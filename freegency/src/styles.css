@@ -2,11 +2,11 @@
    Freegency — Global Stylesheet (Tailwind v4)
    "Collaborative Warmth" design system
    ========================================================================== */
-
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
+@import "intl-tel-input/styles";
 
 /* Fonts: Plus Jakarta Sans (headings/buttons), Inter (body), JetBrains Mono (data/labels) */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 /* ==========================================================================
    1. THEME TOKENS
@@ -520,5 +520,77 @@
   /* Buttons/cards can go full-width on mobile, constrained on desktop */
   .auth-card .btn {
     max-width: 480px;
+  }
+
+  /* intl-tel-input — match Freegency auth fields */
+  .freegency-phone.iti {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .freegency-phone .iti__country-container {
+    display: flex;
+    align-items: center;
+  }
+
+  .freegency-phone.iti input.iti__tel-input,
+  .freegency-phone.iti input.iti__tel-input[type='tel'],
+  .freegency-phone.iti input.iti__tel-input[type='text'] {
+    height: 100% !important;
+    min-width: 100%;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    line-height: 55px;
+    border: none !important;
+    border-radius: 0;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: var(--color-on-surface);
+    font-family: var(--font-body);
+    font-size: 14px;
+    outline: none !important;
+  }
+
+  .freegency-phone.iti input.iti__tel-input::placeholder {
+    color: rgba(70, 69, 85, 0.4);
+  }
+
+  .freegency-phone.iti input.iti__tel-input:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  .freegency-phone .iti__selected-country,
+  .freegency-phone .iti__selected-country-primary {
+    background: transparent;
+  }
+
+  .freegency-phone .iti__selected-country-primary:hover {
+    background-color: rgba(65, 48, 215, 0.06);
+  }
+
+  .freegency-phone .iti__selected-dial-code {
+    color: var(--color-on-surface);
+    font-family: var(--font-body);
+    font-size: 14px;
+  }
+
+  /* Dropdown attaches to body — keep it outside the input */
+  .iti__country-selector {
+    z-index: 50;
+    border-radius: 12px;
+    border: 1px solid var(--color-surface-container-high);
+    box-shadow: var(--shadow-level-3);
+    font-family: var(--font-body);
+    overflow: hidden;
+  }
+
+  .iti__country-selector .iti__search-input {
+    border-radius: 8px;
+    border: 1px solid rgba(229, 225, 228, 0.4);
+    font-family: var(--font-body);
+    box-shadow: none;
   }
 }

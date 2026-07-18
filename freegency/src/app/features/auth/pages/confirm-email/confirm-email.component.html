@@ -1,0 +1,44 @@
+<div
+  class="flex min-h-dvh flex-col items-center bg-background px-8 pb-12 md:px-10 md:py-12 lg:px-[64px] lg:py-16"
+>
+  <app-header />
+
+  <main
+    class="mx-auto flex w-full max-w-[500px] flex-col items-center gap-10 md:max-w-[670px] lg:max-w-[500px]"
+  >
+    <section class="flex w-full flex-col gap-4 text-center">
+      <h1
+        class="font-display text-[24px] leading-8 font-bold tracking-tight text-on-surface sm:text-[28px] sm:leading-9 md:text-[32px] md:leading-10 lg:text-[30px] lg:leading-9 xl:text-[40px] xl:leading-[48px]"
+      >
+        @if (status() === 'loading') {
+          Confirming your email…
+        } @else if (status() === 'error') {
+          Confirmation failed
+        } @else {
+          Email confirmed
+        }
+      </h1>
+
+      @if (status() === 'loading') {
+        <p class="text-body-md text-on-surface-variant md:text-body-lg">
+          Please wait while we verify your account.
+        </p>
+      }
+
+      @if (status() === 'error') {
+        <p class="text-body-md text-error md:text-body-lg" role="alert">
+          {{ errorMessage() }}
+        </p>
+      }
+    </section>
+
+    @if (status() === 'error') {
+      <a
+        routerLink="/auth/login"
+        class="font-bold text-primary-container underline decoration-primary-container/10 underline-offset-2"
+      >
+        ← Back to Login
+      </a>
+    }
+  </main>
+</div>
