@@ -1,0 +1,80 @@
+/* Question alone in the center first (no cards in the DOM).
+   When ready, the panel mounts and opens gently under it. */
+
+.onboarding-question {
+  opacity: 0;
+  animation: onboarding-fade-in 0.9s ease 0.05s forwards;
+}
+
+.onboarding-question--ready {
+  padding-bottom: 48px;
+  transition: padding-bottom 1.15s ease-in-out;
+}
+
+.onboarding-panel {
+  display: grid;
+  width: 100%;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  animation: onboarding-panel-open 1.2s ease-in-out forwards;
+}
+
+.onboarding-panel-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.onboarding-card {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: onboarding-card-in 1s ease-in-out 0.25s forwards;
+}
+
+.onboarding-card--late {
+  animation-delay: 0.4s;
+}
+
+.onboarding-footer {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: onboarding-card-in 0.9s ease-in-out 0.5s forwards;
+}
+
+@keyframes onboarding-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes onboarding-panel-open {
+  to {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+}
+
+@keyframes onboarding-card-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-question,
+  .onboarding-panel,
+  .onboarding-card,
+  .onboarding-footer {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .onboarding-panel {
+    grid-template-rows: 1fr !important;
+  }
+}

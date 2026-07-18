@@ -2,11 +2,12 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { extractApiError } from '../../../../core/http/api-error';
+import { AuthAmbientBgComponent } from '../../../../shared/components/auth-ambient-bg/auth-ambient-bg.component';
 import { HeaderComponent } from '../../../../shared/header/header.component';
 
 @Component({
   selector: 'app-confirm-email',
-  imports: [RouterLink, HeaderComponent],
+  imports: [RouterLink, AuthAmbientBgComponent, HeaderComponent],
   templateUrl: './confirm-email.component.html',
 })
 export class ConfirmEmailComponent implements OnInit {

@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { extractApiError } from '../../../../core/http/api-error';
+import { AuthAmbientBgComponent } from '../../../../shared/components/auth-ambient-bg/auth-ambient-bg.component';
 import { HeaderComponent } from '../../../../shared/header/header.component';
 import { PasswordRulesComponent } from '../../../../shared/components/password-rules/password-rules.component';
 
@@ -10,7 +11,7 @@ const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@#$%^&*!])[A-Za-z\
 
 @Component({
   selector: 'app-create-new-password',
-  imports: [FormsModule, RouterLink, HeaderComponent, PasswordRulesComponent],
+  imports: [FormsModule, RouterLink, AuthAmbientBgComponent, HeaderComponent, PasswordRulesComponent],
   templateUrl: './create-new-password.component.html',
 })
 export class CreateNewPasswordComponent {

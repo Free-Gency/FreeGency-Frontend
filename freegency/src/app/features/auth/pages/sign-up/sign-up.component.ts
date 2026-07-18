@@ -1,23 +1,30 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import allCountries from 'intl-tel-input/data';
 import { AuthService } from '../../../../core/auth/auth.service';
 import type { UserMode } from '../../../../core/auth/auth.models';
 import { extractApiError } from '../../../../core/http/api-error';
+import { AuthAmbientBgComponent } from '../../../../shared/components/auth-ambient-bg/auth-ambient-bg.component';
 import { HeaderComponent } from '../../../../shared/header/header.component';
 import { PhoneInputComponent } from '../../../../shared/components/phone-input/phone-input.component';
+import { SIGNUP_MODE_KEY } from '../onboarding/onboarding.component';
 
 const countryDisplayNames = new Intl.DisplayNames(['en'], { type: 'region' });
 const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@#$%^&*!])[A-Za-z\d@#$%^&*!]{8,}$/;
 
+function isUserMode(value: string | null): value is UserMode {
+  return value === 'Client' || value === 'Developer';
+}
+
 @Component({
   selector: 'app-sign-up',
-  imports: [FormsModule, RouterLink, HeaderComponent, PhoneInputComponent],
+  imports: [FormsModule, RouterLink, AuthAmbientBgComponent, HeaderComponent, PhoneInputComponent],
   templateUrl: './sign-up.component.html',
 })
-export class SignUpComponent {
+export class SignUpComponent implements OnInit {
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(AuthService);
 
   protected firstName = '';
@@ -43,12 +50,22 @@ export class SignUpComponent {
     })
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  protected togglePassword(): void {
-    this.showPassword.update((v) => !v);
+  ngOnInit(): void {
+    const fromQuery = this.route.snapshot.queryParamMap.get('mode');
+    const fromStorage = sessionStorage.getItem(SIGNUP_MODE_KEY);
+    const mode = isUserMode(fromQuery) ? fromQuery : isUserMode(fromStorage) ? fromStorage : null;
+
+    if (!mode) {
+      this.router.navigate(['/auth/onboarding']);
+      return;
+    }
+
+    this.mode = mode;
+    sessionStorage.setItem(SIGNUP_MODE_KEY, mode);
   }
 
-  protected selectMode(mode: UserMode): void {
-    this.mode = mode;
+  protected togglePassword(): void {
+    this.showPassword.update((v) => !v);
   }
 
   protected onPhoneValidityChange(valid: boolean): void {

@@ -1,10 +1,11 @@
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { AuthAmbientBgComponent } from '../../../../shared/components/auth-ambient-bg/auth-ambient-bg.component';
 import { HeaderComponent } from '../../../../shared/header/header.component';
 
 @Component({
   selector: 'app-registration-success',
-  imports: [HeaderComponent],
+  imports: [AuthAmbientBgComponent, HeaderComponent],
   templateUrl: './registration-success.component.html',
 })
 export class RegistrationSuccessComponent implements OnInit, OnDestroy {

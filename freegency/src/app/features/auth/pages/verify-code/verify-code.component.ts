@@ -2,12 +2,13 @@ import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { extractApiError } from '../../../../core/http/api-error';
+import { AuthAmbientBgComponent } from '../../../../shared/components/auth-ambient-bg/auth-ambient-bg.component';
 import { HeaderComponent } from '../../../../shared/header/header.component';
 import { OtpInputComponent } from '../../../../shared/components/otp-input/otp-input.component';
 
 @Component({
   selector: 'app-verify-code',
-  imports: [RouterLink, HeaderComponent, OtpInputComponent],
+  imports: [RouterLink, AuthAmbientBgComponent, HeaderComponent, OtpInputComponent],
   templateUrl: './verify-code.component.html',
 })
 export class VerifyCodeComponent {

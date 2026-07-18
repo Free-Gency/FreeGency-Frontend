@@ -1,10 +1,12 @@
 <div
-  class="flex min-h-dvh flex-col items-center bg-background px-8 pb-12 md:px-10 md:py-12 lg:px-[64px] lg:py-16"
+  class="relative flex min-h-dvh flex-col items-center overflow-x-hidden bg-background px-10 pb-12"
 >
-  <app-header />
+  <app-auth-ambient-bg />
+
+  <app-header class="relative z-10" />
 
   <main
-    class="mx-auto flex w-full max-w-[500px] flex-col items-center gap-10 md:max-w-[670px] lg:max-w-[500px]"
+    class="relative z-10 mx-auto flex w-full max-w-[500px] flex-col items-center gap-10 md:max-w-[670px] lg:max-w-[500px]"
   >
     <section class="flex w-full flex-col gap-4 text-center">
       <h1
@@ -116,7 +118,7 @@
       <p class="text-center text-body-md text-on-surface-variant">
         Don't have an account?
         <a
-          routerLink="/auth/sign-up"
+          routerLink="/auth/onboarding"
           class="font-bold text-primary-container underline decoration-primary-container/10 underline-offset-2"
         >
           Sign Up
