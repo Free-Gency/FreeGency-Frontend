@@ -8,7 +8,12 @@
       data-mobile-nav
     >
       <div class="flex min-w-0 items-center gap-4 lg:gap-[60px]">
-        <a routerLink="/" class="shrink-0" aria-label="FreeGency home">
+        <a
+          routerLink="/"
+          class="shrink-0"
+          aria-label="FreeGency home"
+          (click)="activeNav.set('Home')"
+        >
           <img
             src="/assets/brand/wordmark.svg"
             alt="freegency"
@@ -22,11 +27,13 @@
           @for (link of navLinks; track link.label) {
             <a
               href="#"
-              class="inline-flex items-center justify-center gap-1 rounded-[40px] px-5 py-2 text-sm leading-normal whitespace-nowrap 2xl:px-6"
-              [class.bg-[#27253f]]="link.active"
-              [class.text-[#f7f7f7]]="link.active"
-              [class.bg-[#fcfcfc]]="!link.active"
-              [class.text-[#27253f]]="!link.active"
+              class="inline-flex items-center justify-center gap-1 rounded-[40px] px-5 py-2 text-sm leading-normal whitespace-nowrap transition-colors 2xl:px-6"
+              [class.bg-[#27253f]]="activeNav() === link.label"
+              [class.text-[#f7f7f7]]="activeNav() === link.label"
+              [class.bg-[#fcfcfc]]="activeNav() !== link.label"
+              [class.text-[#27253f]]="activeNav() !== link.label"
+              [class.hover:bg-[#eceaf8]]="activeNav() !== link.label"
+              (click)="selectNav(link.label, $event)"
             >
               {{ link.label }}
               @if (link.hasChevron) {
@@ -36,8 +43,8 @@
                   width="10"
                   height="6"
                   class="h-[6px] w-[10px] shrink-0"
-                  [class.brightness-0]="link.active"
-                  [class.invert]="link.active"
+                  [class.brightness-0]="activeNav() === link.label"
+                  [class.invert]="activeNav() === link.label"
                   aria-hidden="true"
                 />
               }
@@ -49,17 +56,9 @@
       <div class="flex shrink-0 items-center gap-2 sm:gap-3 xl:gap-4">
         <a
           routerLink="/auth/login"
-          class="hidden items-center justify-center gap-2.5 p-2.5 text-base leading-normal text-[#27253f] no-underline xl:inline-flex"
+          class="hidden px-1 py-2 text-base leading-normal text-[#27253f] underline decoration-[#27253f] underline-offset-2 xl:inline"
         >
           Sign in now
-          <img
-            src="/assets/landing/icons/arrow-right-white.svg"
-            alt=""
-            width="16"
-            height="16"
-            class="size-4 shrink-0 brightness-0"
-            aria-hidden="true"
-          />
         </a>
         <a
           routerLink="/auth/onboarding"
@@ -116,11 +115,11 @@
             @for (link of navLinks; track link.label) {
               <a
                 href="#"
-                class="inline-flex items-center justify-between rounded-xl px-4 py-3 text-sm"
-                [class.bg-[#27253f]]="link.active"
-                [class.text-[#f7f7f7]]="link.active"
-                [class.text-[#27253f]]="!link.active"
-                (click)="closeMobileNav()"
+                class="inline-flex items-center justify-between rounded-xl px-4 py-3 text-sm transition-colors"
+                [class.bg-[#27253f]]="activeNav() === link.label"
+                [class.text-[#f7f7f7]]="activeNav() === link.label"
+                [class.text-[#27253f]]="activeNav() !== link.label"
+                (click)="selectNav(link.label, $event)"
               >
                 {{ link.label }}
                 @if (link.hasChevron) {
@@ -130,8 +129,8 @@
                     width="10"
                     height="6"
                     class="h-[6px] w-[10px] shrink-0"
-                    [class.brightness-0]="link.active"
-                    [class.invert]="link.active"
+                    [class.brightness-0]="activeNav() === link.label"
+                    [class.invert]="activeNav() === link.label"
                     aria-hidden="true"
                   />
                 }
@@ -140,7 +139,7 @@
           </nav>
           <a
             routerLink="/auth/login"
-            class="mt-2 flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-[#27253f] no-underline xl:hidden"
+            class="mt-2 flex items-center justify-center px-4 py-3 text-sm text-[#27253f] underline decoration-[#27253f] underline-offset-2 xl:hidden"
             (click)="closeMobileNav()"
           >
             Sign in now

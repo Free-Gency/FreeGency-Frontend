@@ -62,12 +62,14 @@ export class LandingComponent implements OnInit {
   private fadeTimeoutId: number | undefined;
 
   protected readonly navLinks = [
-    { label: 'Home', active: true, hasChevron: false },
-    { label: 'Explore Services', active: false, hasChevron: true },
-    { label: 'About Us', active: false, hasChevron: false },
-    { label: 'Contact', active: false, hasChevron: false },
-    { label: 'FAQ', active: false, hasChevron: false },
+    { label: 'Home', hasChevron: false },
+    { label: 'Explore Services', hasChevron: true },
+    { label: 'About Us', hasChevron: false },
+    { label: 'Contact', hasChevron: false },
+    { label: 'FAQ', hasChevron: false },
   ] as const;
+
+  protected readonly activeNav = signal<string>('Home');
 
   protected readonly trustAvatars = [
     'user-1.png',
@@ -142,6 +144,12 @@ export class LandingComponent implements OnInit {
       this.categoryImageFading.set(false);
       this.fadeTimeoutId = undefined;
     }, 350);
+  }
+
+  protected selectNav(label: string, event: Event): void {
+    event.preventDefault();
+    this.activeNav.set(label);
+    this.mobileNavOpen.set(false);
   }
 
   protected toggleMobileNav(): void {
