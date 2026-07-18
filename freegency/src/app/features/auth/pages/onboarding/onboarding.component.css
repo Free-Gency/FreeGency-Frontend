@@ -1,14 +1,9 @@
-/* Question alone in the center first (no cards in the DOM).
-   When ready, the panel mounts and opens gently under it. */
+/* Question fades in first; cards open ~2s later via CSS animation-delay only. */
 
 .onboarding-question {
+  padding-bottom: 48px;
   opacity: 0;
   animation: onboarding-fade-in 0.9s ease 0.05s forwards;
-}
-
-.onboarding-question--ready {
-  padding-bottom: 48px;
-  transition: padding-bottom 1.15s ease-in-out;
 }
 
 .onboarding-panel {
@@ -16,7 +11,7 @@
   width: 100%;
   grid-template-rows: 0fr;
   opacity: 0;
-  animation: onboarding-panel-open 1.2s ease-in-out forwards;
+  animation: onboarding-panel-open 1.2s ease-in-out 2s forwards;
 }
 
 .onboarding-panel-inner {
@@ -27,17 +22,17 @@
 .onboarding-card {
   opacity: 0;
   transform: translateY(12px);
-  animation: onboarding-card-in 1s ease-in-out 0.25s forwards;
+  animation: onboarding-card-in 1s ease-in-out 2.25s forwards;
 }
 
 .onboarding-card--late {
-  animation-delay: 0.4s;
+  animation-delay: 2.4s;
 }
 
 .onboarding-footer {
   opacity: 0;
   transform: translateY(8px);
-  animation: onboarding-card-in 0.9s ease-in-out 0.5s forwards;
+  animation: onboarding-card-in 0.9s ease-in-out 2.5s forwards;
 }
 
 @keyframes onboarding-fade-in {

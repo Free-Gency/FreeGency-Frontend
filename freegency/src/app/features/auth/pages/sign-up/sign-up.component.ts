@@ -4,18 +4,14 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import allCountries from 'intl-tel-input/data';
 import { AuthService } from '../../../../core/auth/auth.service';
 import type { UserMode } from '../../../../core/auth/auth.models';
+import { isPasswordValid, PASSWORD_RULE_MESSAGE } from '../../../../core/auth/password-rules';
+import { readSignupMode, storeSignupMode } from '../../../../core/auth/signup-mode';
 import { extractApiError } from '../../../../core/http/api-error';
 import { AuthAmbientBgComponent } from '../../../../shared/components/auth-ambient-bg/auth-ambient-bg.component';
 import { HeaderComponent } from '../../../../shared/header/header.component';
 import { PhoneInputComponent } from '../../../../shared/components/phone-input/phone-input.component';
-import { SIGNUP_MODE_KEY } from '../onboarding/onboarding.component';
 
 const countryDisplayNames = new Intl.DisplayNames(['en'], { type: 'region' });
-const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@#$%^&*!])[A-Za-z\d@#$%^&*!]{8,}$/;
-
-function isUserMode(value: string | null): value is UserMode {
-  return value === 'Client' || value === 'Developer';
-}
 
 @Component({
   selector: 'app-sign-up',
@@ -51,9 +47,7 @@ export class SignUpComponent implements OnInit {
     .sort((a, b) => a.name.localeCompare(b.name));
 
   ngOnInit(): void {
-    const fromQuery = this.route.snapshot.queryParamMap.get('mode');
-    const fromStorage = sessionStorage.getItem(SIGNUP_MODE_KEY);
-    const mode = isUserMode(fromQuery) ? fromQuery : isUserMode(fromStorage) ? fromStorage : null;
+    const mode = readSignupMode(this.route.snapshot.queryParamMap.get('mode'));
 
     if (!mode) {
       this.router.navigate(['/auth/onboarding']);
@@ -61,7 +55,7 @@ export class SignUpComponent implements OnInit {
     }
 
     this.mode = mode;
-    sessionStorage.setItem(SIGNUP_MODE_KEY, mode);
+    storeSignupMode(mode);
   }
 
   protected togglePassword(): void {
@@ -92,10 +86,8 @@ export class SignUpComponent implements OnInit {
       return;
     }
 
-    if (!passwordPattern.test(this.password)) {
-      this.errorMessage.set(
-        'Password must be at least 8 characters and include uppercase, lowercase, a number, and a special character (@#$%^&*!).',
-      );
+    if (!isPasswordValid(this.password)) {
+      this.errorMessage.set(PASSWORD_RULE_MESSAGE);
       return;
     }
 

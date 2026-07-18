@@ -11,6 +11,16 @@ export class TokenStorageService {
     storage.setItem(SESSION_KEY, JSON.stringify(session));
   }
 
+  /** Update tokens in whichever storage currently holds the session. */
+  update(session: StoredSession): void {
+    if (localStorage.getItem(SESSION_KEY) !== null) {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      return;
+    }
+
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  }
+
   get(): StoredSession | null {
     const raw = localStorage.getItem(SESSION_KEY) ?? sessionStorage.getItem(SESSION_KEY);
     if (!raw) return null;
@@ -25,6 +35,10 @@ export class TokenStorageService {
 
   getAccessToken(): string | null {
     return this.get()?.token ?? null;
+  }
+
+  getRefreshToken(): string | null {
+    return this.get()?.refreshToken ?? null;
   }
 
   clear(): void {

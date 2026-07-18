@@ -55,9 +55,11 @@ function messageFromBody(body: Record<string, unknown> | null): string | null {
   const errors = body['errors'];
 
   if (Array.isArray(errors)) {
-    const description = errors[1] ?? errors[0];
-    if (typeof description === 'string' && description.trim()) {
-      return description.trim();
+    const messages = errors.filter(
+      (value): value is string => typeof value === 'string' && value.trim().length > 0,
+    );
+    if (messages.length > 0) {
+      return messages[messages.length - 1].trim();
     }
   }
 

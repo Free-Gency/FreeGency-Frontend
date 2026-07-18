@@ -8,10 +8,7 @@
   <main
     class="onboarding-main relative z-10 mx-auto flex w-full max-w-[900px] flex-1 flex-col items-center justify-center"
   >
-    <section
-      class="onboarding-question flex w-full max-w-[576px] flex-col gap-4 text-center"
-      [class.onboarding-question--ready]="ready()"
-    >
+    <section class="onboarding-question flex w-full max-w-[576px] flex-col gap-4 text-center">
       <h1
         class="font-display text-[48px] leading-[52.8px] font-bold tracking-[-0.96px] text-on-surface max-md:text-[32px] max-md:leading-10 max-md:tracking-tight"
       >
@@ -22,96 +19,94 @@
       </p>
     </section>
 
-    @if (ready()) {
-      <div class="onboarding-panel">
-        <div class="onboarding-panel-inner">
-          <div class="flex w-full flex-col items-stretch justify-center gap-6 sm:flex-row">
-            <button
-              type="button"
-              class="onboarding-card group flex flex-1 cursor-pointer flex-col items-center rounded-[24px] border border-surface-container-high bg-surface-container-lowest px-8 py-10 text-center transition-[border-color,box-shadow,transform] duration-150 hover:border-primary-container/40 hover:shadow-[0_8px_24px_rgba(91,79,240,0.08)] active:scale-[0.99] sm:px-[67px] sm:py-[49px]"
-              (click)="selectMode('Developer')"
+    <div class="onboarding-panel">
+      <div class="onboarding-panel-inner">
+        <div class="flex w-full flex-col items-stretch justify-center gap-6 sm:flex-row">
+          <button
+            type="button"
+            class="onboarding-card group flex flex-1 cursor-pointer flex-col items-center rounded-[24px] border border-surface-container-high bg-surface-container-lowest px-8 py-10 text-center transition-[border-color,box-shadow,transform] duration-150 hover:border-primary-container/40 hover:shadow-[0_8px_24px_rgba(91,79,240,0.08)] active:scale-[0.99] sm:px-[67px] sm:py-[49px]"
+            (click)="selectMode('Developer')"
+          >
+            <img
+              src="/Toolbox.png"
+              alt=""
+              width="160"
+              height="160"
+              class="mb-8 size-[120px] shrink-0 object-contain sm:size-[160px]"
+              aria-hidden="true"
+            />
+            <h2
+              class="mb-[11px] font-display text-xl leading-7 font-semibold text-on-surface sm:text-2xl sm:leading-[31.2px]"
             >
-              <img
-                src="/Toolbox.png"
-                alt=""
-                width="160"
-                height="160"
-                class="mb-8 size-[120px] shrink-0 object-contain sm:size-[160px]"
-                aria-hidden="true"
-              />
-              <h2
-                class="mb-[11px] font-display text-xl leading-7 font-semibold text-on-surface sm:text-2xl sm:leading-[31.2px]"
-              >
-                Sign up as a freelancer
-              </h2>
-              <p class="mb-8 max-w-[280px] text-base leading-6 text-on-surface-variant">
-                Showcase your portfolio, find high-quality work, and collaborate.
-              </p>
-              <span
-                class="inline-flex items-center gap-2 font-display text-base font-semibold text-primary-container transition-transform duration-150 group-hover:translate-x-0.5"
-              >
-                Get started
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                  <path
-                    d="M5.25 2.917 9.333 7 5.25 11.083"
-                    stroke="currentColor"
-                    stroke-width="1.75"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-              </span>
-            </button>
+              Sign up as a freelancer
+            </h2>
+            <p class="mb-8 max-w-[280px] text-base leading-6 text-on-surface-variant">
+              Showcase your portfolio, find high-quality work, and collaborate.
+            </p>
+            <span
+              class="inline-flex items-center gap-2 font-display text-base font-semibold text-primary-container transition-transform duration-150 group-hover:translate-x-0.5"
+            >
+              Get started
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                <path
+                  d="M5.25 2.917 9.333 7 5.25 11.083"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+          </button>
 
-            <button
-              type="button"
-              class="onboarding-card onboarding-card--late group flex flex-1 cursor-pointer flex-col items-center rounded-[24px] border border-surface-container-high bg-surface-container-lowest px-8 py-10 text-center transition-[border-color,box-shadow,transform] duration-150 hover:border-primary-container/40 hover:shadow-[0_8px_24px_rgba(91,79,240,0.08)] active:scale-[0.99] sm:px-[67px] sm:py-[49px]"
-              (click)="selectMode('Client')"
+          <button
+            type="button"
+            class="onboarding-card onboarding-card--late group flex flex-1 cursor-pointer flex-col items-center rounded-[24px] border border-surface-container-high bg-surface-container-lowest px-8 py-10 text-center transition-[border-color,box-shadow,transform] duration-150 hover:border-primary-container/40 hover:shadow-[0_8px_24px_rgba(91,79,240,0.08)] active:scale-[0.99] sm:px-[67px] sm:py-[49px]"
+            (click)="selectMode('Client')"
+          >
+            <img
+              src="/Briefcase.png"
+              alt=""
+              width="160"
+              height="160"
+              class="mb-8 size-[120px] shrink-0 object-contain sm:size-[160px]"
+              aria-hidden="true"
+            />
+            <h2
+              class="mb-[11px] font-display text-xl leading-7 font-semibold text-on-surface sm:text-2xl sm:leading-[31.2px]"
             >
-              <img
-                src="/Briefcase.png"
-                alt=""
-                width="160"
-                height="160"
-                class="mb-8 size-[120px] shrink-0 object-contain sm:size-[160px]"
-                aria-hidden="true"
-              />
-              <h2
-                class="mb-[11px] font-display text-xl leading-7 font-semibold text-on-surface sm:text-2xl sm:leading-[31.2px]"
-              >
-                Sign up to hire
-              </h2>
-              <p class="mb-8 max-w-[280px] text-base leading-6 text-on-surface-variant">
-                Find specialized talent, launch projects, and hire freelancers.
-              </p>
-              <span
-                class="inline-flex items-center gap-2 font-display text-base font-semibold text-primary-container transition-transform duration-150 group-hover:translate-x-0.5"
-              >
-                Explore talent
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                  <path
-                    d="M5.25 2.917 9.333 7 5.25 11.083"
-                    stroke="currentColor"
-                    stroke-width="1.75"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-              </span>
-            </button>
-          </div>
-
-          <p class="onboarding-footer pt-12 text-center text-body-md text-on-surface-variant">
-            Already have an account?
-            <a
-              routerLink="/auth/login"
-              class="font-bold text-primary underline decoration-primary/10 underline-offset-2"
+              Sign up to hire
+            </h2>
+            <p class="mb-8 max-w-[280px] text-base leading-6 text-on-surface-variant">
+              Find specialized talent, launch projects, and hire freelancers.
+            </p>
+            <span
+              class="inline-flex items-center gap-2 font-display text-base font-semibold text-primary-container transition-transform duration-150 group-hover:translate-x-0.5"
             >
-              Log in
-            </a>
-          </p>
+              Explore talent
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                <path
+                  d="M5.25 2.917 9.333 7 5.25 11.083"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+          </button>
         </div>
+
+        <p class="onboarding-footer pt-12 text-center text-body-md text-on-surface-variant">
+          Already have an account?
+          <a
+            routerLink="/auth/login"
+            class="font-bold text-primary underline decoration-primary/10 underline-offset-2"
+          >
+            Log in
+          </a>
+        </p>
       </div>
-    }
+    </div>
   </main>
 </div>

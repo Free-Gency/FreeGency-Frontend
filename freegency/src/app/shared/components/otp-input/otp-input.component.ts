@@ -9,19 +9,13 @@ export class OtpInputComponent {
   readonly valueChange = output<string>();
 
   private readonly inputs = viewChildren<ElementRef<HTMLInputElement>>('otpBox');
-  protected readonly digits: string[] = [];
-
-  constructor() {
-    for (let i = 0; i < 6; i++) {
-      this.digits.push('');
-    }
-  }
+  protected readonly digits = Array.from({ length: this.length() }, () => '');
 
   protected onInput(index: number, event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const value = input.value.replace(/\D/g, '').slice(-1);
+    const inputEl = event.target as HTMLInputElement;
+    const value = inputEl.value.replace(/\D/g, '').slice(-1);
     this.digits[index] = value;
-    input.value = value;
+    inputEl.value = value;
 
     if (value && index < this.length() - 1) {
       this.inputs()[index + 1]?.nativeElement.focus();
@@ -38,7 +32,8 @@ export class OtpInputComponent {
 
   protected onPaste(event: ClipboardEvent): void {
     event.preventDefault();
-    const pasted = event.clipboardData?.getData('text').replace(/\D/g, '').slice(0, this.length()) ?? '';
+    const pasted =
+      event.clipboardData?.getData('text').replace(/\D/g, '').slice(0, this.length()) ?? '';
 
     for (let i = 0; i < this.length(); i++) {
       this.digits[i] = pasted[i] ?? '';

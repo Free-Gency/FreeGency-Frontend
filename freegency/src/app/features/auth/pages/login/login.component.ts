@@ -37,16 +37,18 @@ export class LoginComponent {
 
     this.loading.set(true);
 
-    this.auth.login({ email: this.email.trim(), password: this.password }, this.keepLoggedIn).subscribe({
-      next: (response) => {
-        this.loading.set(false);
-        const name = response.firstName?.trim() || response.email;
-        this.successMessage.set(`Welcome back, ${name}! You're signed in.`);
-      },
-      error: (err) => {
-        this.loading.set(false);
-        this.errorMessage.set(extractApiError(err));
-      },
-    });
+    this.auth
+      .login({ email: this.email.trim(), password: this.password }, this.keepLoggedIn)
+      .subscribe({
+        next: (response) => {
+          this.loading.set(false);
+          const name = response.firstName?.trim() || response.email;
+          this.successMessage.set(`Welcome back, ${name}! You're signed in.`);
+        },
+        error: (err) => {
+          this.loading.set(false);
+          this.errorMessage.set(extractApiError(err));
+        },
+      });
   }
 }

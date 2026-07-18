@@ -32,6 +32,11 @@ export interface ResetPasswordRequest {
   confirmPassword: string;
 }
 
+export interface RefreshTokenRequest {
+  token: string;
+  refreshToken: string;
+}
+
 export interface StoredSession {
   token: string;
   refreshToken: string;
