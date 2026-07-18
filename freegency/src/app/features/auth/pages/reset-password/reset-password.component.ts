@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { grantAuthFlow } from '../../../../core/auth/auth-flow';
 import { extractApiError } from '../../../../core/http/api-error';
 import { AuthAmbientBgComponent } from '../../../../shared/components/auth-ambient-bg/auth-ambient-bg.component';
 import { HeaderComponent } from '../../../../shared/header/header.component';
@@ -32,8 +33,10 @@ export class ResetPasswordComponent {
     this.auth.sendResetPassword(this.email.trim()).subscribe({
       next: () => {
         this.loading.set(false);
+        const email = this.email.trim();
+        grantAuthFlow('verify-code', email);
         this.router.navigate(['/auth/verify-code'], {
-          queryParams: { email: this.email.trim() },
+          queryParams: { email },
         });
       },
       error: (err) => {

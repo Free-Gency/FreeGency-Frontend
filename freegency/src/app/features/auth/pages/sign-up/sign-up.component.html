@@ -1,72 +1,96 @@
 <div
-  class="relative flex min-h-dvh flex-col items-center overflow-x-hidden bg-background px-10 pb-12"
+  class="relative flex min-h-dvh flex-col items-center justify-center overflow-x-hidden bg-background px-5 py-8"
 >
   <app-auth-ambient-bg />
 
-  <app-header class="relative z-10" />
-
-  <main
-    class="relative z-10 mx-auto flex w-full max-w-[500px] flex-col items-center gap-10 md:max-w-[670px] lg:max-w-[500px]"
+  <div
+    class="relative z-10 mx-auto flex w-full max-w-[360px] flex-col items-center gap-5 sm:max-w-[400px] sm:gap-6"
   >
-    <section class="flex w-full flex-col gap-4 text-center">
+    <img
+      src="/assets/brand/logo.svg"
+      alt="FreeGency"
+      class="block h-7 w-auto sm:h-8"
+      width="140"
+      height="32"
+    />
+
+    <section class="flex w-full flex-col gap-1.5 text-center">
       <h1
-        class="font-display text-[24px] leading-8 font-bold tracking-tight text-on-surface sm:text-[28px] sm:leading-9 md:text-[32px] md:leading-10 lg:text-[30px] lg:leading-9 xl:text-[40px] xl:leading-[48px]"
+        class="font-display text-[22px] leading-7 font-bold tracking-tight text-on-surface sm:text-[24px] sm:leading-8"
       >
         Create your&nbsp;FreeGency Account
       </h1>
-      <p class="text-body-md text-on-surface-variant md:text-body-lg">
+      <p class="text-sm leading-5 text-on-surface-variant">
         Join FreeGency and start collaborating today.
       </p>
     </section>
 
-    <div class="flex w-full flex-col items-center gap-8">
-      <div class="flex w-full flex-col gap-3">
+    <div class="flex w-full flex-col items-center gap-4">
+      <div class="flex w-full flex-col gap-2">
         <button
           type="button"
-          class="inline-flex h-[55px] w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-outline-variant bg-surface-container-lowest px-4 font-display text-base font-bold text-on-surface transition-[background-color,transform] duration-150 hover:bg-surface-container-low active:scale-[0.98] md:text-xl"
+          class="inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-outline-variant bg-surface-container-lowest px-4 font-display text-sm font-bold text-on-surface transition-[background-color,transform] duration-150 hover:bg-surface-container-low active:scale-[0.98]"
         >
-          <img src="/assets/signup/google-logo.svg" alt="" width="24" height="24" class="size-6 shrink-0 object-contain" />
+          <img
+            src="/assets/auth/google.svg"
+            alt=""
+            width="20"
+            height="20"
+            class="size-5 shrink-0 object-contain"
+          />
           Continue with Google
         </button>
         <button
           type="button"
-          class="inline-flex h-[55px] w-full cursor-pointer items-center justify-center gap-3 rounded-full bg-[#1569bf] px-4 font-display text-base font-bold text-white transition-[background-color,transform] duration-150 hover:bg-[#084d9e] active:scale-[0.98] md:gap-4 md:text-xl"
+          class="inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2.5 rounded-full bg-[#1569bf] px-4 font-display text-sm font-bold text-white transition-[background-color,transform] duration-150 hover:bg-[#084d9e] active:scale-[0.98]"
         >
-          <img src="/assets/signup/linkedin-icon.svg" alt="" width="24" height="24" class="size-6 shrink-0 object-contain" />
+          <img
+            src="/assets/auth/linkedin.svg"
+            alt=""
+            width="20"
+            height="20"
+            class="size-5 shrink-0 object-contain"
+          />
           Continue with LinkedIn
         </button>
       </div>
 
-      <div class="flex w-full items-center gap-3 text-sm text-on-surface-variant">
+      <div class="flex w-full items-center gap-2.5 text-xs text-on-surface-variant">
         <div class="h-px flex-1 bg-outline-variant"></div>
         <span>or</span>
         <div class="h-px flex-1 bg-outline-variant"></div>
       </div>
 
-      <form class="flex w-full flex-col gap-6" (ngSubmit)="onSubmit()">
-        <div class="flex w-full flex-col gap-6 sm:flex-row sm:gap-4">
-          <div class="flex min-w-0 flex-1 flex-col gap-2">
-            <label class="block text-left font-mono text-sm font-medium tracking-wide text-on-surface" for="firstName">
+      <form class="flex w-full flex-col gap-3.5" (ngSubmit)="onSubmit()">
+        <div class="flex w-full flex-col gap-3.5 sm:flex-row sm:gap-3">
+          <div class="flex min-w-0 flex-1 flex-col gap-1.5">
+            <label
+              class="block text-left font-mono text-xs font-medium tracking-wide text-on-surface"
+              for="firstName"
+            >
               First Name
             </label>
             <input
               id="firstName"
               type="text"
-              class="h-[55px] w-full rounded-sm border border-[rgba(229,225,228,0.2)] bg-surface-container-low px-sm font-body text-base text-on-surface placeholder:text-on-surface-variant/40 transition-[background-color,border-color,box-shadow] duration-150 focus:border-primary focus:bg-surface-container-lowest focus:outline-none focus:ring-[3px] focus:ring-primary/12"
+              class="h-11 w-full rounded-sm border border-[rgba(229,225,228,0.2)] bg-surface-container-low px-3 font-body text-sm text-on-surface placeholder:text-on-surface-variant/40 transition-[background-color,border-color,box-shadow] duration-150 focus:border-primary focus:bg-surface-container-lowest focus:outline-none focus:ring-[3px] focus:ring-primary/12"
               placeholder="Jane"
               [(ngModel)]="firstName"
               name="firstName"
               autocomplete="given-name"
             />
           </div>
-          <div class="flex min-w-0 flex-1 flex-col gap-2">
-            <label class="block text-left font-mono text-sm font-medium tracking-wide text-on-surface" for="lastName">
+          <div class="flex min-w-0 flex-1 flex-col gap-1.5">
+            <label
+              class="block text-left font-mono text-xs font-medium tracking-wide text-on-surface"
+              for="lastName"
+            >
               Last Name
             </label>
             <input
               id="lastName"
               type="text"
-              class="h-[55px] w-full rounded-sm border border-[rgba(229,225,228,0.2)] bg-surface-container-low px-sm font-body text-base text-on-surface placeholder:text-on-surface-variant/40 transition-[background-color,border-color,box-shadow] duration-150 focus:border-primary focus:bg-surface-container-lowest focus:outline-none focus:ring-[3px] focus:ring-primary/12"
+              class="h-11 w-full rounded-sm border border-[rgba(229,225,228,0.2)] bg-surface-container-low px-3 font-body text-sm text-on-surface placeholder:text-on-surface-variant/40 transition-[background-color,border-color,box-shadow] duration-150 focus:border-primary focus:bg-surface-container-lowest focus:outline-none focus:ring-[3px] focus:ring-primary/12"
               placeholder="Cooper"
               [(ngModel)]="lastName"
               name="lastName"
@@ -75,14 +99,17 @@
           </div>
         </div>
 
-        <div class="flex w-full flex-col gap-2">
-          <label class="block text-left font-mono text-sm font-medium tracking-wide text-on-surface" for="email">
+        <div class="flex w-full flex-col gap-1.5">
+          <label
+            class="block text-left font-mono text-xs font-medium tracking-wide text-on-surface"
+            for="email"
+          >
             Email Address
           </label>
           <input
             id="email"
             type="email"
-            class="h-[55px] w-full rounded-sm border border-[rgba(229,225,228,0.2)] bg-surface-container-low px-sm font-body text-base text-on-surface placeholder:text-on-surface-variant/40 transition-[background-color,border-color,box-shadow] duration-150 focus:border-primary focus:bg-surface-container-lowest focus:outline-none focus:ring-[3px] focus:ring-primary/12"
+            class="h-11 w-full rounded-sm border border-[rgba(229,225,228,0.2)] bg-surface-container-low px-3 font-body text-sm text-on-surface placeholder:text-on-surface-variant/40 transition-[background-color,border-color,box-shadow] duration-150 focus:border-primary focus:bg-surface-container-lowest focus:outline-none focus:ring-[3px] focus:ring-primary/12"
             placeholder="alex@freelancer.com"
             [(ngModel)]="email"
             name="email"
@@ -90,8 +117,11 @@
           />
         </div>
 
-        <div class="flex w-full flex-col gap-2">
-          <label class="block text-left font-mono text-sm font-medium tracking-wide text-on-surface" for="phone">
+        <div class="flex w-full flex-col gap-1.5">
+          <label
+            class="block text-left font-mono text-xs font-medium tracking-wide text-on-surface"
+            for="phone"
+          >
             Phone Number
           </label>
           <app-phone-input
@@ -101,15 +131,18 @@
           />
         </div>
 
-        <div class="flex w-full flex-col gap-2">
-          <label class="block text-left font-mono text-sm font-medium tracking-wide text-on-surface" for="password">
+        <div class="flex w-full flex-col gap-1.5">
+          <label
+            class="block text-left font-mono text-xs font-medium tracking-wide text-on-surface"
+            for="password"
+          >
             Password
           </label>
           <div class="relative">
             <input
               id="password"
               [type]="showPassword() ? 'text' : 'password'"
-              class="h-[55px] w-full rounded-sm border border-[rgba(229,225,228,0.2)] bg-surface-container-low py-0 pr-11 pl-sm font-body text-sm text-on-surface placeholder:text-on-surface-variant/40 transition-[background-color,border-color,box-shadow] duration-150 focus:border-primary focus:bg-surface-container-lowest focus:outline-none focus:ring-[3px] focus:ring-primary/12"
+              class="h-11 w-full rounded-sm border border-[rgba(229,225,228,0.2)] bg-surface-container-low py-0 pr-10 pl-3 font-body text-sm text-on-surface placeholder:text-on-surface-variant/40 transition-[background-color,border-color,box-shadow] duration-150 focus:border-primary focus:bg-surface-container-lowest focus:outline-none focus:ring-[3px] focus:ring-primary/12"
               placeholder="Password(8 or more characters)"
               [(ngModel)]="password"
               name="password"
@@ -121,19 +154,22 @@
               (click)="togglePassword()"
               [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
             >
-              <img src="/assets/signup/eye-icon.svg" alt="" width="18" height="13" />
+              <img src="/assets/auth/eye.svg" alt="" width="16" height="12" />
             </button>
           </div>
         </div>
 
-        <div class="flex w-full flex-col gap-2">
-          <label class="block text-left font-mono text-sm font-medium tracking-wide text-on-surface" for="country">
+        <div class="flex w-full flex-col gap-1.5">
+          <label
+            class="block text-left font-mono text-xs font-medium tracking-wide text-on-surface"
+            for="country"
+          >
             Country
           </label>
           <div class="relative">
             <select
               id="country"
-              class="h-[55px] w-full cursor-pointer appearance-none rounded-sm border border-[rgba(229,225,228,0.2)] bg-surface-container-low py-0 pr-11 pl-sm font-body text-sm text-on-surface transition-[background-color,border-color,box-shadow] duration-150 focus:border-primary focus:bg-surface-container-lowest focus:outline-none focus:ring-[3px] focus:ring-primary/12 invalid:text-on-surface-variant/40"
+              class="h-11 w-full cursor-pointer appearance-none rounded-sm border border-[rgba(229,225,228,0.2)] bg-surface-container-low py-0 pr-10 pl-3 font-body text-sm text-on-surface transition-[background-color,border-color,box-shadow] duration-150 focus:border-primary focus:bg-surface-container-lowest focus:outline-none focus:ring-[3px] focus:ring-primary/12 invalid:text-on-surface-variant/40"
               [(ngModel)]="country"
               name="country"
               required
@@ -144,24 +180,24 @@
               }
             </select>
             <img
-              src="/assets/signup/chevron-down.svg"
+              src="/assets/auth/chevron-down.svg"
               alt=""
               width="14"
               height="7"
-              class="pointer-events-none absolute top-1/2 right-[17px] -translate-y-1/2"
+              class="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2"
               aria-hidden="true"
             />
           </div>
         </div>
 
-        <label class="flex cursor-pointer items-start gap-3 pt-2 text-left">
+        <label class="flex cursor-pointer items-start gap-2.5 pt-1 text-left">
           <input
             type="checkbox"
-            class="mt-1.25 size-5 shrink-0 cursor-pointer rounded border border-[#e5e7eb] accent-primary-container"
+            class="mt-0.5 size-4 shrink-0 cursor-pointer rounded border border-[#e5e7eb] accent-primary-container"
             [(ngModel)]="agreedToTerms"
             name="agreedToTerms"
           />
-          <span class="text-body-md leading-[22px] text-on-surface-variant">
+          <span class="text-sm leading-5 text-on-surface-variant">
             I understand and agree to the
             <a href="#" class="font-medium text-primary-container no-underline">Terms of Service</a>
             and
@@ -170,12 +206,12 @@
         </label>
 
         @if (errorMessage()) {
-          <p class="text-left text-sm text-error" role="alert">{{ errorMessage() }}</p>
+          <p class="text-left text-xs text-error" role="alert">{{ errorMessage() }}</p>
         }
 
         <button
           type="submit"
-          class="inline-flex h-[55px] w-full cursor-pointer items-center justify-center rounded-full bg-primary-container px-4 font-display text-base font-bold text-on-primary shadow-[0_1px_1px_rgba(0,0,0,0.05)] transition-[background-color,transform] duration-150 hover:bg-primary active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 md:text-xl"
+          class="inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-full bg-primary-container px-4 font-display text-sm font-bold text-on-primary shadow-[0_1px_1px_rgba(0,0,0,0.05)] transition-[background-color,transform] duration-150 hover:bg-primary active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
           [disabled]="!agreedToTerms || loading()"
         >
           {{ loading() ? 'Creating account...' : 'Create my account' }}
@@ -183,11 +219,11 @@
       </form>
 
       <div class="flex items-center justify-center gap-2 text-on-surface-variant/60">
-        <img src="/assets/signup/lock-icon.svg" alt="" width="11" height="14" />
-        <span class="text-body-md">Your data is safe and encrypted</span>
+        <img src="/assets/auth/lock.svg" alt="" width="11" height="14" />
+        <span class="text-sm">Your data is safe and encrypted</span>
       </div>
 
-      <p class="text-center text-body-md text-on-surface-variant">
+      <p class="text-center text-sm text-on-surface-variant">
         Already have an account?
         <a
           routerLink="/auth/login"
@@ -197,5 +233,5 @@
         </a>
       </p>
     </div>
-  </main>
+  </div>
 </div>

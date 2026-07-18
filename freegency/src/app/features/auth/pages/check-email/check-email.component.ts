@@ -2,11 +2,10 @@ import { Component, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { getEmailInboxLabel, getEmailInboxUrl } from '../../../../core/auth/email-inbox';
 import { AuthAmbientBgComponent } from '../../../../shared/components/auth-ambient-bg/auth-ambient-bg.component';
-import { HeaderComponent } from '../../../../shared/header/header.component';
 
 @Component({
   selector: 'app-check-email',
-  imports: [RouterLink, AuthAmbientBgComponent, HeaderComponent],
+  imports: [RouterLink, AuthAmbientBgComponent],
   templateUrl: './check-email.component.html',
 })
 export class CheckEmailComponent {

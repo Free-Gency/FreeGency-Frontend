@@ -4,18 +4,18 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import allCountries from 'intl-tel-input/data';
 import { AuthService } from '../../../../core/auth/auth.service';
 import type { UserMode } from '../../../../core/auth/auth.models';
+import { grantAuthFlow } from '../../../../core/auth/auth-flow';
 import { isPasswordValid, PASSWORD_RULE_MESSAGE } from '../../../../core/auth/password-rules';
 import { readSignupMode, storeSignupMode } from '../../../../core/auth/signup-mode';
 import { extractApiError } from '../../../../core/http/api-error';
 import { AuthAmbientBgComponent } from '../../../../shared/components/auth-ambient-bg/auth-ambient-bg.component';
-import { HeaderComponent } from '../../../../shared/header/header.component';
 import { PhoneInputComponent } from '../../../../shared/components/phone-input/phone-input.component';
 
 const countryDisplayNames = new Intl.DisplayNames(['en'], { type: 'region' });
 
 @Component({
   selector: 'app-sign-up',
-  imports: [FormsModule, RouterLink, AuthAmbientBgComponent, HeaderComponent, PhoneInputComponent],
+  imports: [FormsModule, RouterLink, AuthAmbientBgComponent, PhoneInputComponent],
   templateUrl: './sign-up.component.html',
 })
 export class SignUpComponent implements OnInit {
@@ -106,8 +106,10 @@ export class SignUpComponent implements OnInit {
       .subscribe({
         next: () => {
           this.loading.set(false);
+          const email = this.email.trim();
+          grantAuthFlow('check-email', email);
           this.router.navigate(['/auth/check-email'], {
-            queryParams: { email: this.email.trim() },
+            queryParams: { email },
           });
         },
         error: (err) => {

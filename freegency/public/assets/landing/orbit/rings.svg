@@ -1,0 +1,13 @@
+<svg preserveAspectRatio="xMidYMid meet" width="640" height="640" viewBox="0 0 640 640" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Equal offset 36px between fill and each ring -->
+  <!-- fill 211.5 → 247.5 → 283.5 → 319.5 -->
+  <circle cx="320" cy="320" r="211.5" fill="#B7E804"/>
+  <circle cx="320" cy="320" r="247.5" stroke="#B7E804" stroke-width="2" fill="none"/>
+  <circle cx="320" cy="320" r="283.5" stroke="#B7E804" stroke-width="2" fill="none" opacity="0.55"/>
+  <circle cx="320" cy="320" r="319.5" stroke="#B7E804" stroke-width="2" fill="none" opacity="0.4"/>
+  <!-- Nodes on first ring -->
+  <circle cx="567.5" cy="320" r="7.5" fill="#B7E804" opacity="0.5"/>
+  <circle cx="72.5" cy="320" r="7.5" fill="#B7E804" opacity="0.5"/>
+  <circle cx="567.5" cy="320" r="4.5" fill="#B7E804"/>
+  <circle cx="72.5" cy="320" r="4.5" fill="#B7E804"/>
+</svg>

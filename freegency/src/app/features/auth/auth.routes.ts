@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authFlowGuard } from '../../core/auth/auth-flow.guard';
 import { CheckEmailComponent } from './pages/check-email/check-email.component';
 import { ConfirmEmailComponent } from './pages/confirm-email/confirm-email.component';
 import { CreateNewPasswordComponent } from './pages/create-new-password/create-new-password.component';
@@ -15,11 +16,32 @@ export const authRoutes: Routes = [
   { path: 'sign-up', component: SignUpComponent },
   { path: 'login', component: LoginComponent },
   { path: 'reset-password', component: ResetPasswordComponent },
-  { path: 'verify-code', component: VerifyCodeComponent },
-  { path: 'create-new-password', component: CreateNewPasswordComponent },
-  { path: 'reset-confirmed', component: ResetConfirmedComponent },
-  { path: 'check-email', component: CheckEmailComponent },
+  {
+    path: 'verify-code',
+    component: VerifyCodeComponent,
+    canActivate: [authFlowGuard('verify-code', { requireEmail: true })],
+  },
+  {
+    path: 'create-new-password',
+    component: CreateNewPasswordComponent,
+    canActivate: [authFlowGuard('create-new-password', { requireEmail: true })],
+  },
+  {
+    path: 'reset-confirmed',
+    component: ResetConfirmedComponent,
+    canActivate: [authFlowGuard('reset-confirmed')],
+  },
+  {
+    path: 'check-email',
+    component: CheckEmailComponent,
+    canActivate: [authFlowGuard('check-email', { requireEmail: true })],
+  },
+  // Open: email confirmation links land here with userId + code
   { path: 'confirm-email', component: ConfirmEmailComponent },
-  { path: 'registration-success', component: RegistrationSuccessComponent },
+  {
+    path: 'registration-success',
+    component: RegistrationSuccessComponent,
+    canActivate: [authFlowGuard('registration-success')],
+  },
   { path: '', redirectTo: 'onboarding', pathMatch: 'full' },
 ];

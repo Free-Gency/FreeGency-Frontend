@@ -3,11 +3,10 @@ import { Router, RouterLink } from '@angular/router';
 import type { UserMode } from '../../../../core/auth/auth.models';
 import { storeSignupMode } from '../../../../core/auth/signup-mode';
 import { AuthAmbientBgComponent } from '../../../../shared/components/auth-ambient-bg/auth-ambient-bg.component';
-import { HeaderComponent } from '../../../../shared/header/header.component';
 
 @Component({
   selector: 'app-onboarding',
-  imports: [RouterLink, AuthAmbientBgComponent, HeaderComponent],
+  imports: [RouterLink, AuthAmbientBgComponent],
   templateUrl: './onboarding.component.html',
   styleUrl: './onboarding.component.css',
 })

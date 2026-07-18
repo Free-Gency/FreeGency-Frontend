@@ -1,7 +1,7 @@
 /* Question fades in first; cards open ~2s later via CSS animation-delay only. */
 
 .onboarding-question {
-  padding-bottom: 48px;
+  padding-bottom: 28px;
   opacity: 0;
   animation: onboarding-fade-in 0.9s ease 0.05s forwards;
 }

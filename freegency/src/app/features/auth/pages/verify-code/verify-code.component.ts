@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { grantAuthFlow } from '../../../../core/auth/auth-flow';
 import { extractApiError } from '../../../../core/http/api-error';
 import { AuthAmbientBgComponent } from '../../../../shared/components/auth-ambient-bg/auth-ambient-bg.component';
 import { HeaderComponent } from '../../../../shared/header/header.component';
@@ -34,6 +35,7 @@ export class VerifyCodeComponent {
     this.auth.confirmResetCode(this.email, this.code).subscribe({
       next: () => {
         this.loading.set(false);
+        grantAuthFlow('create-new-password', this.email);
         this.router.navigate(['/auth/create-new-password'], {
           queryParams: { email: this.email },
         });

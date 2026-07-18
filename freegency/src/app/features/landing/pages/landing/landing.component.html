@@ -1,0 +1,468 @@
+<div class="relative min-h-dvh overflow-x-hidden bg-background">
+  <app-auth-ambient-bg />
+
+  <div class="relative z-10 mx-auto flex w-full max-w-[1512px] flex-col gap-6 pb-10 sm:gap-8 sm:pb-16">
+    <!-- Navigation -->
+    <header
+      class="relative flex w-full items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-6 md:px-10 lg:px-20 lg:py-8"
+      data-mobile-nav
+    >
+      <div class="flex min-w-0 items-center gap-4 lg:gap-[60px]">
+        <a routerLink="/" class="shrink-0" aria-label="FreeGency home">
+          <img
+            src="/assets/brand/wordmark.svg"
+            alt="freegency"
+            class="block h-7 w-auto sm:h-[37px] sm:w-[160px]"
+            width="160"
+            height="37"
+          />
+        </a>
+
+        <nav class="hidden items-center gap-[10px] xl:flex" aria-label="Primary">
+          @for (link of navLinks; track link.label) {
+            <a
+              href="#"
+              class="inline-flex items-center justify-center gap-1 rounded-[40px] px-5 py-2 text-sm leading-normal whitespace-nowrap 2xl:px-6"
+              [class.bg-[#27253f]]="link.active"
+              [class.text-[#f7f7f7]]="link.active"
+              [class.bg-[#fcfcfc]]="!link.active"
+              [class.text-[#27253f]]="!link.active"
+            >
+              {{ link.label }}
+              @if (link.hasChevron) {
+                <img
+                  src="/assets/landing/icons/arrow-down-dark.svg"
+                  alt=""
+                  width="10"
+                  height="6"
+                  class="h-[6px] w-[10px] shrink-0"
+                  [class.brightness-0]="link.active"
+                  [class.invert]="link.active"
+                  aria-hidden="true"
+                />
+              }
+            </a>
+          }
+        </nav>
+      </div>
+
+      <div class="flex shrink-0 items-center gap-2 sm:gap-3 xl:gap-4">
+        <a
+          routerLink="/auth/login"
+          class="hidden items-center justify-center gap-2.5 p-2.5 text-base leading-normal text-[#27253f] no-underline xl:inline-flex"
+        >
+          Sign in now
+          <img
+            src="/assets/landing/icons/arrow-right-white.svg"
+            alt=""
+            width="16"
+            height="16"
+            class="size-4 shrink-0 brightness-0"
+            aria-hidden="true"
+          />
+        </a>
+        <a
+          routerLink="/auth/onboarding"
+          class="inline-flex items-center justify-center gap-2 rounded-[20px] bg-primary-container px-3 py-2 text-sm leading-normal text-white no-underline sm:gap-2.5 sm:rounded-[24px] sm:px-4 sm:py-2.5 sm:text-base xl:w-[156px]"
+        >
+          <span class="xl:hidden">Start</span>
+          <span class="hidden xl:inline">Get Started</span>
+          <img
+            src="/assets/landing/icons/arrow-down-white.svg"
+            alt=""
+            width="12"
+            height="7"
+            class="h-[7px] w-3 shrink-0"
+            aria-hidden="true"
+          />
+        </a>
+
+        <button
+          type="button"
+          class="inline-flex size-10 items-center justify-center rounded-full bg-[#fcfcfc] text-[#27253f] xl:hidden"
+          [attr.aria-expanded]="mobileNavOpen()"
+          aria-controls="mobile-nav"
+          aria-label="Toggle menu"
+          (click)="toggleMobileNav(); $event.stopPropagation()"
+        >
+          @if (mobileNavOpen()) {
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+              <path
+                d="M4 4l10 10M14 4 4 14"
+                stroke="currentColor"
+                stroke-width="1.75"
+                stroke-linecap="round"
+              />
+            </svg>
+          } @else {
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+              <path
+                d="M3 5h12M3 9h12M3 13h12"
+                stroke="currentColor"
+                stroke-width="1.75"
+                stroke-linecap="round"
+              />
+            </svg>
+          }
+        </button>
+      </div>
+
+      @if (mobileNavOpen()) {
+        <div
+          id="mobile-nav"
+          class="absolute top-full right-4 left-4 z-50 mt-2 rounded-2xl bg-white p-3 shadow-[0_12px_40px_rgba(39,37,63,0.14)] sm:right-6 sm:left-auto sm:w-[280px]"
+        >
+          <nav class="flex flex-col gap-1" aria-label="Mobile">
+            @for (link of navLinks; track link.label) {
+              <a
+                href="#"
+                class="inline-flex items-center justify-between rounded-xl px-4 py-3 text-sm"
+                [class.bg-[#27253f]]="link.active"
+                [class.text-[#f7f7f7]]="link.active"
+                [class.text-[#27253f]]="!link.active"
+                (click)="closeMobileNav()"
+              >
+                {{ link.label }}
+                @if (link.hasChevron) {
+                  <img
+                    src="/assets/landing/icons/arrow-down-dark.svg"
+                    alt=""
+                    width="10"
+                    height="6"
+                    class="h-[6px] w-[10px] shrink-0"
+                    [class.brightness-0]="link.active"
+                    [class.invert]="link.active"
+                    aria-hidden="true"
+                  />
+                }
+              </a>
+            }
+          </nav>
+          <a
+            routerLink="/auth/login"
+            class="mt-2 flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-[#27253f] no-underline xl:hidden"
+            (click)="closeMobileNav()"
+          >
+            Sign in now
+          </a>
+        </div>
+      }
+    </header>
+
+    <!-- Headline -->
+    <h1
+      class="mx-auto max-w-[1060px] px-4 text-center font-display text-[26px] leading-[1.25] font-normal tracking-[-0.04em] text-[#27253f] sm:px-6 sm:text-[40px] sm:leading-[1.2] sm:tracking-[-0.96px] md:text-[48px] lg:text-[64px]"
+    >
+      Find the Right Service<span
+        class="mx-1 inline-flex size-[0.9em] -translate-y-[0.1em] items-center justify-center align-middle sm:ml-3 sm:mr-1.5 sm:size-[1em] sm:-translate-y-[0.12em]"
+        aria-hidden="true"
+      >
+        <img
+          [src]="categoryImageSrc()"
+          alt=""
+          width="60"
+          height="60"
+          class="headline-category-img size-full -rotate-[19deg] object-contain"
+          [class.is-fading]="categoryImageFading()"
+        /> </span
+      >. Offer Your Expertise. All in One Place<span
+        class="mx-1 inline-flex size-[1em] -translate-y-[0.1em] items-center justify-center align-middle sm:ml-3 sm:mr-1.5 sm:size-[1.15em] sm:-translate-y-[0.12em]"
+        aria-hidden="true"
+      >
+        <span
+          class="flex size-[0.9em] rotate-[10deg] items-center justify-center rounded-[0.28em] bg-[#5c52ec] sm:size-[1em]"
+        >
+          <img
+            src="/assets/brand/mark.svg"
+            alt=""
+            width="44"
+            height="44"
+            class="size-[0.55em] sm:size-[0.6em]"
+          />
+        </span> </span
+      >.
+    </h1>
+
+    <!-- Hero panels -->
+    <div class="relative w-full px-4 sm:px-6 md:px-10 lg:px-[100px]">
+      <div
+        class="relative mx-auto grid max-w-[1200px] grid-cols-1 gap-4 md:gap-5 xl:grid-cols-[minmax(0,1fr)_15px_minmax(0,1fr)] xl:gap-0 xl:items-stretch"
+      >
+        <!-- Left: dark panel -->
+        <section
+          class="hero-panel-left relative flex min-h-0 flex-col items-center rounded-[28px] bg-[#27253f] px-4 pt-8 pb-7 sm:rounded-[36px] sm:px-8 sm:pt-12 sm:pb-8 md:rounded-[44px] md:px-10 md:pt-14 xl:col-start-1 xl:h-[600px] xl:rounded-none xl:px-10 xl:pt-16 xl:pb-10"
+          [class.overflow-hidden]="!servicesOpen"
+          [class.overflow-visible]="servicesOpen"
+        >
+          <h2
+            class="max-w-[555px] text-center font-display text-[28px] leading-tight font-normal tracking-[-0.04em] text-white sm:text-[40px] sm:tracking-[-0.96px] md:text-[48px] lg:text-[52px] xl:text-[58px]"
+          >
+            Where Great Services Meet the Right People.
+          </h2>
+
+          <div class="my-6 flex w-full max-w-[min(100%,380px)] flex-col items-center gap-4 sm:my-auto sm:max-w-[437px] sm:gap-6 sm:py-8">
+            <form
+              class="flex h-12 w-full min-w-0 items-center gap-1 rounded-full bg-white p-1 sm:h-[52px] sm:gap-1.5 sm:p-1.5"
+              role="search"
+              (submit)="$event.preventDefault()"
+            >
+              <input
+                type="search"
+                name="q"
+                placeholder="What service do you need?"
+                class="min-w-0 flex-1 bg-transparent px-2.5 text-left text-xs text-[#27253f] outline-none placeholder:truncate placeholder:text-[#27253f]/70 sm:px-3 sm:text-sm [&::-webkit-search-cancel-button]:hidden"
+                autocomplete="off"
+              />
+              <div class="relative flex shrink-0 items-center gap-1 sm:gap-1.5" data-services-dropdown>
+                <button
+                  type="button"
+                  class="inline-flex max-w-[88px] items-center justify-center gap-1 rounded-full bg-[#fcfcfc] px-2 py-1.5 text-[10px] text-[#27253f] sm:max-w-[120px] sm:px-2.5 sm:py-2"
+                  [attr.aria-expanded]="servicesOpen"
+                  aria-haspopup="listbox"
+                  (click)="toggleServices($event)"
+                >
+                  <span class="truncate">{{ selectedCategory ?? 'Services' }}</span>
+                  <img
+                    src="/assets/landing/icons/arrow-down-dark.svg"
+                    alt=""
+                    width="12"
+                    height="7"
+                    class="h-[7px] w-3 shrink-0 transition-transform"
+                    [class.rotate-180]="servicesOpen"
+                    aria-hidden="true"
+                  />
+                </button>
+
+                @if (servicesOpen) {
+                  <ul
+                    role="listbox"
+                    class="absolute top-[calc(100%+6px)] right-0 z-50 max-h-60 min-w-[180px] overflow-y-auto rounded-2xl bg-white py-2 shadow-[0_8px_30px_rgba(39,37,63,0.12)]"
+                  >
+                    @for (category of serviceCategories; track category) {
+                      <li role="option" [attr.aria-selected]="selectedCategory === category">
+                        <button
+                          type="button"
+                          class="flex w-full px-4 py-2.5 text-left text-sm text-[#27253f] transition-colors hover:bg-[#f4f3ff]"
+                          [class.bg-[#f4f3ff]]="selectedCategory === category"
+                          [class.font-medium]="selectedCategory === category"
+                          (click)="selectCategory(category, $event)"
+                        >
+                          {{ category }}
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                }
+
+                <button
+                  type="submit"
+                  class="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-[#5b4ff0] sm:size-[38px]"
+                  aria-label="Search"
+                >
+                  <img
+                    src="/assets/landing/icons/search.png"
+                    alt=""
+                    width="22"
+                    height="22"
+                    class="size-[18px] object-contain mix-blend-screen sm:size-[22px]"
+                  />
+                </button>
+              </div>
+            </form>
+
+            <div class="flex w-full max-w-[347px] flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:gap-4">
+              <a
+                href="#"
+                class="inline-flex flex-1 items-center justify-center gap-2 p-2.5 text-sm whitespace-nowrap text-white no-underline sm:gap-2.5 sm:text-base"
+              >
+                Explore Services
+                <img
+                  src="/assets/landing/icons/arrow-right-white.svg"
+                  alt=""
+                  width="20"
+                  height="20"
+                  class="size-4 shrink-0 sm:size-5"
+                  aria-hidden="true"
+                />
+              </a>
+              <a
+                routerLink="/auth/onboarding"
+                class="inline-flex flex-1 items-center justify-center gap-2 rounded-[24px] bg-primary-container p-2.5 text-sm whitespace-nowrap text-white no-underline sm:gap-2.5 sm:text-base"
+              >
+                Get Started
+                <img
+                  src="/assets/landing/icons/arrow-down-white.svg"
+                  alt=""
+                  width="12"
+                  height="7"
+                  class="h-[7px] w-3 shrink-0"
+                  aria-hidden="true"
+                />
+              </a>
+            </div>
+          </div>
+
+          <div class="mt-auto flex flex-col items-center gap-3">
+            <p class="px-2 text-center text-xs text-[#e8e5fe] sm:text-sm">
+              Trusted by thousands of users every day.
+            </p>
+            <div class="flex items-center">
+              @for (avatar of trustAvatars; track avatar) {
+                <img
+                  [src]="'/assets/landing/trust/' + avatar"
+                  alt=""
+                  width="38"
+                  height="38"
+                  class="relative size-8 rounded-full object-cover -mr-3.5 sm:size-[38px] sm:-mr-[18px]"
+                  [style.z-index]="trustAvatars.length - $index"
+                />
+              }
+              <span
+                class="relative z-0 flex size-8 items-center justify-center rounded-full bg-[#cfcfcf] text-[9px] font-medium text-[#27253f] sm:size-[38px] sm:text-[10px]"
+              >
+                +50K
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Gap column + mouse (desktop only) -->
+        <div class="relative z-30 col-start-2 row-start-1 hidden xl:block" aria-hidden="true">
+          <div
+            class="absolute bottom-0 left-1/2 flex size-[85px] -translate-x-1/2 items-center justify-center rounded-full bg-[#5c52ec] shadow-[0_0_20px_rgba(0,0,0,0.08)]"
+          >
+            <img
+              src="/assets/landing/icons/mouse.png"
+              alt=""
+              width="40"
+              height="40"
+              class="size-10 object-contain"
+            />
+          </div>
+        </div>
+
+        <!-- Right: lime illustration -->
+        <section
+          class="hero-panel-right relative mx-auto aspect-square w-full max-w-[520px] overflow-hidden rounded-[28px] bg-[#d6ff3f] sm:max-w-none sm:rounded-[36px] md:rounded-[44px] xl:col-start-3 xl:mx-0 xl:aspect-auto xl:h-[600px] xl:max-w-none xl:rounded-none"
+          aria-hidden="true"
+        >
+          <div class="absolute top-[4.5%] left-[4.5%] aspect-square w-[91%]">
+            <img
+              src="/assets/landing/orbit/rings.svg"
+              alt=""
+              width="640"
+              height="640"
+              class="pointer-events-none absolute inset-0 size-full"
+            />
+
+            <img
+              src="/assets/landing/orbit/center.png"
+              alt=""
+              width="202"
+              height="202"
+              class="absolute top-1/2 left-1/2 w-[31.6%] max-w-[202px] -translate-x-1/2 -translate-y-1/2 rotate-[10.09deg] object-contain"
+            />
+
+            <img
+              src="/assets/landing/orbit/call.svg"
+              alt=""
+              width="66"
+              height="66"
+              class="absolute object-contain"
+              [ngStyle]="orbitStyle(352, 'mid', orbitSizes.call)"
+            />
+
+            <div
+              class="absolute overflow-hidden rounded-[28px] bg-white"
+              [ngStyle]="orbitStyle(30, 'mid', orbitSizes.avatarCoder, 10)"
+            >
+              <img
+                src="/assets/landing/orbit/avatar-coder.png"
+                alt=""
+                width="63"
+                height="60"
+                class="size-full rotate-[19.2deg] object-cover"
+              />
+            </div>
+
+            <img
+              src="/assets/landing/orbit/video.png"
+              alt=""
+              width="55"
+              height="48"
+              class="absolute rotate-[30.85deg] object-contain"
+              [ngStyle]="orbitStyle(58, 'outer', orbitSizes.videoW, orbitSizes.videoH)"
+            />
+
+            <div
+              class="absolute overflow-hidden rounded-full border-[3px] border-[#5b4ff0] bg-white"
+              [ngStyle]="orbitStyle(90, 'inner', orbitSizes.avatarGroup)"
+            >
+              <img
+                src="/assets/landing/orbit/avatar-group.png"
+                alt=""
+                width="60"
+                height="60"
+                class="size-full rotate-[7.8deg] object-cover"
+              />
+            </div>
+
+            <img
+              src="/assets/landing/orbit/illustrator.png"
+              alt=""
+              width="39"
+              height="38"
+              class="absolute rotate-[12.78deg] object-contain"
+              [ngStyle]="orbitStyle(118, 'inner', orbitSizes.illustrator)"
+            />
+
+            <img
+              src="/assets/landing/orbit/avatar-headset.png"
+              alt=""
+              width="111"
+              height="99"
+              class="absolute rotate-[12deg] rounded-full object-cover"
+              [ngStyle]="orbitStyle(138, 'outer', orbitSizes.avatarHeadset, 16.5)"
+            />
+
+            <img
+              src="/assets/landing/orbit/trello.png"
+              alt=""
+              width="51"
+              height="51"
+              class="absolute rotate-[19.36deg] object-contain"
+              [ngStyle]="orbitStyle(180, 'inner', orbitSizes.trello)"
+            />
+
+            <img
+              src="/assets/landing/orbit/avatar-megaphone.png"
+              alt=""
+              width="99"
+              height="99"
+              class="absolute -rotate-[27.27deg] object-contain"
+              [ngStyle]="orbitStyle(225, 'mid', orbitSizes.avatarMegaphone)"
+            />
+
+            <img
+              src="/assets/landing/orbit/zoom.png"
+              alt=""
+              width="49"
+              height="49"
+              class="absolute -rotate-[11.75deg] object-contain"
+              [ngStyle]="orbitStyle(270, 'mid', orbitSizes.zoom)"
+            />
+
+            <img
+              src="/assets/landing/orbit/avatar-artist.png"
+              alt=""
+              width="90"
+              height="83"
+              class="absolute -rotate-[12deg] rounded-full object-cover"
+              [ngStyle]="orbitStyle(318, 'inner', orbitSizes.avatarArtist, 13.8)"
+            />
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>

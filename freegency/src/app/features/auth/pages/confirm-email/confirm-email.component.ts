@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { grantAuthFlow } from '../../../../core/auth/auth-flow';
 import { extractApiError } from '../../../../core/http/api-error';
 import { AuthAmbientBgComponent } from '../../../../shared/components/auth-ambient-bg/auth-ambient-bg.component';
 import { HeaderComponent } from '../../../../shared/header/header.component';
@@ -31,6 +32,7 @@ export class ConfirmEmailComponent implements OnInit {
     this.auth.confirmEmail(userId, code).subscribe({
       next: () => {
         this.status.set('success');
+        grantAuthFlow('registration-success');
         this.router.navigate(['/auth/registration-success']);
       },
       error: (err) => {

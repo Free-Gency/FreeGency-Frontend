@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { grantAuthFlow } from '../../../../core/auth/auth-flow';
 import { isPasswordValid } from '../../../../core/auth/password-rules';
 import { extractApiError } from '../../../../core/http/api-error';
 import { AuthAmbientBgComponent } from '../../../../shared/components/auth-ambient-bg/auth-ambient-bg.component';
@@ -55,6 +56,7 @@ export class CreateNewPasswordComponent {
       .subscribe({
         next: () => {
           this.loading.set(false);
+          grantAuthFlow('reset-confirmed');
           this.router.navigate(['/auth/reset-confirmed']);
         },
         error: (err) => {

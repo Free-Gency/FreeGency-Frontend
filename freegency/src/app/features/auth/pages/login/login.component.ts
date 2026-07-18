@@ -4,11 +4,10 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { extractApiError } from '../../../../core/http/api-error';
 import { AuthAmbientBgComponent } from '../../../../shared/components/auth-ambient-bg/auth-ambient-bg.component';
-import { HeaderComponent } from '../../../../shared/header/header.component';
 
 @Component({
   selector: 'app-login',
-  imports: [FormsModule, RouterLink, AuthAmbientBgComponent, HeaderComponent],
+  imports: [FormsModule, RouterLink, AuthAmbientBgComponent],
   templateUrl: './login.component.html',
 })
 export class LoginComponent {
