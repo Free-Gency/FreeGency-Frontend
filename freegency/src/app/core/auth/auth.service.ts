@@ -8,6 +8,7 @@ import type {
   RegisterRequest,
   ResetPasswordRequest,
   StoredSession,
+  UserMode,
 } from './auth.models';
 import { TokenStorageService } from './token-storage.service';
 
@@ -16,6 +17,7 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly tokens = inject(TokenStorageService);
   private readonly baseUrl = `${environment.apiBaseUrl}/Auth`;
+  private readonly externalBaseUrl = `${environment.apiBaseUrl}/External`;
 
   /** Bypasses interceptors so refresh never loops on itself. */
   private readonly rawHttp = new HttpClient(inject(HttpBackend));
@@ -23,6 +25,17 @@ export class AuthService {
   private refreshRequest$: Observable<string> | null = null;
 
   readonly session = signal<StoredSession | null>(this.tokens.get());
+
+  /** Full-page redirect to the API Google OAuth challenge endpoint. */
+  loginWithGoogle(intent: 'login' | 'signup', mode?: UserMode): void {
+    const params = new URLSearchParams({ intent });
+    if (mode) params.set('mode', mode);
+    window.location.assign(`${this.externalBaseUrl}/google-login?${params}`);
+  }
+
+  completeGoogleLogin(response: AuthResponse, keepLoggedIn = true): void {
+    this.persistSession(response, keepLoggedIn);
+  }
 
   login(request: LoginRequest, keepLoggedIn: boolean): Observable<AuthResponse> {
     return this.http

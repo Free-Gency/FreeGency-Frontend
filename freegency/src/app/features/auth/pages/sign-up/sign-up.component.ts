@@ -62,6 +62,10 @@ export class SignUpComponent implements OnInit {
     this.showPassword.update((v) => !v);
   }
 
+  protected loginWithGoogle(): void {
+    this.auth.loginWithGoogle('signup', this.mode);
+  }
+
   protected onPhoneValidityChange(valid: boolean): void {
     this.phoneValid = valid;
   }

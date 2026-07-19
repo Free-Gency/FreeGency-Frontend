@@ -25,6 +25,10 @@ export class LoginComponent {
     this.showPassword.update((visible) => !visible);
   }
 
+  protected loginWithGoogle(): void {
+    this.auth.loginWithGoogle('login');
+  }
+
   protected onSubmit(): void {
     this.errorMessage.set(null);
     this.successMessage.set(null);

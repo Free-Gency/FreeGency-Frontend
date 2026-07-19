@@ -8,6 +8,7 @@ import { OnboardingComponent } from './pages/onboarding/onboarding.component';
 import { RegistrationSuccessComponent } from './pages/registration-success/registration-success.component';
 import { ResetConfirmedComponent } from './pages/reset-confirmed/reset-confirmed.component';
 import { ResetPasswordComponent } from './pages/reset-password/reset-password.component';
+import { GoogleCallbackComponent } from './pages/google-callback/google-callback.component';
 import { SignUpComponent } from './pages/sign-up/sign-up.component';
 import { VerifyCodeComponent } from './pages/verify-code/verify-code.component';
 
@@ -38,6 +39,8 @@ export const authRoutes: Routes = [
   },
   // Open: email confirmation links land here with userId + code
   { path: 'confirm-email', component: ConfirmEmailComponent },
+  // Open: Google OAuth callback from the API redirect
+  { path: 'google/callback', component: GoogleCallbackComponent },
   {
     path: 'registration-success',
     component: RegistrationSuccessComponent,

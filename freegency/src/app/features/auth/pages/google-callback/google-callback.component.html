@@ -1,0 +1,43 @@
+<div
+  class="relative flex min-h-dvh flex-col items-center justify-center overflow-x-hidden bg-background px-5 py-8"
+>
+  <app-auth-ambient-bg />
+
+  <div
+    class="relative z-10 mx-auto flex w-full max-w-[360px] flex-col items-center gap-4 text-center sm:max-w-[400px]"
+  >
+    <img
+      src="/assets/brand/logo.svg"
+      alt="FreeGency"
+      class="block h-7 w-auto sm:h-8"
+      width="140"
+      height="32"
+    />
+
+    @if (status() === 'loading') {
+      <h1 class="font-display text-[22px] leading-7 font-bold tracking-tight text-on-surface">
+        Signing you in…
+      </h1>
+      <p class="text-sm text-on-surface-variant">Completing Google sign-in.</p>
+    } @else if (status() === 'error') {
+      <h1 class="font-display text-[22px] leading-7 font-bold tracking-tight text-on-surface">
+        Sign-in failed
+      </h1>
+      <p class="text-sm text-error" role="alert">{{ errorMessage() }}</p>
+      <div class="flex flex-col gap-2">
+        <a
+          routerLink="/auth/login"
+          class="font-bold text-primary-container underline decoration-primary-container/10 underline-offset-2"
+        >
+          ← Back to Login
+        </a>
+        <a
+          routerLink="/auth/onboarding"
+          class="font-bold text-primary-container underline decoration-primary-container/10 underline-offset-2"
+        >
+          Create an account
+        </a>
+      </div>
+    }
+  </div>
+</div>
