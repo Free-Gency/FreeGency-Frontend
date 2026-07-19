@@ -1,0 +1,115 @@
+@media (min-width: 1280px) {
+  .hero-panel-left,
+  .hero-panel-right {
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    mask-mode: alpha;
+  }
+
+  .hero-panel-left {
+    -webkit-mask-image: url('/assets/landing/hero/subtract-left.svg');
+    mask-image: url('/assets/landing/hero/subtract-left.svg');
+  }
+
+  .hero-panel-right {
+    -webkit-mask-image: url('/assets/landing/hero/subtract-right.svg');
+    mask-image: url('/assets/landing/hero/subtract-right.svg');
+  }
+}
+
+.headline-category-img {
+  transition: opacity 350ms ease;
+}
+
+.headline-category-img.is-fading {
+  opacity: 0;
+}
+
+.orbit-system {
+  contain: layout style;
+}
+
+.orbit-ring {
+  --orbit-duration: 28s;
+  position: absolute;
+  inset: 0;
+  transform-origin: center;
+  will-change: transform;
+  animation: orbit-spin var(--orbit-duration) linear infinite;
+}
+
+.orbit-ring--inner {
+  --r: 38.67%;
+  --orbit-duration: 28s;
+}
+
+.orbit-ring--mid {
+  --r: 44.3%;
+  --orbit-duration: 40s;
+  animation-direction: reverse;
+}
+
+.orbit-ring--outer {
+  --r: 49.92%;
+  --orbit-duration: 56s;
+}
+
+.orbit-slot {
+  position: absolute;
+  inset: 0;
+  transform: rotate(var(--angle));
+}
+
+.orbit-item {
+  position: absolute;
+  left: 50%;
+  top: calc(50% - var(--r));
+  width: var(--w);
+  height: var(--h);
+  transform: translate3d(-50%, -50%, 0);
+}
+
+/* Counter-spin so icons stay upright while the ring rotates */
+.orbit-face {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: center;
+  will-change: transform;
+  backface-visibility: hidden;
+  animation: orbit-face-counter var(--orbit-duration) linear infinite;
+}
+
+.orbit-ring--mid .orbit-face {
+  animation-direction: reverse;
+}
+
+@keyframes orbit-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orbit-face-counter {
+  from {
+    transform: rotate(calc(var(--angle) * -1));
+  }
+  to {
+    transform: rotate(calc(var(--angle) * -1 - 360deg));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orbit-ring,
+  .orbit-face {
+    animation: none !important;
+  }
+
+  .orbit-face {
+    transform: rotate(calc(var(--angle) * -1));
+  }
+}

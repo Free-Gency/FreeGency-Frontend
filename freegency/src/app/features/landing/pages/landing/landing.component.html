@@ -328,14 +328,14 @@
         <!-- Gap column + mouse (desktop only) -->
         <div class="relative z-30 col-start-2 row-start-1 hidden xl:block" aria-hidden="true">
           <div
-            class="absolute bottom-0 left-1/2 flex size-[85px] -translate-x-1/2 items-center justify-center rounded-full bg-[#5c52ec] shadow-[0_0_20px_rgba(0,0,0,0.08)]"
+            class="absolute bottom-0 left-1/2 flex size-[110px] -translate-x-1/2 translate-y-1/2 items-center justify-center rounded-full bg-[#5c52ec] shadow-[0_0_20px_rgba(0,0,0,0.08)]"
           >
             <img
-              src="/assets/landing/icons/mouse.png"
+              src="/assets/landing/hero/Icon.svg"
               alt=""
-              width="40"
-              height="40"
-              class="size-10 object-contain"
+              width="52"
+              height="52"
+              class="size-[52px] object-contain"
             />
           </div>
         </div>
@@ -345,7 +345,7 @@
           class="hero-panel-right relative mx-auto aspect-square w-full max-w-[520px] overflow-hidden rounded-[28px] bg-[#d6ff3f] sm:max-w-none sm:rounded-[36px] md:rounded-[44px] xl:col-start-3 xl:mx-0 xl:aspect-auto xl:h-[600px] xl:max-w-none xl:rounded-none"
           aria-hidden="true"
         >
-          <div class="absolute top-[4.5%] left-[4.5%] aspect-square w-[91%]">
+          <div class="orbit-system absolute top-[4.5%] left-[4.5%] aspect-square w-[91%]">
             <img
               src="/assets/landing/orbit/rings.svg"
               alt=""
@@ -359,109 +359,152 @@
               alt=""
               width="202"
               height="202"
-              class="absolute top-1/2 left-1/2 w-[31.6%] max-w-[202px] -translate-x-1/2 -translate-y-1/2 rotate-[10.09deg] object-contain"
+              class="absolute top-1/2 left-1/2 z-10 w-[31.6%] max-w-[202px] -translate-x-1/2 -translate-y-1/2 rotate-[10.09deg] object-contain"
             />
 
-            <img
-              src="/assets/landing/orbit/call.svg"
-              alt=""
-              width="66"
-              height="66"
-              class="absolute object-contain"
-              [ngStyle]="orbitStyle(352, 'mid', orbitSizes.call)"
-            />
-
-            <div
-              class="absolute overflow-hidden rounded-[28px] bg-white"
-              [ngStyle]="orbitStyle(30, 'mid', orbitSizes.avatarCoder, 10)"
-            >
-              <img
-                src="/assets/landing/orbit/avatar-coder.png"
-                alt=""
-                width="63"
-                height="60"
-                class="size-full rotate-[19.2deg] object-cover"
-              />
+            <!-- Inner ring -->
+            <div class="orbit-ring orbit-ring--inner">
+              <div class="orbit-slot" style="--angle: 0deg">
+                <div
+                  class="orbit-item overflow-hidden rounded-full border-[3px] border-[#5b4ff0] bg-white"
+                  style="--w: 9.97%; --h: 9.97%"
+                >
+                  <div class="orbit-face">
+                    <img
+                      src="/assets/landing/orbit/avatar-group.png"
+                      alt=""
+                      width="60"
+                      height="60"
+                      class="size-full object-cover"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div class="orbit-slot" style="--angle: 90deg">
+                <div class="orbit-item" style="--w: 6.5%; --h: 6.5%">
+                  <img
+                    src="/assets/landing/orbit/illustrator.png"
+                    alt=""
+                    width="39"
+                    height="38"
+                    class="orbit-face object-contain"
+                  />
+                </div>
+              </div>
+              <div class="orbit-slot" style="--angle: 180deg">
+                <div class="orbit-item" style="--w: 8.5%; --h: 8.5%">
+                  <img
+                    src="/assets/landing/orbit/trello.png"
+                    alt=""
+                    width="51"
+                    height="51"
+                    class="orbit-face object-contain"
+                  />
+                </div>
+              </div>
+              <div class="orbit-slot" style="--angle: 270deg">
+                <div class="orbit-item" style="--w: 15.03%; --h: 13.8%">
+                  <img
+                    src="/assets/landing/orbit/avatar-artist.png"
+                    alt=""
+                    width="90"
+                    height="83"
+                    class="orbit-face rounded-full object-cover"
+                  />
+                </div>
+              </div>
             </div>
 
-            <img
-              src="/assets/landing/orbit/video.png"
-              alt=""
-              width="55"
-              height="48"
-              class="absolute rotate-[30.85deg] object-contain"
-              [ngStyle]="orbitStyle(58, 'outer', orbitSizes.videoW, orbitSizes.videoH)"
-            />
-
-            <div
-              class="absolute overflow-hidden rounded-full border-[3px] border-[#5b4ff0] bg-white"
-              [ngStyle]="orbitStyle(90, 'inner', orbitSizes.avatarGroup)"
-            >
-              <img
-                src="/assets/landing/orbit/avatar-group.png"
-                alt=""
-                width="60"
-                height="60"
-                class="size-full rotate-[7.8deg] object-cover"
-              />
+            <!-- Mid ring (reverse) -->
+            <div class="orbit-ring orbit-ring--mid">
+              <div class="orbit-slot" style="--angle: 45deg">
+                <div class="orbit-item" style="--w: 11%; --h: 11%">
+                  <img
+                    src="/assets/landing/orbit/call.svg"
+                    alt=""
+                    width="66"
+                    height="66"
+                    class="orbit-face object-contain"
+                  />
+                </div>
+              </div>
+              <div class="orbit-slot" style="--angle: 135deg">
+                <div
+                  class="orbit-item overflow-hidden rounded-[28px] bg-white"
+                  style="--w: 10.52%; --h: 10%"
+                >
+                  <div class="orbit-face">
+                    <img
+                      src="/assets/landing/orbit/avatar-coder.png"
+                      alt=""
+                      width="63"
+                      height="60"
+                      class="size-full object-cover"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div class="orbit-slot" style="--angle: 225deg">
+                <div class="orbit-item" style="--w: 16.5%; --h: 16.5%">
+                  <img
+                    src="/assets/landing/orbit/avatar-megaphone.png"
+                    alt=""
+                    width="99"
+                    height="99"
+                    class="orbit-face object-contain"
+                  />
+                </div>
+              </div>
+              <div class="orbit-slot" style="--angle: 315deg">
+                <div class="orbit-item" style="--w: 8.2%; --h: 8.2%">
+                  <img
+                    src="/assets/landing/orbit/zoom.png"
+                    alt=""
+                    width="49"
+                    height="49"
+                    class="orbit-face object-contain"
+                  />
+                </div>
+              </div>
             </div>
 
-            <img
-              src="/assets/landing/orbit/illustrator.png"
-              alt=""
-              width="39"
-              height="38"
-              class="absolute rotate-[12.78deg] object-contain"
-              [ngStyle]="orbitStyle(118, 'inner', orbitSizes.illustrator)"
-            />
-
-            <img
-              src="/assets/landing/orbit/avatar-headset.png"
-              alt=""
-              width="111"
-              height="99"
-              class="absolute rotate-[12deg] rounded-full object-cover"
-              [ngStyle]="orbitStyle(138, 'outer', orbitSizes.avatarHeadset, 16.5)"
-            />
-
-            <img
-              src="/assets/landing/orbit/trello.png"
-              alt=""
-              width="51"
-              height="51"
-              class="absolute rotate-[19.36deg] object-contain"
-              [ngStyle]="orbitStyle(180, 'inner', orbitSizes.trello)"
-            />
-
-            <img
-              src="/assets/landing/orbit/avatar-megaphone.png"
-              alt=""
-              width="99"
-              height="99"
-              class="absolute -rotate-[27.27deg] object-contain"
-              [ngStyle]="orbitStyle(225, 'mid', orbitSizes.avatarMegaphone)"
-            />
-
-            <img
-              src="/assets/landing/orbit/zoom.png"
-              alt=""
-              width="49"
-              height="49"
-              class="absolute -rotate-[11.75deg] object-contain"
-              [ngStyle]="orbitStyle(270, 'mid', orbitSizes.zoom)"
-            />
-
-            <img
-              src="/assets/landing/orbit/avatar-artist.png"
-              alt=""
-              width="90"
-              height="83"
-              class="absolute -rotate-[12deg] rounded-full object-cover"
-              [ngStyle]="orbitStyle(318, 'inner', orbitSizes.avatarArtist, 13.8)"
-            />
+            <!-- Outer ring -->
+            <div class="orbit-ring orbit-ring--outer">
+              <div class="orbit-slot" style="--angle: 0deg">
+                <div class="orbit-item" style="--w: 9.2%; --h: 8.1%">
+                  <img
+                    src="/assets/landing/orbit/video.png"
+                    alt=""
+                    width="55"
+                    height="48"
+                    class="orbit-face object-contain"
+                  />
+                </div>
+              </div>
+              <div class="orbit-slot" style="--angle: 180deg">
+                <div class="orbit-item" style="--w: 18.5%; --h: 16.5%">
+                  <img
+                    src="/assets/landing/orbit/avatar-headset.png"
+                    alt=""
+                    width="111"
+                    height="99"
+                    class="orbit-face rounded-full object-cover"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </section>
       </div>
     </div>
+
+    <!-- Brand logos -->
+    <app-brand class="mt-10 sm:mt-12" />
+
+    <!-- Roles intro -->
+    <app-roles-intro class="mt-3 sm:mt-4" />
+
+    <!-- Role sections -->
+    <app-roles-sections class="mt-10 sm:mt-12" />
   </div>
 </div>

@@ -3,8 +3,8 @@
    "Collaborative Warmth" design system
    ========================================================================== */
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
-@import "tailwindcss";
-@import "intl-tel-input/styles";
+@import 'tailwindcss';
+@import 'intl-tel-input/styles';
 
 /* Fonts: Plus Jakarta Sans (headings/buttons), Inter (body), JetBrains Mono (data/labels) */
 
@@ -73,17 +73,17 @@
   --color-on-error-container: #93000a;
 
   /* ---- Fonts ---- */
-  --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-display: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
   /* ---- Radius ---- */
-  --radius-sm: 0.5rem;   /* 8px  — small elements */
-  --radius-DEFAULT: 1rem;  /* 16px — buttons, inputs */
-  --radius-md: 1.5rem;  /* 24px */
-  --radius-lg: 2rem;    /* 32px */
-  --radius-xl: 3rem;    /* 48px — cards */
-  --radius-full: 9999px;  /* pills, avatars, tags */
+  --radius-sm: 0.5rem; /* 8px  — small elements */
+  --radius-DEFAULT: 1rem; /* 16px — buttons, inputs */
+  --radius-md: 1.5rem; /* 24px */
+  --radius-lg: 2rem; /* 32px */
+  --radius-xl: 3rem; /* 48px — cards */
+  --radius-full: 9999px; /* pills, avatars, tags */
 
   /* ---- Spacing scale (8px base) ---- */
   --spacing-xs: 4px;
@@ -99,10 +99,10 @@
   --container-content: 1280px;
 
   /* ---- Standard responsive breakpoints ---- */
-  --breakpoint-sm: 640px;   /* large phone / landscape */
-  --breakpoint-md: 768px;   /* tablet */
-  --breakpoint-lg: 1024px;  /* small laptop */
-  --breakpoint-xl: 1280px;  /* desktop */
+  --breakpoint-sm: 640px; /* large phone / landscape */
+  --breakpoint-md: 768px; /* tablet */
+  --breakpoint-lg: 1024px; /* small laptop */
+  --breakpoint-xl: 1280px; /* desktop */
   --breakpoint-2xl: 1536px; /* large desktop */
 
   /* ---- Shadows: diffused, violet-tinted (per design system) ---- */
@@ -129,7 +129,10 @@
     line-height: 24px;
   }
 
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     font-family: var(--font-display);
     color: var(--color-on-surface);
     font-weight: 700;
@@ -196,7 +199,6 @@
    ========================================================================== */
 
 @layer components {
-
   /* ---------- Page shell ---------- */
   .auth-shell {
     min-height: 100dvh;
@@ -404,7 +406,10 @@
     font-size: 16px;
     font-weight: 600;
     line-height: 16px;
-    transition: background-color 150ms ease, box-shadow 150ms ease, transform 100ms ease;
+    transition:
+      background-color 150ms ease,
+      box-shadow 150ms ease,
+      transform 100ms ease;
     cursor: pointer;
   }
   .btn:active {
@@ -474,7 +479,10 @@
     color: var(--color-on-surface);
     font-family: var(--font-body);
     font-size: 16px;
-    transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+    transition:
+      background-color 150ms ease,
+      border-color 150ms ease,
+      box-shadow 150ms ease;
   }
   .input::placeholder {
     color: rgba(70, 69, 85, 0.4); /* #464555 @ 40% */
@@ -644,7 +652,7 @@
   }
   .divider-or::before,
   .divider-or::after {
-    content: "";
+    content: '';
     flex: 1;
     height: 1px;
     background-color: var(--color-outline-variant);

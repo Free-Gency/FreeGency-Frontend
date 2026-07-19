@@ -1,4 +1,3 @@
-import { NgStyle } from '@angular/common';
 import {
   Component,
   computed,
@@ -10,6 +9,9 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthAmbientBgComponent } from '../../../../shared/components/auth-ambient-bg/auth-ambient-bg.component';
+import { BrandComponent } from '../../components/brand/brand.component';
+import { RolesIntroComponent } from '../../components/roles-intro/roles-intro.component';
+import { RolesSectionsComponent } from '../../components/roles-sections/roles-sections.component';
 
 const CATEGORY_IMAGES = [
   '01.png',
@@ -22,40 +24,15 @@ const CATEGORY_IMAGES = [
 
 @Component({
   selector: 'app-landing',
-  imports: [RouterLink, AuthAmbientBgComponent, NgStyle],
+  imports: [
+    RouterLink,
+    AuthAmbientBgComponent,
+    BrandComponent,
+    RolesIntroComponent,
+    RolesSectionsComponent,
+  ],
   templateUrl: './landing.component.html',
-  styles: `
-    @media (min-width: 1280px) {
-      .hero-panel-left,
-      .hero-panel-right {
-        -webkit-mask-size: 100% 100%;
-        mask-size: 100% 100%;
-        -webkit-mask-repeat: no-repeat;
-        mask-repeat: no-repeat;
-        -webkit-mask-position: center;
-        mask-position: center;
-        mask-mode: alpha;
-      }
-
-      .hero-panel-left {
-        -webkit-mask-image: url('/assets/landing/hero/subtract-left.svg');
-        mask-image: url('/assets/landing/hero/subtract-left.svg');
-      }
-
-      .hero-panel-right {
-        -webkit-mask-image: url('/assets/landing/hero/subtract-right.svg');
-        mask-image: url('/assets/landing/hero/subtract-right.svg');
-      }
-    }
-
-    .headline-category-img {
-      transition: opacity 350ms ease;
-    }
-
-    .headline-category-img.is-fading {
-      opacity: 0;
-    }
-  `,
+  styleUrl: './landing.component.css',
 })
 export class LandingComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
@@ -100,24 +77,6 @@ export class LandingComponent implements OnInit {
   protected readonly mobileNavOpen = signal(false);
   protected servicesOpen = false;
   protected selectedCategory: string | null = null;
-
-  /** Equal 36px gaps. SVG 640: r 247.5 / 283.5 / 319.5 */
-  private readonly rings = { inner: 38.67, mid: 44.3, outer: 49.92 } as const;
-
-  /** Utility icons on first ellipse; avatars on mid/outer (move with rings) */
-  protected readonly orbitSizes = {
-    call: 11,
-    zoom: 8.2,
-    videoW: 9.2,
-    videoH: 8.1,
-    illustrator: 6.5,
-    trello: 8.5,
-    avatarCoder: 10.52,
-    avatarArtist: 15.03,
-    avatarGroup: 9.97,
-    avatarMegaphone: 16.5,
-    avatarHeadset: 18.5,
-  } as const;
 
   ngOnInit(): void {
     for (const file of CATEGORY_IMAGES) {
@@ -188,20 +147,5 @@ export class LandingComponent implements OnInit {
     if (window.innerWidth >= 1280) {
       this.mobileNavOpen.set(false);
     }
-  }
-
-  /**
-   * Place item on a ring. angleDeg: 0 = top, clockwise.
-   * Sizes from Figma inspect (px / 599).
-   */
-  protected orbitStyle(angleDeg: number, ring: keyof typeof this.rings, wPct: number, hPct = wPct) {
-    const r = this.rings[ring];
-    const rad = (angleDeg * Math.PI) / 180;
-    return {
-      left: `${50 + r * Math.sin(rad) - wPct / 2}%`,
-      top: `${50 - r * Math.cos(rad) - hPct / 2}%`,
-      width: `${wPct}%`,
-      height: `${hPct}%`,
-    };
   }
 }

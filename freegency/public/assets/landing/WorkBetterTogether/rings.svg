@@ -1,0 +1,10 @@
+<svg preserveAspectRatio="xMidYMid meet" width="640" height="640" viewBox="0 0 640 640" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="320" cy="320" r="211.5" fill="#F0DC95"/>
+  <circle cx="320" cy="320" r="247.5" stroke="#F9D22C" stroke-width="2" fill="none"/>
+  <circle cx="320" cy="320" r="283.5" stroke="#F9D22C" stroke-width="2" fill="none" opacity="0.55"/>
+  <circle cx="320" cy="320" r="319.5" stroke="#FFDD4C" stroke-width="2" fill="none" opacity="0.4"/>
+  <circle cx="567.5" cy="320" r="7.5" fill="#F9D22C" opacity="0.5"/>
+  <circle cx="72.5" cy="320" r="7.5" fill="#F9D22C" opacity="0.5"/>
+  <circle cx="567.5" cy="320" r="4.5" fill="#FFDD4C"/>
+  <circle cx="72.5" cy="320" r="4.5" fill="#FFDD4C"/>
+</svg>

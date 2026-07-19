@@ -1,0 +1,35 @@
+<section
+  class="w-full px-4 sm:px-6 md:px-10 lg:px-[100px]"
+  aria-label="Trusted brands"
+>
+  <ul
+    class="mx-auto flex max-w-[1200px] flex-wrap items-center justify-center gap-x-8 gap-y-5 sm:gap-x-10 md:justify-between md:gap-x-6 lg:gap-x-10"
+  >
+    @for (logo of logos; track logo.src) {
+      <li class="flex shrink-0 items-center gap-2 text-[#b0b0b0]">
+        @if (logo.label) {
+          <img
+            [src]="'/assets/landing/brand/' + logo.src"
+            [alt]="logo.alt"
+            [width]="logo.width"
+            [height]="logo.height"
+            class="size-9 object-contain opacity-45"
+          />
+          <span
+            class="font-display text-center text-[28.607px] leading-normal font-normal text-[#b0b0b0]"
+          >
+            {{ logo.label }}
+          </span>
+        } @else {
+          <img
+            [src]="'/assets/landing/brand/' + logo.src"
+            [alt]="logo.alt"
+            [width]="logo.width"
+            [height]="logo.height"
+            class="h-[42px] w-auto object-contain opacity-45"
+          />
+        }
+      </li>
+    }
+  </ul>
+</section>
