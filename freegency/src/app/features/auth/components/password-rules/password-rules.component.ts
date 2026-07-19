@@ -1,5 +1,5 @@
 import { Component, computed, input } from '@angular/core';
-import { getPasswordRules } from '../../../core/auth/password-rules';
+import { getPasswordRules } from '../../utils/password-rules';
 
 @Component({
   selector: 'app-password-rules',

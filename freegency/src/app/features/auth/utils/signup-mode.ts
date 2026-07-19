@@ -1,4 +1,4 @@
-import type { UserMode } from './auth.models';
+import type { UserMode } from '../../../core/auth/auth.models';
 
 export const SIGNUP_MODE_KEY = 'freegency_signup_mode';
 

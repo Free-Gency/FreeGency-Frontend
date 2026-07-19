@@ -1,13 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { AuthService } from '../../../../core/auth/auth.service';
-import { grantAuthFlow } from '../../../../core/auth/auth-flow';
-import { isPasswordValid } from '../../../../core/auth/password-rules';
 import { extractApiError } from '../../../../core/http/api-error';
-import { AuthAmbientBgComponent } from '../../../../shared/components/auth-ambient-bg/auth-ambient-bg.component';
-import { HeaderComponent } from '../../../../shared/header/header.component';
-import { PasswordRulesComponent } from '../../../../shared/components/password-rules/password-rules.component';
+import { AuthApiService } from '../../data-access/auth-api.service';
+import { AuthAmbientBgComponent } from '../../components/auth-ambient-bg/auth-ambient-bg.component';
+import { HeaderComponent } from '../../../../core/theme/header/header.component';
+import { PasswordRulesComponent } from '../../components/password-rules/password-rules.component';
+import { grantAuthFlow } from '../../utils/auth-flow';
+import { isPasswordValid } from '../../utils/password-rules';
 
 @Component({
   selector: 'app-create-new-password',
@@ -17,7 +17,7 @@ import { PasswordRulesComponent } from '../../../../shared/components/password-r
 export class CreateNewPasswordComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  private readonly auth = inject(AuthService);
+  private readonly authApi = inject(AuthApiService);
 
   private readonly email = this.route.snapshot.queryParamMap.get('email') ?? '';
 
@@ -47,7 +47,7 @@ export class CreateNewPasswordComponent {
 
     this.loading.set(true);
 
-    this.auth
+    this.authApi
       .resetPassword({
         email: this.email,
         password: this.password,

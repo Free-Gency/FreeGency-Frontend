@@ -1,8 +1,11 @@
 import { Routes } from '@angular/router';
-import { LandingComponent } from './features/landing/pages/landing/landing.component';
 
 export const routes: Routes = [
-  { path: '', component: LandingComponent },
+  {
+    path: '',
+    loadChildren: () =>
+      import('./features/landing/landing.routes').then((m) => m.landingRoutes),
+  },
   {
     path: 'auth',
     loadChildren: () => import('./features/auth/auth.routes').then((m) => m.authRoutes),

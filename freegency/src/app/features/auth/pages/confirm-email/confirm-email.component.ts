@@ -1,10 +1,10 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { AuthService } from '../../../../core/auth/auth.service';
-import { grantAuthFlow } from '../../../../core/auth/auth-flow';
 import { extractApiError } from '../../../../core/http/api-error';
-import { AuthAmbientBgComponent } from '../../../../shared/components/auth-ambient-bg/auth-ambient-bg.component';
-import { HeaderComponent } from '../../../../shared/header/header.component';
+import { AuthApiService } from '../../data-access/auth-api.service';
+import { AuthAmbientBgComponent } from '../../components/auth-ambient-bg/auth-ambient-bg.component';
+import { HeaderComponent } from '../../../../core/theme/header/header.component';
+import { grantAuthFlow } from '../../utils/auth-flow';
 
 @Component({
   selector: 'app-confirm-email',
@@ -14,7 +14,7 @@ import { HeaderComponent } from '../../../../shared/header/header.component';
 export class ConfirmEmailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly auth = inject(AuthService);
+  private readonly authApi = inject(AuthApiService);
 
   protected readonly status = signal<'loading' | 'success' | 'error'>('loading');
   protected readonly errorMessage = signal<string | null>(null);
@@ -29,7 +29,7 @@ export class ConfirmEmailComponent implements OnInit {
       return;
     }
 
-    this.auth.confirmEmail(userId, code).subscribe({
+    this.authApi.confirmEmail(userId, code).subscribe({
       next: () => {
         this.status.set('success');
         grantAuthFlow('registration-success');

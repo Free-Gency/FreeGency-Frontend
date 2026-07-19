@@ -1,9 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { tap } from 'rxjs';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { extractApiError } from '../../../../core/http/api-error';
-import { AuthAmbientBgComponent } from '../../../../shared/components/auth-ambient-bg/auth-ambient-bg.component';
+import { AuthApiService } from '../../data-access/auth-api.service';
+import { AuthAmbientBgComponent } from '../../components/auth-ambient-bg/auth-ambient-bg.component';
 
 @Component({
   selector: 'app-login',
@@ -12,6 +14,7 @@ import { AuthAmbientBgComponent } from '../../../../shared/components/auth-ambie
 })
 export class LoginComponent {
   private readonly auth = inject(AuthService);
+  private readonly authApi = inject(AuthApiService);
 
   protected email = '';
   protected password = '';
@@ -40,8 +43,9 @@ export class LoginComponent {
 
     this.loading.set(true);
 
-    this.auth
-      .login({ email: this.email.trim(), password: this.password }, this.keepLoggedIn)
+    this.authApi
+      .login({ email: this.email.trim(), password: this.password })
+      .pipe(tap((response) => this.auth.completeLogin(response, this.keepLoggedIn)))
       .subscribe({
         next: (response) => {
           this.loading.set(false);

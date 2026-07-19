@@ -8,7 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { AuthAmbientBgComponent } from '../../../../shared/components/auth-ambient-bg/auth-ambient-bg.component';
+import { AuthAmbientBgComponent } from '../../../auth/components/auth-ambient-bg/auth-ambient-bg.component';
 import { BrandComponent } from '../../components/brand/brand.component';
 import { RolesIntroComponent } from '../../components/roles-intro/roles-intro.component';
 import { RolesSectionsComponent } from '../../components/roles-sections/roles-sections.component';

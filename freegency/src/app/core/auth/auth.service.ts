@@ -1,20 +1,12 @@
-import { HttpBackend, HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable, inject, signal } from '@angular/core';
-import { Observable, catchError, finalize, map, shareReplay, tap, throwError } from 'rxjs';
+import { HttpBackend, HttpClient } from '@angular/common/http';
+import { computed, Injectable, inject, signal } from '@angular/core';
+import { Observable, catchError, finalize, map, shareReplay, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import type {
-  AuthResponse,
-  LoginRequest,
-  RegisterRequest,
-  ResetPasswordRequest,
-  StoredSession,
-  UserMode,
-} from './auth.models';
+import type { AuthResponse, StoredSession, UserMode } from './auth.models';
 import { TokenStorageService } from './token-storage.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly http = inject(HttpClient);
   private readonly tokens = inject(TokenStorageService);
   private readonly baseUrl = `${environment.apiBaseUrl}/Auth`;
   private readonly externalBaseUrl = `${environment.apiBaseUrl}/External`;
@@ -25,6 +17,7 @@ export class AuthService {
   private refreshRequest$: Observable<string> | null = null;
 
   readonly session = signal<StoredSession | null>(this.tokens.get());
+  readonly isLoggedIn = computed(() => !!this.session());
 
   /** Full-page redirect to the API Google OAuth challenge endpoint. */
   loginWithGoogle(intent: 'login' | 'signup', mode?: UserMode): void {
@@ -37,48 +30,8 @@ export class AuthService {
     this.persistSession(response, keepLoggedIn);
   }
 
-  login(request: LoginRequest, keepLoggedIn: boolean): Observable<AuthResponse> {
-    return this.http
-      .post<AuthResponse>(this.baseUrl, request)
-      .pipe(tap((response) => this.persistSession(response, keepLoggedIn)));
-  }
-
-  register(request: RegisterRequest): Observable<void> {
-    return this.http
-      .post(`${this.baseUrl}/register`, request, { responseType: 'text' })
-      .pipe(map(() => undefined));
-  }
-
-  confirmEmail(userId: string, code: string): Observable<string> {
-    const params = new HttpParams().set('userId', userId).set('code', code);
-    return this.http.get(`${this.baseUrl}/ConfirmEmail`, {
-      params,
-      responseType: 'text',
-    });
-  }
-
-  sendResetPassword(email: string): Observable<string> {
-    const params = new HttpParams().set('email', email);
-    return this.http.post(`${this.baseUrl}/SendResetPassword`, null, {
-      params,
-      responseType: 'text',
-    });
-  }
-
-  confirmResetCode(email: string, code: string): Observable<void> {
-    const params = new HttpParams().set('email', email).set('code', code);
-    return this.http
-      .get(`${this.baseUrl}/ComfirmResetPassword`, {
-        params,
-        responseType: 'text',
-      })
-      .pipe(map(() => undefined));
-  }
-
-  resetPassword(request: ResetPasswordRequest): Observable<string> {
-    return this.http.post(`${this.baseUrl}/ResetPassword`, request, {
-      responseType: 'text',
-    });
+  completeLogin(response: AuthResponse, keepLoggedIn: boolean): void {
+    this.persistSession(response, keepLoggedIn);
   }
 
   /** Exchange the stored refresh token for a new access token. Shared across concurrent 401s. */

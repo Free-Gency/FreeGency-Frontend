@@ -1,11 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { AuthService } from '../../../../core/auth/auth.service';
-import { grantAuthFlow } from '../../../../core/auth/auth-flow';
 import { extractApiError } from '../../../../core/http/api-error';
-import { AuthAmbientBgComponent } from '../../../../shared/components/auth-ambient-bg/auth-ambient-bg.component';
-import { HeaderComponent } from '../../../../shared/header/header.component';
+import { AuthApiService } from '../../data-access/auth-api.service';
+import { AuthAmbientBgComponent } from '../../components/auth-ambient-bg/auth-ambient-bg.component';
+import { HeaderComponent } from '../../../../core/theme/header/header.component';
 import { OtpInputComponent } from '../../../../shared/components/otp-input/otp-input.component';
+import { grantAuthFlow } from '../../utils/auth-flow';
 
 @Component({
   selector: 'app-verify-code',
@@ -15,7 +15,7 @@ import { OtpInputComponent } from '../../../../shared/components/otp-input/otp-i
 export class VerifyCodeComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly auth = inject(AuthService);
+  private readonly authApi = inject(AuthApiService);
 
   protected readonly email = this.route.snapshot.queryParamMap.get('email') ?? '';
   protected code = '';
@@ -32,7 +32,7 @@ export class VerifyCodeComponent {
 
     this.loading.set(true);
 
-    this.auth.confirmResetCode(this.email, this.code).subscribe({
+    this.authApi.confirmResetCode(this.email, this.code).subscribe({
       next: () => {
         this.loading.set(false);
         grantAuthFlow('create-new-password', this.email);
@@ -55,7 +55,7 @@ export class VerifyCodeComponent {
 
     this.resending.set(true);
 
-    this.auth.sendResetPassword(this.email).subscribe({
+    this.authApi.sendResetPassword(this.email).subscribe({
       next: () => {
         this.resending.set(false);
         this.infoMessage.set('A new code has been sent to your email.');

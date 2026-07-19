@@ -2,14 +2,15 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import allCountries from 'intl-tel-input/data';
-import { AuthService } from '../../../../core/auth/auth.service';
 import type { UserMode } from '../../../../core/auth/auth.models';
-import { grantAuthFlow } from '../../../../core/auth/auth-flow';
-import { isPasswordValid, PASSWORD_RULE_MESSAGE } from '../../../../core/auth/password-rules';
-import { readSignupMode, storeSignupMode } from '../../../../core/auth/signup-mode';
 import { extractApiError } from '../../../../core/http/api-error';
-import { AuthAmbientBgComponent } from '../../../../shared/components/auth-ambient-bg/auth-ambient-bg.component';
+import { AuthService } from '../../../../core/auth/auth.service';
+import { AuthApiService } from '../../data-access/auth-api.service';
+import { AuthAmbientBgComponent } from '../../components/auth-ambient-bg/auth-ambient-bg.component';
 import { PhoneInputComponent } from '../../../../shared/components/phone-input/phone-input.component';
+import { grantAuthFlow } from '../../utils/auth-flow';
+import { isPasswordValid, PASSWORD_RULE_MESSAGE } from '../../utils/password-rules';
+import { readSignupMode, storeSignupMode } from '../../utils/signup-mode';
 
 const countryDisplayNames = new Intl.DisplayNames(['en'], { type: 'region' });
 
@@ -22,6 +23,7 @@ export class SignUpComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(AuthService);
+  private readonly authApi = inject(AuthApiService);
 
   protected firstName = '';
   protected lastName = '';
@@ -97,7 +99,7 @@ export class SignUpComponent implements OnInit {
 
     this.loading.set(true);
 
-    this.auth
+    this.authApi
       .register({
         firstName: this.firstName.trim(),
         lastName: this.lastName.trim(),

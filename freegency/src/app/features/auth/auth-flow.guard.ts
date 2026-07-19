@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { type AuthFlowStep, hasAuthFlowAccess } from './auth-flow';
+import { type AuthFlowStep, hasAuthFlowAccess } from './utils/auth-flow';
 
 /**
  * Blocks direct URL access to intermediate auth screens.

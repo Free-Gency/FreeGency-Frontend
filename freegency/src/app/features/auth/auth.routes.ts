@@ -1,49 +1,72 @@
 import { Routes } from '@angular/router';
-import { authFlowGuard } from '../../core/auth/auth-flow.guard';
-import { CheckEmailComponent } from './pages/check-email/check-email.component';
-import { ConfirmEmailComponent } from './pages/confirm-email/confirm-email.component';
-import { CreateNewPasswordComponent } from './pages/create-new-password/create-new-password.component';
-import { LoginComponent } from './pages/login/login.component';
-import { OnboardingComponent } from './pages/onboarding/onboarding.component';
-import { RegistrationSuccessComponent } from './pages/registration-success/registration-success.component';
-import { ResetConfirmedComponent } from './pages/reset-confirmed/reset-confirmed.component';
-import { ResetPasswordComponent } from './pages/reset-password/reset-password.component';
-import { GoogleCallbackComponent } from './pages/google-callback/google-callback.component';
-import { SignUpComponent } from './pages/sign-up/sign-up.component';
-import { VerifyCodeComponent } from './pages/verify-code/verify-code.component';
+import { authFlowGuard } from './auth-flow.guard';
 
 export const authRoutes: Routes = [
-  { path: 'onboarding', component: OnboardingComponent },
-  { path: 'sign-up', component: SignUpComponent },
-  { path: 'login', component: LoginComponent },
-  { path: 'reset-password', component: ResetPasswordComponent },
+  {
+    path: 'onboarding',
+    loadComponent: () =>
+      import('./pages/onboarding/onboarding.component').then((m) => m.OnboardingComponent),
+  },
+  {
+    path: 'sign-up',
+    loadComponent: () =>
+      import('./pages/sign-up/sign-up.component').then((m) => m.SignUpComponent),
+  },
+  {
+    path: 'login',
+    loadComponent: () => import('./pages/login/login.component').then((m) => m.LoginComponent),
+  },
+  {
+    path: 'reset-password',
+    loadComponent: () =>
+      import('./pages/reset-password/reset-password.component').then((m) => m.ResetPasswordComponent),
+  },
   {
     path: 'verify-code',
-    component: VerifyCodeComponent,
+    loadComponent: () =>
+      import('./pages/verify-code/verify-code.component').then((m) => m.VerifyCodeComponent),
     canActivate: [authFlowGuard('verify-code', { requireEmail: true })],
   },
   {
     path: 'create-new-password',
-    component: CreateNewPasswordComponent,
+    loadComponent: () =>
+      import('./pages/create-new-password/create-new-password.component').then(
+        (m) => m.CreateNewPasswordComponent,
+      ),
     canActivate: [authFlowGuard('create-new-password', { requireEmail: true })],
   },
   {
     path: 'reset-confirmed',
-    component: ResetConfirmedComponent,
+    loadComponent: () =>
+      import('./pages/reset-confirmed/reset-confirmed.component').then(
+        (m) => m.ResetConfirmedComponent,
+      ),
     canActivate: [authFlowGuard('reset-confirmed')],
   },
   {
     path: 'check-email',
-    component: CheckEmailComponent,
+    loadComponent: () =>
+      import('./pages/check-email/check-email.component').then((m) => m.CheckEmailComponent),
     canActivate: [authFlowGuard('check-email', { requireEmail: true })],
   },
-  // Open: email confirmation links land here with userId + code
-  { path: 'confirm-email', component: ConfirmEmailComponent },
-  // Open: Google OAuth callback from the API redirect
-  { path: 'google/callback', component: GoogleCallbackComponent },
+  {
+    path: 'confirm-email',
+    loadComponent: () =>
+      import('./pages/confirm-email/confirm-email.component').then((m) => m.ConfirmEmailComponent),
+  },
+  {
+    path: 'google/callback',
+    loadComponent: () =>
+      import('./pages/google-callback/google-callback.component').then(
+        (m) => m.GoogleCallbackComponent,
+      ),
+  },
   {
     path: 'registration-success',
-    component: RegistrationSuccessComponent,
+    loadComponent: () =>
+      import('./pages/registration-success/registration-success.component').then(
+        (m) => m.RegistrationSuccessComponent,
+      ),
     canActivate: [authFlowGuard('registration-success')],
   },
   { path: '', redirectTo: 'onboarding', pathMatch: 'full' },

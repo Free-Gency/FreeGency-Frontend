@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { getEmailInboxLabel, getEmailInboxUrl } from '../../../../core/auth/email-inbox';
-import { AuthAmbientBgComponent } from '../../../../shared/components/auth-ambient-bg/auth-ambient-bg.component';
+import { AuthAmbientBgComponent } from '../../components/auth-ambient-bg/auth-ambient-bg.component';
+import { getEmailInboxLabel, getEmailInboxUrl } from '../../utils/email-inbox';
 
 @Component({
   selector: 'app-check-email',

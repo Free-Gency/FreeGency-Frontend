@@ -1,8 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import type { UserMode } from '../../../../core/auth/auth.models';
-import { storeSignupMode } from '../../../../core/auth/signup-mode';
-import { AuthAmbientBgComponent } from '../../../../shared/components/auth-ambient-bg/auth-ambient-bg.component';
+import { AuthAmbientBgComponent } from '../../components/auth-ambient-bg/auth-ambient-bg.component';
+import { storeSignupMode } from '../../utils/signup-mode';
 
 @Component({
   selector: 'app-onboarding',

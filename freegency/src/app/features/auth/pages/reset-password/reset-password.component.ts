@@ -1,11 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { AuthService } from '../../../../core/auth/auth.service';
-import { grantAuthFlow } from '../../../../core/auth/auth-flow';
 import { extractApiError } from '../../../../core/http/api-error';
-import { AuthAmbientBgComponent } from '../../../../shared/components/auth-ambient-bg/auth-ambient-bg.component';
-import { HeaderComponent } from '../../../../shared/header/header.component';
+import { AuthApiService } from '../../data-access/auth-api.service';
+import { AuthAmbientBgComponent } from '../../components/auth-ambient-bg/auth-ambient-bg.component';
+import { HeaderComponent } from '../../../../core/theme/header/header.component';
+import { grantAuthFlow } from '../../utils/auth-flow';
 
 @Component({
   selector: 'app-reset-password',
@@ -14,7 +14,7 @@ import { HeaderComponent } from '../../../../shared/header/header.component';
 })
 export class ResetPasswordComponent {
   private readonly router = inject(Router);
-  private readonly auth = inject(AuthService);
+  private readonly authApi = inject(AuthApiService);
 
   protected email = '';
   protected readonly loading = signal(false);
@@ -30,7 +30,7 @@ export class ResetPasswordComponent {
 
     this.loading.set(true);
 
-    this.auth.sendResetPassword(this.email.trim()).subscribe({
+    this.authApi.sendResetPassword(this.email.trim()).subscribe({
       next: () => {
         this.loading.set(false);
         const email = this.email.trim();
