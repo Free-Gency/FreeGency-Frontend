@@ -15,7 +15,7 @@ export class AuthApiService {
   private readonly baseUrl = `${environment.apiBaseUrl}/Auth`;
 
   login(request: LoginRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(this.baseUrl, request);
+    return this.http.post<AuthResponse>(`${this.baseUrl}/login`, request);
   }
 
   register(request: RegisterRequest): Observable<void> {
