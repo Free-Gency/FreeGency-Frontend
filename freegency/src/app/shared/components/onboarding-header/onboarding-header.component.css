@@ -1,0 +1,44 @@
+.onboarding-header {
+  animation: onboarding-header-fade-in 0.55s ease-out both;
+}
+
+.onboarding-header__progress {
+  transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.onboarding-header__dot {
+  transition: left 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.onboarding-header__label,
+.onboarding-header__divider {
+  transition:
+    color 0.45s ease,
+    opacity 0.45s ease,
+    background-color 0.45s ease;
+}
+
+@keyframes onboarding-header-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-header {
+    animation: none;
+  }
+
+  .onboarding-header__progress,
+  .onboarding-header__dot,
+  .onboarding-header__label,
+  .onboarding-header__divider {
+    transition: none;
+  }
+}

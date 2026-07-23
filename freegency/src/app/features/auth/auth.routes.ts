@@ -8,6 +8,47 @@ export const authRoutes: Routes = [
       import('./pages/onboarding/onboarding.component').then((m) => m.OnboardingComponent),
   },
   {
+    path: 'client-onboarding',
+    loadComponent: () =>
+      import('./pages/client-onboarding/client-onboarding-layout.component').then(
+        (m) => m.ClientOnboardingLayoutComponent,
+      ),
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./components/client-onboarding-profile/client-onboarding-profile.component').then(
+            (m) => m.ClientOnboardingProfileComponent,
+          ),
+        data: { step: 1 },
+      },
+      {
+        path: 'interests',
+        loadComponent: () =>
+          import(
+            './components/client-onboarding-interests/client-onboarding-interests.component'
+          ).then((m) => m.ClientOnboardingInterestsComponent),
+        data: { step: 2 },
+      },
+      {
+        path: 'create-project',
+        loadComponent: () =>
+          import(
+            './components/client-onboarding-create-project/client-onboarding-create-project.component'
+          ).then((m) => m.ClientOnboardingCreateProjectComponent),
+        data: { step: 3, center: false },
+      },
+      {
+        path: 'complete',
+        loadComponent: () =>
+          import(
+            './components/client-onboarding-complete/client-onboarding-complete.component'
+          ).then((m) => m.ClientOnboardingCompleteComponent),
+        data: { step: 3, filled: true },
+      },
+    ],
+  },
+  {
     path: 'sign-up',
     loadComponent: () =>
       import('./pages/sign-up/sign-up.component').then((m) => m.SignUpComponent),

@@ -1,4 +1,5 @@
 export const environment = {
   production: false,
-  apiBaseUrl: 'https://free-gency-backend-003bbc67b812.herokuapp.com',
+  /** Local API — switch back to Heroku before deploy if needed */
+  apiBaseUrl: 'https://localhost:7186',
 };

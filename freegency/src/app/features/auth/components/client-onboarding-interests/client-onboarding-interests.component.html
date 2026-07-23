@@ -1,0 +1,87 @@
+<section
+  class="interests-section relative z-10 mx-auto flex w-full max-w-[986px] flex-col items-center px-5 pb-12 pt-2 sm:px-10 sm:pt-4"
+>
+  <div class="interests-heading mb-8 flex w-full max-w-[600px] flex-col items-center gap-4 text-center sm:mb-12">
+    <h1
+      class="font-display text-[28px] leading-9 font-bold tracking-[-0.02em] text-on-surface sm:text-[40px] sm:leading-[48px] sm:tracking-[-1.2px] lg:text-[48px] lg:leading-[57.6px]"
+    >
+      What are you looking for?
+    </h1>
+    <p class="font-body text-sm leading-5 text-on-surface-variant sm:text-base sm:leading-6">
+      Select the categories that match your needs to help us tailor your experience.
+    </p>
+  </div>
+
+  <div class="interests-grid mb-10 w-full sm:mb-16">
+    @if (loadingCategories()) {
+      <div class="interests-grid__list" aria-busy="true" aria-label="Loading categories">
+        @for (_ of [1, 2, 3, 4, 5, 6, 7, 8]; track $index) {
+          <div class="interests-skeleton"></div>
+        }
+      </div>
+    } @else if (categories().length === 0) {
+      <p class="py-8 text-center text-sm text-on-surface-variant" role="status">
+        No categories available right now. You can skip and continue.
+      </p>
+    } @else {
+      <div class="interests-grid__list" role="group" aria-label="Interest categories">
+        @for (category of categories(); track category.id) {
+          <button
+            type="button"
+            class="interests-card"
+            [class.is-selected]="isSelected(category.id)"
+            (click)="toggle(category.id)"
+            [attr.aria-pressed]="isSelected(category.id)"
+          >
+            <span class="interests-card__icon">
+              <hugeicons-icon
+                [icon]="category.icon"
+                [size]="22"
+                color="currentColor"
+                [strokeWidth]="1.75"
+                aria-hidden="true"
+              />
+            </span>
+
+            <span class="interests-card__label">{{ category.label }}</span>
+
+            @if (isSelected(category.id)) {
+              <span class="interests-card__check" aria-hidden="true">
+                <hugeicons-icon
+                  [icon]="checkIcon"
+                  [size]="20"
+                  color="currentColor"
+                  [strokeWidth]="2"
+                />
+              </span>
+            }
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="interests-actions flex w-full max-w-[560px] flex-col items-center gap-6">
+    @if (errorMessage()) {
+      <p class="w-full text-center text-sm text-error" role="alert">{{ errorMessage() }}</p>
+    }
+
+    <button
+      type="button"
+      class="interests-continue"
+      [disabled]="loading() || loadingCategories()"
+      (click)="onContinue()"
+    >
+      {{ loading() ? 'Saving...' : 'Continue' }}
+    </button>
+
+    <button
+      type="button"
+      class="interests-skip"
+      [disabled]="loading() || loadingCategories()"
+      (click)="onSkip()"
+    >
+      Skip for now
+    </button>
+  </div>
+</section>

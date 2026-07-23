@@ -1,7 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { tap } from 'rxjs';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { extractApiError } from '../../../../core/http/api-error';
 import { AuthApiService } from '../../data-access/auth-api.service';
@@ -12,9 +11,11 @@ import { AuthAmbientBgComponent } from '../../components/auth-ambient-bg/auth-am
   imports: [FormsModule, RouterLink, AuthAmbientBgComponent],
   templateUrl: './login.component.html',
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly authApi = inject(AuthApiService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   protected email = '';
   protected password = '';
@@ -22,10 +23,16 @@ export class LoginComponent {
   protected readonly showPassword = signal(false);
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
-  protected readonly successMessage = signal<string | null>(null);
+
+  private returnUrl: string | null = null;
+
+  ngOnInit(): void {
+    const raw = this.route.snapshot.queryParamMap.get('returnUrl');
+    this.returnUrl = raw?.startsWith('/') ? raw : null;
+  }
 
   protected togglePassword(): void {
-    this.showPassword.update((visible) => !visible);
+    this.showPassword.update((v) => !v);
   }
 
   protected loginWithGoogle(): void {
@@ -34,7 +41,6 @@ export class LoginComponent {
 
   protected onSubmit(): void {
     this.errorMessage.set(null);
-    this.successMessage.set(null);
 
     if (!this.email.trim() || !this.password) {
       this.errorMessage.set('Email and password are required.');
@@ -43,19 +49,16 @@ export class LoginComponent {
 
     this.loading.set(true);
 
-    this.authApi
-      .login({ email: this.email.trim(), password: this.password })
-      .pipe(tap((response) => this.auth.completeLogin(response, this.keepLoggedIn)))
-      .subscribe({
-        next: (response) => {
-          this.loading.set(false);
-          const name = response.firstName?.trim() || response.email;
-          this.successMessage.set(`Welcome back, ${name}! You're signed in.`);
-        },
-        error: (err) => {
-          this.loading.set(false);
-          this.errorMessage.set(extractApiError(err));
-        },
-      });
+    this.authApi.login({ email: this.email.trim(), password: this.password }).subscribe({
+      next: (response) => {
+        this.auth.completeLogin(response, this.keepLoggedIn);
+        this.loading.set(false);
+        void this.router.navigateByUrl(this.auth.resolvePostAuthPath(response, this.returnUrl));
+      },
+      error: (err) => {
+        this.loading.set(false);
+        this.errorMessage.set(extractApiError(err));
+      },
+    });
   }
 }

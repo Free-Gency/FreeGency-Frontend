@@ -1,5 +1,7 @@
 export type UserMode = 'Client' | 'Developer';
 
+export const CLIENT_ONBOARDING_PATH = '/auth/client-onboarding';
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -20,6 +22,8 @@ export interface AuthResponse {
   email: string;
   firstName: string | null;
   lastName: string | null;
+  activeProfileMode: UserMode | string | null;
+  hasCompletedOnboarding: boolean;
   token: string;
   expiresIn: number;
   refreshToken: string;
@@ -38,11 +42,13 @@ export interface RefreshTokenRequest {
 }
 
 export interface StoredSession {
-  token: string;
-  refreshToken: string;
-  refreshTokenExpiration: string;
+  id: string;
   email: string;
   firstName: string | null;
   lastName: string | null;
-  id: string;
+  activeProfileMode: UserMode | null;
+  hasCompletedOnboarding: boolean;
+  token: string;
+  refreshToken: string;
+  refreshTokenExpiration: string;
 }

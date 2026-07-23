@@ -1,0 +1,56 @@
+<header
+  class="onboarding-header relative z-10 flex w-full flex-col items-center gap-4 px-5 pt-8 pb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6 sm:pt-10 sm:pb-8"
+>
+  <img
+    src="/assets/brand/logo.svg"
+    alt="FreeGency"
+    class="block h-8 w-auto shrink-0 self-start sm:h-[37px] sm:self-auto"
+    width="160"
+    height="37"
+  />
+
+  <div
+    class="flex w-full min-w-0 max-w-[420px] flex-col items-stretch justify-center gap-2 sm:mx-auto sm:w-fit sm:max-w-none sm:gap-2.5"
+  >
+    <div class="relative h-1 w-full" aria-hidden="true">
+      <div class="absolute inset-0 rounded-full bg-surface-container"></div>
+      <div
+        class="onboarding-header__progress absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[#c4c0ff] via-[#8781ff] to-[#6a5fff]"
+        [style.width]="progress()"
+      ></div>
+      <span
+        class="onboarding-header__dot absolute top-1/2 size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary-container"
+        [style.left]="progress()"
+      ></span>
+    </div>
+
+    <nav
+      class="flex items-center justify-between gap-2 sm:justify-center sm:gap-6"
+      aria-label="Onboarding progress"
+    >
+      @for (item of steps; track item.id; let last = $last) {
+        <span
+          class="onboarding-header__label font-mono text-[11px] leading-[14px] font-medium tracking-[0.28px] whitespace-nowrap sm:text-sm"
+          [class.text-primary-container]="isActive(item.id) || isCompleted(item.id)"
+          [class.text-on-surface-variant]="isUpcoming(item.id)"
+          [class.opacity-50]="isCompleted(item.id)"
+          [class.opacity-70]="isUpcoming(item.id)"
+          [attr.aria-current]="isActive(item.id) ? 'step' : null"
+        >
+          {{ item.label }}
+        </span>
+        @if (!last) {
+          <span
+            class="onboarding-header__divider h-0.5 w-3 shrink-0 sm:w-8"
+            [class.bg-primary-container]="isDividerActive(item.id)"
+            [class.opacity-50]="isDividerActive(item.id)"
+            [class.bg-outline-variant]="!isDividerActive(item.id)"
+            aria-hidden="true"
+          ></span>
+        }
+      }
+    </nav>
+  </div>
+
+  <div class="hidden h-[37px] w-[160px] shrink-0 sm:block" aria-hidden="true"></div>
+</header>

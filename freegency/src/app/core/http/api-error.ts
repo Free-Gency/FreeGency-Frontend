@@ -73,6 +73,19 @@ function messageFromBody(body: Record<string, unknown> | null): string | null {
     }
   }
 
+  const nestedError = body['error'];
+  if (nestedError && typeof nestedError === 'object' && !Array.isArray(nestedError)) {
+    const nestedMessage = (nestedError as Record<string, unknown>)['message'];
+    if (typeof nestedMessage === 'string' && nestedMessage.trim()) {
+      return nestedMessage.trim();
+    }
+  }
+
+  const message = body['message'];
+  if (typeof message === 'string' && message.trim()) {
+    return message.trim();
+  }
+
   const detail = body['detail'];
   if (typeof detail === 'string' && detail.trim()) {
     return detail.trim();

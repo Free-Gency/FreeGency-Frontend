@@ -1,0 +1,139 @@
+<section
+  class="relative z-10 mx-auto flex w-full max-w-[560px] flex-col items-stretch gap-8 px-5 pb-12 pt-3 sm:px-10"
+>
+  <div class="flex w-full flex-col items-center gap-[7px] text-center">
+    <h1
+      class="font-display text-[32px] leading-[1.1] font-bold tracking-[-0.02em] text-on-surface sm:text-[48px] sm:leading-[52.8px] sm:tracking-[-0.96px]"
+    >
+      Let's get you started
+    </h1>
+    <p class="font-body text-base leading-7 text-on-surface-variant sm:text-lg sm:leading-[28.8px]">
+      Tell the community a bit about yourself.
+    </p>
+  </div>
+
+  <div class="flex w-full flex-col items-stretch gap-6">
+    <div class="flex flex-col items-center">
+      <div class="relative shrink-0">
+        <button
+          type="button"
+          class="flex size-40 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-outline-variant bg-surface-container-low p-0.5 transition-[border-color,background-color] duration-150 hover:border-primary-container/50 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/12"
+          (click)="openFilePicker()"
+          aria-label="Upload profile photo"
+        >
+          @if (previewUrl(); as url) {
+            <img [src]="url" alt="Profile preview" class="size-full rounded-full object-cover" />
+          } @else {
+            <span class="flex flex-col items-center gap-2 text-outline">
+              <hugeicons-icon
+                [icon]="cameraIcon"
+                [size]="28"
+                color="currentColor"
+                [strokeWidth]="1.75"
+                aria-hidden="true"
+              />
+              <span class="font-mono text-sm leading-[14px] font-medium tracking-[0.28px]">
+                UPLOAD
+              </span>
+            </span>
+          }
+        </button>
+
+        <button
+          type="button"
+          class="absolute right-1 bottom-1 flex size-8 cursor-pointer items-center justify-center rounded-full bg-primary-container text-on-primary shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.1)] transition-transform duration-150 hover:bg-primary active:scale-95 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/20"
+          (click)="openFilePicker()"
+          aria-label="Edit profile photo"
+        >
+          <hugeicons-icon
+            [icon]="editIcon"
+            [size]="15"
+            color="currentColor"
+            [strokeWidth]="1.75"
+            aria-hidden="true"
+          />
+        </button>
+
+        <input
+          #fileInput
+          type="file"
+          class="sr-only"
+          accept="image/jpeg,image/png,image/webp"
+          (change)="onFileSelected($event)"
+        />
+      </div>
+
+      <p class="pt-4 font-mono text-xs leading-[18px] font-medium text-outline">
+        JPEG, PNG or WebP (Max 5MB)
+      </p>
+
+      @if (uploadError()) {
+        <p class="mt-2 text-center text-xs text-error" role="alert">{{ uploadError() }}</p>
+      }
+    </div>
+
+    <form class="flex w-full flex-col gap-6" (ngSubmit)="onContinue()">
+      <div class="flex w-full flex-col gap-2">
+        <label
+          class="block font-mono text-base leading-4 font-bold text-on-surface"
+          for="displayName"
+        >
+          Display Name
+        </label>
+        <input
+          id="displayName"
+          type="text"
+          name="displayName"
+          class="w-full rounded-lg border border-[rgba(229,225,228,0.2)] bg-surface-container-low px-[17px] py-[19px] font-body text-base text-on-surface placeholder:text-outline/50 transition-[background-color,border-color,box-shadow] duration-150 focus:border-primary focus:bg-surface-container-lowest focus:outline-none focus:ring-[3px] focus:ring-primary/12"
+          placeholder="e.g. Alex Rivera"
+          [(ngModel)]="displayName"
+          autocomplete="nickname"
+        />
+      </div>
+
+      <div class="flex w-full flex-col gap-2">
+        <div class="flex items-center justify-between px-1">
+          <label class="font-mono text-base leading-4 font-bold text-on-surface" for="bio">
+            Bio
+          </label>
+          <span class="font-mono text-sm leading-[14px] font-medium tracking-[0.28px] text-outline">
+            {{ bioCount }}/{{ bioLimit }}
+          </span>
+        </div>
+        <textarea
+          id="bio"
+          name="bio"
+          rows="5"
+          class="min-h-[160px] w-full resize-y rounded-lg border border-[rgba(229,225,228,0.2)] bg-surface-container-low px-[17px] py-[17px] font-body text-base leading-6 text-on-surface placeholder:text-outline/50 transition-[background-color,border-color,box-shadow] duration-150 focus:border-primary focus:bg-surface-container-lowest focus:outline-none focus:ring-[3px] focus:ring-primary/12"
+          placeholder="What do you do best? Share your expertise and what drives you."
+          [(ngModel)]="bio"
+          (ngModelChange)="onBioInput($event)"
+          [attr.maxlength]="bioLimit"
+        ></textarea>
+      </div>
+
+      <div class="flex w-full flex-col items-center gap-6 pt-6">
+        @if (errorMessage()) {
+          <p class="w-full text-center text-sm text-error" role="alert">{{ errorMessage() }}</p>
+        }
+
+        <button
+          type="submit"
+          class="inline-flex h-[50px] w-full cursor-pointer items-center justify-center rounded-full bg-primary-container px-4 font-display text-lg leading-4 font-semibold text-on-primary shadow-[0_1px_1px_rgba(0,0,0,0.05)] transition-[background-color,transform] duration-150 hover:bg-primary active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+          [disabled]="loading()"
+        >
+          {{ loading() ? 'Saving...' : 'Continue' }}
+        </button>
+
+        <button
+          type="button"
+          class="cursor-pointer border-none bg-transparent font-display text-base leading-4 font-semibold text-outline transition-colors duration-150 hover:text-on-surface-variant disabled:cursor-not-allowed disabled:opacity-50"
+          [disabled]="loading()"
+          (click)="onSkip()"
+        >
+          Skip for now
+        </button>
+      </div>
+    </form>
+  </div>
+</section>

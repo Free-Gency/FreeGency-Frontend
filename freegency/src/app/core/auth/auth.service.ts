@@ -3,7 +3,10 @@ import { computed, Injectable, inject, signal } from '@angular/core';
 import { Observable, catchError, finalize, map, shareReplay, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import type { AuthResponse, StoredSession, UserMode } from './auth.models';
+import { CLIENT_ONBOARDING_PATH } from './auth.models';
 import { TokenStorageService } from './token-storage.service';
+
+const GOOGLE_AUTH_INTENT_KEY = 'freegency_google_intent';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -19,22 +22,63 @@ export class AuthService {
   readonly session = signal<StoredSession | null>(this.tokens.get());
   readonly isLoggedIn = computed(() => !!this.session());
 
-  /** Full-page redirect to the API Google OAuth challenge endpoint. */
   loginWithGoogle(intent: 'login' | 'signup', mode?: UserMode): void {
+    sessionStorage.setItem(GOOGLE_AUTH_INTENT_KEY, intent);
     const params = new URLSearchParams({ intent });
     if (mode) params.set('mode', mode);
     window.location.assign(`${this.externalBaseUrl}/google-login?${params}`);
   }
 
-  completeGoogleLogin(response: AuthResponse, keepLoggedIn = true): void {
-    this.persistSession(response, keepLoggedIn);
+  consumeGoogleAuthIntent(): 'login' | 'signup' | null {
+    const value = sessionStorage.getItem(GOOGLE_AUTH_INTENT_KEY);
+    sessionStorage.removeItem(GOOGLE_AUTH_INTENT_KEY);
+    return value === 'login' || value === 'signup' ? value : null;
   }
 
-  completeLogin(response: AuthResponse, keepLoggedIn: boolean): void {
-    this.persistSession(response, keepLoggedIn);
+  completeLogin(response: AuthResponse, keepLoggedIn = true): void {
+    const session = this.toSession(response);
+    this.tokens.save(session, keepLoggedIn);
+    this.session.set(session);
   }
 
-  /** Exchange the stored refresh token for a new access token. Shared across concurrent 401s. */
+  markOnboardingComplete(): void {
+    const current = this.session();
+    if (!current || current.hasCompletedOnboarding) return;
+    const updated = { ...current, hasCompletedOnboarding: true };
+    this.tokens.update(updated);
+    this.session.set(updated);
+  }
+
+  /** Keep session name in sync after profile load/save. */
+  patchSessionNames(firstName: string | null, lastName: string | null): void {
+    const current = this.session();
+    if (!current) return;
+    const updated = {
+      ...current,
+      firstName: firstName?.trim() || current.firstName,
+      lastName: lastName?.trim() || current.lastName,
+    };
+    this.tokens.update(updated);
+    this.session.set(updated);
+  }
+
+  needsClientOnboarding(
+    auth: Pick<AuthResponse, 'activeProfileMode' | 'hasCompletedOnboarding'> | null = this.session(),
+  ): boolean {
+    if (!auth) return false;
+    return auth.activeProfileMode === 'Client' && !auth.hasCompletedOnboarding;
+  }
+
+  /** Single post-auth destination used by login + Google callback. */
+  resolvePostAuthPath(
+    auth: Pick<AuthResponse, 'activeProfileMode' | 'hasCompletedOnboarding'>,
+    returnUrl?: string | null,
+  ): string {
+    if (this.needsClientOnboarding(auth)) return CLIENT_ONBOARDING_PATH;
+    if (returnUrl?.startsWith('/')) return returnUrl;
+    return '/';
+  }
+
   refreshAccessToken(): Observable<string> {
     if (this.refreshRequest$) {
       return this.refreshRequest$;
@@ -53,7 +97,9 @@ export class AuthService {
       })
       .pipe(
         map((response) => {
-          this.replaceSession(response);
+          const session = this.toSession(response);
+          this.tokens.update(session);
+          this.session.set(session);
           return response.token;
         }),
         catchError((err) => {
@@ -88,24 +134,15 @@ export class AuthService {
     this.session.set(null);
   }
 
-  private persistSession(response: AuthResponse, keepLoggedIn: boolean): void {
-    const session = this.toSession(response);
-    this.tokens.save(session, keepLoggedIn);
-    this.session.set(session);
-  }
-
-  private replaceSession(response: AuthResponse): void {
-    const session = this.toSession(response);
-    this.tokens.update(session);
-    this.session.set(session);
-  }
-
   private toSession(response: AuthResponse): StoredSession {
+    const mode = response.activeProfileMode;
     return {
       id: response.id,
       email: response.email,
       firstName: response.firstName,
       lastName: response.lastName,
+      activeProfileMode: mode === 'Client' || mode === 'Developer' ? mode : null,
+      hasCompletedOnboarding: !!response.hasCompletedOnboarding,
       token: response.token,
       refreshToken: response.refreshToken,
       refreshTokenExpiration: response.refreshTokenExpiration,

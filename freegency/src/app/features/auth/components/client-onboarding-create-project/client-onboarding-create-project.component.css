@@ -1,0 +1,127 @@
+.create-project-heading,
+.create-project-actions,
+.create-project-skip {
+  animation: create-project-fade-up 0.5s ease-out both;
+}
+
+.create-project-actions {
+  animation-delay: 0.08s;
+}
+
+.create-project-spacer {
+  flex: 0 0 auto;
+  height: 5rem;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .create-project-spacer {
+    height: 7rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .create-project-spacer {
+    height: 9rem;
+  }
+}
+
+.create-project-primary {
+  display: inline-flex;
+  height: 50px;
+  width: 100%;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  background: var(--color-primary-container);
+  padding: 0 1rem;
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  line-height: 1rem;
+  font-weight: 600;
+  color: var(--color-on-primary);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  transition:
+    background-color 0.15s,
+    transform 0.15s,
+    opacity 0.15s;
+}
+
+.create-project-primary:hover:not(:disabled) {
+  background: var(--color-primary);
+}
+
+.create-project-primary:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.create-project-secondary {
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  line-height: 1rem;
+  font-weight: 600;
+  color: var(--color-on-surface-variant);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  transition: color 0.15s;
+}
+
+.create-project-secondary:hover:not(:disabled) {
+  color: var(--color-on-surface);
+}
+
+.create-project-skip {
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  line-height: 1rem;
+  font-weight: 600;
+  color: var(--color-outline);
+  transition: color 0.15s;
+  animation-delay: 0.16s;
+}
+
+.create-project-skip:hover:not(:disabled) {
+  color: var(--color-on-surface-variant);
+}
+
+.create-project-primary:disabled,
+.create-project-secondary:disabled,
+.create-project-skip:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+@media (min-width: 640px) {
+  .create-project-primary {
+    height: 55px;
+    font-size: 1.125rem;
+  }
+}
+
+@keyframes create-project-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .create-project-heading,
+  .create-project-actions,
+  .create-project-skip {
+    animation: none;
+  }
+}

@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { interval, take } from 'rxjs';
 import { AuthAmbientBgComponent } from '../../components/auth-ambient-bg/auth-ambient-bg.component';
 import { HeaderComponent } from '../../../../core/theme/header/header.component';
+import { postSignupPath, readSignupMode } from '../../utils/signup-mode';
 
 @Component({
   selector: 'app-registration-success',
@@ -16,6 +17,8 @@ export class RegistrationSuccessComponent implements OnInit {
 
   protected readonly countdown = signal(5);
 
+  private readonly afterLoginPath = postSignupPath(readSignupMode(null));
+
   ngOnInit(): void {
     interval(1000)
       .pipe(take(5), takeUntilDestroyed(this.destroyRef))
@@ -23,12 +26,18 @@ export class RegistrationSuccessComponent implements OnInit {
         const next = this.countdown() - 1;
         this.countdown.set(next);
         if (next <= 0) {
-          this.router.navigate(['/auth/login']);
+          this.goToLogin();
         }
       });
   }
 
   protected continueNow(): void {
-    this.router.navigate(['/auth/login']);
+    this.goToLogin();
+  }
+
+  private goToLogin(): void {
+    this.router.navigate(['/auth/login'], {
+      queryParams: { returnUrl: this.afterLoginPath },
+    });
   }
 }

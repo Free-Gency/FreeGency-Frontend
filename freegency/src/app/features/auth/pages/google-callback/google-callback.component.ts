@@ -33,16 +33,15 @@ export class GoogleCallbackComponent implements OnInit {
     }
 
     try {
-      const json = this.decodeBase64Url(session);
-      const response = JSON.parse(json) as AuthResponse;
-
+      const response = JSON.parse(this.decodeBase64Url(session)) as AuthResponse;
       if (!response.token || !response.refreshToken || !response.email) {
         throw new Error('Invalid session payload');
       }
 
-      this.auth.completeGoogleLogin(response);
+      this.auth.consumeGoogleAuthIntent();
+      this.auth.completeLogin(response);
       this.status.set('success');
-      this.router.navigate(['/']);
+      void this.router.navigateByUrl(this.auth.resolvePostAuthPath(response));
     } catch {
       this.status.set('error');
       this.errorMessage.set('Could not complete Google sign-in. Please try again.');

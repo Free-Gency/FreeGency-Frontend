@@ -1,24 +1,23 @@
 import { Injectable } from '@angular/core';
-import type { StoredSession } from './auth.models';
+import type { StoredSession, UserMode } from './auth.models';
 
 const SESSION_KEY = 'freegency.auth.session';
+
+function asUserMode(value: unknown): UserMode | null {
+  return value === 'Client' || value === 'Developer' ? value : null;
+}
 
 @Injectable({ providedIn: 'root' })
 export class TokenStorageService {
   save(session: StoredSession, persist: boolean): void {
     this.clear();
-    const storage = persist ? localStorage : sessionStorage;
-    storage.setItem(SESSION_KEY, JSON.stringify(session));
+    (persist ? localStorage : sessionStorage).setItem(SESSION_KEY, JSON.stringify(session));
   }
 
-  /** Update tokens in whichever storage currently holds the session. */
+  /** Update session in whichever storage currently holds it. */
   update(session: StoredSession): void {
-    if (localStorage.getItem(SESSION_KEY) !== null) {
-      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-      return;
-    }
-
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    const storage = localStorage.getItem(SESSION_KEY) !== null ? localStorage : sessionStorage;
+    storage.setItem(SESSION_KEY, JSON.stringify(session));
   }
 
   get(): StoredSession | null {
@@ -26,7 +25,23 @@ export class TokenStorageService {
     if (!raw) return null;
 
     try {
-      return JSON.parse(raw) as StoredSession;
+      const parsed = JSON.parse(raw) as Partial<StoredSession>;
+      if (!parsed.token || !parsed.refreshToken || !parsed.email || !parsed.id) {
+        this.clear();
+        return null;
+      }
+
+      return {
+        id: parsed.id,
+        email: parsed.email,
+        firstName: parsed.firstName ?? null,
+        lastName: parsed.lastName ?? null,
+        activeProfileMode: asUserMode(parsed.activeProfileMode),
+        hasCompletedOnboarding: !!parsed.hasCompletedOnboarding,
+        token: parsed.token,
+        refreshToken: parsed.refreshToken,
+        refreshTokenExpiration: parsed.refreshTokenExpiration ?? '',
+      };
     } catch {
       this.clear();
       return null;
