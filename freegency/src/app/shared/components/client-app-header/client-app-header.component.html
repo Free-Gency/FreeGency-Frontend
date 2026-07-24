@@ -1,0 +1,108 @@
+<header
+  class="relative z-10 flex w-full items-center px-5 pt-8 pb-4 sm:px-10 sm:pt-10 sm:pb-6 lg:px-[60px] lg:pt-10 lg:pb-6"
+>
+  <div class="flex h-12 w-full items-center justify-between gap-4 lg:h-16">
+    <!-- Left: logo + nav -->
+    <div class="flex min-w-0 items-center gap-6 lg:gap-10">
+      <img
+        src="/assets/brand/logo.svg"
+        alt="FreeGency"
+        class="block h-8 w-auto shrink-0 sm:h-[37px] sm:w-[161px]"
+        width="161"
+        height="37"
+      />
+
+      <nav
+        class="hidden items-center gap-2.5 xl:flex"
+        aria-label="Primary"
+      >
+        @for (item of navItems; track item.label) {
+          <button
+            type="button"
+            class="inline-flex cursor-pointer items-center justify-center gap-1 rounded-[40px] bg-[#fcfcfc] px-6 py-2 font-body text-sm leading-normal text-on-surface transition-colors hover:bg-surface-container"
+          >
+            <span>{{ item.label }}</span>
+            @if (item.dropdown) {
+              <span class="inline-flex size-5 items-center justify-center overflow-hidden" aria-hidden="true">
+                <hugeicons-icon
+                  [icon]="arrowDownIcon"
+                  [size]="16"
+                  color="currentColor"
+                  [strokeWidth]="1.75"
+                />
+              </span>
+            }
+          </button>
+        }
+      </nav>
+    </div>
+
+    <!-- Right: search + notification + avatar -->
+    <div class="flex shrink-0 items-center gap-3 sm:gap-4">
+      <div
+        class="hidden h-[50px] w-[min(400px,36vw)] items-center justify-between rounded-[18px] bg-[#fbfbfb] px-4 py-1.5 md:flex"
+        role="search"
+      >
+        <label class="flex min-w-0 flex-1 items-center">
+          <span class="sr-only">Search</span>
+          <span class="inline-flex size-6 shrink-0 items-center justify-center overflow-hidden text-on-surface-variant">
+            <hugeicons-icon
+              [icon]="searchIcon"
+              [size]="24"
+              color="currentColor"
+              [strokeWidth]="1.5"
+              aria-hidden="true"
+            />
+          </span>
+          <input
+            type="search"
+            placeholder="Search"
+            class="min-w-0 flex-1 border-0 bg-transparent px-3 py-px font-body text-sm text-on-surface-variant outline-none placeholder:text-on-surface-variant"
+          />
+        </label>
+
+        <button
+          type="button"
+          class="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-[10px] bg-white px-2.5 py-[7px] font-body text-sm text-on-surface-variant transition-colors hover:bg-surface-container-lowest"
+        >
+          <span class="w-20 truncate text-left">Projects</span>
+          <span class="inline-flex h-[5px] w-2.5 items-center justify-center overflow-hidden" aria-hidden="true">
+            <hugeicons-icon
+              [icon]="arrowDownIcon"
+              [size]="12"
+              color="currentColor"
+              [strokeWidth]="2"
+            />
+          </span>
+        </button>
+      </div>
+
+      <button
+        type="button"
+        class="inline-flex size-6 cursor-pointer items-center justify-center overflow-hidden text-on-surface transition-opacity hover:opacity-70"
+        aria-label="Notifications"
+      >
+        <hugeicons-icon
+          [icon]="notificationIcon"
+          [size]="24"
+          color="currentColor"
+          [strokeWidth]="1.5"
+        />
+      </button>
+
+      <button
+        type="button"
+        class="relative size-10 shrink-0 overflow-hidden rounded-full border border-outline-variant/30 sm:size-[50px]"
+        aria-label="Account menu"
+      >
+        <img
+          src="/assets/CreateProject/avatar.jpg"
+          alt=""
+          class="absolute inset-0 size-full object-cover"
+          width="50"
+          height="50"
+        />
+      </button>
+    </div>
+  </div>
+</header>

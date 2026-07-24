@@ -1,10 +1,14 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { HugeiconsIconComponent, type IconSvgObject } from '@hugeicons/angular';
-import { SparklesIcon } from '@hugeicons/core-free-icons';
+import {
+  ArrowRight01Icon,
+  CheckmarkBadge01Icon,
+  QuillWrite01Icon,
+  SparklesIcon,
+} from '@hugeicons/core-free-icons';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../../core/auth/auth.service';
-import { CLIENT_ONBOARDING_PATH } from '../../../../core/auth/auth.models';
 import { extractApiError } from '../../../../core/http/api-error';
 import { ProfileApiService } from '../../data-access/profile-api.service';
 
@@ -24,7 +28,11 @@ export class ClientOnboardingCreateProjectComponent {
 
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
+
   protected readonly sparklesIcon = SparklesIcon as IconSvgObject;
+  protected readonly quillIcon = QuillWrite01Icon as IconSvgObject;
+  protected readonly arrowRightIcon = ArrowRight01Icon as IconSvgObject;
+  protected readonly checkBadgeIcon = CheckmarkBadge01Icon as IconSvgObject;
 
   protected onGenerateWithAi(): void {
     void this.finish('/');
@@ -32,10 +40,6 @@ export class ClientOnboardingCreateProjectComponent {
 
   protected onWithoutAi(): void {
     void this.finish('/');
-  }
-
-  protected onSkip(): void {
-    void this.finish(`${CLIENT_ONBOARDING_PATH}/complete`);
   }
 
   private async finish(nextUrl: string): Promise<void> {

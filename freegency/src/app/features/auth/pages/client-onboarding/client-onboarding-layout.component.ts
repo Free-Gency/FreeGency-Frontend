@@ -6,6 +6,7 @@ import {
   OnboardingHeaderComponent,
   type OnboardingStep,
 } from '../../../../shared/components/onboarding-header/onboarding-header.component';
+import { ClientAppHeaderComponent } from '../../../../shared/components/client-app-header/client-app-header.component';
 import { AuthAmbientBgComponent } from '../../components/auth-ambient-bg/auth-ambient-bg.component';
 
 export interface ClientOnboardingRouteData {
@@ -13,11 +14,18 @@ export interface ClientOnboardingRouteData {
   filled?: boolean;
   /** When false, main content is top-aligned (create-project). Default: centered. */
   center?: boolean;
+  /** When true, show the app chrome header instead of the onboarding progress header. */
+  appHeader?: boolean;
 }
 
 @Component({
   selector: 'app-client-onboarding-layout',
-  imports: [AuthAmbientBgComponent, OnboardingHeaderComponent, RouterOutlet],
+  imports: [
+    AuthAmbientBgComponent,
+    OnboardingHeaderComponent,
+    ClientAppHeaderComponent,
+    RouterOutlet,
+  ],
   templateUrl: './client-onboarding-layout.component.html',
 })
 export class ClientOnboardingLayoutComponent {
@@ -35,6 +43,7 @@ export class ClientOnboardingLayoutComponent {
   protected readonly step = computed(() => this.routeData().step);
   protected readonly filled = computed(() => !!this.routeData().filled);
   protected readonly center = computed(() => this.routeData().center !== false);
+  protected readonly appHeader = computed(() => !!this.routeData().appHeader);
 
   private readChildData(): ClientOnboardingRouteData {
     let snapshot = this.router.routerState.snapshot.root;
@@ -47,6 +56,7 @@ export class ClientOnboardingLayoutComponent {
       step: data.step ?? 1,
       filled: data.filled,
       center: data.center,
+      appHeader: data.appHeader,
     };
   }
 }

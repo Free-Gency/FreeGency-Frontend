@@ -1,61 +1,158 @@
 <section
-  class="create-project-section relative z-10 mx-auto flex w-full max-w-[986px] flex-1 flex-col items-center px-5 pb-12 pt-16 sm:px-10 sm:pt-24 lg:pt-28"
+  class="relative z-10 mx-auto flex w-full max-w-[1000px] flex-1 flex-col items-center px-5 py-8 sm:px-10 sm:py-12 lg:px-20"
 >
+  <!-- Heading -->
   <div
-    class="create-project-heading mb-8 flex w-full max-w-[721px] flex-col items-center gap-4 text-center sm:mb-12"
+    class="create-project-heading mb-8 flex w-full max-w-[672px] flex-col items-center gap-4 text-center sm:mb-12 sm:gap-6"
   >
     <h1
-      class="font-display text-[28px] leading-9 font-bold tracking-[-0.02em] text-on-surface sm:text-[40px] sm:leading-[48px] sm:tracking-[-1.2px] lg:text-[48px] lg:leading-[57.6px]"
+      class="font-display text-[28px] leading-9 font-bold text-on-surface sm:text-[40px] sm:leading-[48px] lg:text-[48px]"
     >
-      Let's start with your first job post
+      How would you like to create
+      <br class="hidden sm:inline" />
+      your project?
     </h1>
-    <p class="font-body text-sm leading-5 text-on-surface-variant sm:text-base sm:leading-6">
-      It's the fastest route to matching with the right talent.<br class="hidden sm:inline" />
-      Just describe what you need and let AI handle the post instantly.
+    <p class="font-body text-base leading-[26px] text-on-surface-variant sm:text-lg sm:leading-[29px]">
+      Choose the method that fits your workflow.
     </p>
   </div>
 
-  <div class="create-project-actions flex w-full max-w-[560px] flex-col items-center gap-6">
-    @if (errorMessage()) {
-      <p class="w-full text-center text-sm text-error" role="alert">{{ errorMessage() }}</p>
-    }
+  @if (errorMessage()) {
+    <p class="mb-6 w-full text-center text-sm text-error" role="alert">{{ errorMessage() }}</p>
+  }
 
+  <!-- Choice cards -->
+  <div
+    class="create-project-cards mb-8 flex w-full flex-col items-stretch gap-6 sm:mb-12 sm:gap-8 lg:flex-row lg:items-start"
+  >
+    <!-- AI card (featured) -->
     <button
       type="button"
-      class="create-project-primary"
+      class="group relative flex min-h-0 flex-1 cursor-pointer flex-col overflow-hidden rounded-[32px] border border-primary-container bg-[linear-gradient(145deg,#ffffff_0%,#f7f6ff_100%)] p-8 text-left transition-[transform,box-shadow,border-color] duration-200 hover:shadow-level-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50 sm:p-[41px]"
       [disabled]="loading()"
       (click)="onGenerateWithAi()"
     >
-      <hugeicons-icon
-        [icon]="sparklesIcon"
-        [size]="24"
-        color="currentColor"
-        [strokeWidth]="1.75"
+      <div
+        class="pointer-events-none absolute -right-12 -bottom-12 size-64 rounded-full bg-primary/5 blur-[40px]"
         aria-hidden="true"
-      />
-      <span>{{ loading() ? 'Saving...' : 'Generate with AI' }}</span>
+      ></div>
+
+      <div class="relative flex flex-1 flex-col">
+        <div
+          class="mb-6 flex size-14 items-center justify-center rounded-2xl bg-primary-container sm:mb-10"
+        >
+          <hugeicons-icon
+            [icon]="sparklesIcon"
+            [size]="30"
+            color="#ffffff"
+            [strokeWidth]="1.5"
+            aria-hidden="true"
+          />
+        </div>
+
+        <span
+          class="mb-4 inline-flex w-fit items-start rounded-full bg-primary/10 px-3 py-1 font-body text-xs leading-4 font-bold text-primary"
+        >
+          RECOMMENDED
+        </span>
+
+        <h2 class="mb-4 font-display text-2xl leading-8 text-on-surface">Generate with AI</h2>
+
+        <p class="mb-8 max-w-[420px] font-body text-base leading-[26px] text-on-surface-variant">
+          Describe your vision in a few words. Our AI handles the technical details, skill mapping,
+          and market rate estimation.
+        </p>
+      </div>
+
+      <div
+        class="relative mt-auto flex items-center justify-between border-t border-primary/10 pt-6"
+      >
+        <span class="font-body text-lg leading-7 font-bold text-primary">
+          {{ loading() ? 'Saving...' : 'Start AI Drafting' }}
+        </span>
+        <span class="inline-flex size-4 items-center justify-center overflow-hidden text-primary">
+          <hugeicons-icon
+            [icon]="arrowRightIcon"
+            [size]="16"
+            color="currentColor"
+            [strokeWidth]="2"
+            aria-hidden="true"
+          />
+        </span>
+      </div>
     </button>
 
+    <!-- Manual card -->
     <button
       type="button"
-      class="create-project-secondary"
+      class="group relative flex min-h-0 flex-1 cursor-pointer flex-col overflow-hidden rounded-[32px] border border-outline-variant bg-white p-8 text-left transition-[transform,box-shadow,border-color] duration-200 hover:shadow-level-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-outline disabled:cursor-not-allowed disabled:opacity-50 sm:p-[41px]"
       [disabled]="loading()"
       (click)="onWithoutAi()"
     >
-      I'll do it without AI
+      <div class="relative flex flex-1 flex-col">
+        <div
+          class="mb-6 flex size-14 items-center justify-center overflow-hidden rounded-2xl border border-outline-variant bg-surface-container-high sm:mb-10"
+        >
+          <hugeicons-icon
+            [icon]="quillIcon"
+            [size]="30"
+            color="currentColor"
+            [strokeWidth]="1.5"
+            class="text-on-surface"
+            aria-hidden="true"
+          />
+        </div>
+
+        <h2 class="mb-4 pt-0 font-display text-2xl leading-8 text-on-surface sm:pt-6">
+          Write manually
+        </h2>
+
+        <p class="mb-8 max-w-[420px] font-body text-base leading-[26px] text-on-surface-variant">
+          Start with a clean slate. Use our step-by-step templates to define precise requirements
+          and custom deliverables.
+        </p>
+      </div>
+
+      <div
+        class="relative mt-auto flex items-center justify-between border-t border-outline-variant pt-6"
+      >
+        <span class="font-body text-lg leading-7 font-bold text-on-surface-variant">
+          {{ loading() ? 'Saving...' : 'Create from scratch' }}
+        </span>
+        <span
+          class="inline-flex size-4 items-center justify-center overflow-hidden text-on-surface-variant"
+        >
+          <hugeicons-icon
+            [icon]="arrowRightIcon"
+            [size]="16"
+            color="currentColor"
+            [strokeWidth]="2"
+            aria-hidden="true"
+          />
+        </span>
+      </div>
     </button>
   </div>
 
-  <div class="create-project-spacer" aria-hidden="true"></div>
-
-  <div class="flex w-full max-w-[560px] flex-col items-center">
-    <button
-      type="button"
-      class="create-project-skip"
-      [disabled]="loading()"
-      (click)="onSkip()"
+  <!-- Pro tip -->
+  <div class="create-project-tip flex w-full items-start justify-center">
+    <div
+      class="inline-flex max-w-full items-center gap-3 self-stretch rounded-full border border-secondary-container/20 bg-secondary-container/10 px-5 py-3 sm:px-6 sm:py-[13px]"
     >
-      Skip for now
-    </button>
+      <span class="inline-flex size-[18px] shrink-0 items-center justify-center overflow-hidden text-secondary">
+        <hugeicons-icon
+          [icon]="checkBadgeIcon"
+          [size]="18"
+          color="currentColor"
+          [strokeWidth]="1.5"
+          aria-hidden="true"
+        />
+      </span>
+      <p
+        class="font-body text-sm leading-5 font-medium text-on-secondary-container"
+      >
+        AI-assisted descriptions attract 85% more qualified applicants.
+      </p>
+    </div>
   </div>
 </section>

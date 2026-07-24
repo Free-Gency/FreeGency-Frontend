@@ -25,33 +25,32 @@ export const authRoutes: Routes = [
       {
         path: 'interests',
         loadComponent: () =>
-          import(
-            './components/client-onboarding-interests/client-onboarding-interests.component'
-          ).then((m) => m.ClientOnboardingInterestsComponent),
+          import('./components/client-onboarding-interests/client-onboarding-interests.component').then(
+            (m) => m.ClientOnboardingInterestsComponent,
+          ),
         data: { step: 2 },
       },
       {
         path: 'create-project',
         loadComponent: () =>
-          import(
-            './components/client-onboarding-create-project/client-onboarding-create-project.component'
-          ).then((m) => m.ClientOnboardingCreateProjectComponent),
-        data: { step: 3, center: false },
+          import('./components/client-onboarding-create-project/client-onboarding-create-project.component').then(
+            (m) => m.ClientOnboardingCreateProjectComponent,
+          ),
+        data: { step: 3, center: false, appHeader: true },
       },
       {
         path: 'complete',
         loadComponent: () =>
-          import(
-            './components/client-onboarding-complete/client-onboarding-complete.component'
-          ).then((m) => m.ClientOnboardingCompleteComponent),
+          import('./components/client-onboarding-complete/client-onboarding-complete.component').then(
+            (m) => m.ClientOnboardingCompleteComponent,
+          ),
         data: { step: 3, filled: true },
       },
     ],
   },
   {
     path: 'sign-up',
-    loadComponent: () =>
-      import('./pages/sign-up/sign-up.component').then((m) => m.SignUpComponent),
+    loadComponent: () => import('./pages/sign-up/sign-up.component').then((m) => m.SignUpComponent),
   },
   {
     path: 'login',
@@ -60,7 +59,9 @@ export const authRoutes: Routes = [
   {
     path: 'reset-password',
     loadComponent: () =>
-      import('./pages/reset-password/reset-password.component').then((m) => m.ResetPasswordComponent),
+      import('./pages/reset-password/reset-password.component').then(
+        (m) => m.ResetPasswordComponent,
+      ),
   },
   {
     path: 'verify-code',
