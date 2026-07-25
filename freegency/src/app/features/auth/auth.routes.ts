@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authGuard } from '../../core/auth/auth.guard';
 import { authFlowGuard } from './auth-flow.guard';
 
 export const authRoutes: Routes = [
@@ -9,6 +10,7 @@ export const authRoutes: Routes = [
   },
   {
     path: 'client-onboarding',
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./pages/client-onboarding/client-onboarding-layout.component').then(
         (m) => m.ClientOnboardingLayoutComponent,
@@ -37,6 +39,62 @@ export const authRoutes: Routes = [
             (m) => m.ClientOnboardingCreateProjectComponent,
           ),
         data: { step: 3, center: false, appHeader: true },
+      },
+      {
+        path: 'create-project/with-ai',
+        loadComponent: () =>
+          import('./components/client-create-project-with-ai/client-create-project-with-ai.component').then(
+            (m) => m.ClientCreateProjectWithAiComponent,
+          ),
+        data: { step: 3, center: false, appHeader: true, flush: true },
+      },
+      {
+        path: 'create-project/with-ai/scope',
+        loadComponent: () =>
+          import('./components/client-project-scope/client-project-scope.component').then(
+            (m) => m.ClientProjectScopeComponent,
+          ),
+        data: { step: 3, center: false, appHeader: true, flush: true },
+      },
+      {
+        path: 'create-project/with-ai/overview',
+        loadComponent: () =>
+          import('./components/client-project-overview/client-project-overview.component').then(
+            (m) => m.ClientProjectOverviewComponent,
+          ),
+        data: { step: 3, center: false, appHeader: true, flush: true },
+      },
+      {
+        path: 'create-project/manual',
+        loadComponent: () =>
+          import('./components/client-create-project-manual/client-create-project-manual.component').then(
+            (m) => m.ClientCreateProjectManualComponent,
+          ),
+        data: { step: 3, center: false, appHeader: true, flush: true },
+      },
+      {
+        path: 'create-project/manual/taxonomy',
+        loadComponent: () =>
+          import(
+            './components/client-create-project-manual-taxonomy/client-create-project-manual-taxonomy.component'
+          ).then((m) => m.ClientCreateProjectManualTaxonomyComponent),
+        data: { step: 3, center: false, appHeader: true, flush: true },
+      },
+      {
+        path: 'create-project/manual/scope',
+        loadComponent: () =>
+          import('./components/client-project-scope/client-project-scope.component').then(
+            (m) => m.ClientProjectScopeComponent,
+          ),
+        data: { step: 3, center: false, appHeader: true, flush: true },
+      },
+      {
+        path: 'create-project/manual/overview',
+        loadComponent: () =>
+          import('./components/client-project-overview/client-project-overview.component').then(
+            (m) => m.ClientProjectOverviewComponent,
+          ),
+        data: { step: 3, center: false, appHeader: true, flush: true },
       },
       {
         path: 'complete',
@@ -112,4 +170,5 @@ export const authRoutes: Routes = [
     canActivate: [authFlowGuard('registration-success')],
   },
   { path: '', redirectTo: 'onboarding', pathMatch: 'full' },
+  { path: '**', redirectTo: '/' },
 ];

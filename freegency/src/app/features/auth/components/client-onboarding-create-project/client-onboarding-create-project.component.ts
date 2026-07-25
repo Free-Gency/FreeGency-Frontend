@@ -7,10 +7,7 @@ import {
   QuillWrite01Icon,
   SparklesIcon,
 } from '@hugeicons/core-free-icons';
-import { firstValueFrom } from 'rxjs';
-import { AuthService } from '../../../../core/auth/auth.service';
-import { extractApiError } from '../../../../core/http/api-error';
-import { ProfileApiService } from '../../data-access/profile-api.service';
+import { CLIENT_ONBOARDING_PATH } from '../../../../core/auth/auth.models';
 
 @Component({
   selector: 'app-client-onboarding-create-project',
@@ -23,8 +20,6 @@ import { ProfileApiService } from '../../data-access/profile-api.service';
 })
 export class ClientOnboardingCreateProjectComponent {
   private readonly router = inject(Router);
-  private readonly auth = inject(AuthService);
-  private readonly profileApi = inject(ProfileApiService);
 
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
@@ -35,26 +30,10 @@ export class ClientOnboardingCreateProjectComponent {
   protected readonly checkBadgeIcon = CheckmarkBadge01Icon as IconSvgObject;
 
   protected onGenerateWithAi(): void {
-    void this.finish('/');
+    void this.router.navigate([`${CLIENT_ONBOARDING_PATH}/create-project/with-ai`]);
   }
 
   protected onWithoutAi(): void {
-    void this.finish('/');
-  }
-
-  private async finish(nextUrl: string): Promise<void> {
-    if (this.loading()) return;
-
-    this.errorMessage.set(null);
-    this.loading.set(true);
-
-    try {
-      await firstValueFrom(this.profileApi.completeOnboarding());
-      this.auth.markOnboardingComplete();
-      await this.router.navigateByUrl(nextUrl);
-    } catch (err) {
-      this.loading.set(false);
-      this.errorMessage.set(extractApiError(err));
-    }
+    void this.router.navigate([`${CLIENT_ONBOARDING_PATH}/create-project/manual`]);
   }
 }

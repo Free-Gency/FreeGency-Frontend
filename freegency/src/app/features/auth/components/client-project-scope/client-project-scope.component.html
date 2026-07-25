@@ -1,0 +1,263 @@
+<section class="relative z-10 flex w-full flex-1 flex-col">
+  <div
+    class="mx-auto flex w-full max-w-[1512px] flex-1 flex-col items-center gap-6 px-5 py-5 sm:gap-7 sm:px-10 sm:py-6 lg:px-20 lg:py-7"
+  >
+    <!-- Progress: 3 steps, second active -->
+    <div class="flex w-full items-start justify-center gap-2" aria-label="Progress">
+      @for (step of progressSteps(); track step) {
+        <div
+          class="relative h-1 flex-1 overflow-hidden rounded-full bg-surface-container-high"
+        >
+          <div
+            class="absolute inset-0 rounded-full bg-primary-container"
+            [class.opacity-40]="step < currentStep()"
+            [class.scope-progress-fill]="step === currentStep()"
+            [class.opacity-0]="step > currentStep()"
+          ></div>
+        </div>
+      }
+    </div>
+
+    <div class="scope-content flex w-full flex-col items-center">
+      <div class="mb-6 flex w-full max-w-[700px] flex-col items-center gap-3 text-center sm:mb-8">
+        <h1
+          class="font-display text-[28px] leading-9 font-bold tracking-[-0.03em] text-on-surface sm:text-[40px] sm:leading-[48px] lg:text-[48px] lg:leading-[52.8px] lg:tracking-[-0.96px]"
+        >
+          Set your project scope
+        </h1>
+        <p class="w-full font-body text-sm leading-6 text-on-surface-variant sm:text-base">
+          This will help us match you to talent within your range.
+        </p>
+      </div>
+
+      <!-- Form card -->
+      <div
+        class="flex w-full max-w-[620px] flex-col gap-6 rounded-[20px] bg-[#f6f6f6] p-4 sm:gap-8 sm:p-6"
+      >
+        <!-- Budget -->
+        <div class="flex w-full flex-col gap-4">
+          <div class="flex w-full flex-col gap-1.5">
+            <h2 class="font-display text-base leading-6 font-bold text-on-surface sm:text-lg sm:leading-7">
+              What is the best cost estimate for your project?
+            </h2>
+            <p class="font-body text-sm leading-5 text-on-surface-variant/80 sm:text-[15px] sm:leading-6">
+              Set a price for the project and pay at the end, or you can divide the project into
+              milestones and pay as each milestone is completed.
+            </p>
+          </div>
+
+          <div class="flex w-full flex-col gap-3">
+            <!-- Fixed vs Range toggle -->
+            <div
+              class="grid w-full grid-cols-2 gap-1 rounded-full bg-white p-1.5 shadow-[inset_0_0_0_1px_rgba(199,196,216,0.35)]"
+              role="group"
+              aria-label="Budget type"
+            >
+              <button
+                type="button"
+                class="cursor-pointer rounded-full px-4 py-2.5 font-display text-sm font-semibold transition-all duration-200 sm:text-[15px]"
+                [class.bg-primary-container]="isFixedPrice()"
+                [class.text-white]="isFixedPrice()"
+                [class.shadow-[0_1px_3px_rgba(91,79,240,0.35)]]="isFixedPrice()"
+                [class.text-on-surface-variant]="!isFixedPrice()"
+                [class.hover:text-on-surface]="!isFixedPrice()"
+                (click)="setFixedPrice(true)"
+              >
+                Fixed price
+              </button>
+              <button
+                type="button"
+                class="cursor-pointer rounded-full px-4 py-2.5 font-display text-sm font-semibold transition-all duration-200 sm:text-[15px]"
+                [class.bg-primary-container]="!isFixedPrice()"
+                [class.text-white]="!isFixedPrice()"
+                [class.shadow-[0_1px_3px_rgba(91,79,240,0.35)]]="!isFixedPrice()"
+                [class.text-on-surface-variant]="isFixedPrice()"
+                [class.hover:text-on-surface]="isFixedPrice()"
+                (click)="setFixedPrice(false)"
+              >
+                Price range
+              </button>
+            </div>
+
+            @if (isFixedPrice()) {
+              <div class="relative flex w-full items-center">
+                <span
+                  class="pointer-events-none absolute left-4 font-body text-base leading-7 font-bold text-on-surface/40 sm:text-lg"
+                  aria-hidden="true"
+                >
+                  $
+                </span>
+                <input
+                  type="text"
+                  inputmode="numeric"
+                  [ngModel]="budgetFixed()"
+                  (ngModelChange)="onDigitsInput($event, 'budgetFixed')"
+                  placeholder="5000"
+                  aria-label="Fixed project budget"
+                  class="h-12 w-full rounded-lg border-0 bg-white pr-24 pl-9 font-body text-base leading-7 text-on-surface outline-none placeholder:text-on-surface/30 focus-visible:ring-2 focus-visible:ring-primary/20 sm:h-[52px] sm:text-lg"
+                />
+                <div class="absolute right-2">
+                  <label class="sr-only" for="scope-currency">Currency</label>
+                  <div class="relative flex items-center">
+                    <select
+                      id="scope-currency"
+                      [ngModel]="currency()"
+                      (ngModelChange)="currency.set($event)"
+                      class="cursor-pointer appearance-none rounded-lg bg-white py-1.5 pr-7 pl-3 font-body text-sm leading-6 font-semibold text-on-surface outline-none transition-colors hover:bg-surface-container-lowest focus-visible:ring-2 focus-visible:ring-primary/20 sm:text-base"
+                    >
+                      @for (item of currencies; track item) {
+                        <option [value]="item">{{ item }}</option>
+                      }
+                    </select>
+                    <span
+                      class="pointer-events-none absolute right-2 inline-flex size-3.5 items-center justify-center text-on-surface"
+                      aria-hidden="true"
+                    >
+                      <hugeicons-icon
+                        [icon]="arrowDownIcon"
+                        [size]="14"
+                        color="currentColor"
+                        [strokeWidth]="2"
+                      />
+                    </span>
+                  </div>
+                </div>
+              </div>
+            } @else {
+              <div class="flex w-full flex-col gap-3 sm:flex-row">
+                <div class="relative flex min-w-0 flex-1 items-center">
+                  <span
+                    class="pointer-events-none absolute left-4 font-body text-base leading-7 font-bold text-on-surface/40 sm:text-lg"
+                    aria-hidden="true"
+                  >
+                    $
+                  </span>
+                  <input
+                    type="text"
+                    inputmode="numeric"
+                    [ngModel]="budgetMin()"
+                    (ngModelChange)="onDigitsInput($event, 'budgetMin')"
+                    placeholder="Min"
+                    aria-label="Minimum budget"
+                    class="h-12 w-full rounded-lg border-0 bg-white pr-4 pl-9 font-body text-base leading-7 text-on-surface outline-none placeholder:text-on-surface/30 focus-visible:ring-2 focus-visible:ring-primary/20 sm:h-[52px] sm:text-lg"
+                  />
+                </div>
+                <div class="relative flex min-w-0 flex-1 items-center">
+                  <span
+                    class="pointer-events-none absolute left-4 font-body text-base leading-7 font-bold text-on-surface/40 sm:text-lg"
+                    aria-hidden="true"
+                  >
+                    $
+                  </span>
+                  <input
+                    type="text"
+                    inputmode="numeric"
+                    [ngModel]="budgetMax()"
+                    (ngModelChange)="onDigitsInput($event, 'budgetMax')"
+                    placeholder="Max"
+                    aria-label="Maximum budget"
+                    class="h-12 w-full rounded-lg border-0 bg-white pr-24 pl-9 font-body text-base leading-7 text-on-surface outline-none placeholder:text-on-surface/30 focus-visible:ring-2 focus-visible:ring-primary/20 sm:h-[52px] sm:text-lg"
+                  />
+                  <div class="absolute right-2">
+                    <label class="sr-only" for="scope-currency-range">Currency</label>
+                    <div class="relative flex items-center">
+                      <select
+                        id="scope-currency-range"
+                        [ngModel]="currency()"
+                        (ngModelChange)="currency.set($event)"
+                        class="cursor-pointer appearance-none rounded-lg bg-white py-1.5 pr-7 pl-3 font-body text-sm leading-6 font-semibold text-on-surface outline-none transition-colors hover:bg-surface-container-lowest focus-visible:ring-2 focus-visible:ring-primary/20 sm:text-base"
+                      >
+                        @for (item of currencies; track item) {
+                          <option [value]="item">{{ item }}</option>
+                        }
+                      </select>
+                      <span
+                        class="pointer-events-none absolute right-2 inline-flex size-3.5 items-center justify-center text-on-surface"
+                        aria-hidden="true"
+                      >
+                        <hugeicons-icon
+                          [icon]="arrowDownIcon"
+                          [size]="14"
+                          color="currentColor"
+                          [strokeWidth]="2"
+                        />
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+
+            <div class="flex w-full items-center gap-2 opacity-80">
+              <span
+                class="inline-flex size-3.5 shrink-0 items-center justify-center text-on-surface-variant"
+                aria-hidden="true"
+              >
+                <hugeicons-icon
+                  [icon]="infoIcon"
+                  [size]="14"
+                  color="currentColor"
+                  [strokeWidth]="1.75"
+                />
+              </span>
+              <p class="font-body text-xs leading-5 text-on-surface-variant sm:text-sm">
+                You can negotiate this cost and create milestones when you chat with your freelancer.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Duration -->
+        <div class="flex w-full flex-col gap-3">
+          <div class="flex items-center gap-2">
+            <span
+              class="inline-flex size-5 items-center justify-center text-on-surface"
+              aria-hidden="true"
+            >
+              <hugeicons-icon
+                [icon]="calendarDurationIcon"
+                [size]="20"
+                color="currentColor"
+                [strokeWidth]="1.75"
+              />
+            </span>
+            <h3 class="font-display text-base leading-6 font-bold text-on-surface sm:text-lg sm:leading-7">
+              Estimated Duration
+            </h3>
+          </div>
+          <div class="relative flex items-center">
+            <label class="sr-only" for="scope-duration">Estimated duration</label>
+            <select
+              id="scope-duration"
+              [ngModel]="duration()"
+              (ngModelChange)="duration.set($event)"
+              class="h-12 w-full cursor-pointer appearance-none rounded-lg border-0 bg-white pr-10 pl-4 font-body text-sm leading-6 text-on-surface outline-none focus-visible:ring-2 focus-visible:ring-primary/20 sm:text-base"
+            >
+              @for (item of durations; track item) {
+                <option [value]="item">{{ item }}</option>
+              }
+            </select>
+            <span
+              class="pointer-events-none absolute right-4 inline-flex size-3.5 items-center justify-center text-on-surface"
+              aria-hidden="true"
+            >
+              <hugeicons-icon
+                [icon]="arrowDownIcon"
+                [size]="14"
+                color="currentColor"
+                [strokeWidth]="2"
+              />
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <app-step-footer-actions
+    class="mt-auto w-full"
+    [continueDisabled]="!canContinue()"
+    (back)="onBack()"
+    (continue)="onContinue()"
+  />
+</section>

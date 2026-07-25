@@ -1,0 +1,233 @@
+<section class="relative z-10 flex w-full flex-1 flex-col">
+  <div
+    class="mx-auto flex w-full max-w-[1512px] flex-1 flex-col items-center gap-6 px-5 py-5 sm:gap-7 sm:px-10 sm:py-6 lg:px-20 lg:py-7"
+  >
+    <!-- Progress: 4 steps, second active -->
+    <div class="flex w-full items-start justify-center gap-2" aria-label="Progress">
+      @for (step of totalSteps; track step) {
+        <div class="relative h-1 flex-1 overflow-hidden rounded-full bg-surface-container-high">
+          <div
+            class="absolute inset-0 rounded-full bg-primary-container"
+            [class.opacity-40]="step < currentStep"
+            [class.taxonomy-progress-fill]="step === currentStep"
+            [class.opacity-0]="step > currentStep"
+          ></div>
+        </div>
+      }
+    </div>
+
+    <div class="taxonomy-content flex w-full max-w-[1100px] flex-col items-center">
+      <div class="mb-6 flex w-full flex-col items-center gap-3 text-center sm:mb-8 sm:gap-4">
+        <h1
+          class="font-display text-[28px] leading-9 font-bold tracking-[-0.03em] text-on-surface sm:text-[36px] sm:leading-[44px] lg:text-[40px] lg:leading-[48px] lg:tracking-[-1px]"
+        >
+          What area does your project fall under?
+        </h1>
+        <p class="font-body text-sm leading-6 text-on-surface-variant sm:text-base">
+          This helps us show your post to the right freelancers.
+        </p>
+      </div>
+
+      @if (errorMessage()) {
+        <p class="mb-4 w-full text-center text-sm text-error" role="alert">{{ errorMessage() }}</p>
+      }
+
+      <div
+        class="flex w-full flex-col gap-8 rounded-[24px] bg-[#f6f6f6] p-5 sm:gap-10 sm:rounded-[28px] sm:p-7 lg:p-8"
+      >
+        <!-- SELECT INDUSTRY -->
+        <section class="flex w-full flex-col gap-4">
+          <h2 class="font-mono text-sm font-medium tracking-[0.04em] text-[#777587] uppercase sm:text-base">
+            Select Industry
+          </h2>
+
+          <div
+            class="flex h-12 w-full max-w-[544px] items-center gap-2 rounded-[18px] bg-white px-4"
+          >
+            <span class="inline-flex size-5 shrink-0 text-on-surface-variant" aria-hidden="true">
+              <hugeicons-icon
+                [icon]="searchIcon"
+                [size]="20"
+                color="currentColor"
+                [strokeWidth]="1.75"
+              />
+            </span>
+            <input
+              type="search"
+              class="min-w-0 flex-1 bg-transparent font-body text-sm text-on-surface outline-none placeholder:text-[#464555]/70 sm:text-base"
+              placeholder="Search categories..."
+              [ngModel]="categoryQuery()"
+              (ngModelChange)="categoryQuery.set($event)"
+            />
+          </div>
+
+          @if (loadingCategories()) {
+            <p class="font-body text-sm text-on-surface-variant">Loading categories…</p>
+          } @else {
+            <div class="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
+              @for (cat of filteredCategories(); track cat.id) {
+                <button
+                  type="button"
+                  class="flex cursor-pointer items-center gap-3 rounded-[18px] bg-white p-4 text-left transition-shadow hover:shadow-sm sm:p-5"
+                  [class.ring-2]="isCategorySelected(cat.id)"
+                  [class.ring-primary-container]="isCategorySelected(cat.id)"
+                  (click)="selectCategory(cat.id)"
+                >
+                  <span
+                    class="inline-flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary-container text-white"
+                  >
+                    <hugeicons-icon
+                      [icon]="cat.icon"
+                      [size]="22"
+                      color="currentColor"
+                      [strokeWidth]="1.75"
+                    />
+                  </span>
+                  <span class="font-body text-base leading-7 font-semibold text-[#0c0c0c] sm:text-lg">
+                    {{ cat.label }}
+                  </span>
+                </button>
+              } @empty {
+                <p class="font-body text-sm text-on-surface-variant sm:col-span-2 lg:col-span-4">
+                  No categories match your search.
+                </p>
+              }
+            </div>
+          }
+        </section>
+
+        <!-- SELECT SPECIALTIES -->
+        <section class="flex w-full flex-col gap-4">
+          <h2 class="font-mono text-sm font-medium tracking-[0.04em] text-[#777587] uppercase sm:text-base">
+            Select Specialties
+          </h2>
+
+          <div
+            class="rounded-xl border border-[rgba(229,225,228,0.2)] bg-white px-4 py-4"
+          >
+            <input
+              type="search"
+              class="w-full bg-transparent font-body text-sm text-on-surface outline-none placeholder:text-[rgba(119,117,135,0.5)] sm:text-base"
+              placeholder="e.g., Frontend, Backend, API Integration"
+              [disabled]="!selectedCategoryId()"
+              [ngModel]="specialtyQuery()"
+              (ngModelChange)="specialtyQuery.set($event)"
+            />
+          </div>
+
+          @if (!selectedCategoryId()) {
+            <p class="font-body text-sm text-on-surface-variant">
+              Select an industry first to see specialties.
+            </p>
+          } @else if (loadingSpecialties()) {
+            <p class="font-body text-sm text-on-surface-variant">Loading specialties…</p>
+          } @else {
+            <div class="flex flex-col gap-3 pt-1">
+              <p class="font-body text-sm font-medium text-[#777587]">Popular for this category:</p>
+              <div class="flex flex-wrap gap-2">
+                @for (item of filteredSpecialties(); track item.id) {
+                  <button
+                    type="button"
+                    class="cursor-pointer rounded-[10px] px-5 py-1.5 font-display text-base transition-colors sm:px-6 sm:text-lg"
+                    [class.bg-primary-container]="isSpecialtySelected(item.id)"
+                    [class.text-white]="isSpecialtySelected(item.id)"
+                    [class.bg-[#e3dfff]]="!isSpecialtySelected(item.id)"
+                    [class.text-primary-container]="!isSpecialtySelected(item.id)"
+                    (click)="toggleSpecialty(item.id)"
+                  >
+                    {{ specialtyLabel(item) }}
+                  </button>
+                } @empty {
+                  <p class="font-body text-sm text-on-surface-variant">
+                    No specialties found for this category.
+                  </p>
+                }
+              </div>
+            </div>
+          }
+        </section>
+
+        <!-- TECHNICAL SKILLS -->
+        <section class="flex w-full flex-col gap-4">
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="font-mono text-sm font-medium tracking-[0.04em] text-[#777587] uppercase sm:text-base">
+              Technical Skills
+            </h2>
+            <span class="font-mono text-sm font-medium text-[#777587]">
+              Selected: {{ selectedSkillIds().length }}/{{ maxSkills }}
+            </span>
+          </div>
+
+          <div
+            class="min-h-[88px] rounded-xl border border-[rgba(229,225,228,0.2)] bg-white p-4"
+          >
+            @if (selectedSkills().length === 0) {
+              <p class="font-body text-sm text-[rgba(119,117,135,0.6)]">
+                Select specialties, then add related skills.
+              </p>
+            } @else {
+              <div class="flex flex-wrap gap-2">
+                @for (skill of selectedSkills(); track skill.id) {
+                  <span
+                    class="inline-flex items-center gap-2 rounded-[10px] bg-primary-container px-4 py-1.5 font-display text-base text-white sm:text-lg"
+                  >
+                    {{ skill.name }}
+                    <button
+                      type="button"
+                      class="inline-flex size-5 cursor-pointer items-center justify-center rounded-full text-white/80 transition-opacity hover:opacity-100"
+                      [attr.aria-label]="'Remove ' + skill.name"
+                      (click)="removeSkill(skill.id)"
+                    >
+                      <hugeicons-icon
+                        [icon]="closeIcon"
+                        [size]="14"
+                        color="currentColor"
+                        [strokeWidth]="2"
+                      />
+                    </button>
+                  </span>
+                }
+              </div>
+            }
+          </div>
+
+          @if (selectedSpecialtyIds().length === 0) {
+            <p class="font-body text-sm text-on-surface-variant">
+              Select at least one specialty to load related skills.
+            </p>
+          } @else if (loadingSkills()) {
+            <p class="font-body text-sm text-on-surface-variant">Loading skills…</p>
+          } @else {
+            <div class="flex flex-col gap-3 pt-1">
+              <p class="font-body text-sm font-medium text-[#777587]">Popular for this category:</p>
+              <div class="flex flex-wrap gap-2">
+                @for (skill of popularSkills(); track skill.id) {
+                  <button
+                    type="button"
+                    class="cursor-pointer rounded-[10px] bg-[#e3dfff] px-5 py-1.5 font-display text-base text-primary-container transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40 sm:px-6 sm:text-lg"
+                    [disabled]="selectedSkillIds().length >= maxSkills"
+                    (click)="toggleSkill(skill.id)"
+                  >
+                    {{ skill.name }}
+                  </button>
+                } @empty {
+                  <p class="font-body text-sm text-on-surface-variant">
+                    No related skills found for the selected specialties.
+                  </p>
+                }
+              </div>
+            </div>
+          }
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <app-step-footer-actions
+    class="mt-auto w-full"
+    continueLabel="Continue"
+    [continueDisabled]="!canContinue()"
+    (back)="onBack()"
+    (continue)="onContinue()"
+  />
+</section>

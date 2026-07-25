@@ -20,11 +20,11 @@ App runs at [http://localhost:4200](http://localhost:4200).
 2. Set **Root Directory** to `freegency` (Vercel will detect `vercel.json` there).
 3. Confirm these settings (they are defined in `freegency/vercel.json`):
 
-   | Setting | Value |
-   |---------|-------|
-   | Build Command | `npm run build` |
+   | Setting          | Value                    |
+   | ---------------- | ------------------------ |
+   | Build Command    | `npm run build`          |
    | Output Directory | `dist/freegency/browser` |
-   | Install Command | `npm install` |
+   | Install Command  | `npm install`            |
 
 4. Deploy.
 

@@ -3,7 +3,11 @@ import { computed, Injectable, inject, signal } from '@angular/core';
 import { Observable, catchError, finalize, map, shareReplay, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import type { AuthResponse, StoredSession, UserMode } from './auth.models';
-import { CLIENT_ONBOARDING_PATH } from './auth.models';
+import {
+  CLIENT_HOME_PATH,
+  CLIENT_ONBOARDING_PATH,
+  DEVELOPER_DASHBOARD_PATH,
+} from './auth.models';
 import { TokenStorageService } from './token-storage.service';
 
 const GOOGLE_AUTH_INTENT_KEY = 'freegency_google_intent';
@@ -76,6 +80,8 @@ export class AuthService {
   ): string {
     if (this.needsClientOnboarding(auth)) return CLIENT_ONBOARDING_PATH;
     if (returnUrl?.startsWith('/')) return returnUrl;
+    if (auth.activeProfileMode === 'Client') return CLIENT_HOME_PATH;
+    if (auth.activeProfileMode === 'Developer') return DEVELOPER_DASHBOARD_PATH;
     return '/';
   }
 
