@@ -1,0 +1,49 @@
+<app-client-app-header></app-client-app-header>
+
+<div class="settings-container">
+
+  <aside class="sidebar">
+
+    <ul>
+  <li routerLink="account" routerLinkActive="active">
+    Account
+  </li>
+
+  <li routerLink="security" routerLinkActive="active">
+    Security
+  </li>
+
+  <li routerLink="notifications" routerLinkActive="active">
+    Notifications
+  </li>
+
+  <li routerLink="payments" routerLinkActive="active">
+    Payments
+  </li>
+
+  <li routerLink="privacy" routerLinkActive="active">
+    Privacy
+  </li>
+
+  <li routerLink="verification" routerLinkActive="active">
+    Identity Verification
+  </li>
+
+  <li routerLink="integrations" routerLinkActive="active">
+    Integrations
+  </li>
+
+  <li class="danger" routerLink="danger-zone" routerLinkActive="active">
+    Danger Zone
+  </li>
+</ul>
+
+  </aside>
+
+  <main class="content">
+
+    <router-outlet></router-outlet>
+
+  </main>
+
+</div>
