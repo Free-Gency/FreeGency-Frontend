@@ -1,63 +1,313 @@
-<div class="account-container">
+<section class="account">
 
-  <h2>Account Settings</h2>
+  <header class="account-header">
+    <h1 class="text-headline-md">Account</h1>
 
-  <div class="profile-image">
+    <p class="text-body-sm text-on-surface-variant">
+      Manage your personal information and hiring interests.
+    </p>
+  </header>
 
-    <img
-      src="https://placehold.co/120x120"
-      alt="Profile">
+  <!-- Tabs -->
+  <div class="account-tabbar" role="tablist">
 
-    <button>Change Photo</button>
+    <button
+      type="button"
+      role="tab"
+      class="account-tab"
+      [class.account-tab--active]="activeTab() === 'profile'"
+      (click)="setTab('profile')">
+
+      Profile
+
+    </button>
+
+    <button
+      type="button"
+      role="tab"
+      class="account-tab"
+      [class.account-tab--active]="activeTab() === 'interests'"
+      (click)="setTab('interests')">
+
+      Interests
+
+    </button>
 
   </div>
 
-  <form>
+  <!-- ================= Profile ================= -->
 
-    <div class="form-group">
+  @if(activeTab() === 'profile'){
 
-      <label>Full Name</label>
+    <div class="account-body">
 
-      <input
-        type="text"
-        placeholder="Enter your name">
+      <div class="card photo-card">
+
+        <div class="photo-left">
+
+          <div class="avatar">
+
+            @if(profile()?.profileImage){
+
+              <img
+                [src]="profile()?.profileImage"
+                alt="Profile Photo">
+
+            }
+
+            @else{
+
+              <span>
+
+                {{ profile()?.firstName?.charAt(0) }}
+                {{ profile()?.lastName?.charAt(0) }}
+
+              </span>
+
+            }
+
+          </div>
+
+          <div>
+
+            <p class="text-body-md font-semibold">
+
+              {{ profile()?.firstName }}
+              {{ profile()?.lastName }}
+
+            </p>
+
+            <p class="text-body-sm text-on-surface-variant">
+
+              {{ profile()?.email }}
+
+            </p>
+
+          </div>
+
+        </div>
+
+        <div class="photo-actions">
+
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="removePhoto()">
+
+            Remove
+
+          </button>
+
+          <label class="btn btn-primary">
+
+            Upload new photo
+
+            <input
+              type="file"
+              accept="image/png,image/jpeg"
+              class="sr-only"
+              (change)="onPhotoSelected($event)" />
+
+          </label>
+
+        </div>
+
+      </div>
+
+      <div class="card info-card">
+
+        <div class="field-row">
+
+          <div class="field">
+
+            <label
+              class="field-label"
+              for="firstName">
+
+              First name
+
+            </label>
+
+            <input
+              id="firstName"
+              type="text"
+              class="input"
+              [value]="profile()?.firstName">
+
+          </div>
+
+          <div class="field">
+
+            <label
+              class="field-label"
+              for="lastName">
+
+              Last name
+
+            </label>
+
+            <input
+              id="lastName"
+              type="text"
+              class="input"
+              [value]="profile()?.lastName">
+
+          </div>
+
+        </div>
+
+        <div class="field">
+
+          <label
+            class="field-label"
+            for="email">
+
+            Email
+
+          </label>
+
+          <input
+            id="email"
+            class="input"
+            [value]="profile()?.email"
+            readonly>
+
+        </div>
+
+        <div class="field">
+
+          <label
+            class="field-label"
+            for="country">
+
+            Country
+
+          </label>
+
+          <input
+            id="country"
+            class="input"
+            [value]="profile()?.country">
+
+        </div>
+
+        <div class="field">
+
+          <label
+            class="field-label"
+            for="bio">
+
+            Bio
+
+          </label>
+
+          <textarea
+            id="bio"
+            rows="3"
+            class="input textarea">{{ profile()?.bio }}</textarea>
+
+        </div>
+
+      </div>
+
+      <div class="save-bar">
+
+        <button
+          type="button"
+          class="btn btn-secondary">
+
+          Cancel
+
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-primary">
+
+          Save Changes
+
+        </button>
+
+      </div>
 
     </div>
 
-    <div class="form-group">
+  }
 
-      <label>Email</label>
+  <!-- ================= Interests ================= -->
 
-      <input
-        type="email"
-        placeholder="Enter your email">
+@if(activeTab() === 'interests'){
+
+<div class="account-body">
+
+  <div class="card interests-card">
+
+    <div class="mb-6">
+      <h2 class="text-lg font-semibold">
+        Your Interests
+      </h2>
+
+      <p class="text-body-sm text-on-surface-variant mt-1">
+        Select the categories you're interested in.
+      </p>
+    </div>
+
+    <div class="flex flex-wrap gap-3">
+
+      @for (category of categories(); track category.id) {
+
+      <button
+        type="button"
+        (click)="toggleInterest(category)"
+        class="flex items-center gap-2 rounded-full border px-4 py-2 transition-all duration-200"
+        [class.bg-indigo-600]="isSelected(category.id)"
+        [class.text-white]="isSelected(category.id)"
+        [class.border-indigo-600]="isSelected(category.id)"
+        [class.bg-white]="!isSelected(category.id)"
+        [class.border-gray-300]="!isSelected(category.id)"
+        [class.hover:bg-gray-100]="!isSelected(category.id)">
+
+        <span class="text-sm">
+
+          {{ isSelected(category.id) ? '✔' : '☐' }}
+
+        </span>
+
+        <span>
+
+          {{ category.nameEn }}
+
+        </span>
+
+      </button>
+
+      }
 
     </div>
 
-    <div class="form-group">
+  </div>
 
-      <label>Phone</label>
+  <div class="save-bar mt-8">
 
-      <input
-        type="text"
-        placeholder="Enter your phone">
+    <button
+      type="button"
+      class="btn btn-secondary">
 
-    </div>
+      Cancel
 
-    <div class="form-group">
+    </button>
 
-      <label>Bio</label>
-
-      <textarea rows="5"></textarea>
-
-    </div>
-
-    <button class="save-btn">
+    <button
+      type="button"
+      class="btn btn-primary"
+      (click)="saveInterests()">
 
       Save Changes
 
     </button>
 
-  </form>
+  </div>
 
 </div>
+
+}
