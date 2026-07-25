@@ -6,7 +6,7 @@ import {
   OnboardingHeaderComponent,
   type OnboardingStep,
 } from '../../../../shared/components/onboarding-header/onboarding-header.component';
-import { ClientAppHeaderComponent } from '../../../../shared/components/client-app-header/client-app-header.component';
+import { ClientViewNavbarComponent } from '../../../../shared/components/client-view-navbar/client-view-navbar.component';
 import { AuthAmbientBgComponent } from '../../components/auth-ambient-bg/auth-ambient-bg.component';
 
 export interface ClientOnboardingRouteData {
@@ -14,8 +14,10 @@ export interface ClientOnboardingRouteData {
   filled?: boolean;
   /** When false, main content is top-aligned (create-project). Default: centered. */
   center?: boolean;
-  /** When true, show the app chrome header instead of the onboarding progress header. */
+  /** When true, show the client view navbar instead of the onboarding progress header. */
   appHeader?: boolean;
+  /** When true, drop layout bottom padding (full-bleed page footers). */
+  flush?: boolean;
 }
 
 @Component({
@@ -23,7 +25,7 @@ export interface ClientOnboardingRouteData {
   imports: [
     AuthAmbientBgComponent,
     OnboardingHeaderComponent,
-    ClientAppHeaderComponent,
+    ClientViewNavbarComponent,
     RouterOutlet,
   ],
   templateUrl: './client-onboarding-layout.component.html',
@@ -44,6 +46,7 @@ export class ClientOnboardingLayoutComponent {
   protected readonly filled = computed(() => !!this.routeData().filled);
   protected readonly center = computed(() => this.routeData().center !== false);
   protected readonly appHeader = computed(() => !!this.routeData().appHeader);
+  protected readonly flush = computed(() => !!this.routeData().flush);
 
   private readChildData(): ClientOnboardingRouteData {
     let snapshot = this.router.routerState.snapshot.root;
@@ -57,6 +60,7 @@ export class ClientOnboardingLayoutComponent {
       filled: data.filled,
       center: data.center,
       appHeader: data.appHeader,
+      flush: data.flush,
     };
   }
 }

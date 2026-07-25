@@ -2,6 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, of } from 'rxjs';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { CLIENT_HOME_PATH } from '../../../../core/auth/auth.models';
 import { ProfileApiService } from '../../data-access/profile-api.service';
 
 @Component({
@@ -29,6 +30,6 @@ export class ClientOnboardingCompleteComponent implements OnInit {
   }
 
   protected goToDashboard(): void {
-    void this.router.navigateByUrl('/');
+    void this.router.navigateByUrl(CLIENT_HOME_PATH);
   }
 }

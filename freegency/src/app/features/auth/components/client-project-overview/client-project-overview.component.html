@@ -1,0 +1,540 @@
+<section class="relative z-10 flex w-full flex-1 flex-col">
+  <div
+    class="mx-auto flex w-full max-w-[1512px] flex-1 flex-col items-center gap-6 px-5 py-5 sm:gap-7 sm:px-10 sm:py-6 lg:px-20 lg:py-7"
+  >
+    <!-- Progress: 3 steps, third active -->
+    <div class="flex w-full items-start justify-center gap-2" aria-label="Progress">
+      @for (step of progressSteps(); track step) {
+        <div class="relative h-1 flex-1 overflow-hidden rounded-full bg-surface-container-high">
+          <div
+            class="absolute inset-0 rounded-full bg-primary-container"
+            [class.opacity-40]="step < currentStep()"
+            [class.overview-progress-fill]="step === currentStep()"
+            [class.opacity-0]="step > currentStep()"
+          ></div>
+        </div>
+      }
+    </div>
+
+    <div class="overview-content flex w-full flex-col items-stretch gap-8 sm:gap-10">
+      <div class="flex w-full flex-col items-center gap-2 text-center sm:gap-3">
+        <h1
+          class="font-display text-[28px] leading-9 font-bold tracking-[-0.03em] text-on-surface sm:text-[40px] sm:leading-[48px] lg:text-[48px] lg:leading-[52.8px] lg:tracking-[-0.96px]"
+        >
+          Project Overview
+        </h1>
+        <p class="font-body text-sm leading-6 text-on-surface-variant sm:text-base sm:leading-7">
+          Take a moment to review your project details.
+        </p>
+      </div>
+
+      <!-- AI draft card -->
+      <div class="flex w-full flex-col gap-6 rounded-[24px] bg-[#f6f6f6] p-6 sm:gap-12 sm:rounded-[32px]">
+        <div class="flex w-full flex-col gap-4">
+          <div class="flex items-center gap-2">
+            <span class="inline-flex size-[18px] items-center justify-center text-[#4130d7]" aria-hidden="true">
+              <hugeicons-icon
+                [icon]="sparklesIcon"
+                [size]="18"
+                color="currentColor"
+                [strokeWidth]="1.75"
+              />
+            </span>
+            <span
+              class="font-mono text-xs leading-[14px] font-medium tracking-[0.1em] text-[#4130d7] uppercase sm:text-sm"
+            >
+              AI-Refined Draft
+            </span>
+          </div>
+
+          <div class="flex w-full flex-col gap-6">
+            <div
+              class="flex items-center justify-between gap-3 border-b border-outline-variant pb-4"
+            >
+              <h2
+                class="font-display text-lg leading-7 font-semibold text-on-surface sm:text-2xl sm:leading-[31px]"
+              >
+                {{ projectTitle() }}
+              </h2>
+              <button
+                type="button"
+                class="inline-flex shrink-0 cursor-pointer items-center gap-1 text-[#4130d7] transition-opacity hover:opacity-80"
+                (click)="openEdit('draft')"
+              >
+                <hugeicons-icon
+                  [icon]="editIcon"
+                  [size]="14"
+                  color="currentColor"
+                  [strokeWidth]="1.75"
+                />
+                <span class="font-mono text-xs leading-[14px] font-medium tracking-[0.02em] sm:text-sm">
+                  Edit
+                </span>
+              </button>
+            </div>
+
+            <div class="flex flex-col gap-4">
+              @for (paragraph of projectParagraphs(); track paragraph) {
+                <p class="font-body text-sm leading-6 text-on-surface sm:text-base sm:leading-[29px] lg:text-lg">
+                  {{ paragraph }}
+                </p>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Detail cards -->
+        <div class="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          @for (card of detailCards(); track card.label) {
+            <div
+              class="flex items-center gap-4 rounded-[18px] bg-white p-6 backdrop-blur-[6px]"
+            >
+              <div
+                class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary-container text-white sm:size-12"
+              >
+                <hugeicons-icon
+                  [icon]="card.icon"
+                  [size]="22"
+                  color="currentColor"
+                  [strokeWidth]="1.75"
+                />
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="font-mono text-xs leading-[14px] font-medium tracking-[0.02em] text-[#b9b9b9] sm:text-sm">
+                  {{ card.label }}
+                </p>
+                <p
+                  class="truncate font-body text-base leading-7 font-semibold text-[#0c0c0c] sm:text-lg sm:leading-[28.8px]"
+                  [class.underline]="card.underline"
+                >
+                  {{ card.value }}
+                </p>
+              </div>
+              <button
+                type="button"
+                class="inline-flex shrink-0 cursor-pointer text-on-surface-variant transition-colors hover:text-on-surface"
+                [attr.aria-label]="'Edit ' + card.label"
+                (click)="openEdit(card.field)"
+              >
+                <hugeicons-icon
+                  [icon]="editIcon"
+                  [size]="18"
+                  color="currentColor"
+                  [strokeWidth]="1.75"
+                />
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Skills -->
+      <div class="flex w-full flex-col gap-3 sm:gap-4">
+        <div class="flex items-center justify-between gap-3">
+          <h2 class="font-display text-lg leading-7 font-semibold text-on-surface sm:text-2xl sm:leading-[31px]">
+            Project Selected Skills
+          </h2>
+          <button
+            type="button"
+            class="inline-flex shrink-0 cursor-pointer items-center gap-1 text-[#4130d7] transition-opacity hover:opacity-80"
+            (click)="openEdit('skills')"
+          >
+            <hugeicons-icon
+              [icon]="editIcon"
+              [size]="14"
+              color="currentColor"
+              [strokeWidth]="1.75"
+            />
+            <span class="font-mono text-xs leading-[14px] font-medium tracking-[0.02em] sm:text-sm">
+              Edit
+            </span>
+          </button>
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+          @if (skills().length === 0) {
+            <p class="font-body text-sm text-on-surface-variant">No skills selected yet.</p>
+          } @else {
+            @for (skill of skills(); track skill) {
+              <span
+                class="inline-flex items-center justify-center rounded-[10px] bg-[#e3dfff] px-4 py-1.5 font-display text-sm leading-6 text-primary-container sm:px-6 sm:text-base sm:leading-[31px] lg:text-xl"
+              >
+                {{ skill }}
+              </span>
+            }
+          }
+        </div>
+      </div>
+
+      <!-- Assets -->
+      <div class="flex w-full flex-col gap-4 sm:gap-6">
+        <h2 class="font-display text-lg leading-7 font-semibold text-on-surface sm:text-2xl sm:leading-[31px]">
+          Project Assets
+        </h2>
+
+        <div
+          class="grid w-full grid-cols-1 gap-4 lg:gap-6"
+          [class.lg:grid-cols-[1fr_minmax(280px,420px)]]="assets().length > 0"
+        >
+          <div
+            class="flex min-h-[200px] flex-col items-center justify-center gap-3 rounded-[24px] border border-dashed border-outline-variant bg-white px-6 py-8 text-center sm:min-h-[240px]"
+          >
+            <div
+              class="flex size-14 items-center justify-center rounded-full bg-primary-container/10 text-primary-container"
+            >
+              <hugeicons-icon
+                [icon]="uploadIcon"
+                [size]="28"
+                color="currentColor"
+                [strokeWidth]="1.5"
+              />
+            </div>
+            <p class="max-w-[280px] font-body text-sm leading-6 text-on-surface-variant sm:text-base">
+              Drag & drop files here or
+              <button
+                type="button"
+                class="cursor-pointer underline decoration-on-surface-variant underline-offset-2"
+                (click)="onBrowseFiles(fileInput)"
+              >
+                browse files
+              </button>
+              from your computer
+            </p>
+            <p class="font-body text-xs text-on-surface-variant/70">Maximum file size: 50MB</p>
+            <input
+              #fileInput
+              type="file"
+              class="hidden"
+              multiple
+              (change)="onFilesSelected($event)"
+            />
+          </div>
+
+          @if (assets().length > 0) {
+            <div class="flex flex-col gap-2">
+              @for (asset of assets(); track asset.id) {
+                <div
+                  class="flex items-center gap-3 rounded-2xl bg-[#f6f6f6] p-3 sm:rounded-[24px] sm:p-4"
+                >
+                  <div
+                    class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white text-on-surface"
+                  >
+                    <hugeicons-icon
+                      [icon]="assetIcon(asset.kind)"
+                      [size]="22"
+                      color="currentColor"
+                      [strokeWidth]="1.5"
+                    />
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate font-body text-sm font-medium text-on-surface sm:text-base">
+                      {{ asset.name }}
+                    </p>
+                    <p class="font-body text-xs text-on-surface-variant">{{ asset.size }}</p>
+                  </div>
+                  <button
+                    type="button"
+                    class="inline-flex shrink-0 cursor-pointer text-error transition-opacity hover:opacity-80"
+                    [attr.aria-label]="'Remove ' + asset.name"
+                    (click)="onRemoveAsset(asset.id)"
+                  >
+                    <hugeicons-icon
+                      [icon]="deleteIcon"
+                      [size]="20"
+                      color="currentColor"
+                      [strokeWidth]="1.75"
+                    />
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <app-step-footer-actions
+    class="mt-auto w-full"
+    continueLabel="Post this job"
+    secondaryLabel="Save Draft"
+    [continueDisabled]="submitting()"
+    [continueLoading]="submitting()"
+    [continueLoadingLabel]="'Saving...'"
+    [secondaryDisabled]="submitting()"
+    (back)="onBack()"
+    (continue)="onPostJob()"
+    (secondary)="onSaveDraft()"
+  />
+
+
+  @if (editField(); as field) {
+    <div
+      class="overview-edit-backdrop"
+      (click)="closeEdit()"
+      role="presentation"
+    >
+      <div
+        class="overview-edit-panel"
+        (click)="$event.stopPropagation()"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="editDialogTitle()"
+      >
+        <div class="flex shrink-0 items-center justify-between gap-3 border-b border-outline-variant px-5 py-4 sm:px-6">
+          <h3 class="min-w-0 font-display text-lg font-semibold text-on-surface sm:text-xl">
+            {{ editDialogTitle() }}
+          </h3>
+          <button
+            type="button"
+            class="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
+            aria-label="Close"
+            (click)="closeEdit()"
+          >
+            <hugeicons-icon
+              [icon]="closeIcon"
+              [size]="18"
+              color="currentColor"
+              [strokeWidth]="1.75"
+            />
+          </button>
+        </div>
+
+        <div class="overview-edit-body px-5 py-4 sm:px-6 sm:py-5">
+          @if (editError()) {
+            <p class="mb-4 font-body text-sm text-error">{{ editError() }}</p>
+          }
+
+          @if (editLoading() && (field === 'category' || field === 'specialty' || field === 'skills')) {
+            <p class="font-body text-sm text-on-surface-variant">Loading…</p>
+          }
+
+          @switch (field) {
+            @case ('draft') {
+              <div class="flex flex-col gap-4">
+                <label class="flex flex-col gap-2">
+                  <span class="font-mono text-xs font-medium tracking-[0.02em] text-on-surface-variant">
+                    Title
+                  </span>
+                  <input
+                    type="text"
+                    class="rounded-xl border border-outline-variant bg-white px-4 py-3 font-body text-base text-on-surface outline-none focus:border-primary-container"
+                    [ngModel]="editTitle()"
+                    (ngModelChange)="editTitle.set($event)"
+                  />
+                </label>
+                <label class="flex flex-col gap-2">
+                  <span class="font-mono text-xs font-medium tracking-[0.02em] text-on-surface-variant">
+                    Description
+                  </span>
+                  <textarea
+                    rows="8"
+                    class="resize-y rounded-xl border border-outline-variant bg-white px-4 py-3 font-body text-base leading-7 text-on-surface outline-none focus:border-primary-container"
+                    [ngModel]="editDescription()"
+                    (ngModelChange)="editDescription.set($event)"
+                  ></textarea>
+                </label>
+              </div>
+            }
+
+            @case ('category') {
+              @if (!editLoading()) {
+                <div class="flex flex-col gap-2">
+                  @for (cat of categories(); track cat.id) {
+                    <button
+                      type="button"
+                      class="flex cursor-pointer items-center justify-between rounded-xl border px-4 py-3 text-left transition-colors"
+                      [class.border-primary-container]="editCategoryId() === cat.id"
+                      [class.bg-primary-container/5]="editCategoryId() === cat.id"
+                      [class.border-outline-variant]="editCategoryId() !== cat.id"
+                      (click)="editCategoryId.set(cat.id)"
+                    >
+                      <span class="font-body text-base text-on-surface">{{ categoryLabel(cat) }}</span>
+                    </button>
+                  } @empty {
+                    <p class="font-body text-sm text-on-surface-variant">No categories available.</p>
+                  }
+                </div>
+              }
+            }
+
+            @case ('budget') {
+              <div class="flex flex-col gap-5">
+                <div class="inline-flex rounded-full bg-surface-container-high p-1">
+                  <button
+                    type="button"
+                    class="flex-1 cursor-pointer rounded-full px-4 py-2 font-body text-sm transition-colors"
+                    [class.bg-white]="editIsFixedPrice()"
+                    [class.text-on-surface]="editIsFixedPrice()"
+                    [class.shadow-sm]="editIsFixedPrice()"
+                    [class.text-on-surface-variant]="!editIsFixedPrice()"
+                    (click)="setEditFixedPrice(true)"
+                  >
+                    Fixed Price
+                  </button>
+                  <button
+                    type="button"
+                    class="flex-1 cursor-pointer rounded-full px-4 py-2 font-body text-sm transition-colors"
+                    [class.bg-white]="!editIsFixedPrice()"
+                    [class.text-on-surface]="!editIsFixedPrice()"
+                    [class.shadow-sm]="!editIsFixedPrice()"
+                    [class.text-on-surface-variant]="editIsFixedPrice()"
+                    (click)="setEditFixedPrice(false)"
+                  >
+                    Price Range
+                  </button>
+                </div>
+
+                <label class="flex flex-col gap-2">
+                  <span class="font-mono text-xs font-medium tracking-[0.02em] text-on-surface-variant">
+                    Currency
+                  </span>
+                  <select
+                    class="rounded-xl border border-outline-variant bg-white px-4 py-3 font-body text-base outline-none focus:border-primary-container"
+                    [ngModel]="editCurrency()"
+                    (ngModelChange)="editCurrency.set($event)"
+                  >
+                    @for (c of currencies; track c) {
+                      <option [value]="c">{{ c }}</option>
+                    }
+                  </select>
+                </label>
+
+                @if (editIsFixedPrice()) {
+                  <label class="flex flex-col gap-2">
+                    <span class="font-mono text-xs font-medium tracking-[0.02em] text-on-surface-variant">
+                      Amount
+                    </span>
+                    <input
+                      type="number"
+                      min="1"
+                      class="rounded-xl border border-outline-variant bg-white px-4 py-3 font-body text-base outline-none focus:border-primary-container"
+                      [ngModel]="editBudgetFixed()"
+                      (ngModelChange)="editBudgetFixed.set($event)"
+                    />
+                  </label>
+                } @else {
+                  <div class="grid grid-cols-2 gap-3">
+                    <label class="flex flex-col gap-2">
+                      <span class="font-mono text-xs font-medium tracking-[0.02em] text-on-surface-variant">
+                        Min
+                      </span>
+                      <input
+                        type="number"
+                        min="1"
+                        class="rounded-xl border border-outline-variant bg-white px-4 py-3 font-body text-base outline-none focus:border-primary-container"
+                        [ngModel]="editBudgetMin()"
+                        (ngModelChange)="editBudgetMin.set($event)"
+                      />
+                    </label>
+                    <label class="flex flex-col gap-2">
+                      <span class="font-mono text-xs font-medium tracking-[0.02em] text-on-surface-variant">
+                        Max
+                      </span>
+                      <input
+                        type="number"
+                        min="1"
+                        class="rounded-xl border border-outline-variant bg-white px-4 py-3 font-body text-base outline-none focus:border-primary-container"
+                        [ngModel]="editBudgetMax()"
+                        (ngModelChange)="editBudgetMax.set($event)"
+                      />
+                    </label>
+                  </div>
+                }
+              </div>
+            }
+
+            @case ('specialty') {
+              @if (!editLoading()) {
+                <p class="mb-3 font-body text-sm text-on-surface-variant">
+                  Select one or more specialties for this project.
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  @for (item of availableSpecialties(); track item.id) {
+                    <button
+                      type="button"
+                      class="cursor-pointer rounded-[10px] px-4 py-2 font-display text-sm transition-colors sm:text-base"
+                      [class.bg-primary-container]="isSpecialtySelected(item.id)"
+                      [class.text-white]="isSpecialtySelected(item.id)"
+                      [class.bg-[#e3dfff]]="!isSpecialtySelected(item.id)"
+                      [class.text-primary-container]="!isSpecialtySelected(item.id)"
+                      (click)="toggleSpecialty(item.id)"
+                    >
+                      {{ specialtyLabel(item) }}
+                    </button>
+                  } @empty {
+                    <p class="font-body text-sm text-on-surface-variant">
+                      No specialties found for this category.
+                    </p>
+                  }
+                </div>
+              }
+            }
+
+            @case ('timeline') {
+              <div class="flex flex-col gap-2">
+                @for (duration of durations; track duration) {
+                  <button
+                    type="button"
+                    class="flex cursor-pointer items-center rounded-xl border px-4 py-3 text-left transition-colors"
+                    [class.border-primary-container]="editDuration() === duration"
+                    [class.bg-primary-container/5]="editDuration() === duration"
+                    [class.border-outline-variant]="editDuration() !== duration"
+                    (click)="editDuration.set(duration)"
+                  >
+                    <span class="font-body text-base text-on-surface">{{ duration }}</span>
+                  </button>
+                }
+              </div>
+            }
+
+            @case ('skills') {
+              @if (!editLoading()) {
+                <p class="mb-3 font-body text-sm text-on-surface-variant">
+                  Skills related to your selected specialties. Tap to add or remove.
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  @for (skill of availableSkills(); track skill.id) {
+                    <button
+                      type="button"
+                      class="cursor-pointer rounded-[10px] px-4 py-2 font-display text-sm transition-colors sm:text-base"
+                      [class.bg-primary-container]="isSkillSelected(skill.id)"
+                      [class.text-white]="isSkillSelected(skill.id)"
+                      [class.bg-[#e3dfff]]="!isSkillSelected(skill.id)"
+                      [class.text-primary-container]="!isSkillSelected(skill.id)"
+                      (click)="toggleSkill(skill.id)"
+                    >
+                      {{ skill.name }}
+                    </button>
+                  } @empty {
+                    <p class="font-body text-sm text-on-surface-variant">
+                      No related skills found for the selected specialties.
+                    </p>
+                  }
+                </div>
+              }
+            }
+          }
+        </div>
+
+        <div class="flex shrink-0 items-center justify-end gap-3 border-t border-outline-variant px-5 py-4 sm:px-6">
+          <button
+            type="button"
+            class="cursor-pointer rounded-full px-5 py-2.5 font-body text-sm text-on-surface-variant transition-colors hover:bg-surface-container-high"
+            (click)="closeEdit()"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="cursor-pointer rounded-full bg-primary-container px-5 py-2.5 font-body text-sm font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+            [disabled]="!canSaveEdit()"
+            (click)="saveEdit()"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</section>

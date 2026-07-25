@@ -1,0 +1,38 @@
+@if (toastService.toasts().length > 0) {
+  <div
+    class="pointer-events-none fixed bottom-6 left-1/2 z-[200] flex w-[min(92vw,420px)] -translate-x-1/2 flex-col gap-2"
+    aria-live="polite"
+  >
+    @for (toast of toastService.toasts(); track toast.id) {
+      <div
+        class="toast-item pointer-events-auto flex items-center gap-3 rounded-2xl px-4 py-3 shadow-[0_12px_40px_rgba(39,37,63,0.18)]"
+        [class.bg-[#16a34a]]="toast.variant === 'success'"
+        [class.bg-error]="toast.variant === 'error'"
+        role="status"
+      >
+        <span class="inline-flex size-5 shrink-0 items-center justify-center text-white" aria-hidden="true">
+          <hugeicons-icon
+            [icon]="variantIcon(toast.variant)"
+            [size]="20"
+            color="currentColor"
+            [strokeWidth]="1.75"
+          />
+        </span>
+        <p class="min-w-0 flex-1 font-body text-sm leading-5 text-white">{{ toast.text }}</p>
+        <button
+          type="button"
+          class="inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+          aria-label="Dismiss"
+          (click)="toastService.dismiss(toast.id)"
+        >
+          <hugeicons-icon
+            [icon]="closeIcon"
+            [size]="14"
+            color="currentColor"
+            [strokeWidth]="2"
+          />
+        </button>
+      </div>
+    }
+  </div>
+}

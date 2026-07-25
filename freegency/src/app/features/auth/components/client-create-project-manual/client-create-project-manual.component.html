@@ -1,0 +1,100 @@
+<section class="relative z-10 flex w-full flex-1 flex-col">
+  <div
+    class="mx-auto flex w-full max-w-[1512px] flex-1 flex-col items-center gap-6 px-5 py-5 sm:gap-7 sm:px-10 sm:py-6 lg:px-20 lg:py-7"
+  >
+    <!-- Progress: 4 steps, first active -->
+    <div class="flex w-full items-start justify-center gap-2" aria-label="Progress">
+      @for (step of totalSteps; track step) {
+        <div class="relative h-1 flex-1 overflow-hidden rounded-full bg-surface-container-high">
+          <div
+            class="absolute inset-0 rounded-full bg-primary-container"
+            [class.manual-progress-fill]="step === currentStep"
+            [class.opacity-0]="step !== currentStep"
+          ></div>
+        </div>
+      }
+    </div>
+
+    <div class="manual-content flex w-full max-w-[700px] flex-col items-center">
+      <div class="mb-6 flex w-full flex-col items-center gap-3 text-center sm:mb-8 sm:gap-4">
+        <h1
+          class="font-display text-[28px] leading-9 font-bold tracking-[-0.03em] text-on-surface sm:text-[36px] sm:leading-[44px] lg:text-[40px] lg:leading-[48px] lg:tracking-[-1px]"
+        >
+          Name and describe your project
+        </h1>
+        <p class="font-body text-sm leading-6 text-on-surface-variant sm:text-base sm:leading-6">
+          Keep it clear and detailed. This helps your job post stand out to the right talent.
+        </p>
+      </div>
+
+      <div
+        class="flex w-full flex-col gap-2 rounded-[20px] bg-[#f6f6f6] p-5 sm:p-7 lg:p-8"
+      >
+        <!-- Project Title -->
+        <div class="flex w-full flex-col gap-4">
+          <div class="flex w-full flex-col gap-2">
+            <label
+              for="manual-project-title"
+              class="font-mono text-base leading-4 font-bold text-on-surface"
+            >
+              Project Title
+            </label>
+            <input
+              id="manual-project-title"
+              type="text"
+              [ngModel]="title()"
+              (ngModelChange)="onTitleInput($event)"
+              placeholder="e.g., Designer for high-end SaaS platform"
+              class="w-full rounded-lg border border-[rgba(229,225,228,0.2)] bg-white px-4 py-4 font-body text-sm text-on-surface outline-none placeholder:text-[rgba(119,117,135,0.5)] focus-visible:ring-2 focus-visible:ring-primary/20 sm:text-base"
+            />
+          </div>
+
+          <div class="flex w-full flex-col gap-2">
+            <p class="font-mono text-sm leading-[14px] font-medium tracking-[0.02em] text-[#777587]">
+              Example Titles
+            </p>
+            <ul
+              class="list-disc space-y-0 pl-[21px] font-mono text-sm leading-5 font-medium tracking-[0.02em] text-[#777587]"
+            >
+              @for (example of exampleTitles; track example) {
+                <li>{{ example }}</li>
+              }
+            </ul>
+          </div>
+        </div>
+
+        <!-- Project Description -->
+        <div class="flex w-full flex-col gap-2 pt-5">
+          <label
+            for="manual-project-description"
+            class="font-mono text-base leading-4 font-bold text-on-surface"
+          >
+            Project Description
+          </label>
+          <textarea
+            id="manual-project-description"
+            rows="6"
+            [ngModel]="description()"
+            (ngModelChange)="onDescriptionInput($event)"
+            [attr.maxlength]="maxChars"
+            placeholder="e.g., We are looking for a designer to help us refresh our FinTech mobile app. The goal is to improve the onboarding experience and create a more modern, Gen Z-friendly aesthetic..."
+            class="min-h-[170px] w-full resize-y rounded-lg border border-[rgba(229,225,228,0.2)] bg-white px-4 py-4 font-body text-sm leading-6 text-on-surface outline-none placeholder:text-[#6b7280] focus-visible:ring-2 focus-visible:ring-primary/20 sm:min-h-[180px] sm:text-base"
+          ></textarea>
+          <div class="flex w-full justify-end pt-1.5">
+            <span class="font-mono text-sm leading-[14px] font-medium tracking-[0.02em] text-[#777587]">
+              {{ charCountLabel() }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <app-step-footer-actions
+    class="mt-auto w-full"
+    continueLabel="Continue"
+    [continueDisabled]="!canContinue()"
+    (back)="onBack()"
+    (continue)="onContinue()"
+  />
+</section>

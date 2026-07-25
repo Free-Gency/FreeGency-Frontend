@@ -1,0 +1,49 @@
+<footer
+  class="w-full border-t border-outline-variant/50 bg-white px-5 pt-4 pb-6 sm:px-10 sm:pt-5 sm:pb-8 lg:px-[60px]"
+>
+  <div class="flex w-full items-center justify-between gap-4">
+    @if (showBack()) {
+      <button
+        type="button"
+        class="inline-flex cursor-pointer items-center gap-2.5 text-on-surface-variant transition-colors hover:text-on-surface"
+        (click)="back.emit()"
+      >
+        <span class="inline-flex size-3.5 items-center justify-center overflow-hidden" aria-hidden="true">
+          <hugeicons-icon
+            [icon]="arrowLeftIcon"
+            [size]="14"
+            color="currentColor"
+            [strokeWidth]="2"
+          />
+        </span>
+        <span class="font-display text-sm leading-4 font-semibold sm:text-base">
+          {{ backLabel() }}
+        </span>
+      </button>
+    } @else {
+      <span></span>
+    }
+
+    <div class="flex shrink-0 items-center gap-2 sm:gap-3">
+      @if (secondaryLabel(); as secondaryText) {
+        <button
+          type="button"
+          class="inline-flex h-11 min-w-[120px] cursor-pointer items-center justify-center rounded-full bg-[#f6f6f6] px-5 font-display text-sm leading-4 font-semibold text-on-surface transition-[background-color,transform] duration-150 hover:bg-surface-container-high active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:h-12 sm:min-w-[140px] sm:text-base"
+          [disabled]="secondaryDisabled()"
+          (click)="secondary.emit()"
+        >
+          {{ secondaryText }}
+        </button>
+      }
+
+      <button
+        type="button"
+        class="inline-flex h-11 min-w-[140px] cursor-pointer items-center justify-center rounded-full bg-primary-container px-5 font-display text-sm leading-4 font-semibold text-on-primary shadow-[0_1px_1px_rgba(0,0,0,0.05)] transition-[background-color,transform] duration-150 hover:bg-primary active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:h-12 sm:min-w-[180px] sm:text-base"
+        [disabled]="continueDisabled() || continueLoading()"
+        (click)="continue.emit()"
+      >
+        {{ continueLoading() ? continueLoadingLabel() : continueLabel() }}
+      </button>
+    </div>
+  </div>
+</footer>
