@@ -17,7 +17,6 @@ import {
   ShoppingCart01Icon,
   SourceCodeIcon,
 } from '@hugeicons/core-free-icons';
-import { CLIENT_ONBOARDING_PATH } from '../../../../core/auth/auth.models';
 import { extractApiError } from '../../../../core/http/api-error';
 import { StepFooterActionsComponent } from '../../../../shared/components/step-footer-actions/step-footer-actions.component';
 import { CategoriesApiService, type CategoryDto } from '../../data-access/categories-api.service';
@@ -27,6 +26,7 @@ import {
   type TaxonomySkill,
   type TaxonomySpecialty,
 } from '../../data-access/taxonomy-api.service';
+import { createProjectBasePath, isOnboardingCreateFlow } from '../../utils/create-project-paths';
 
 const MAX_SKILLS = 10;
 
@@ -84,6 +84,7 @@ export class ClientCreateProjectManualTaxonomyComponent implements OnInit {
   protected readonly maxSkills = MAX_SKILLS;
   protected readonly currentStep = 2;
   protected readonly totalSteps = [1, 2, 3, 4] as const;
+  protected readonly showStepProgress = !isOnboardingCreateFlow(this.router);
 
   protected readonly categories = signal<CategoryCard[]>([]);
   protected readonly categoryQuery = signal('');
@@ -147,7 +148,7 @@ export class ClientCreateProjectManualTaxonomyComponent implements OnInit {
 
   ngOnInit(): void {
     if (!this.draftState.hasDraft()) {
-      void this.router.navigate([`${CLIENT_ONBOARDING_PATH}/create-project/manual`]);
+      void this.router.navigate([`${createProjectBasePath(this.router)}/manual`]);
       return;
     }
 
@@ -204,7 +205,7 @@ export class ClientCreateProjectManualTaxonomyComponent implements OnInit {
   }
 
   protected onBack(): void {
-    void this.router.navigate([`${CLIENT_ONBOARDING_PATH}/create-project/manual`]);
+    void this.router.navigate([`${createProjectBasePath(this.router)}/manual`]);
   }
 
   protected onContinue(): void {
@@ -232,7 +233,7 @@ export class ClientCreateProjectManualTaxonomyComponent implements OnInit {
       skillNames,
     });
 
-    void this.router.navigate([`${CLIENT_ONBOARDING_PATH}/create-project/manual/scope`]);
+    void this.router.navigate([`${createProjectBasePath(this.router)}/manual/scope`]);
   }
 
   private loadCategories(): void {

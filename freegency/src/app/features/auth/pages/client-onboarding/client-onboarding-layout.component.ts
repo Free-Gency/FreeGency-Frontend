@@ -6,7 +6,6 @@ import {
   OnboardingHeaderComponent,
   type OnboardingStep,
 } from '../../../../shared/components/onboarding-header/onboarding-header.component';
-import { ClientViewNavbarComponent } from '../../../../shared/components/client-view-navbar/client-view-navbar.component';
 import { AuthAmbientBgComponent } from '../../components/auth-ambient-bg/auth-ambient-bg.component';
 
 export interface ClientOnboardingRouteData {
@@ -14,20 +13,13 @@ export interface ClientOnboardingRouteData {
   filled?: boolean;
   /** When false, main content is top-aligned (create-project). Default: centered. */
   center?: boolean;
-  /** When true, show the client view navbar instead of the onboarding progress header. */
-  appHeader?: boolean;
   /** When true, drop layout bottom padding (full-bleed page footers). */
   flush?: boolean;
 }
 
 @Component({
   selector: 'app-client-onboarding-layout',
-  imports: [
-    AuthAmbientBgComponent,
-    OnboardingHeaderComponent,
-    ClientViewNavbarComponent,
-    RouterOutlet,
-  ],
+  imports: [AuthAmbientBgComponent, OnboardingHeaderComponent, RouterOutlet],
   templateUrl: './client-onboarding-layout.component.html',
 })
 export class ClientOnboardingLayoutComponent {
@@ -45,7 +37,6 @@ export class ClientOnboardingLayoutComponent {
   protected readonly step = computed(() => this.routeData().step);
   protected readonly filled = computed(() => !!this.routeData().filled);
   protected readonly center = computed(() => this.routeData().center !== false);
-  protected readonly appHeader = computed(() => !!this.routeData().appHeader);
   protected readonly flush = computed(() => !!this.routeData().flush);
 
   private readChildData(): ClientOnboardingRouteData {
@@ -59,7 +50,6 @@ export class ClientOnboardingLayoutComponent {
       step: data.step ?? 1,
       filled: data.filled,
       center: data.center,
-      appHeader: data.appHeader,
       flush: data.flush,
     };
   }

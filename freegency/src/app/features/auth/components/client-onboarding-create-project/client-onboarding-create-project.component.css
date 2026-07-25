@@ -1,18 +1,8 @@
-.create-project-heading,
-.create-project-cards,
-.create-project-tip {
-  animation: create-project-fade-up 0.5s ease-out both;
+section {
+  animation: first-job-fade-up 0.45s ease-out both;
 }
 
-.create-project-cards {
-  animation-delay: 0.08s;
-}
-
-.create-project-tip {
-  animation-delay: 0.16s;
-}
-
-@keyframes create-project-fade-up {
+@keyframes first-job-fade-up {
   from {
     opacity: 0;
     transform: translateY(10px);
@@ -25,9 +15,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .create-project-heading,
-  .create-project-cards,
-  .create-project-tip {
+  section {
     animation: none;
   }
 }

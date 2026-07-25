@@ -1,9 +1,9 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { CLIENT_ONBOARDING_PATH } from '../../../../core/auth/auth.models';
 import { StepFooterActionsComponent } from '../../../../shared/components/step-footer-actions/step-footer-actions.component';
 import { ProjectDraftStateService } from '../../data-access/project-draft-state.service';
+import { createProjectBasePath, isOnboardingCreateFlow } from '../../utils/create-project-paths';
 
 const MAX_CHARS = 3000;
 
@@ -29,6 +29,7 @@ export class ClientCreateProjectManualComponent implements OnInit {
   protected readonly exampleTitles = EXAMPLE_TITLES;
   protected readonly currentStep = 1;
   protected readonly totalSteps = [1, 2, 3, 4] as const;
+  protected readonly showStepProgress = !isOnboardingCreateFlow(this.router);
 
   protected readonly title = signal('');
   protected readonly description = signal('');
@@ -58,7 +59,7 @@ export class ClientCreateProjectManualComponent implements OnInit {
   }
 
   protected onBack(): void {
-    void this.router.navigate([`${CLIENT_ONBOARDING_PATH}/create-project`]);
+    void this.router.navigate([createProjectBasePath(this.router)]);
   }
 
   protected onContinue(): void {
@@ -81,6 +82,6 @@ export class ClientCreateProjectManualComponent implements OnInit {
       skillNames: existing?.skillNames ?? [],
     });
 
-    void this.router.navigate([`${CLIENT_ONBOARDING_PATH}/create-project/manual/taxonomy`]);
+    void this.router.navigate([`${createProjectBasePath(this.router)}/manual/taxonomy`]);
   }
 }

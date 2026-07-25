@@ -4,11 +4,11 @@ import { Router } from '@angular/router';
 import { HugeiconsIconComponent, type IconSvgObject } from '@hugeicons/angular';
 import { SparklesIcon } from '@hugeicons/core-free-icons';
 import { firstValueFrom } from 'rxjs';
-import { CLIENT_ONBOARDING_PATH } from '../../../../core/auth/auth.models';
 import { extractApiError } from '../../../../core/http/api-error';
 import { StepFooterActionsComponent } from '../../../../shared/components/step-footer-actions/step-footer-actions.component';
 import { ProjectDraftApiService } from '../../data-access/project-draft-api.service';
 import { ProjectDraftStateService } from '../../data-access/project-draft-state.service';
+import { createProjectBasePath, isOnboardingCreateFlow } from '../../utils/create-project-paths';
 
 const MAX_CHARS = 3000;
 
@@ -33,6 +33,7 @@ export class ClientCreateProjectWithAiComponent implements OnInit {
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly currentStep = 1;
   protected readonly totalSteps = 3;
+  protected readonly showStepProgress = !isOnboardingCreateFlow(this.router);
 
   protected readonly charCount = computed(() => this.description().length);
   protected readonly charCountLabel = computed(
@@ -55,7 +56,7 @@ export class ClientCreateProjectWithAiComponent implements OnInit {
   }
 
   protected onBack(): void {
-    void this.router.navigate([`${CLIENT_ONBOARDING_PATH}/create-project`]);
+    void this.router.navigate([createProjectBasePath(this.router)]);
   }
 
   protected async onContinue(): Promise<void> {
@@ -70,7 +71,7 @@ export class ClientCreateProjectWithAiComponent implements OnInit {
     try {
       const draft = await firstValueFrom(this.draftApi.generate(userInput));
       this.draftState.setDraft(draft);
-      await this.router.navigate([`${CLIENT_ONBOARDING_PATH}/create-project/with-ai/scope`]);
+      await this.router.navigate([`${createProjectBasePath(this.router)}/with-ai/scope`]);
     } catch (err) {
       this.errorMessage.set(extractApiError(err, 'Could not generate the AI draft. Please try again.'));
     } finally {

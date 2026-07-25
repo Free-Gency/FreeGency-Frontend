@@ -1,13 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { HugeiconsIconComponent, type IconSvgObject } from '@hugeicons/angular';
-import {
-  ArrowRight01Icon,
-  CheckmarkBadge01Icon,
-  QuillWrite01Icon,
-  SparklesIcon,
-} from '@hugeicons/core-free-icons';
+import { SparklesIcon } from '@hugeicons/core-free-icons';
 import { CLIENT_ONBOARDING_PATH } from '../../../../core/auth/auth.models';
+import { ONBOARDING_CREATE_PROJECT_PATH } from '../../utils/create-project-paths';
 
 @Component({
   selector: 'app-client-onboarding-create-project',
@@ -21,19 +17,17 @@ import { CLIENT_ONBOARDING_PATH } from '../../../../core/auth/auth.models';
 export class ClientOnboardingCreateProjectComponent {
   private readonly router = inject(Router);
 
-  protected readonly loading = signal(false);
-  protected readonly errorMessage = signal<string | null>(null);
-
   protected readonly sparklesIcon = SparklesIcon as IconSvgObject;
-  protected readonly quillIcon = QuillWrite01Icon as IconSvgObject;
-  protected readonly arrowRightIcon = ArrowRight01Icon as IconSvgObject;
-  protected readonly checkBadgeIcon = CheckmarkBadge01Icon as IconSvgObject;
 
   protected onGenerateWithAi(): void {
-    void this.router.navigate([`${CLIENT_ONBOARDING_PATH}/create-project/with-ai`]);
+    void this.router.navigate([`${ONBOARDING_CREATE_PROJECT_PATH}/with-ai`]);
   }
 
   protected onWithoutAi(): void {
-    void this.router.navigate([`${CLIENT_ONBOARDING_PATH}/create-project/manual`]);
+    void this.router.navigate([`${ONBOARDING_CREATE_PROJECT_PATH}/manual`]);
+  }
+
+  protected onSkip(): void {
+    void this.router.navigate([`${CLIENT_ONBOARDING_PATH}/complete`]);
   }
 }

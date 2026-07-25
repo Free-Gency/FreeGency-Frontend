@@ -1,160 +1,53 @@
 <section
-  class="relative z-10 mx-auto flex w-full max-w-[920px] flex-1 flex-col items-center px-5 py-8 sm:px-8 sm:py-12 lg:px-10"
+  class="relative z-10 mx-auto flex w-full max-w-[986px] flex-1 flex-col items-center justify-center px-5 py-8 sm:px-10 sm:py-12"
 >
-  <!-- Heading -->
-  <div
-    class="create-project-heading mb-8 flex w-full max-w-[672px] flex-col items-center gap-4 text-center sm:mb-12 sm:gap-6"
-  >
-    <h1
-      class="font-display text-[28px] leading-9 font-bold text-on-surface sm:text-[40px] sm:leading-[48px] lg:text-[48px]"
-    >
-      How would you like to create
-      <br class="hidden sm:inline" />
-      your project?
-    </h1>
-    <p class="font-body text-base leading-[26px] text-on-surface-variant sm:text-lg sm:leading-[29px]">
-      Choose the method that fits your workflow.
-    </p>
-  </div>
-
-  @if (errorMessage()) {
-    <p class="mb-4 w-full text-center text-sm text-error" role="alert">{{ errorMessage() }}</p>
-  }
-
-  <!-- Choice cards -->
-  <div
-    class="create-project-cards mb-6 flex w-full flex-col items-stretch gap-4 sm:mb-8 sm:gap-5 lg:flex-row lg:items-stretch"
-  >
-    <!-- AI card (featured) -->
-    <button
-      type="button"
-      class="group relative flex flex-1 cursor-pointer flex-col overflow-hidden rounded-[24px] border border-primary-container bg-[linear-gradient(145deg,#ffffff_0%,#f7f6ff_100%)] p-5 text-left transition-[transform,box-shadow,border-color] duration-200 hover:shadow-level-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50 sm:p-6 lg:max-w-[440px]"
-      [disabled]="loading()"
-      (click)="onGenerateWithAi()"
-    >
-      <div
-        class="pointer-events-none absolute -right-12 -bottom-12 size-64 rounded-full bg-primary/5 blur-[40px]"
-        aria-hidden="true"
-      ></div>
-
-      <div class="relative flex flex-col">
-        <div
-          class="mb-3 flex size-10 items-center justify-center rounded-[12px] bg-primary-container sm:mb-4"
-        >
-          <hugeicons-icon
-            [icon]="sparklesIcon"
-            [size]="20"
-            color="#ffffff"
-            [strokeWidth]="1.5"
-            aria-hidden="true"
-          />
-        </div>
-
-        <span
-          class="mb-2 inline-flex w-fit items-start rounded-full bg-primary/10 px-2.5 py-1 font-body text-[10px] leading-4 font-bold tracking-[0.04em] text-primary"
-        >
-          RECOMMENDED
-        </span>
-
-        <h2 class="mb-2 font-display text-lg leading-7 text-on-surface sm:text-xl">
-          Generate with AI
-        </h2>
-
-        <p class="mb-4 max-w-[300px] font-body text-[13px] leading-[20px] text-on-surface-variant sm:text-sm sm:leading-[22px]">
-          Describe your vision in a few words. Our AI handles the technical details, skill mapping,
-          and market rate estimation.
-        </p>
-      </div>
-
-      <div
-        class="relative mt-auto flex items-center justify-between border-t border-primary/10 pt-4"
+  <div class="flex w-full flex-col items-center">
+    <div class="mb-10 flex w-full max-w-[720px] flex-col items-center gap-4 text-center sm:mb-12 sm:gap-4">
+      <h1
+        class="font-display text-[28px] leading-9 font-bold tracking-[-0.02em] text-on-surface sm:text-[40px] sm:leading-[48px] sm:tracking-[-1.2px] lg:text-[48px] lg:leading-[57.6px]"
       >
-        <span class="font-body text-sm leading-6 font-bold text-primary">
-          {{ loading() ? 'Saving...' : 'Start AI Drafting' }}
-        </span>
-        <span class="inline-flex size-4 items-center justify-center overflow-hidden text-primary">
-          <hugeicons-icon
-            [icon]="arrowRightIcon"
-            [size]="16"
-            color="currentColor"
-            [strokeWidth]="2"
-            aria-hidden="true"
-          />
-        </span>
-      </div>
-    </button>
+        Let's start with your first job post
+      </h1>
+      <p class="max-w-[560px] font-body text-sm leading-6 text-on-surface-variant sm:text-base">
+        It's the fastest route to matching with the right talent.
+        <br class="hidden sm:inline" />
+        Just describe what you need and let AI handle the post instantly.
+      </p>
+    </div>
 
-    <!-- Manual card -->
-    <button
-      type="button"
-      class="group relative flex flex-1 cursor-pointer flex-col overflow-hidden rounded-[24px] border border-outline-variant bg-white p-5 text-left transition-[transform,box-shadow,border-color] duration-200 hover:shadow-level-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-outline disabled:cursor-not-allowed disabled:opacity-50 sm:p-6 lg:max-w-[440px]"
-      [disabled]="loading()"
-      (click)="onWithoutAi()"
-    >
-      <div class="relative flex flex-col">
-        <div
-          class="mb-3 flex size-10 items-center justify-center overflow-hidden rounded-[12px] border border-outline-variant bg-surface-container-high sm:mb-4"
-        >
-          <hugeicons-icon
-            [icon]="quillIcon"
-            [size]="20"
-            color="currentColor"
-            [strokeWidth]="1.5"
-            class="text-on-surface"
-            aria-hidden="true"
-          />
-        </div>
-
-        <h2 class="mb-2 pt-0 font-display text-lg leading-7 text-on-surface sm:pt-[28px] sm:text-xl">
-          Write manually
-        </h2>
-
-        <p class="mb-4 max-w-[300px] font-body text-[13px] leading-[20px] text-on-surface-variant sm:text-sm sm:leading-[22px]">
-          Start with a clean slate. Use our step-by-step templates to define precise requirements
-          and custom deliverables.
-        </p>
-      </div>
-
-      <div
-        class="relative mt-auto flex items-center justify-between border-t border-outline-variant pt-4"
+    <div class="flex w-full max-w-[560px] flex-col items-center gap-6">
+      <button
+        type="button"
+        class="inline-flex h-[50px] w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-primary-container px-4 font-display text-lg leading-4 font-semibold text-on-primary shadow-[0_1px_1px_rgba(0,0,0,0.05)] transition-[background-color,transform] duration-150 hover:bg-primary active:scale-[0.98] sm:h-[55px]"
+        (click)="onGenerateWithAi()"
       >
-        <span class="font-body text-sm leading-6 font-bold text-on-surface-variant">
-          {{ loading() ? 'Saving...' : 'Create from scratch' }}
-        </span>
-        <span
-          class="inline-flex size-4 items-center justify-center overflow-hidden text-on-surface-variant"
-        >
-          <hugeicons-icon
-            [icon]="arrowRightIcon"
-            [size]="16"
-            color="currentColor"
-            [strokeWidth]="2"
-            aria-hidden="true"
-          />
-        </span>
-      </div>
-    </button>
-  </div>
-
-  <!-- Pro tip -->
-  <div class="create-project-tip flex w-full items-start justify-center">
-    <div
-      class="inline-flex max-w-full items-center gap-3 self-stretch rounded-full border border-secondary-container/20 bg-secondary-container/10 px-5 py-2.5 sm:px-6 sm:py-3"
-    >
-      <span class="inline-flex size-[18px] shrink-0 items-center justify-center overflow-hidden text-secondary">
         <hugeicons-icon
-          [icon]="checkBadgeIcon"
-          [size]="18"
+          [icon]="sparklesIcon"
+          [size]="22"
           color="currentColor"
           [strokeWidth]="1.5"
           aria-hidden="true"
         />
-      </span>
-      <p
-        class="font-body text-sm leading-5 font-medium text-on-secondary-container"
+        Generate with AI
+      </button>
+
+      <button
+        type="button"
+        class="cursor-pointer font-display text-base font-semibold text-on-surface-variant underline underline-offset-2 transition-colors hover:text-on-surface"
+        (click)="onWithoutAi()"
       >
-        AI-assisted descriptions attract 85% more qualified applicants.
-      </p>
+        I'll do it without AI
+      </button>
     </div>
+  </div>
+
+  <div class="mt-auto flex w-full justify-center pt-16 sm:pt-24">
+    <button
+      type="button"
+      class="cursor-pointer font-display text-base font-semibold text-[#777587] transition-colors hover:text-on-surface-variant"
+      (click)="onSkip()"
+    >
+      Skip for now
+    </button>
   </div>
 </section>

@@ -1,0 +1,145 @@
+<section
+  class="relative z-10 mx-auto flex w-full max-w-[920px] flex-1 flex-col items-center px-5 py-8 sm:px-8 sm:py-12 lg:px-10"
+>
+    <div
+      class="create-project-heading mb-8 flex w-full max-w-[672px] flex-col items-center gap-4 text-center sm:mb-12 sm:gap-6"
+    >
+      <h1
+        class="font-display text-[28px] leading-9 font-bold text-on-surface sm:text-[40px] sm:leading-[48px] lg:text-[48px]"
+      >
+        How would you like to create
+        <br class="hidden sm:inline" />
+        your project?
+      </h1>
+      <p class="font-body text-base leading-[26px] text-on-surface-variant sm:text-lg sm:leading-[29px]">
+        Choose the method that fits your workflow.
+      </p>
+    </div>
+
+    <div
+      class="create-project-cards mb-6 flex w-full flex-col items-stretch gap-4 sm:mb-8 sm:gap-5 lg:flex-row lg:items-stretch"
+    >
+      <button
+        type="button"
+        class="group relative flex flex-1 cursor-pointer flex-col overflow-hidden rounded-[24px] border border-primary-container bg-[linear-gradient(145deg,#ffffff_0%,#f7f6ff_100%)] p-5 text-left transition-[transform,box-shadow,border-color] duration-200 hover:shadow-level-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:p-6 lg:max-w-[440px]"
+        (click)="onGenerateWithAi()"
+      >
+        <div
+          class="pointer-events-none absolute -right-12 -bottom-12 size-64 rounded-full bg-primary/5 blur-[40px]"
+          aria-hidden="true"
+        ></div>
+
+        <div class="relative flex flex-col">
+          <div class="mb-3 flex size-10 items-center justify-center rounded-[12px] bg-primary-container sm:mb-4">
+            <hugeicons-icon
+              [icon]="sparklesIcon"
+              [size]="20"
+              color="#ffffff"
+              [strokeWidth]="1.5"
+              aria-hidden="true"
+            />
+          </div>
+
+          <span
+            class="mb-2 inline-flex w-fit items-start rounded-full bg-primary/10 px-2.5 py-1 font-body text-[10px] leading-4 font-bold tracking-[0.04em] text-primary"
+          >
+            RECOMMENDED
+          </span>
+
+          <h2 class="mb-2 font-display text-lg leading-7 text-on-surface sm:text-xl">
+            Generate with AI
+          </h2>
+
+          <p
+            class="mb-4 max-w-[300px] font-body text-[13px] leading-[20px] text-on-surface-variant sm:text-sm sm:leading-[22px]"
+          >
+            Describe your vision in a few words. Our AI handles the technical details, skill mapping,
+            and market rate estimation.
+          </p>
+        </div>
+
+        <div class="relative mt-auto flex items-center justify-between border-t border-primary/10 pt-4">
+          <span class="font-body text-sm leading-6 font-bold text-primary">Start AI Drafting</span>
+          <span class="inline-flex size-4 items-center justify-center overflow-hidden text-primary">
+            <hugeicons-icon
+              [icon]="arrowRightIcon"
+              [size]="16"
+              color="currentColor"
+              [strokeWidth]="2"
+            />
+          </span>
+        </div>
+      </button>
+
+      <button
+        type="button"
+        class="group relative flex flex-1 cursor-pointer flex-col overflow-hidden rounded-[24px] border border-outline-variant bg-white p-5 text-left transition-[transform,box-shadow,border-color] duration-200 hover:shadow-level-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-outline sm:p-6 lg:max-w-[440px]"
+        (click)="onWithoutAi()"
+      >
+        <div class="relative flex flex-col">
+          <div
+            class="mb-3 flex size-10 items-center justify-center overflow-hidden rounded-[12px] border border-outline-variant bg-surface-container-high sm:mb-4"
+          >
+            <hugeicons-icon
+              [icon]="quillIcon"
+              [size]="20"
+              color="currentColor"
+              [strokeWidth]="1.5"
+              class="text-on-surface"
+              aria-hidden="true"
+            />
+          </div>
+
+          <h2 class="mb-2 pt-0 font-display text-lg leading-7 text-on-surface sm:pt-[28px] sm:text-xl">
+            Write manually
+          </h2>
+
+          <p
+            class="mb-4 max-w-[300px] font-body text-[13px] leading-[20px] text-on-surface-variant sm:text-sm sm:leading-[22px]"
+          >
+            Start with a clean slate. Use our step-by-step templates to define precise requirements
+            and custom deliverables.
+          </p>
+        </div>
+
+        <div
+          class="relative mt-auto flex items-center justify-between border-t border-outline-variant pt-4"
+        >
+          <span class="font-body text-sm leading-6 font-bold text-on-surface-variant">
+            Create from scratch
+          </span>
+          <span
+            class="inline-flex size-4 items-center justify-center overflow-hidden text-on-surface-variant"
+          >
+            <hugeicons-icon
+              [icon]="arrowRightIcon"
+              [size]="16"
+              color="currentColor"
+              [strokeWidth]="2"
+            />
+          </span>
+        </div>
+      </button>
+    </div>
+
+    <div class="create-project-tip flex w-full items-start justify-center">
+      <div
+        class="inline-flex max-w-full items-center gap-3 self-stretch rounded-full border border-secondary-container/20 bg-secondary-container/10 px-5 py-2.5 sm:px-6 sm:py-3"
+      >
+        <span
+          class="inline-flex size-[18px] shrink-0 items-center justify-center overflow-hidden text-secondary"
+        >
+          <hugeicons-icon
+            [icon]="checkBadgeIcon"
+            [size]="18"
+            color="currentColor"
+            [strokeWidth]="1.5"
+            aria-hidden="true"
+          />
+        </span>
+        <p class="font-body text-sm leading-5 font-medium text-on-secondary-container">
+          AI-assisted descriptions attract 85% more qualified applicants.
+        </p>
+      </div>
+  </div>
+</section>

@@ -16,16 +16,11 @@ import {
   SecurityCheckIcon,
   SparklesIcon,
 } from '@hugeicons/core-free-icons';
-import {
-  CLIENT_HOME_PATH,
-  CLIENT_ONBOARDING_PATH,
-} from '../../../../core/auth/auth.models';
-import { AuthService } from '../../../../core/auth/auth.service';
+import { CLIENT_HOME_PATH, CLIENT_ONBOARDING_PATH } from '../../../../core/auth/auth.models';
 import { extractApiError } from '../../../../core/http/api-error';
 import { StepFooterActionsComponent } from '../../../../shared/components/step-footer-actions/step-footer-actions.component';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
 import { CategoriesApiService, type CategoryDto } from '../../data-access/categories-api.service';
-import { ProfileApiService } from '../../data-access/profile-api.service';
 import { ProjectFilesApiService } from '../../data-access/project-files-api.service';
 import {
   PROJECT_CURRENCIES,
@@ -42,17 +37,16 @@ import {
   type TaxonomySkill,
   type TaxonomySpecialty,
 } from '../../data-access/taxonomy-api.service';
+import {
+  createProjectBasePath,
+  isOnboardingCreateFlow,
+} from '../../utils/create-project-paths';
 import { firstValueFrom } from 'rxjs';
 
 const MAX_ASSET_BYTES = 50 * 1024 * 1024;
 
 export type OverviewEditField =
-  | 'draft'
-  | 'category'
-  | 'budget'
-  | 'specialty'
-  | 'timeline'
-  | 'skills';
+  'draft' | 'category' | 'budget' | 'specialty' | 'timeline' | 'skills';
 
 export interface OverviewDetailCard {
   label: string;
@@ -86,8 +80,6 @@ export class ClientProjectOverviewComponent implements OnInit {
   private readonly taxonomyApi = inject(TaxonomyApiService);
   private readonly projectsApi = inject(ProjectsApiService);
   private readonly projectFilesApi = inject(ProjectFilesApiService);
-  private readonly profileApi = inject(ProfileApiService);
-  private readonly auth = inject(AuthService);
   private readonly toast = inject(ToastService);
 
   protected readonly sparklesIcon = SparklesIcon as IconSvgObject;
@@ -99,12 +91,11 @@ export class ClientProjectOverviewComponent implements OnInit {
   protected readonly docIcon = File01Icon as IconSvgObject;
   protected readonly closeIcon = Cancel01Icon as IconSvgObject;
 
-  protected readonly currentStep = computed(() =>
-    this.draftState.mode() === 'manual' ? 4 : 3,
-  );
+  protected readonly currentStep = computed(() => (this.draftState.mode() === 'manual' ? 4 : 3));
   protected readonly progressSteps = computed(() =>
     this.draftState.mode() === 'manual' ? [1, 2, 3, 4] : [1, 2, 3],
   );
+  protected readonly showStepProgress = !isOnboardingCreateFlow(this.router);
   protected readonly currencies = PROJECT_CURRENCIES;
   protected readonly durations = PROJECT_DURATIONS;
   protected readonly assets = signal<OverviewAsset[]>([]);
@@ -234,8 +225,8 @@ export class ClientProjectOverviewComponent implements OnInit {
     if (!this.draftState.hasDraft()) {
       const start =
         this.draftState.mode() === 'manual'
-          ? `${CLIENT_ONBOARDING_PATH}/create-project/manual`
-          : `${CLIENT_ONBOARDING_PATH}/create-project/with-ai`;
+          ? `${createProjectBasePath(this.router)}/manual`
+          : `${createProjectBasePath(this.router)}/with-ai`;
       void this.router.navigate([start]);
     }
   }
@@ -408,10 +399,11 @@ export class ClientProjectOverviewComponent implements OnInit {
   }
 
   protected onBack(): void {
+    const base = createProjectBasePath(this.router);
     const scope =
       this.draftState.mode() === 'manual'
-        ? `${CLIENT_ONBOARDING_PATH}/create-project/manual/scope`
-        : `${CLIENT_ONBOARDING_PATH}/create-project/with-ai/scope`;
+        ? `${base}/manual/scope`
+        : `${base}/with-ai/scope`;
     void this.router.navigate([scope]);
   }
 
@@ -443,15 +435,6 @@ export class ClientProjectOverviewComponent implements OnInit {
         await firstValueFrom(this.projectsApi.publish(projectId));
       }
 
-      if (!this.auth.session()?.hasCompletedOnboarding) {
-        try {
-          await firstValueFrom(this.profileApi.completeOnboarding());
-          this.auth.markOnboardingComplete();
-        } catch {
-          // Project creation succeeded; onboarding sync can be retried later.
-        }
-      }
-
       this.draftState.clear();
       this.assets.set([]);
 
@@ -461,7 +444,10 @@ export class ClientProjectOverviewComponent implements OnInit {
           : 'Your project has been saved as a draft.',
       );
 
-      await this.router.navigateByUrl(CLIENT_HOME_PATH);
+      const nextPath = isOnboardingCreateFlow(this.router)
+        ? `${CLIENT_ONBOARDING_PATH}/complete`
+        : CLIENT_HOME_PATH;
+      await this.router.navigateByUrl(nextPath);
     } catch (err) {
       this.toast.error(
         extractApiError(
@@ -551,13 +537,7 @@ export class ClientProjectOverviewComponent implements OnInit {
 
     const min = Number(this.editBudgetMin());
     const max = Number(this.editBudgetMax());
-    return (
-      Number.isFinite(min) &&
-      Number.isFinite(max) &&
-      min > 0 &&
-      max > 0 &&
-      max >= min
-    );
+    return Number.isFinite(min) && Number.isFinite(max) && min > 0 && max > 0 && max >= min;
   }
 
   private loadCategories(): void {
@@ -642,8 +622,7 @@ export class ClientProjectOverviewComponent implements OnInit {
     const selected = this.availableSpecialties().filter((s) => selectedIds.includes(s.id));
     const previous = this.draft()?.specialtyIds ?? [];
     const changed =
-      previous.length !== selectedIds.length ||
-      selectedIds.some((id) => !previous.includes(id));
+      previous.length !== selectedIds.length || selectedIds.some((id) => !previous.includes(id));
 
     this.draftState.patchDraft({
       specialtyIds: selected.map((s) => s.id),

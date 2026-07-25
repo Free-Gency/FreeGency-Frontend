@@ -131,6 +131,7 @@ export class ClientOnboardingProfileComponent implements OnInit, OnDestroy {
         }),
       );
       this.auth.patchSessionNames(firstName, lastName);
+      await this.markOnboardingStarted();
       await this.router.navigate([`${CLIENT_ONBOARDING_PATH}/interests`]);
     } catch (err) {
       this.loading.set(false);
@@ -138,9 +139,22 @@ export class ClientOnboardingProfileComponent implements OnInit, OnDestroy {
     }
   }
 
-  protected onSkip(): void {
+  protected async onSkip(): Promise<void> {
     if (this.loading()) return;
+    await this.markOnboardingStarted();
     void this.router.navigate([`${CLIENT_ONBOARDING_PATH}/interests`]);
+  }
+
+  /** Mark onboarding complete on first Continue/Skip so the user isn't forced back later. */
+  private async markOnboardingStarted(): Promise<void> {
+    if (this.auth.session()?.hasCompletedOnboarding) return;
+
+    try {
+      await firstValueFrom(this.profileApi.completeOnboarding());
+      this.auth.markOnboardingComplete();
+    } catch {
+      // Non-blocking: user can still continue the flow.
+    }
   }
 
   private hydrateFromSession(): void {

@@ -38,7 +38,7 @@ export const authRoutes: Routes = [
           import('./components/client-onboarding-create-project/client-onboarding-create-project.component').then(
             (m) => m.ClientOnboardingCreateProjectComponent,
           ),
-        data: { step: 3, center: false, appHeader: true },
+        data: { step: 3 },
       },
       {
         path: 'create-project/with-ai',
@@ -46,7 +46,7 @@ export const authRoutes: Routes = [
           import('./components/client-create-project-with-ai/client-create-project-with-ai.component').then(
             (m) => m.ClientCreateProjectWithAiComponent,
           ),
-        data: { step: 3, center: false, appHeader: true, flush: true },
+        data: { step: 3, center: false, flush: true },
       },
       {
         path: 'create-project/with-ai/scope',
@@ -54,7 +54,7 @@ export const authRoutes: Routes = [
           import('./components/client-project-scope/client-project-scope.component').then(
             (m) => m.ClientProjectScopeComponent,
           ),
-        data: { step: 3, center: false, appHeader: true, flush: true },
+        data: { step: 3, center: false, flush: true },
       },
       {
         path: 'create-project/with-ai/overview',
@@ -62,7 +62,7 @@ export const authRoutes: Routes = [
           import('./components/client-project-overview/client-project-overview.component').then(
             (m) => m.ClientProjectOverviewComponent,
           ),
-        data: { step: 3, center: false, appHeader: true, flush: true },
+        data: { step: 3, center: false, flush: true },
       },
       {
         path: 'create-project/manual',
@@ -70,7 +70,7 @@ export const authRoutes: Routes = [
           import('./components/client-create-project-manual/client-create-project-manual.component').then(
             (m) => m.ClientCreateProjectManualComponent,
           ),
-        data: { step: 3, center: false, appHeader: true, flush: true },
+        data: { step: 3, center: false, flush: true },
       },
       {
         path: 'create-project/manual/taxonomy',
@@ -78,7 +78,7 @@ export const authRoutes: Routes = [
           import(
             './components/client-create-project-manual-taxonomy/client-create-project-manual-taxonomy.component'
           ).then((m) => m.ClientCreateProjectManualTaxonomyComponent),
-        data: { step: 3, center: false, appHeader: true, flush: true },
+        data: { step: 3, center: false, flush: true },
       },
       {
         path: 'create-project/manual/scope',
@@ -86,7 +86,7 @@ export const authRoutes: Routes = [
           import('./components/client-project-scope/client-project-scope.component').then(
             (m) => m.ClientProjectScopeComponent,
           ),
-        data: { step: 3, center: false, appHeader: true, flush: true },
+        data: { step: 3, center: false, flush: true },
       },
       {
         path: 'create-project/manual/overview',
@@ -94,7 +94,7 @@ export const authRoutes: Routes = [
           import('./components/client-project-overview/client-project-overview.component').then(
             (m) => m.ClientProjectOverviewComponent,
           ),
-        data: { step: 3, center: false, appHeader: true, flush: true },
+        data: { step: 3, center: false, flush: true },
       },
       {
         path: 'complete',

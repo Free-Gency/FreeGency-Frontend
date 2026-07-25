@@ -3,15 +3,9 @@
   [class.pb-8]="!flush()"
   [class.sm:pb-12]="!flush()"
 >
-  @if (!appHeader()) {
-    <app-auth-ambient-bg />
-  }
+  <app-auth-ambient-bg />
 
-  @if (appHeader()) {
-    <app-client-view-navbar class="relative z-30 w-full overflow-visible" />
-  } @else {
-    <app-onboarding-header class="relative z-10 w-full" [step]="step()" [filled]="filled()" />
-  }
+  <app-onboarding-header class="relative z-10 w-full" [step]="step()" [filled]="filled()" />
 
   <main
     class="relative z-10 mx-auto flex w-full flex-1 flex-col items-center"

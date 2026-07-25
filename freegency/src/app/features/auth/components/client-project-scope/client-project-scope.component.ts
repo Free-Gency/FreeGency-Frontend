@@ -7,9 +7,9 @@ import {
   Calendar03Icon,
   InformationCircleIcon,
 } from '@hugeicons/core-free-icons';
-import { CLIENT_ONBOARDING_PATH } from '../../../../core/auth/auth.models';
 import { StepFooterActionsComponent } from '../../../../shared/components/step-footer-actions/step-footer-actions.component';
 import { ProjectDraftStateService } from '../../data-access/project-draft-state.service';
+import { createProjectBasePath, isOnboardingCreateFlow } from '../../utils/create-project-paths';
 
 @Component({
   selector: 'app-client-project-scope',
@@ -33,6 +33,7 @@ export class ClientProjectScopeComponent {
   protected readonly progressSteps = computed(() =>
     this.isManual() ? [1, 2, 3, 4] : [1, 2, 3],
   );
+  protected readonly showStepProgress = !isOnboardingCreateFlow(this.router);
 
   /** Matches Project.IsFixedPrice — true = single price, false = min/max range. */
   protected readonly isFixedPrice = signal(true);
@@ -94,11 +95,12 @@ export class ClientProjectScopeComponent {
   }
 
   protected onBack(): void {
-    const base =
+    const base = createProjectBasePath(this.router);
+    const path =
       this.draftState.mode() === 'manual'
-        ? `${CLIENT_ONBOARDING_PATH}/create-project/manual/taxonomy`
-        : `${CLIENT_ONBOARDING_PATH}/create-project/with-ai`;
-    void this.router.navigate([base]);
+        ? `${base}/manual/taxonomy`
+        : `${base}/with-ai`;
+    void this.router.navigate([path]);
   }
 
   protected onContinue(): void {
@@ -113,10 +115,11 @@ export class ClientProjectScopeComponent {
       duration: this.duration(),
     });
 
+    const base = createProjectBasePath(this.router);
     const overview =
       this.draftState.mode() === 'manual'
-        ? `${CLIENT_ONBOARDING_PATH}/create-project/manual/overview`
-        : `${CLIENT_ONBOARDING_PATH}/create-project/with-ai/overview`;
+        ? `${base}/manual/overview`
+        : `${base}/with-ai/overview`;
     void this.router.navigate([overview]);
   }
 }

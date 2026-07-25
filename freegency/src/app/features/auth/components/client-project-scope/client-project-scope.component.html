@@ -2,21 +2,23 @@
   <div
     class="mx-auto flex w-full max-w-[1512px] flex-1 flex-col items-center gap-6 px-5 py-5 sm:gap-7 sm:px-10 sm:py-6 lg:px-20 lg:py-7"
   >
-    <!-- Progress: 3 steps, second active -->
-    <div class="flex w-full items-start justify-center gap-2" aria-label="Progress">
-      @for (step of progressSteps(); track step) {
-        <div
-          class="relative h-1 flex-1 overflow-hidden rounded-full bg-surface-container-high"
-        >
+    <!-- Progress: second active (in-app only; onboarding uses header stepper) -->
+    @if (showStepProgress) {
+      <div class="flex w-full items-start justify-center gap-2" aria-label="Progress">
+        @for (step of progressSteps(); track step) {
           <div
-            class="absolute inset-0 rounded-full bg-primary-container"
-            [class.opacity-40]="step < currentStep()"
-            [class.scope-progress-fill]="step === currentStep()"
-            [class.opacity-0]="step > currentStep()"
-          ></div>
-        </div>
-      }
-    </div>
+            class="relative h-1 flex-1 overflow-hidden rounded-full bg-surface-container-high"
+          >
+            <div
+              class="absolute inset-0 rounded-full bg-primary-container"
+              [class.opacity-40]="step < currentStep()"
+              [class.scope-progress-fill]="step === currentStep()"
+              [class.opacity-0]="step > currentStep()"
+            ></div>
+          </div>
+        }
+      </div>
+    }
 
     <div class="scope-content flex w-full flex-col items-center">
       <div class="mb-6 flex w-full max-w-[700px] flex-col items-center gap-3 text-center sm:mb-8">
