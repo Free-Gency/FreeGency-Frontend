@@ -7,7 +7,7 @@ import { PagedResponse } from '../../../shared/models/PagedResponse';
 import { Category } from '../../../shared/models/Category';
 import { ProfileInterest } from '../../../shared/models/profile-interest';
 import { ApiResponse } from '../../../shared/models/ApiResponse';
-
+import { ProfileInterestsDto } from '../../../shared/models/UpdateClientInterestsRequest';
 @Injectable({
   providedIn: 'root',
 })
@@ -26,9 +26,21 @@ export class SettingService {
     `${this.apiUrl}/api/v1/profiles/client/me/interests`
   );
 }
+replaceClientInterests(dto: ProfileInterestsDto) {
+  return this.http.put(
+    `${this.apiUrl}/api/v1/profiles/client/me/interests`,
+    dto
+  );
+}
 getCategories() {
  return this.http.get<ApiResponse<PagedResponse<Category>>>(
     `${this.apiUrl}/api/v1/categories`
+  );
+}
+updateClientProfile(formData: FormData) {
+  return this.http.put(
+    `${this.apiUrl}/api/v1/profiles/client/me`,
+    formData
   );
 }
 }

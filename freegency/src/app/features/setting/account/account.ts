@@ -1,59 +1,125 @@
-  import { Component, inject, OnInit, signal } from '@angular/core';
-  import { SettingService } from '../Data-Access/setting-service';
-  import { ClientAccount } from '../../../shared/models/client-account.model';
-  import { Category } from '../../../shared/models/Category';
+import {
+  Component,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import {
+  FormBuilder,
+  ReactiveFormsModule,
+  Validators
+} from '@angular/forms';
+
+import { SettingService } from '../Data-Access/setting-service';
+
+import { ClientAccount } from '../../../shared/models/client-account.model';
 import { ProfileInterest } from '../../../shared/models/profile-interest';
-  type AccountTab = 'profile' | 'interests';
+import { Category } from '../../../shared/models/Category';
 
-  @Component({
-    selector: 'app-account',
-    imports: [],
-    templateUrl: './account.html',
-    styleUrl: './account.css',
-  })
-  export class Account implements OnInit {
+type AccountTab = 'profile' | 'interests';
 
-    private settingService = inject(SettingService);
+@Component({
+  selector: 'app-account',
+  standalone: true,
+  imports: [ReactiveFormsModule],
+  templateUrl: './account.html',
+  styleUrl: './account.css',
+})
+export class Account implements OnInit {
 
-    profile = signal<ClientAccount | null>(null);
-    interests = signal<ProfileInterest[]>([]);
-    categories = signal<Category[]>([]);
-    ngOnInit(): void {
-      this.loadProfile();
-    }
+  private settingService = inject(SettingService);
+  private fb = inject(FormBuilder);
 
-    loadProfile(): void {
-      this.settingService.getClientProfile().subscribe({
-        next: (res) => {
-          this.profile.set(res);
-        },
-        error: (err) => {
-          console.error(err);
-        }
-      });
-    }
-    loadInterest():void{
-      this.settingService.getClientInterests().subscribe({
-        next:(res)=>{
-          this.interests.set(res);
-        },
-        error: (err) => {
-          console.error(err);
-        }
-      })
-    }
-    loadCategories() {
-    this.settingService.getCategories().subscribe({
-      next: (res) => {
-         this.categories.set(res.data.items);     
-      }
-    });
-  }
-    readonly activeTab = signal<AccountTab>('profile');
-  
+  profile = signal<ClientAccount | null>(null);
+
+  interests = signal<ProfileInterest[]>([]);
+
+  categories = signal<Category[]>([]);
+
+  readonly activeTab = signal<AccountTab>('profile');
+
   private interestsLoaded = false;
 
-  setTab(tab: AccountTab): void {
+  selectedImage: File | null = null;
+  imageChanged = signal(false);
+
+interestsChanged = signal(false);
+  readonly form = this.fb.group({
+
+    firstName: ['', Validators.required],
+
+    lastName: ['', Validators.required],
+
+    email: [{ value: '', disabled: true }],
+
+    country: [''],
+
+    bio: ['']
+
+  });
+
+  ngOnInit(): void {
+
+    this.loadProfile();
+
+  }
+
+ loadProfile() {
+
+  this.settingService.getClientProfile().subscribe({
+
+    next: profile => {
+
+      this.profile.set(profile);
+
+      this.form.patchValue({
+
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        email: profile.email,
+        country: profile.country ?? '',
+        bio: profile.bio ?? ''
+
+      });
+
+      this.form.markAsPristine();
+
+      this.avatarUrl.set(profile.profileImage ?? null);
+
+      this.imageChanged.set(false);
+
+    }
+
+  });
+
+}
+
+  loadInterest() {
+
+    this.settingService.getClientInterests().subscribe({
+
+      next: (res) =>{ this.interests.set(res)
+      this.interestsChanged.set(false);
+      }
+    });
+
+  }
+
+  loadCategories() {
+
+    this.settingService.getCategories().subscribe({
+
+      next: res => {
+
+        this.categories.set(res.data.items);
+
+      }
+
+    });
+
+  }
+
+  setTab(tab: AccountTab) {
 
     this.activeTab.set(tab);
 
@@ -68,62 +134,193 @@ import { ProfileInterest } from '../../../shared/models/profile-interest';
     }
 
   }
-  isSelected(id: string): boolean {
+
+  isSelected(id: string) {
+
     return this.interests().some(x => x.id === id);
+
   }
-  toggleInterest(category: Category): void {
+
+  toggleInterest(category: Category) {
+    this.interestsChanged.set(true);
 
     if (this.isSelected(category.id)) {
 
-      this.interests.update(interests =>
-        interests.filter(x => x.id !== category.id)
+      this.interests.update(x =>
+
+        x.filter(i => i.id !== category.id)
+
       );
 
       return;
+
     }
 
-    this.interests.update(interests => [
-      ...interests,
+    this.interests.update(x => [
+
+      ...x,
+
       {
+
         id: category.id,
+
         name: category.name,
+
         nameEn: category.nameEn,
+
         imageCover: category.imageCover,
+
         specialties: []
+
       }
+
     ]);
 
   }
-  saveInterests(): void {
+
+  saveInterests() {
 
     const dto = {
+  categoryIds: this.interests().map(x => x.id)
+};
 
-      interestIds: this.interests().map(x => x.id)
+    this.settingService.replaceClientInterests(dto).subscribe({
 
-    };
+    next: () => {
 
-    console.log(dto);
+      this.interestsChanged.set(false);
 
-    // this.settingService.replaceClientInterests(dto).subscribe();
+      this.loadInterest();
+
+    },
+
+    error: err => console.error(err)
+
+  });
 
   }
-    /* ---------- Photo upload (real preview, static everything else) ---------- */
-    readonly avatarUrl = signal<string | null>(null);
-  
-    onPhotoSelected(event: Event): void {
-      const input = event.target as HTMLInputElement;
-      const file = input.files?.[0];
-      if (!file) return;
-  
-      const reader = new FileReader();
-      reader.onload = () => this.avatarUrl.set(reader.result as string);
-      reader.readAsDataURL(file);
-  
-      // reset so selecting the same file twice still fires 'change'
-      input.value = '';
-    }
-  
-    removePhoto(): void {
-      this.avatarUrl.set(null);
-    }
+  resetInterests() {
+
+  this.loadInterest();
+
+  this.interestsChanged.set(false);
+
+}
+ saveProfile() {
+
+  if (this.form.invalid)
+    return;
+
+  const formData = new FormData();
+
+  formData.append(
+    'firstName',
+    this.form.controls.firstName.value!
+  );
+
+  formData.append(
+    'lastName',
+    this.form.controls.lastName.value!
+  );
+
+  formData.append(
+    'country',
+    this.form.controls.country.value ?? ''
+  );
+
+  formData.append(
+    'bio',
+    this.form.controls.bio.value ?? ''
+  );
+
+  if (this.selectedImage) {
+
+    formData.append(
+      'profileImage',
+      this.selectedImage
+    );
+
   }
+
+  this.settingService.updateClientProfile(formData).subscribe({
+
+    next: () => {
+
+      this.selectedImage = null;
+
+      this.imageChanged.set(false);
+
+      this.loadProfile();
+
+    },
+
+    error: err => {
+
+      console.error(err);
+
+    }
+
+  });
+
+}
+
+  readonly avatarUrl = signal<string | null>(null);
+
+ onPhotoSelected(event: Event) {
+
+  const input = event.target as HTMLInputElement;
+
+  const file = input.files?.[0];
+
+  if (!file)
+    return;
+
+  this.selectedImage = file;
+
+  this.imageChanged.set(true);
+
+  const reader = new FileReader();
+
+  reader.onload = () =>
+    this.avatarUrl.set(reader.result as string);
+
+  reader.readAsDataURL(file);
+
+}
+
+  removePhoto() {
+
+  this.avatarUrl.set(null);
+
+  this.selectedImage = null;
+
+  this.imageChanged.set(true);
+
+}
+  resetForm(): void {
+
+  const profile = this.profile();
+
+  if (!profile)
+    return;
+
+  this.form.reset({
+
+    firstName: profile.firstName,
+    lastName: profile.lastName,
+    email: profile.email,
+    country: profile.country ?? '',
+    bio: profile.bio ?? ''
+
+  });
+
+  this.form.markAsPristine();
+
+  this.avatarUrl.set(profile.profileImage ?? null);
+
+  this.selectedImage = null;
+
+  this.imageChanged.set(false);
+
+}
+}

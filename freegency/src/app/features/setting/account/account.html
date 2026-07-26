@@ -1,19 +1,23 @@
 <section class="account">
 
   <header class="account-header">
-    <h1 class="text-headline-md">Account</h1>
+
+    <h1 class="text-headline-md">
+      Account
+    </h1>
 
     <p class="text-body-sm text-on-surface-variant">
       Manage your personal information and hiring interests.
     </p>
+
   </header>
 
   <!-- Tabs -->
+
   <div class="account-tabbar" role="tablist">
 
     <button
       type="button"
-      role="tab"
       class="account-tab"
       [class.account-tab--active]="activeTab() === 'profile'"
       (click)="setTab('profile')">
@@ -24,7 +28,6 @@
 
     <button
       type="button"
-      role="tab"
       class="account-tab"
       [class.account-tab--active]="activeTab() === 'interests'"
       (click)="setTab('interests')">
@@ -39,7 +42,11 @@
 
   @if(activeTab() === 'profile'){
 
+  <form [formGroup]="form">
+
     <div class="account-body">
+
+      <!-- Photo -->
 
       <div class="card photo-card">
 
@@ -47,22 +54,30 @@
 
           <div class="avatar">
 
-            @if(profile()?.profileImage){
+            @if(avatarUrl()){
 
-              <img
-                [src]="profile()?.profileImage"
-                alt="Profile Photo">
+            <img
+              [src]="avatarUrl()!"
+              alt="Profile Photo">
+
+            }
+
+            @else if(profile()?.profileImage){
+
+            <img
+              [src]="profile()?.profileImage!"
+              alt="Profile Photo">
 
             }
 
             @else{
 
-              <span>
+            <span>
 
-                {{ profile()?.firstName?.charAt(0) }}
-                {{ profile()?.lastName?.charAt(0) }}
+              {{ profile()?.firstName?.charAt(0) }}
+              {{ profile()?.lastName?.charAt(0) }}
 
-              </span>
+            </span>
 
             }
 
@@ -72,14 +87,14 @@
 
             <p class="text-body-md font-semibold">
 
-              {{ profile()?.firstName }}
-              {{ profile()?.lastName }}
+              {{ form.controls.firstName.value }}
+              {{ form.controls.lastName.value }}
 
             </p>
 
             <p class="text-body-sm text-on-surface-variant">
 
-              {{ profile()?.email }}
+              {{ form.controls.email.value }}
 
             </p>
 
@@ -104,9 +119,9 @@
 
             <input
               type="file"
-              accept="image/png,image/jpeg"
               class="sr-only"
-              (change)="onPhotoSelected($event)" />
+              accept="image/png,image/jpeg"
+              (change)="onPhotoSelected($event)">
 
           </label>
 
@@ -114,43 +129,39 @@
 
       </div>
 
+      <!-- Information -->
+
       <div class="card info-card">
 
         <div class="field-row">
 
           <div class="field">
 
-            <label
-              class="field-label"
-              for="firstName">
+            <label class="field-label">
 
-              First name
+              First Name
 
             </label>
 
             <input
-              id="firstName"
               type="text"
               class="input"
-              [value]="profile()?.firstName">
+              formControlName="firstName">
 
           </div>
 
           <div class="field">
 
-            <label
-              class="field-label"
-              for="lastName">
+            <label class="field-label">
 
-              Last name
+              Last Name
 
             </label>
 
             <input
-              id="lastName"
               type="text"
               class="input"
-              [value]="profile()?.lastName">
+              formControlName="lastName">
 
           </div>
 
@@ -158,53 +169,47 @@
 
         <div class="field">
 
-          <label
-            class="field-label"
-            for="email">
+          <label class="field-label">
 
             Email
 
           </label>
 
           <input
-            id="email"
             class="input"
-            [value]="profile()?.email"
+            formControlName="email"
             readonly>
 
         </div>
 
         <div class="field">
 
-          <label
-            class="field-label"
-            for="country">
+          <label class="field-label">
 
             Country
 
           </label>
 
           <input
-            id="country"
             class="input"
-            [value]="profile()?.country">
+            formControlName="country">
 
         </div>
 
         <div class="field">
 
-          <label
-            class="field-label"
-            for="bio">
+          <label class="field-label">
 
             Bio
 
           </label>
 
           <textarea
-            id="bio"
-            rows="3"
-            class="input textarea">{{ profile()?.bio }}</textarea>
+            rows="4"
+            class="input textarea"
+            formControlName="bio">
+
+          </textarea>
 
         </div>
 
@@ -214,7 +219,8 @@
 
         <button
           type="button"
-          class="btn btn-secondary">
+          class="btn btn-secondary"
+          (click)="resetForm()">
 
           Cancel
 
@@ -222,7 +228,9 @@
 
         <button
           type="button"
-          class="btn btn-primary">
+          class="btn btn-primary"
+          [disabled]="form.invalid || (!form.dirty && !imageChanged())"
+          (click)="saveProfile()">
 
           Save Changes
 
@@ -232,82 +240,97 @@
 
     </div>
 
+  </form>
+
   }
 
   <!-- ================= Interests ================= -->
 
-@if(activeTab() === 'interests'){
+  @if(activeTab() === 'interests'){
 
-<div class="account-body">
+  <div class="account-body">
 
-  <div class="card interests-card">
+    <div class="card interests-card">
 
-    <div class="mb-6">
-      <h2 class="text-lg font-semibold">
-        Your Interests
-      </h2>
+      <div class="mb-6">
 
-      <p class="text-body-sm text-on-surface-variant mt-1">
-        Select the categories you're interested in.
-      </p>
+        <h2 class="text-lg font-semibold">
+
+          Your Interests
+
+        </h2>
+
+        <p class="text-body-sm text-on-surface-variant mt-1">
+
+          Select the categories you're interested in.
+
+        </p>
+
+      </div>
+
+      <div class="flex flex-wrap gap-3">
+
+        @for (category of categories(); track category.id) {
+
+        <button
+          type="button"
+          (click)="toggleInterest(category)"
+          class="flex items-center gap-2 rounded-full border px-4 py-2 transition-all"
+
+          [class.bg-indigo-600]="isSelected(category.id)"
+          [class.text-white]="isSelected(category.id)"
+          [class.border-indigo-600]="isSelected(category.id)"
+
+          [class.bg-white]="!isSelected(category.id)"
+          [class.border-gray-300]="!isSelected(category.id)"
+          [class.hover:bg-gray-100]="!isSelected(category.id)">
+
+          <span>
+
+            {{ isSelected(category.id) ? '✔' : '☐' }}
+
+          </span>
+
+          <span>
+
+            {{ category.nameEn }}
+
+          </span>
+
+        </button>
+
+        }
+
+      </div>
+
     </div>
 
-    <div class="flex flex-wrap gap-3">
-
-      @for (category of categories(); track category.id) {
+    <div class="save-bar mt-8">
 
       <button
         type="button"
-        (click)="toggleInterest(category)"
-        class="flex items-center gap-2 rounded-full border px-4 py-2 transition-all duration-200"
-        [class.bg-indigo-600]="isSelected(category.id)"
-        [class.text-white]="isSelected(category.id)"
-        [class.border-indigo-600]="isSelected(category.id)"
-        [class.bg-white]="!isSelected(category.id)"
-        [class.border-gray-300]="!isSelected(category.id)"
-        [class.hover:bg-gray-100]="!isSelected(category.id)">
-
-        <span class="text-sm">
-
-          {{ isSelected(category.id) ? '✔' : '☐' }}
-
-        </span>
-
-        <span>
-
-          {{ category.nameEn }}
-
-        </span>
+        class="btn btn-secondary"
+        (click)="resetInterests()"
+        >
+        
+        Cancel
 
       </button>
 
-      }
+      <button
+        type="button"
+        class="btn btn-primary"
+         [disabled]="!interestsChanged()"
+        (click)="saveInterests()">
+
+        Save Changes
+
+      </button>
 
     </div>
 
   </div>
 
-  <div class="save-bar mt-8">
+  }
 
-    <button
-      type="button"
-      class="btn btn-secondary">
-
-      Cancel
-
-    </button>
-
-    <button
-      type="button"
-      class="btn btn-primary"
-      (click)="saveInterests()">
-
-      Save Changes
-
-    </button>
-
-  </div>
-
-</div>
-
-}
+</section>
