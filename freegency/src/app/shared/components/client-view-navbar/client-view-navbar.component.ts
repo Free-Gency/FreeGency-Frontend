@@ -46,8 +46,7 @@ export class ClientViewNavbarComponent implements OnInit {
   protected readonly helpIcon = HelpCircleIcon as IconSvgObject;
   protected readonly logoutIcon = Logout01Icon as IconSvgObject;
 
-  protected readonly defaultAvatar = '/assets/CreateProject/avatar.jpg';
-  protected readonly profileImage = signal<string | null>(null);
+  protected readonly profileImage = this.auth.profileImage;
   protected readonly activeNav = signal('Hire Talent');
   protected readonly searchScope = signal<ClientSearchScope>('Projects');
   protected readonly searchScopeOpen = signal(false);
@@ -63,6 +62,14 @@ export class ClientViewNavbarComponent implements OnInit {
       .filter(Boolean)
       .join(' ');
     return full || 'Your account';
+  });
+
+  protected readonly initials = computed(() => {
+    const session = this.auth.session();
+    const first = session?.firstName?.trim()?.charAt(0) ?? '';
+    const last = session?.lastName?.trim()?.charAt(0) ?? '';
+    const value = `${first}${last}`.toUpperCase();
+    return value || 'FG';
   });
 
   protected readonly email = computed(() => this.auth.session()?.email ?? '');
@@ -83,15 +90,11 @@ export class ClientViewNavbarComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (profile) => {
-          this.profileImage.set(profile.profileImage);
+          this.auth.setProfileImage(profile.profileImage);
           this.auth.patchSessionNames(profile.firstName, profile.lastName);
         },
-        error: () => this.profileImage.set(null),
+        error: () => this.auth.setProfileImage(null),
       });
-  }
-
-  protected avatarSrc(): string {
-    return this.profileImage() || this.defaultAvatar;
   }
 
   protected searchPlaceholder(): string {

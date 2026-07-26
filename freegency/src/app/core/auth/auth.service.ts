@@ -25,6 +25,7 @@ export class AuthService {
 
   readonly session = signal<StoredSession | null>(this.tokens.get());
   readonly isLoggedIn = computed(() => !!this.session());
+  readonly profileImage = signal<string | null>(null);
 
   loginWithGoogle(intent: 'login' | 'signup', mode?: UserMode): void {
     sessionStorage.setItem(GOOGLE_AUTH_INTENT_KEY, intent);
@@ -64,6 +65,10 @@ export class AuthService {
     };
     this.tokens.update(updated);
     this.session.set(updated);
+  }
+
+  setProfileImage(profileImage: string | null): void {
+    this.profileImage.set(profileImage);
   }
 
   needsClientOnboarding(
@@ -138,6 +143,7 @@ export class AuthService {
   clearSession(): void {
     this.tokens.clear();
     this.session.set(null);
+    this.profileImage.set(null);
   }
 
   private toSession(response: AuthResponse): StoredSession {

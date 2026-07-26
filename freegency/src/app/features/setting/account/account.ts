@@ -9,9 +9,12 @@ import {
   ReactiveFormsModule,
   Validators
 } from '@angular/forms';
+import { finalize } from 'rxjs';
 
 import { SettingService } from '../Data-Access/setting-service';
 
+import { AuthService } from '../../../core/auth/auth.service';
+import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ClientAccount } from '../../../shared/models/client-account.model';
 import { ProfileInterest } from '../../../shared/models/profile-interest';
 import { Category } from '../../../shared/models/Category';
@@ -29,8 +32,12 @@ export class Account implements OnInit {
 
   private settingService = inject(SettingService);
   private fb = inject(FormBuilder);
+  private auth = inject(AuthService);
+  private toast = inject(ToastService);
 
   profile = signal<ClientAccount | null>(null);
+  readonly savingProfile = signal(false);
+  readonly savingInterests = signal(false);
 
   interests = signal<ProfileInterest[]>([]);
 
@@ -64,7 +71,7 @@ interestsChanged = signal(false);
 
   }
 
- loadProfile() {
+ loadProfile(refreshImage = false) {
 
   this.settingService.getClientProfile().subscribe({
 
@@ -84,7 +91,17 @@ interestsChanged = signal(false);
 
       this.form.markAsPristine();
 
-      this.avatarUrl.set(profile.profileImage ?? null);
+      const profileImage = refreshImage
+        ? this.withCacheBust(profile.profileImage)
+        : profile.profileImage;
+
+      this.avatarUrl.set(profileImage ?? null);
+      if (profileImage && !profileImage.startsWith('data:') && !profileImage.startsWith('blob:')) {
+        this.auth.setProfileImage(profileImage);
+      } else if (!profileImage) {
+        this.auth.setProfileImage(null);
+      }
+      this.auth.patchSessionNames(profile.firstName, profile.lastName);
 
       this.imageChanged.set(false);
 
@@ -179,22 +196,32 @@ interestsChanged = signal(false);
   }
 
   saveInterests() {
+    if (this.savingInterests())
+      return;
 
     const dto = {
   categoryIds: this.interests().map(x => x.id)
 };
 
-    this.settingService.replaceClientInterests(dto).subscribe({
+    this.savingInterests.set(true);
+
+    this.settingService.replaceClientInterests(dto)
+      .pipe(finalize(() => this.savingInterests.set(false)))
+      .subscribe({
 
     next: () => {
 
       this.interestsChanged.set(false);
 
       this.loadInterest();
+      this.toast.success('Interests updated successfully.');
 
     },
 
-    error: err => console.error(err)
+    error: err => {
+      console.error(err);
+      this.toast.error('Could not update interests. Please try again.');
+    }
 
   });
 
@@ -208,7 +235,7 @@ interestsChanged = signal(false);
 }
  saveProfile() {
 
-  if (this.form.invalid)
+  if (this.form.invalid || this.savingProfile())
     return;
 
   const formData = new FormData();
@@ -242,21 +269,31 @@ interestsChanged = signal(false);
 
   }
 
-  this.settingService.updateClientProfile(formData).subscribe({
+  this.savingProfile.set(true);
+
+  this.settingService.updateClientProfile(formData)
+    .pipe(finalize(() => this.savingProfile.set(false)))
+    .subscribe({
 
     next: () => {
+      const firstName = this.form.controls.firstName.value;
+      const lastName = this.form.controls.lastName.value;
+
+      this.auth.patchSessionNames(firstName, lastName);
 
       this.selectedImage = null;
 
       this.imageChanged.set(false);
 
-      this.loadProfile();
+      this.loadProfile(true);
+      this.toast.success('Profile updated successfully.');
 
     },
 
     error: err => {
 
       console.error(err);
+      this.toast.error('Could not save your changes. Please try again.');
 
     }
 
@@ -323,4 +360,12 @@ interestsChanged = signal(false);
   this.imageChanged.set(false);
 
 }
+
+  private withCacheBust(url: string | null): string | null {
+    if (!url || url.startsWith('data:') || url.startsWith('blob:'))
+      return url;
+
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}v=${Date.now()}`;
+  }
 }

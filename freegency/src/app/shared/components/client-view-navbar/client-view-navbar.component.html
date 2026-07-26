@@ -152,19 +152,23 @@
     <div class="relative shrink-0" (click)="$event.stopPropagation()">
       <button
         type="button"
-        class="relative block size-9 shrink-0 cursor-pointer overflow-hidden rounded-full border border-outline-variant/30 sm:size-10"
+        class="relative flex size-9 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-outline-variant/30 bg-primary-container font-display text-xs font-bold text-on-primary-container sm:size-10 sm:text-sm"
         [attr.aria-expanded]="accountMenuOpen()"
         aria-haspopup="menu"
         aria-label="Account menu"
         (click)="toggleAccountMenu($event)"
       >
-        <img
-          [src]="avatarSrc()"
-          alt=""
-          class="absolute inset-0 size-full object-cover"
-          width="40"
-          height="40"
-        />
+        @if (profileImage()) {
+          <img
+            [src]="profileImage()!"
+            alt=""
+            class="absolute inset-0 size-full object-cover"
+            width="40"
+            height="40"
+          />
+        } @else {
+          <span>{{ initials() }}</span>
+        }
       </button>
 
       @if (accountMenuOpen()) {
@@ -173,14 +177,20 @@
           class="absolute top-[calc(100%+10px)] right-0 z-[70] w-[280px] overflow-hidden rounded-2xl border border-outline-variant/40 bg-white shadow-[0_18px_50px_rgba(39,37,63,0.18)]"
         >
           <div class="flex items-center gap-3 px-4 py-4">
-            <span class="relative size-11 shrink-0 overflow-hidden rounded-full border border-outline-variant/30">
-              <img
-                [src]="avatarSrc()"
-                alt=""
-                class="absolute inset-0 size-full object-cover"
-                width="44"
-                height="44"
-              />
+            <span
+              class="relative flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-outline-variant/30 bg-primary-container font-display text-sm font-bold text-on-primary-container"
+            >
+              @if (profileImage()) {
+                <img
+                  [src]="profileImage()!"
+                  alt=""
+                  class="absolute inset-0 size-full object-cover"
+                  width="44"
+                  height="44"
+                />
+              } @else {
+                <span>{{ initials() }}</span>
+              }
             </span>
             <span class="flex min-w-0 flex-col">
               <span class="truncate font-body text-sm font-semibold text-on-surface">

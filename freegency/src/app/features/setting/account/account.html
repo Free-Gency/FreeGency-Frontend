@@ -220,6 +220,7 @@
         <button
           type="button"
           class="btn btn-secondary"
+          [disabled]="savingProfile()"
           (click)="resetForm()">
 
           Cancel
@@ -229,10 +230,10 @@
         <button
           type="button"
           class="btn btn-primary"
-          [disabled]="form.invalid || (!form.dirty && !imageChanged())"
+          [disabled]="savingProfile() || form.invalid || (!form.dirty && !imageChanged())"
           (click)="saveProfile()">
 
-          Save Changes
+          {{ savingProfile() ? 'Saving...' : 'Save Changes' }}
 
         </button>
 
@@ -310,6 +311,7 @@
       <button
         type="button"
         class="btn btn-secondary"
+        [disabled]="savingInterests()"
         (click)="resetInterests()"
         >
         
@@ -320,10 +322,10 @@
       <button
         type="button"
         class="btn btn-primary"
-         [disabled]="!interestsChanged()"
+         [disabled]="savingInterests() || !interestsChanged()"
         (click)="saveInterests()">
 
-        Save Changes
+        {{ savingInterests() ? 'Saving...' : 'Save Changes' }}
 
       </button>
 
