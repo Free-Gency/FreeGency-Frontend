@@ -1,1 +1,141 @@
-<p>payment works!</p>
+<div class="payment-page">
+
+  <div class="header">
+    <h2>Payments</h2>
+    <p>Manage your wallet, deposits and withdrawals.</p>
+  </div>
+
+  <!-- Wallet Cards -->
+
+  <div class="wallet-grid">
+
+    <div class="wallet-card primary">
+        <span>Available</span>
+    {{ wallet()?.available |currency}} 
+    </div>
+
+    <div class="wallet-card">
+        <span>Reserved in escrow</span>
+    {{ wallet()?.reserved  |currency}}
+    </div>
+
+    <div class="wallet-card">
+        <span>Pending</span>
+    {{ wallet()?.pending  |currency}}
+    </div>
+
+  </div>
+
+  <!-- Actions -->
+
+  <div class="actions">
+
+   <input
+type="number"
+[(ngModel)]="topUpAmount">
+
+<button
+class="primary"
+(click)="topUp()">
+
+Top Up
+
+</button>
+
+    <button>
+      <i class="ti ti-arrow-up"></i>
+      Withdraw
+    </button>
+
+  </div>
+<div id="payment-element"></div>
+<button
+class="primary"
+(click)="pay()">
+
+Pay
+
+</button>
+  <!-- Transactions -->
+
+  <div class="transactions">
+
+    <div class="title">
+      Recent Transactions
+    </div>
+
+    <table>
+
+      <thead>
+
+        <tr>
+          <th>Type</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th>Date</th>
+        </tr>
+
+      </thead>
+
+      <tbody>
+
+        <tr>
+          <td>
+            <span class="badge topup">
+              Top Up
+            </span>
+          </td>
+
+          <td class="success">
+            +EGP 1000
+          </td>
+
+          <td>Completed</td>
+
+          <td>26 Jul 2026</td>
+
+        </tr>
+
+        <tr>
+
+          <td>
+            <span class="badge reserve">
+              Escrow
+            </span>
+          </td>
+
+          <td class="warning">
+            -EGP 500
+          </td>
+
+          <td>Reserved</td>
+
+          <td>25 Jul 2026</td>
+
+        </tr>
+
+        <tr>
+
+          <td>
+            <span class="badge withdraw">
+              Withdraw
+            </span>
+          </td>
+
+          <td class="danger">
+            -EGP 250
+          </td>
+
+          <td>Pending</td>
+
+          <td>24 Jul 2026</td>
+
+        </tr>
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</div>
