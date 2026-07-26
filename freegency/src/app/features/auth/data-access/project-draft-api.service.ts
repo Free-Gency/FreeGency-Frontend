@@ -1,6 +1,7 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { SKIP_LOADING } from '../../../core/http/loading.interceptor';
 import { environment } from '../../../../environments/environment';
 
 export interface GenerateProjectDraftRequest {
@@ -26,6 +27,9 @@ export class ProjectDraftApiService {
 
   generate(userInput: string): Observable<ProjectDraftResponse> {
     const body: GenerateProjectDraftRequest = { userInput };
-    return this.http.post<ProjectDraftResponse>(`${this.baseUrl}/generate`, body);
+    // Page shows its own in-content spinner (Figma loading state).
+    return this.http.post<ProjectDraftResponse>(`${this.baseUrl}/generate`, body, {
+      context: new HttpContext().set(SKIP_LOADING, true),
+    });
   }
 }

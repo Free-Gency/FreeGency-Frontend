@@ -1,0 +1,122 @@
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(91, 79, 240, 0.08), transparent 34%),
+    rgba(252, 248, 251, 0.8);
+  backdrop-filter: blur(8px);
+  animation: loading-overlay-in 260ms cubic-bezier(0.22, 1, 0.36, 1) 100ms both;
+  pointer-events: all;
+}
+
+.loading-overlay__card {
+  position: relative;
+  display: flex;
+  width: min(92vw, 340px);
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  overflow: hidden;
+  padding: 36px 30px 28px;
+  border: 1px solid rgba(199, 196, 216, 0.55);
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow:
+    0 2px 4px rgba(39, 37, 63, 0.04),
+    0 24px 70px rgba(65, 48, 215, 0.14);
+  animation: loading-card-in 440ms cubic-bezier(0.22, 1, 0.36, 1) 100ms both;
+}
+
+.loading-overlay__copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.loading-overlay__title {
+  margin: 0;
+  color: #27253f;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.loading-overlay__message {
+  margin: 0;
+  color: #777587;
+  font-family: Inter, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.loading-overlay__progress {
+  position: relative;
+  width: 96px;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(199, 196, 216, 0.4);
+}
+
+.loading-overlay__progress::after {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 45%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #4130d7, #8c7cff);
+  content: '';
+  animation: loading-progress 1.4s ease-in-out infinite;
+}
+
+@keyframes loading-overlay-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes loading-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes loading-progress {
+  0% {
+    transform: translateX(-120%);
+  }
+
+  50% {
+    transform: translateX(125%);
+  }
+
+  100% {
+    transform: translateX(245%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-overlay,
+  .loading-overlay__card,
+  .loading-overlay__progress::after {
+    animation: none;
+  }
+}

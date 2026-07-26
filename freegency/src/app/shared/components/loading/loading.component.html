@@ -1,0 +1,18 @@
+<span class="sr-only">{{ label() }}</span>
+<span
+  class="loading-mark"
+  [class.loading-mark--sm]="size() === 'sm'"
+  [class.loading-mark--md]="size() === 'md'"
+  [class.loading-mark--lg]="size() === 'lg'"
+  aria-hidden="true"
+>
+  <span class="loading-mark__halo"></span>
+  <img
+    class="loading-mark__img"
+    src="/assets/Loading.svg"
+    alt=""
+    width="219"
+    height="204"
+    decoding="async"
+  />
+</span>
