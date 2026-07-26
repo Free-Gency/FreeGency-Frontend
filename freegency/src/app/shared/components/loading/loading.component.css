@@ -1,0 +1,131 @@
+.loading-mark {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  isolation: isolate;
+  animation: freegency-loading-breathe 2.4s ease-in-out infinite;
+}
+
+.loading-mark--sm {
+  width: 42px;
+  height: 42px;
+}
+
+.loading-mark--md {
+  width: 88px;
+  height: 88px;
+}
+
+.loading-mark--lg {
+  width: clamp(132px, 16vw, 174px);
+  height: clamp(132px, 16vw, 174px);
+}
+
+.loading-mark::before,
+.loading-mark::after,
+.loading-mark__halo {
+  position: absolute;
+  border-radius: 50%;
+  content: '';
+  pointer-events: none;
+}
+
+.loading-mark::before {
+  inset: -10%;
+  z-index: -2;
+  border: 1px solid rgba(91, 79, 240, 0.15);
+  border-top-color: rgba(91, 79, 240, 0.55);
+  animation: freegency-orbit 3s linear infinite;
+}
+
+.loading-mark::after {
+  inset: -19%;
+  z-index: -3;
+  border: 1px dashed rgba(65, 48, 215, 0.12);
+  animation: freegency-orbit 7s linear infinite reverse;
+}
+
+.loading-mark__halo {
+  inset: 8%;
+  z-index: -1;
+  background: rgba(91, 79, 240, 0.16);
+  filter: blur(24px);
+  animation: freegency-halo 2.4s ease-in-out infinite;
+}
+
+.loading-mark__img {
+  display: block;
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
+  filter: drop-shadow(0 10px 18px rgba(39, 37, 63, 0.16));
+  transform-origin: center;
+  animation: freegency-loading-spin 3.2s infinite;
+  will-change: transform;
+}
+
+@keyframes freegency-loading-spin {
+  0% {
+    animation-timing-function: cubic-bezier(0.4, 0, 0.15, 1);
+    transform: rotate(0deg);
+  }
+
+  32% {
+    animation-timing-function: cubic-bezier(0.2, 0.75, 0.25, 1);
+    transform: rotate(120deg);
+  }
+
+  66% {
+    animation-timing-function: cubic-bezier(0.4, 0, 0.15, 1);
+    transform: rotate(240deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes freegency-loading-breathe {
+  0%,
+  100% {
+    transform: scale(0.97);
+  }
+
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+@keyframes freegency-halo {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.88);
+  }
+
+  50% {
+    opacity: 0.9;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes freegency-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-mark,
+  .loading-mark::before,
+  .loading-mark::after,
+  .loading-mark__halo,
+  .loading-mark__img {
+    animation: none;
+    transform: none;
+  }
+}

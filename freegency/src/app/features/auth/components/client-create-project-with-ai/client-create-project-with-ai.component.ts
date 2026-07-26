@@ -5,6 +5,7 @@ import { HugeiconsIconComponent, type IconSvgObject } from '@hugeicons/angular';
 import { SparklesIcon } from '@hugeicons/core-free-icons';
 import { firstValueFrom } from 'rxjs';
 import { extractApiError } from '../../../../core/http/api-error';
+import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { StepFooterActionsComponent } from '../../../../shared/components/step-footer-actions/step-footer-actions.component';
 import { ProjectDraftApiService } from '../../data-access/project-draft-api.service';
 import { ProjectDraftStateService } from '../../data-access/project-draft-state.service';
@@ -14,7 +15,7 @@ const MAX_CHARS = 3000;
 
 @Component({
   selector: 'app-client-create-project-with-ai',
-  imports: [FormsModule, HugeiconsIconComponent, StepFooterActionsComponent],
+  imports: [FormsModule, HugeiconsIconComponent, LoadingComponent, StepFooterActionsComponent],
   templateUrl: './client-create-project-with-ai.component.html',
   styleUrl: './client-create-project-with-ai.component.css',
   host: {
