@@ -18,15 +18,9 @@
           class="flex size-[88px] items-center justify-center overflow-hidden rounded-full bg-[#ebe9ff] font-display text-2xl font-bold text-[#4036e0]"
         >
           @if (avatarUrl()) {
-            <img
-              [src]="avatarUrl()!"
-              alt="Profile photo"
-              class="size-full object-cover"
-            />
+            <img [src]="avatarUrl()!" alt="Profile photo" class="size-full object-cover" />
           } @else {
-            <span>
-              {{ profile()?.firstName?.charAt(0) }}{{ profile()?.lastName?.charAt(0) }}
-            </span>
+            <span> {{ profile()?.firstName?.charAt(0) }}{{ profile()?.lastName?.charAt(0) }} </span>
           }
         </div>
 
@@ -34,12 +28,7 @@
           class="absolute right-0 bottom-0 inline-flex size-8 cursor-pointer items-center justify-center rounded-full bg-[#4036e0] text-white shadow-[0_2px_8px_rgba(64,54,224,0.35)] transition-opacity hover:opacity-90"
           aria-label="Upload new photo"
         >
-          <hugeicons-icon
-            [icon]="cameraIcon"
-            [size]="16"
-            color="currentColor"
-            [strokeWidth]="2"
-          />
+          <hugeicons-icon [icon]="cameraIcon" [size]="16" color="currentColor" [strokeWidth]="2" />
           <input
             type="file"
             class="sr-only"
@@ -225,9 +214,7 @@
     </div>
 
     <div class="mt-6 border-t border-[#eceef4] pt-6">
-      <h2 class="font-display text-base font-semibold text-[#151c27]">
-        Interests & Expertise
-      </h2>
+      <h2 class="font-display text-base font-semibold text-[#151c27]">Interests & Expertise</h2>
       <p class="mt-1 font-body text-sm text-[#6b7285]">
         These tags appear on your profile to help match you with relevant projects.
       </p>
@@ -253,9 +240,7 @@
             </button>
           </span>
         } @empty {
-          <p class="font-body text-sm text-[#8b91a1]">
-            No interests selected yet.
-          </p>
+          <p class="font-body text-sm text-[#8b91a1]">No interests selected yet.</p>
         }
       </div>
 
@@ -293,12 +278,7 @@
           [disabled]="!pendingCategoryId()"
           (click)="addPendingInterest()"
         >
-          <hugeicons-icon
-            [icon]="addIcon"
-            [size]="18"
-            color="currentColor"
-            [strokeWidth]="2"
-          />
+          <hugeicons-icon [icon]="addIcon" [size]="18" color="currentColor" [strokeWidth]="2" />
           Add
         </button>
       </div>
@@ -332,12 +312,7 @@
       class="inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-white/15"
       aria-hidden="true"
     >
-      <hugeicons-icon
-        [icon]="shieldIcon"
-        [size]="22"
-        color="currentColor"
-        [strokeWidth]="1.8"
-      />
+      <hugeicons-icon [icon]="shieldIcon" [size]="22" color="currentColor" [strokeWidth]="1.8" />
     </span>
 
     <p class="font-body text-sm leading-6 text-white/90 sm:text-[15px]">
