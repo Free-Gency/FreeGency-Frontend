@@ -1,0 +1,70 @@
+<div class="security-page">
+  <div class="security-page">
+  <div class="security-container">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1 class="page-title">Security</h1>
+      <p class="page-description">Manage your account security settings and authentication methods.</p>
+    </div>
+
+    <!-- Password Section -->
+    <section class="settings-section">
+      <div class="section-card">
+        <div class="card-content">
+          <div class="card-text">
+            <h2 class="card-title">Password</h2>
+            <p class="card-description">
+              Update your password to keep your account secure.
+            </p>
+            <span class="meta-info">Last changed {{ lastPasswordChange() }}</span>
+          </div>
+          <div class="card-action">
+            <button 
+              class="btn btn-primary"
+              (click)="onPasswordChange()"
+              aria-label="Change your password"
+            >
+              <svg class="btn-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M8 1C6.067 1 4.5 2.567 4.5 4.5V6H3C2.44772 6 2 6.44772 2 7V13C2 13.5523 2.44772 14 3 14H13C13.5523 14 14 13.5523 14 13V7C14 6.44772 13.5523 6 13 6H11.5V4.5C11.5 2.567 9.933 1 8 1ZM8 2.5C9.10457 2.5 10 3.39543 10 4.5V6H6V4.5C6 3.39543 6.89543 2.5 8 2.5ZM8 9C8.82843 9 9.5 9.67157 9.5 10.5C9.5 11.3284 8.82843 12 8 12C7.17157 12 6.5 11.3284 6.5 10.5C6.5 9.67157 7.17157 9 8 9Z" fill="currentColor"/>
+              </svg>
+              Change password
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Two-Factor Authentication Section -->
+    <section class="settings-section">
+      <div class="section-card">
+        <div class="card-content">
+          <div class="card-text">
+            <h2 class="card-title">Two-factor authentication</h2>
+            <p class="card-description">
+              Add an extra step when signing in to protect your account from unauthorized access.
+            </p>
+            <div class="status-indicator" [class]="twoFactorStatusClass()">
+              <span class="status-dot" aria-hidden="true"></span>
+              <span class="status-text">{{ twoFactorStatusText() }}</span>
+            </div>
+          </div>
+          <div class="card-action">
+            <app-toggle-switch
+              [checked]="twoFactorEnabled()"
+              (toggled)="onTwoFactorToggle($event)"
+              ariaLabel="Toggle two-factor authentication"
+            ></app-toggle-switch>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+</div>
+
+<!-- Password Change Modal -->
+<app-change-password-modal
+  [isOpen]="showPasswordModal()"
+  (closeModal)="onClosePasswordModal()"
+  (passwordChanged)="onPasswordChanged()"
+></app-change-password-modal>
