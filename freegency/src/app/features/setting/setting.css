@@ -2,15 +2,14 @@
   animation: settings-shell-enter 0.4s ease-out both;
 }
 
+/* Opacity-only: avoid transform so fixed modals cover the full viewport (incl. navbar). */
 @keyframes settings-shell-enter {
   from {
     opacity: 0;
-    transform: translateY(8px);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
