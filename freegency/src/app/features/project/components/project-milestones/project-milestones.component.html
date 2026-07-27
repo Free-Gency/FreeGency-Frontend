@@ -1,0 +1,52 @@
+
+
+@if (showSection) {
+  <div class="flex flex-col gap-md">
+    @if (loading()) {
+      <p class="text-body-md text-on-surface-variant text-center py-md">Loading milestones...</p>
+    } @else {
+      @if (escrow(); as e) {
+        <div class="card flex flex-col gap-sm">
+          <div class="flex items-center gap-xs">
+            <span class="text-label-mono text-on-surface-variant">Escrow</span>
+            <span class="chip" [class]="e.fundingStatus === 'Completed' ? 'rs-released' : 'rs-locked'">{{ e.fundingStatus }}</span>
+            <span class="text-body-md text-on-surface font-semibold ml-auto">{{ e.totalAmount | number }} USD</span>
+          </div>
+          <div class="flex items-center gap-xs">
+            <span class="text-label-mono text-on-surface-variant">Released</span>
+            <span class="text-body-md text-on-surface">{{ e.totalReleased | number }} / {{ e.totalAmount | number }}</span>
+          </div>
+          <div class="w-full h-1.5 rounded-full bg-outline-variant overflow-hidden">
+            <div class="h-full rounded-full bg-primary transition-[width] duration-400 ease-out" [style.width.%]="releasePercent"></div>
+          </div>
+          <div class="flex items-center gap-xs">
+            <span class="text-label-mono text-on-surface-variant">Plan Status</span>
+            <span class="text-body-sm text-on-surface">{{ e.planStatus }}</span>
+          </div>
+        </div>
+      }
+
+      @if (milestones().length === 0) {
+        <p class="text-body-md text-on-surface-variant text-center py-md">No milestones defined.</p>
+      } @else {
+        <div class="flex flex-col gap-sm">
+          @for (m of milestones(); track m.id) {
+            <div class="card flex flex-col gap-1">
+              <div class="flex items-center justify-between gap-sm">
+                <span class="text-body-md font-semibold text-on-surface">{{ m.title }}</span>
+                <span class="text-body-md text-on-surface font-semibold">{{ m.amount | number }} USD</span>
+              </div>
+              @if (m.description) {
+                <p class="text-body-sm text-on-surface-variant">{{ m.description }}</p>
+              }
+              <div class="flex gap-xs pt-1">
+                <span class="chip ws-chip" [class]="workStatusClass(m.workStatus)">{{ m.workStatus }}</span>
+                <span class="chip rs-chip" [class]="releaseStatusClass(m.releaseStatus)">{{ m.releaseStatus }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+  </div>
+}

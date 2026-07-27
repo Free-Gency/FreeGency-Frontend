@@ -1,0 +1,53 @@
+
+.ws-chip,
+.rs-chip {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+}
+
+.ws-not-started {
+  background-color: var(--color-surface-container-high);
+  color: var(--color-on-surface-variant);
+}
+
+.ws-in-progress {
+  background-color: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+}
+
+.ws-submitted {
+  background-color: var(--color-tertiary-container);
+  color: var(--color-on-tertiary-container);
+}
+
+.ws-changes {
+  background-color: var(--color-tertiary-container);
+  color: var(--color-on-tertiary-container);
+}
+
+.ws-approved {
+  background-color: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+}
+
+.rs-locked {
+  background-color: var(--color-surface-container-high);
+  color: var(--color-on-surface-variant);
+}
+
+.rs-review {
+  background-color: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+}
+
+.rs-pending {
+  background-color: var(--color-tertiary-container);
+  color: var(--color-on-tertiary-container);
+}
+
+.rs-released {
+  background-color: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+}

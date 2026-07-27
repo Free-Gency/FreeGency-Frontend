@@ -5,6 +5,11 @@
     "packageManager": "npm",
     "analytics": false
   },
+  "schematics": {
+    "@schematics/angular:component": {
+      "type": "component"
+    }
+  },
   "newProjectRoot": "projects",
   "projects": {
     "freegency": {

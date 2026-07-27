@@ -1,0 +1,50 @@
+
+@if (showSection) {
+  @if (loading()) {
+    <p class="text-body-md text-on-surface-variant text-center py-md">Loading proposals...</p>
+  } @else if (proposals().length === 0) {
+    <p class="text-body-md text-on-surface-variant text-center py-md">No proposals yet.</p>
+  } @else {
+    <div class="flex flex-col gap-sm">
+      @for (p of proposals(); track p.id) {
+        <div class="card flex flex-col gap-xs">
+          <div class="flex items-center justify-between gap-sm">
+            <div class="flex items-center gap-xs min-w-0">
+              @if (p.applicantAvatarUrl) {
+                <img [src]="p.applicantAvatarUrl" [alt]="p.applicantName" class="w-9 h-9 rounded-full object-cover shrink-0" />
+              } @else {
+                <div class="w-9 h-9 rounded-full flex items-center justify-center bg-primary-container text-on-primary-container font-display font-semibold text-sm shrink-0">
+                  {{ p.applicantName.charAt(0) }}
+                </div>
+              }
+              <div class="flex flex-col min-w-0">
+                <span class="text-body-md font-semibold text-on-surface truncate">{{ p.applicantName }}</span>
+                @if (p.teamName) {
+                  <span class="text-body-sm text-on-surface-variant truncate">{{ p.teamName }}</span>
+                }
+              </div>
+            </div>
+            <span class="chip status-badge shrink-0" [class]="statusClass(p.status)">{{ p.status }}</span>
+          </div>
+
+          <div class="text-body-md text-on-surface">
+            Proposed: <span class="font-semibold">{{ p.proposedBudget | number }} USD</span>
+          </div>
+
+          <p class="text-body-sm text-on-surface-variant line-clamp-3">{{ p.coverLetter }}</p>
+
+          <div class="flex items-center justify-between gap-sm pt-xs border-t border-outline-variant">
+            <span class="text-body-sm text-on-surface-variant">Applied: {{ formatDate(p.appliedAt) }}</span>
+
+            @if (isOwner() && p.status === 'Pending') {
+              <div class="flex gap-xs">
+                <button class="btn btn-primary btn-sm" [disabled]="actionId() === p.id" (click)="acceptProposal(p.id)">Accept</button>
+                <button class="btn btn-secondary btn-sm" [disabled]="actionId() === p.id" (click)="rejectProposal(p.id)">Reject</button>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+}

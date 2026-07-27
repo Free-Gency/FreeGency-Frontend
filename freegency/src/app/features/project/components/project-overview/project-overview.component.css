@@ -1,0 +1,50 @@
+
+.btn-sm {
+  height: 36px;
+  padding: 0 var(--spacing-sm);
+  font-size: 14px;
+  width: auto;
+  border-radius: var(--radius-sm);
+}
+
+.btn-danger {
+  background-color: var(--color-error);
+  color: var(--color-on-error);
+  border: none;
+}
+
+.btn-danger:hover {
+  opacity: 0.9;
+}
+
+.status-badge {
+  width: fit-content;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 12px;
+}
+
+.status-draft {
+  background-color: var(--color-surface-container-high);
+  color: var(--color-on-surface-variant);
+}
+
+.status-open {
+  background-color: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+}
+
+.status-in-progress {
+  background-color: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+}
+
+.status-completed {
+  background-color: var(--color-secondary-fixed);
+  color: var(--color-on-secondary-fixed);
+}
+
+.status-cancelled {
+  background-color: var(--color-error-container);
+  color: var(--color-on-error-container);
+}

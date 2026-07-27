@@ -103,6 +103,12 @@ export const routes: Routes = [
   loadChildren: () =>
     import('./features/setting/setting.routes').then(m => m.settingRoutes),
 },
+{
+  path: 'projects',
+  canActivate: [authGuard],
+  loadChildren: () =>
+    import('./features/project/project.routes').then((m) => m.projectRoutes),
+},
   { path: 'onboarding', redirectTo: 'auth/onboarding', pathMatch: 'full' },
   { path: 'sign-up', redirectTo: 'auth/sign-up', pathMatch: 'full' },
   { path: 'login', redirectTo: 'auth/login', pathMatch: 'full' },
