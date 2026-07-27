@@ -1,217 +1,36 @@
-:host{
-    display:block;
-    padding:30px;
+.payment-page {
+  animation: payment-enter 0.4s ease-out both;
 }
 
-.payment-page{
-    max-width:1100px;
+/* Stripe Payment Element container */
+.payment-element {
+  min-height: 0;
+  padding: 12px 14px;
+  border: 1px solid #e1e4ee;
+  border-radius: 14px;
+  background: #fafbfc;
 }
 
-.header h2{
-    margin:0;
-    font-size:28px;
+.payment-element:empty {
+  display: none;
+  padding: 0;
+  border: 0;
 }
 
-.header p{
-    margin-top:8px;
-    color:#666;
+@keyframes payment-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.wallet-grid{
-
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:20px;
-    margin-top:30px;
-
-}
-
-.wallet-card{
-
-    background:white;
-    border-radius:14px;
-    padding:24px;
-    border:1px solid #ececec;
-
-}
-
-.wallet-card span{
-
-    color:#888;
-    font-size:14px;
-
-}
-
-.wallet-card h2{
-
-    margin-top:15px;
-    font-size:32px;
-
-}
-
-.wallet-card.primary{
-
-    background:#5B4FE0;
-    color:white;
-
-}
-
-.wallet-card.primary span{
-
-    color:#dcd7ff;
-
-}
-
-.actions{
-
-    margin-top:30px;
-    display:flex;
-    gap:15px;
-
-}
-
-.actions button{
-
-    height:45px;
-    padding:0 24px;
-
-    border:none;
-    border-radius:10px;
-
-    cursor:pointer;
-
-    font-weight:600;
-
-    display:flex;
-    align-items:center;
-    gap:8px;
-
-}
-
-.actions .primary{
-
-    background:#5B4FE0;
-    color:white;
-
-}
-
-.actions button:not(.primary){
-
-    background:#f3f3f3;
-
-}
-
-.transactions{
-
-    margin-top:40px;
-    background:white;
-    border-radius:14px;
-    border:1px solid #ececec;
-
-}
-
-.transactions .title{
-
-    padding:20px;
-    font-size:20px;
-    font-weight:600;
-    border-bottom:1px solid #eee;
-
-}
-
-table{
-
-    width:100%;
-    border-collapse:collapse;
-
-}
-
-th{
-
-    text-align:left;
-    padding:18px;
-    color:#777;
-    font-size:14px;
-
-}
-
-td{
-
-    padding:18px;
-    border-top:1px solid #f1f1f1;
-
-}
-
-.badge{
-
-    padding:6px 12px;
-    border-radius:20px;
-    font-size:13px;
-    font-weight:600;
-
-}
-
-.topup{
-
-    background:#E9FFF2;
-    color:#169A4A;
-
-}
-
-.reserve{
-
-    background:#FFF8E4;
-    color:#B57D00;
-
-}
-
-.withdraw{
-
-    background:#FFECEC;
-    color:#D02A2A;
-
-}
-
-.success{
-
-    color:#169A4A;
-    font-weight:600;
-
-}
-
-.warning{
-
-    color:#B57D00;
-    font-weight:600;
-
-}
-
-.danger{
-
-    color:#D02A2A;
-    font-weight:600;
-
-}
-
-@media(max-width:900px){
-
-.wallet-grid{
-
-grid-template-columns:1fr;
-
-}
-
-.actions{
-
-flex-direction:column;
-
-}
-
-table{
-
-display:block;
-overflow:auto;
-
-}
-
+@media (prefers-reduced-motion: reduce) {
+  .payment-page {
+    animation: none;
+  }
 }
