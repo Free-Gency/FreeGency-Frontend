@@ -1,1 +1,163 @@
-<p>dangerzone works!</p>
+<div class="danger-zone-page">
+  <div class="danger-zone-container">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="header-content">
+        <div class="header-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 2C6.477 2 2 6.477 2 12C2 17.523 6.477 22 12 22C17.523 22 22 17.523 22 12C22 6.477 17.523 2 12 2ZM12 18C11.45 18 11 17.55 11 17C11 16.45 11.45 16 12 16C12.55 16 13 16.45 13 17C13 17.55 12.55 18 12 18ZM13 13C13 13.55 12.55 14 12 14C11.45 14 11 13.55 11 13V8C11 7.45 11.45 7 12 7C12.55 7 13 7.45 13 8V13Z" fill="currentColor"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="page-title">Danger Zone</h1>
+          <p class="page-description">These actions affect your account and can't always be undone. Please proceed with caution.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Warning Banner -->
+    <div class="warning-banner" role="alert">
+      <div class="warning-content">
+        <svg class="warning-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M8.257 3.099C8.739 2.225 9.582 1.667 10.542 1.667C11.502 1.667 12.345 2.225 12.826 3.099L18.035 12.566C18.505 13.419 18.495 14.442 18.01 15.286C17.524 16.13 16.633 16.667 15.667 16.667H5.41699C4.45099 16.667 3.55999 16.13 3.07499 15.286C2.58899 14.442 2.57999 13.419 3.04999 12.566L8.25999 3.099H8.257ZM10.542 3.333C10.225 3.333 9.926 3.552 9.786 3.808L4.57699 13.275C4.43399 13.534 4.42899 13.848 4.56199 14.11C4.69499 14.373 4.95199 14.55 5.23999 14.583L15.461 14.583C15.749 14.55 16.006 14.373 16.139 14.11C16.273 13.848 16.267 13.534 16.124 13.275L10.915 3.808C10.775 3.552 10.476 3.333 10.159 3.333H10.542ZM10.6667 7.50004V11.6667H9.33337V7.50004H10.6667ZM10.6667 13.1667V14.5H9.33337V13.1667H10.6667Z" fill="currentColor"/>
+        </svg>
+        <div class="warning-text">
+          <strong>Warning:</strong> Some actions in this section can lead to permanent data loss. We recommend reading carefully before proceeding.
+        </div>
+      </div>
+    </div>
+
+    <!-- Deactivate Account Section -->
+    <section class="settings-section">
+      <div class="section-card card-deactivate">
+        <div class="card-content">
+          <div class="card-info">
+            <h2 class="card-title">Deactivate Account</h2>
+            <p class="card-description">
+              Hides your profile and pauses new invites. Active projects and messages stay untouched. You can reactivate your account at any time by logging back in.
+            </p>
+            <div class="card-meta">
+              <div class="meta-item">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M8 1C4.134 1 1 4.134 1 8C1 11.866 4.134 15 8 15C11.866 15 15 11.866 15 8C15 4.134 11.866 1 8 1ZM7.5 4H8.5V9H7.5V4ZM7.5 10H8.5V11H7.5V10Z" fill="currentColor"/>
+                </svg>
+                <span>You can reactivate anytime</span>
+              </div>
+              <div class="meta-item">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M8 1C4.134 1 1 4.134 1 8C1 11.866 4.134 15 8 15C11.866 15 15 11.866 15 8C15 4.134 11.866 1 8 1ZM7.5 4H8.5V9H7.5V4ZM7.5 10H8.5V11H7.5V10Z" fill="currentColor"/>
+                </svg>
+                <span>Active projects remain unaffected</span>
+              </div>
+              <div class="meta-item">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M8 1C4.134 1 1 4.134 1 8C1 11.866 4.134 15 8 15C11.866 15 15 11.866 15 8C15 4.134 11.866 1 8 1ZM7.5 4H8.5V9H7.5V4ZM7.5 10H8.5V11H7.5V10Z" fill="currentColor"/>
+                </svg>
+                <span>Messages remain accessible</span>
+              </div>
+            </div>
+          </div>
+          <div class="card-action">
+            <button 
+              class="btn btn-warning"
+              (click)="onDeactivateClick()"
+              [disabled]="isLoading()"
+              aria-label="Deactivate your account"
+            >
+              Deactivate
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Delete Account Section -->
+    <section class="settings-section">
+      <div class="section-card card-delete">
+        <div class="card-content">
+          <div class="card-info">
+            <h2 class="card-title">Delete Account</h2>
+            <p class="card-description">
+              Permanently erases your profile, portfolio, message history, and all associated data. This action cannot be undone. We recommend downloading your data before proceeding.
+            </p>
+            
+            <!-- Blocking Conditions -->
+            @if (activeBlockers().length > 0) {
+              <div class="blocking-conditions">
+                <div class="blocking-header">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M8 15C11.866 15 15 11.866 15 8C15 4.134 11.866 1 8 1C4.134 1 1 4.134 1 8C1 11.866 4.134 15 8 15ZM7.25 5H8.75V9.5H7.25V5ZM7.25 10.5H8.75V12H7.25V10.5Z" fill="currentColor"/>
+                  </svg>
+                  <span>{{ blockerSummary() }}</span>
+                </div>
+                
+                @for (blocker of activeBlockers(); track blocker.type) {
+                  <div class="blocking-item">
+                    <div class="blocking-info">
+                      <div class="blocking-icon">
+                        @if (blocker.type === 'active_projects') {
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <path d="M2 3H14V13H2V3ZM3 4V12H13V4H3ZM5 6H7V7H5V6ZM5 8H7V9H5V8ZM5 10H7V11H5V10ZM9 6H11V7H9V6ZM9 8H11V9H9V8ZM9 10H11V11H9V10Z" fill="currentColor"/>
+                          </svg>
+                        } @else if (blocker.type === 'wallet_balance') {
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <path d="M1 3H15V13H1V3ZM2 4V12H14V4H2ZM12 7C11.448 7 11 7.448 11 8C11 8.552 11.448 9 12 9C12.552 9 13 8.552 13 8C13 7.448 12.552 7 12 7Z" fill="currentColor"/>
+                          </svg>
+                        }
+                      </div>
+                      <div class="blocking-details">
+                        <span class="blocking-label">{{ blocker.label }}</span>
+                        <span class="blocking-description">{{ blocker.description }}</span>
+                      </div>
+                    </div>
+                    <a 
+                      [href]="blocker.actionRoute" 
+                      class="blocking-action"
+                      (click)="$event.preventDefault(); resolveBlocker(blocker)"
+                    >
+                      {{ blocker.actionLabel }}
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                        <path d="M4.5 2.5L8 6L4.5 9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </a>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+          <div class="card-action">
+            <button 
+              class="btn btn-danger"
+              (click)="onDeleteClick()"
+              [disabled]="!canDelete() || isLoading()"
+              [title]="!canDelete() ? 'Resolve blocking conditions first' : 'Delete your account permanently'"
+              aria-label="Delete your account permanently"
+            >
+              Delete account
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Deactivate Confirmation Modal -->
+  <app-confirmation-modal
+    [isOpen]="showDeactivateModal()"
+    type="deactivate"
+    [isLoading]="isLoading()"
+    [error]="modalError()"
+    (closeModal)="onCloseDeactivateModal()"
+    (confirmed)="onDeactivateConfirm($event)"
+  ></app-confirmation-modal>
+
+  <!-- Delete Confirmation Modal -->
+  <app-confirmation-modal
+    [isOpen]="showDeleteModal()"
+    type="delete"
+    [isLoading]="isLoading()"
+    [error]="modalError()"
+    (closeModal)="onCloseDeleteModal()"
+    (confirmed)="onDeleteConfirm($event)"
+  ></app-confirmation-modal>
+</div>

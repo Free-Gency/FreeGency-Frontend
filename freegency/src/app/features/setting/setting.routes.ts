@@ -6,7 +6,7 @@ import { Payment } from './payment/payment';
 import { Privacy } from './privacy/privacy';
 import { Verification } from './verification/verification';
 import { Integrations } from './integrations/integrations';
-import { Dangerzone } from './dangerzone/dangerzone';
+import { DangerZone } from '../setting/dangerzone/dangerzone';
 import { SecurityComponent } from './security/security.component';
 
 export const settingRoutes: Routes = [
@@ -29,7 +29,7 @@ export const settingRoutes: Routes = [
       { path: 'privacy', component: Privacy },
       { path: 'verification', component: Verification },
       { path: 'integrations', component: Integrations },
-      { path: 'danger-zone', component: Dangerzone },
+      { path: 'danger-zone', component: DangerZone },
     ],
   },
 ];
