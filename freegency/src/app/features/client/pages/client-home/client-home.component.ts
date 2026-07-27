@@ -285,9 +285,7 @@ export class ClientHomeComponent implements OnInit, OnDestroy {
   }
 
   protected onViewDetails(project: ClientProjectCard): void {
-    void this.router.navigate(['/client/home'], {
-      queryParams: { projectId: project.id },
-    });
+    void this.router.navigate(['/projects', project.id]);
   }
 
   protected onProjectMore(_project: ClientProjectCard): void {
