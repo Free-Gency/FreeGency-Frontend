@@ -2,28 +2,28 @@
   <app-client-view-navbar />
 
   <main
-    class="home-main mx-auto flex w-full max-w-[1512px] flex-col gap-10 px-5 pb-12 sm:px-10 lg:gap-12 lg:px-20 lg:pb-12"
+    class="home-main mx-auto flex w-full max-w-[1512px] flex-col gap-8 px-4 pb-10 sm:gap-10 sm:px-6 sm:pb-12 md:px-10 lg:gap-12 lg:px-12 xl:px-20"
   >
     <!-- Hero: welcome + CTA -->
     <section
-      class="home-hero flex flex-col items-stretch justify-between gap-8 pt-6 lg:flex-row lg:items-center lg:gap-10 lg:pt-10"
+      class="home-hero flex flex-col items-stretch justify-between gap-6 pt-4 sm:gap-8 sm:pt-6 lg:flex-row lg:items-center lg:gap-10 lg:pt-10"
     >
-      <div class="flex min-w-0 flex-1 flex-col gap-[27px]">
+      <div class="flex min-w-0 flex-1 flex-col gap-5 sm:gap-[27px]">
         <div>
           <h1
-            class="font-display text-[28px] leading-[1.2] font-semibold tracking-[-0.32px] text-[#151c27] sm:text-[32px] sm:leading-[38.4px]"
+            class="font-display text-[26px] leading-[1.2] font-semibold tracking-[-0.32px] text-[#151c27] sm:text-[32px] sm:leading-[38.4px]"
           >
             Welcome back, {{ firstName() }} 👋
           </h1>
           <p
-            class="mt-[27px] max-w-[640px] font-display text-base leading-6 text-[#464556]"
+            class="mt-4 max-w-[640px] font-display text-sm leading-6 text-[#464556] sm:mt-[27px] sm:text-base"
           >
             Track your projects, discover inspiration, and manage every milestone
             from one place.
           </p>
         </div>
 
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-0">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
           <label
             class="flex h-[50px] min-w-0 flex-1 items-center rounded-[18px] bg-[#fbfbfb] px-4 py-1.5"
           >
@@ -47,17 +47,43 @@
               (input)="onSearchInput($event)"
             />
           </label>
+
+          <button
+            type="button"
+            class="inline-flex h-[50px] cursor-pointer items-center justify-center gap-2 rounded-[18px] bg-white px-4 font-display text-sm text-[#151c27] shadow-[0_1px_2px_rgba(21,28,39,0.04)] transition-colors hover:bg-[#f7f7fb] sm:shrink-0 sm:text-base"
+            (click)="openFilters()"
+          >
+            <span
+              class="inline-flex size-6 items-center justify-center overflow-hidden"
+              aria-hidden="true"
+            >
+              <hugeicons-icon
+                [icon]="filterIcon"
+                [size]="24"
+                color="currentColor"
+                [strokeWidth]="1.5"
+              />
+            </span>
+            Filters
+            @if (activeFiltersCount() > 0) {
+              <span
+                class="inline-flex min-w-5 items-center justify-center rounded-full bg-[#4036e0] px-1.5 py-0.5 font-body text-[11px] leading-none font-bold text-white"
+              >
+                {{ activeFiltersCount() }}
+              </span>
+            }
+          </button>
         </div>
 
         <div
-          class="inline-flex w-fit items-start rounded-full bg-[#e7eefe] p-1"
+          class="inline-flex w-full items-start rounded-full bg-[#e7eefe] p-1 sm:w-fit"
           role="tablist"
           aria-label="Home views"
         >
           <button
             type="button"
             role="tab"
-            class="cursor-pointer rounded-full px-8 py-2.5 font-display text-sm tracking-[0.14px] transition-colors"
+            class="min-w-0 flex-1 cursor-pointer rounded-full px-4 py-2.5 font-display text-sm tracking-[0.14px] transition-colors sm:flex-none sm:px-8"
             [attr.aria-selected]="activeTab() === 'inspiration'"
             [class.bg-white]="activeTab() === 'inspiration'"
             [class.font-bold]="activeTab() === 'inspiration'"
@@ -71,7 +97,7 @@
           <button
             type="button"
             role="tab"
-            class="cursor-pointer rounded-full px-8 py-2.5 font-display text-sm tracking-[0.14px] transition-colors"
+            class="min-w-0 flex-1 cursor-pointer rounded-full px-4 py-2.5 font-display text-sm tracking-[0.14px] transition-colors sm:flex-none sm:px-8"
             [attr.aria-selected]="activeTab() === 'my-projects'"
             [class.bg-white]="activeTab() === 'my-projects'"
             [class.font-bold]="activeTab() === 'my-projects'"
@@ -86,7 +112,7 @@
       </div>
 
       <aside
-        class="home-cta relative w-full shrink-0 overflow-hidden rounded-[32px] bg-[#4036e0] p-8 text-white lg:w-[331px]"
+        class="home-cta relative w-full shrink-0 overflow-hidden rounded-[28px] bg-[#4036e0] p-6 text-white sm:rounded-[32px] sm:p-8 lg:w-[331px]"
       >
         <div
           class="pointer-events-none absolute right-[-48px] bottom-[-48px] size-48 rounded-full bg-white/10"
@@ -96,7 +122,7 @@
           <h2 class="font-display text-base leading-6 font-bold">
             Need a new team?
           </h2>
-          <p class="pb-6 font-display text-base leading-6 text-white/80">
+          <p class="pb-6 font-display text-sm leading-6 text-white/80 sm:text-base">
             Post your project requirements and receive expert proposals in under
             24 hours.
           </p>
@@ -122,7 +148,7 @@
     </section>
 
     <!-- Content + sidebar -->
-    <section class="flex flex-col items-start gap-8 xl:flex-row">
+    <section class="flex flex-col items-stretch gap-6 lg:gap-8 xl:flex-row xl:items-start">
       <div class="flex min-w-0 flex-1 flex-col gap-5">
         @if (activeTab() === 'inspiration') {
           <div
@@ -151,87 +177,131 @@
             <p class="py-16 text-center font-body text-sm text-[#464556]">
               Loading inspiration…
             </p>
-          } @else {
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            @for (card of pagedCards(); track card.id) {
-              <article
-                class="home-card group relative aspect-[319/220] cursor-pointer overflow-hidden rounded-[20px] bg-[#f0f0f5]"
-                role="button"
-                tabindex="0"
-                (click)="onInspirationCardClick(card)"
-                (keydown.enter)="onInspirationCardClick(card)"
-              >
-                <img
-                  [src]="card.image"
-                  [alt]="card.title"
-                  class="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                  width="319"
-                  height="220"
-                  loading="lazy"
-                />
-                <span
-                  class="absolute top-3 left-3 rounded-full bg-white/90 px-[9px] py-[3px] font-body text-xs leading-[18px] font-medium text-[#4036e0]"
-                >
-                  {{ card.category }}
-                </span>
-                <div
-                  class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent p-3.5 pt-10"
-                >
-                  <h3
-                    class="font-display text-sm leading-[18px] font-semibold text-white"
-                  >
-                    {{ card.title }}
-                  </h3>
-                  <p
-                    class="mt-1.5 font-body text-[11px] leading-[16.5px] text-white/75"
-                  >
-                    {{ card.author }}
-                  </p>
-                </div>
-              </article>
-            } @empty {
-              <p
-                class="col-span-full py-16 text-center font-body text-sm text-[#464556]"
-              >
-                No inspiration matches your search.
+          } @else if (pagedCards().length === 0) {
+            <div
+              class="flex min-h-[280px] w-full flex-col items-center justify-center rounded-[32px] bg-[#fbfbfb] px-6 py-16 text-center"
+            >
+              <p class="font-display text-lg font-semibold text-[#151c27]">
+                {{
+                  searchQuery().trim() || activeCategory() !== 'All'
+                    ? 'No matches found'
+                    : 'No inspiration yet'
+                }}
               </p>
-            }
-          </div>
-
-          @if (filteredCards().length > inspirationPageSize) {
-            <div class="flex items-center justify-center gap-4 pt-2">
-              <button
-                type="button"
-                class="cursor-pointer rounded-full border border-[#dce2f3] px-4 py-2 font-body text-sm text-[#464556] transition-colors hover:bg-[#f0f0f5] disabled:cursor-not-allowed disabled:opacity-40"
-                [disabled]="inspirationPage() <= 1"
-                (click)="goInspirationPage(-1)"
+              <p
+                class="mt-2 mx-auto w-full max-w-[34rem] px-2 font-body text-sm leading-6 text-[#464556]"
               >
-                Previous
-              </button>
-              <span class="font-body text-sm text-[#464556]">
-                Page {{ inspirationPage() }} of {{ inspirationTotalPages() }}
-              </span>
-              <button
-                type="button"
-                class="cursor-pointer rounded-full border border-[#dce2f3] px-4 py-2 font-body text-sm text-[#464556] transition-colors hover:bg-[#f0f0f5] disabled:cursor-not-allowed disabled:opacity-40"
-                [disabled]="inspirationPage() >= inspirationTotalPages()"
-                (click)="goInspirationPage(1)"
-              >
-                Next
-              </button>
+                {{
+                  searchQuery().trim() || activeCategory() !== 'All'
+                    ? 'Try a different category or clear your search to explore more work.'
+                    : 'Public portfolio work will show up here as freelancers publish their projects.'
+                }}
+              </p>
             </div>
-          }
+          } @else {
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              @for (card of pagedCards(); track card.id) {
+                <article
+                  class="home-card group relative aspect-[319/220] cursor-pointer overflow-hidden rounded-[20px] bg-[#f0f0f5]"
+                  role="button"
+                  tabindex="0"
+                  (click)="onInspirationCardClick(card)"
+                  (keydown.enter)="onInspirationCardClick(card)"
+                >
+                  <img
+                    [src]="card.image"
+                    [alt]="card.title"
+                    class="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                    width="319"
+                    height="220"
+                    loading="lazy"
+                  />
+                  <span
+                    class="absolute top-3 left-3 rounded-full bg-white/90 px-[9px] py-[3px] font-body text-xs leading-[18px] font-medium text-[#4036e0]"
+                  >
+                    {{ card.category }}
+                  </span>
+                  <div
+                    class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent p-3.5 pt-10"
+                  >
+                    <h3
+                      class="font-display text-sm leading-[18px] font-semibold text-white"
+                    >
+                      {{ card.title }}
+                    </h3>
+                    <p
+                      class="mt-1.5 font-body text-[11px] leading-[16.5px] text-white/75"
+                    >
+                      {{ card.author }}
+                    </p>
+                  </div>
+                </article>
+              }
+            </div>
+
+            @if (inspirationTotalPages() > 1) {
+              <div class="flex items-center justify-center gap-4 pt-2">
+                <button
+                  type="button"
+                  class="cursor-pointer rounded-full border border-[#dce2f3] px-4 py-2 font-body text-sm text-[#464556] transition-colors hover:bg-[#f0f0f5] disabled:cursor-not-allowed disabled:opacity-40"
+                  [disabled]="inspirationPage() <= 1"
+                  (click)="goInspirationPage(-1)"
+                >
+                  Previous
+                </button>
+                <span class="font-body text-sm text-[#464556]">
+                  Page {{ inspirationPage() }} of {{ inspirationTotalPages() }}
+                </span>
+                <button
+                  type="button"
+                  class="cursor-pointer rounded-full border border-[#dce2f3] px-4 py-2 font-body text-sm text-[#464556] transition-colors hover:bg-[#f0f0f5] disabled:cursor-not-allowed disabled:opacity-40"
+                  [disabled]="inspirationPage() >= inspirationTotalPages()"
+                  (click)="goInspirationPage(1)"
+                >
+                  Next
+                </button>
+              </div>
+            }
           }
         } @else {
           @if (loadingProjects()) {
             <p class="py-16 text-center font-body text-sm text-[#464556]">
               Loading your projects…
             </p>
+          } @else if (pagedProjects().length === 0) {
+            <div
+              class="flex min-h-[280px] w-full flex-col items-center justify-center rounded-[32px] bg-[#fbfbfb] px-6 py-16 text-center"
+            >
+              <p class="font-display text-lg font-semibold text-[#151c27]">
+                {{
+                  projectStatusFilter() !== 'all' || searchQuery().trim()
+                    ? 'No matches found'
+                    : 'No projects yet'
+                }}
+              </p>
+              <p
+                class="mt-2 mx-auto w-full max-w-[34rem] px-2 font-body text-sm leading-6 text-[#464556]"
+              >
+                {{
+                  projectStatusFilter() !== 'all' || searchQuery().trim()
+                    ? 'Try another status filter or clear your search to see your projects.'
+                    : 'Create a project to start receiving proposals and tracking milestones.'
+                }}
+              </p>
+              @if (projectStatusFilter() === 'all' && !searchQuery().trim()) {
+                <a
+                  routerLink="/client/create-project"
+                  class="mt-6 inline-flex cursor-pointer items-center gap-2 rounded-full bg-[#4036e0] px-6 py-3 font-display text-sm font-bold text-white transition-opacity hover:opacity-90"
+                >
+                  Create New Project
+                </a>
+              }
+            </div>
           } @else {
-          <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             @for (project of pagedProjects(); track project.id) {
               <article
-                class="home-project-card flex flex-col gap-4 rounded-[32px] bg-[#fbfbfb] p-6 sm:p-8"
+                class="home-project-card flex flex-col gap-4 rounded-[24px] bg-[#fbfbfb] p-5 sm:rounded-[32px] sm:p-6 md:p-8"
                 [class.opacity-75]="project.status === 'draft'"
                 [class.justify-between]="project.status === 'draft'"
               >
@@ -372,27 +442,10 @@
                   </div>
                 </div>
               </article>
-            } @empty {
-              <div
-                class="col-span-full flex min-h-[280px] flex-col items-center justify-center rounded-[32px] bg-[#fbfbfb] px-6 py-16 text-center"
-              >
-                <p class="font-display text-lg font-semibold text-[#151c27]">
-                  No projects yet
-                </p>
-                <p class="mt-2 max-w-md font-body text-sm text-[#464556]">
-                  Create a project to start receiving proposals and tracking milestones.
-                </p>
-                <a
-                  routerLink="/client/create-project"
-                  class="mt-6 inline-flex cursor-pointer items-center gap-2 rounded-full bg-[#4036e0] px-6 py-3 font-display text-sm font-bold text-white transition-opacity hover:opacity-90"
-                >
-                  Create New Project
-                </a>
-              </div>
             }
           </div>
 
-          @if (filteredProjects().length > projectsPageSize) {
+          @if (projectsTotalPages() > 1) {
             <div class="flex items-center justify-center gap-4 pt-2">
               <button
                 type="button"
@@ -421,7 +474,7 @@
 
       @if (activeTab() === 'inspiration') {
         <aside
-          class="home-sidebar flex w-full shrink-0 flex-col overflow-hidden rounded-[32px] xl:w-[331px]"
+          class="home-sidebar flex w-full shrink-0 flex-col overflow-hidden rounded-[28px] sm:rounded-[32px] xl:w-[331px]"
         >
           <div class="flex flex-col gap-4 rounded-t-3xl bg-[#27253f] p-6">
             <h2
@@ -621,4 +674,116 @@
       }
     </section>
   </main>
+
+  @if (filtersOpen()) {
+    <div
+      class="home-filters-backdrop"
+      (click)="closeFilters()"
+      aria-hidden="true"
+    ></div>
+
+    <aside
+      class="home-filters-panel"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="
+        activeTab() === 'inspiration' ? 'Inspiration filters' : 'Project filters'
+      "
+    >
+      <div class="flex items-center justify-between gap-3 border-b border-[#e7eefe] px-5 py-4 sm:px-6">
+        <div>
+          <h2 class="font-display text-lg font-semibold text-[#151c27]">
+            Filters
+          </h2>
+          <p class="mt-0.5 font-body text-xs text-[#464556]">
+            {{
+              activeTab() === 'inspiration'
+                ? 'Refine inspiration results'
+                : 'Refine your projects'
+            }}
+          </p>
+        </div>
+        <button
+          type="button"
+          class="inline-flex size-10 cursor-pointer items-center justify-center rounded-full bg-[#f0f0f5] text-[#151c27] transition-colors hover:bg-[#e7eefe]"
+          aria-label="Close filters"
+          (click)="closeFilters()"
+        >
+          <hugeicons-icon
+            [icon]="closeIcon"
+            [size]="20"
+            color="currentColor"
+            [strokeWidth]="2"
+          />
+        </button>
+      </div>
+
+      <div class="home-filters-body flex flex-1 flex-col gap-6 overflow-y-auto px-5 py-5 sm:px-6">
+        @if (activeTab() === 'inspiration') {
+          <section class="flex flex-col gap-3">
+            <h3 class="font-body text-xs font-bold tracking-[1.2px] text-[#464556] uppercase">
+              Category
+            </h3>
+            <div class="flex flex-wrap gap-2">
+              @for (category of categoryOptions(); track category) {
+                <button
+                  type="button"
+                  class="cursor-pointer rounded-full px-4 py-2 font-body text-sm font-medium transition-colors"
+                  [class.bg-[#4036e0]]="activeCategory() === category"
+                  [class.text-white]="activeCategory() === category"
+                  [class.bg-[#e7eefe]]="activeCategory() !== category"
+                  [class.text-[#494bd6]]="activeCategory() !== category"
+                  (click)="selectCategory(category)"
+                >
+                  {{ category }}
+                </button>
+              }
+            </div>
+          </section>
+        } @else {
+          <section class="flex flex-col gap-3">
+            <h3 class="font-body text-xs font-bold tracking-[1.2px] text-[#464556] uppercase">
+              Status
+            </h3>
+            <div class="flex flex-col gap-2">
+              @for (option of projectStatusOptions; track option.value) {
+                <button
+                  type="button"
+                  class="flex cursor-pointer items-center justify-between rounded-2xl px-4 py-3 text-left font-body text-sm transition-colors"
+                  [class.bg-[#ebe9ff]]="projectStatusFilter() === option.value"
+                  [class.text-[#4036e0]]="projectStatusFilter() === option.value"
+                  [class.font-semibold]="projectStatusFilter() === option.value"
+                  [class.bg-[#fbfbfb]]="projectStatusFilter() !== option.value"
+                  [class.text-[#151c27]]="projectStatusFilter() !== option.value"
+                  (click)="selectProjectStatusFilter(option.value)"
+                >
+                  <span>{{ option.label }}</span>
+                  @if (projectStatusFilter() === option.value) {
+                    <span class="size-2 rounded-full bg-[#4036e0]"></span>
+                  }
+                </button>
+              }
+            </div>
+          </section>
+        }
+      </div>
+
+      <div class="flex gap-3 border-t border-[#e7eefe] px-5 py-4 sm:px-6">
+        <button
+          type="button"
+          class="flex-1 cursor-pointer rounded-2xl border border-[#dce2f3] px-4 py-3 font-display text-sm font-semibold text-[#464556] transition-colors hover:bg-[#f7f7fb]"
+          (click)="clearFilters()"
+        >
+          Clear
+        </button>
+        <button
+          type="button"
+          class="flex-1 cursor-pointer rounded-2xl bg-[#4036e0] px-4 py-3 font-display text-sm font-bold text-white transition-opacity hover:opacity-90"
+          (click)="closeFilters()"
+        >
+          Show results
+        </button>
+      </div>
+    </aside>
+  }
 </div>

@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { SKIP_LOADING } from '../../../core/http/loading.interceptor';
 import { environment } from '../../../../environments/environment';
+import type { PagedResponse } from '../../../shared/models/PagedResponse';
 
 export interface PortfolioProjectDto {
   id: string;
@@ -96,9 +97,12 @@ export class PortfolioApiService {
   getInspiration(options?: {
     categoryId?: string | null;
     search?: string | null;
-    take?: number;
-  }): Observable<PortfolioProjectDto[]> {
-    let params = new HttpParams().set('take', String(options?.take ?? 24));
+    pageNumber?: number;
+    pageSize?: number;
+  }): Observable<PagedResponse<PortfolioProjectDto>> {
+    let params = new HttpParams()
+      .set('pageNumber', String(options?.pageNumber ?? 1))
+      .set('pageSize', String(options?.pageSize ?? 6));
 
     if (options?.categoryId) {
       params = params.set('categoryId', options.categoryId);
@@ -108,16 +112,19 @@ export class PortfolioApiService {
     }
 
     return this.http
-      .get<ApiResponse<PortfolioProjectDto[]>>(
+      .get<ApiResponse<PagedResponse<PortfolioProjectDto>>>(
         `${this.baseUrl}/portfolio-projects/inspiration`,
         { params },
       )
       .pipe(
         map((res) => {
-          if (!res.isSuccess) {
+          if (!res.isSuccess || !res.data) {
             throw new Error(res.message || 'Failed to load inspiration.');
           }
-          return res.data ?? [];
+          return {
+            ...res.data,
+            items: res.data.items ?? [],
+          };
         }),
       );
   }

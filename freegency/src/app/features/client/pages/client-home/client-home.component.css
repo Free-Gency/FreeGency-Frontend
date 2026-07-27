@@ -44,6 +44,32 @@
   animation-delay: 0.16s;
 }
 
+.home-filters-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgb(21 28 39 / 0.42);
+  animation: home-filters-backdrop-in 0.2s ease-out both;
+}
+
+.home-filters-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  width: min(100vw, 22.5rem);
+  height: 100dvh;
+  background: #fff;
+  box-shadow: -12px 0 40px rgb(39 37 63 / 0.16);
+  animation: home-filters-panel-in 0.28s ease-out both;
+}
+
+.home-filters-body {
+  min-height: 0;
+}
+
 @keyframes home-enter {
   from {
     opacity: 0;
@@ -56,13 +82,43 @@
   }
 }
 
+@keyframes home-filters-backdrop-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes home-filters-panel-in {
+  from {
+    opacity: 0.6;
+    transform: translateX(100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (min-width: 640px) {
+  .home-filters-panel {
+    width: min(100vw, 24rem);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .home-main,
   .home-hero,
   .home-card,
   .home-project-card,
   .home-sidebar,
-  .home-cta {
+  .home-cta,
+  .home-filters-backdrop,
+  .home-filters-panel {
     animation: none;
   }
 

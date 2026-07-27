@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
@@ -6,6 +6,8 @@ import { HugeiconsIconComponent, type IconSvgObject } from '@hugeicons/angular';
 import {
   Add01Icon,
   Calendar01Icon,
+  Cancel01Icon,
+  FilterVerticalIcon,
   Money01Icon,
   MoreHorizontalIcon,
   Search01Icon,
@@ -22,6 +24,7 @@ import {
 } from '../../../auth/data-access/portfolio-api.service';
 import {
   ProjectsApiService,
+  type MyProjectsSummaryDto,
   type ProjectDto,
 } from '../../../auth/data-access/projects-api.service';
 import { ClientViewNavbarComponent } from '../../../../shared/components/client-view-navbar/client-view-navbar.component';
@@ -74,7 +77,7 @@ interface DeadlineItem {
   templateUrl: './client-home.component.html',
   styleUrl: './client-home.component.css',
 })
-export class ClientHomeComponent implements OnInit {
+export class ClientHomeComponent implements OnInit, OnDestroy {
   private readonly auth = inject(AuthService);
   private readonly projectsApi = inject(ProjectsApiService);
   private readonly portfolioApi = inject(PortfolioApiService);
@@ -82,8 +85,12 @@ export class ClientHomeComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
 
+  private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
   protected readonly createIcon = Add01Icon as IconSvgObject;
   protected readonly searchIcon = Search01Icon as IconSvgObject;
+  protected readonly filterIcon = FilterVerticalIcon as IconSvgObject;
+  protected readonly closeIcon = Cancel01Icon as IconSvgObject;
   protected readonly moneyIcon = Money01Icon as IconSvgObject;
   protected readonly calendarIcon = Calendar01Icon as IconSvgObject;
   protected readonly moreIcon = MoreHorizontalIcon as IconSvgObject;
@@ -92,9 +99,21 @@ export class ClientHomeComponent implements OnInit {
   protected readonly projectStatusFilter = signal<ProjectStatusFilter>('all');
   protected readonly activeCategory = signal('All');
   protected readonly searchQuery = signal('');
+  protected readonly filtersOpen = signal(false);
   protected readonly loadingInspiration = signal(true);
   protected readonly loadingProjects = signal(true);
   protected readonly publishingId = signal<string | null>(null);
+
+  protected readonly projectStatusOptions: ReadonlyArray<{
+    value: ProjectStatusFilter;
+    label: string;
+  }> = [
+    { value: 'all', label: 'All' },
+    { value: 'in-progress', label: 'In Progress' },
+    { value: 'draft', label: 'Draft' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'cancelled', label: 'Canceled' },
+  ];
 
   protected readonly categoryOptions = signal<string[]>(['All']);
   protected readonly categoryLookup = signal<Record<string, string>>({});
@@ -112,94 +131,76 @@ export class ClientHomeComponent implements OnInit {
   protected readonly projectsPage = signal(1);
   protected readonly inspirationPageSize = 6;
   protected readonly projectsPageSize = 4;
+  protected readonly inspirationTotalPages = signal(1);
+  protected readonly projectsTotalPages = signal(1);
 
-  protected readonly filteredCards = computed(() => {
-    const category = this.activeCategory();
-    const query = this.searchQuery().trim().toLowerCase();
+  protected readonly pagedCards = computed(() => this.inspirationCards());
+  protected readonly pagedProjects = computed(() => this.myProjects());
 
-    return this.inspirationCards().filter((card) => {
-      const matchesCategory = category === 'All' || card.category === category;
-      const matchesQuery =
-        !query ||
-        card.title.toLowerCase().includes(query) ||
-        card.author.toLowerCase().includes(query) ||
-        card.category.toLowerCase().includes(query);
-      return matchesCategory && matchesQuery;
-    });
+  protected readonly projectSummary = signal({
+    total: 0,
+    inProgress: 0,
+    draft: 0,
+    completed: 0,
+    cancelled: 0,
+    overallProgress: 0,
   });
 
-  protected readonly filteredProjects = computed(() => {
-    const query = this.searchQuery().trim().toLowerCase();
-    const statusFilter = this.projectStatusFilter();
+  protected readonly activeFiltersCount = computed(() => {
+    let count = 0;
+    if (this.searchQuery().trim()) count += 1;
 
-    return this.myProjects().filter((project) => {
-      const matchesStatus =
-        statusFilter === 'all' ||
-        project.status === statusFilter ||
-        (statusFilter === 'in-progress' && project.status === 'open');
+    if (this.activeTab() === 'inspiration') {
+      if (this.activeCategory() !== 'All') count += 1;
+    } else if (this.projectStatusFilter() !== 'all') {
+      count += 1;
+    }
 
-      if (!matchesStatus) return false;
-
-      if (!query) return true;
-
-      return (
-        project.title.toLowerCase().includes(query) ||
-        project.category.toLowerCase().includes(query) ||
-        project.statusLabel.toLowerCase().includes(query) ||
-        project.description.toLowerCase().includes(query)
-      );
-    });
-  });
-
-  protected readonly inspirationTotalPages = computed(() => {
-    const total = this.filteredCards().length;
-    return Math.max(1, Math.ceil(total / this.inspirationPageSize));
-  });
-
-  protected readonly pagedCards = computed(() => {
-    const page = Math.min(this.inspirationPage(), this.inspirationTotalPages());
-    const start = (page - 1) * this.inspirationPageSize;
-    return this.filteredCards().slice(start, start + this.inspirationPageSize);
-  });
-
-  protected readonly projectsTotalPages = computed(() => {
-    const total = this.filteredProjects().length;
-    return Math.max(1, Math.ceil(total / this.projectsPageSize));
-  });
-
-  protected readonly pagedProjects = computed(() => {
-    const page = Math.min(this.projectsPage(), this.projectsTotalPages());
-    const start = (page - 1) * this.projectsPageSize;
-    return this.filteredProjects().slice(start, start + this.projectsPageSize);
-  });
-
-  protected readonly projectSummary = computed(() => {
-    const projects = this.myProjects();
-    const total = projects.length;
-    const inProgress = projects.filter(
-      (p) => p.status === 'in-progress' || p.status === 'open',
-    ).length;
-    const draft = projects.filter((p) => p.status === 'draft').length;
-    const completed = projects.filter((p) => p.status === 'completed').length;
-    const cancelled = projects.filter((p) => p.status === 'cancelled').length;
-    const overallProgress =
-      total === 0
-        ? 0
-        : Math.round(
-            ((inProgress * 0.5 + completed) / total) * 100,
-          );
-
-    return { total, inProgress, draft, completed, cancelled, overallProgress };
+    return count;
   });
 
   ngOnInit(): void {
     this.loadHomeData();
   }
 
-  protected selectTab(tab: HomeTab): void {
-    this.activeTab.set(tab);
+  ngOnDestroy(): void {
+    document.body.style.overflow = '';
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+  }
+
+  protected openFilters(): void {
+    this.filtersOpen.set(true);
+    document.body.style.overflow = 'hidden';
+  }
+
+  protected closeFilters(): void {
+    this.filtersOpen.set(false);
+    document.body.style.overflow = '';
+  }
+
+  protected clearFilters(): void {
+    this.searchQuery.set('');
     this.inspirationPage.set(1);
     this.projectsPage.set(1);
+
+    if (this.activeTab() === 'inspiration') {
+      this.activeCategory.set('All');
+      this.reloadInspiration();
+    } else {
+      this.projectStatusFilter.set('all');
+      this.reloadProjects();
+    }
+  }
+
+  protected selectTab(tab: HomeTab): void {
+    this.activeTab.set(tab);
+    if (tab === 'inspiration') {
+      this.reloadInspiration();
+    } else {
+      this.reloadProjects();
+    }
   }
 
   protected selectProjectStatusFilter(filter: ProjectStatusFilter): void {
@@ -208,6 +209,7 @@ export class ClientHomeComponent implements OnInit {
     if (this.activeTab() !== 'my-projects') {
       this.activeTab.set('my-projects');
     }
+    this.reloadProjects();
   }
 
   protected summaryTabClass(filter: ProjectStatusFilter): string {
@@ -221,6 +223,9 @@ export class ClientHomeComponent implements OnInit {
   protected selectCategory(category: string): void {
     this.activeCategory.set(category);
     this.inspirationPage.set(1);
+    if (this.activeTab() !== 'inspiration') {
+      this.activeTab.set('inspiration');
+    }
     this.reloadInspiration();
   }
 
@@ -237,18 +242,32 @@ export class ClientHomeComponent implements OnInit {
     this.searchQuery.set(value);
     this.inspirationPage.set(1);
     this.projectsPage.set(1);
+
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+
+    this.searchDebounceTimer = setTimeout(() => {
+      if (this.activeTab() === 'inspiration') {
+        this.reloadInspiration();
+      } else {
+        this.reloadProjects();
+      }
+    }, 350);
   }
 
   protected goInspirationPage(delta: number): void {
     const next = this.inspirationPage() + delta;
     if (next < 1 || next > this.inspirationTotalPages()) return;
     this.inspirationPage.set(next);
+    this.reloadInspiration();
   }
 
   protected goProjectsPage(delta: number): void {
     const next = this.projectsPage() + delta;
     if (next < 1 || next > this.projectsTotalPages()) return;
     this.projectsPage.set(next);
+    this.reloadProjects();
   }
 
   protected onInspirationCardClick(card: InspirationCard): void {
@@ -317,9 +336,6 @@ export class ClientHomeComponent implements OnInit {
   }
 
   private loadHomeData(): void {
-    this.loadingInspiration.set(true);
-    this.loadingProjects.set(true);
-
     this.categoriesApi
       .getCategories()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -328,28 +344,9 @@ export class ClientHomeComponent implements OnInit {
         error: () => undefined,
       });
 
-    this.portfolioApi
-      .getInspiration({ take: 60 })
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (inspiration) => {
-          this.applyInspiration(inspiration);
-          this.loadingInspiration.set(false);
-        },
-        error: () => this.loadingInspiration.set(false),
-      });
-
-    this.projectsApi
-      .getMine('as-client')
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (projects) => {
-          this.applyProjects(projects);
-          this.loadingProjects.set(false);
-        },
-        error: () => this.loadingProjects.set(false),
-      });
-
+    this.reloadInspiration();
+    this.reloadProjects();
+    this.loadProjectsSummary();
     this.loadRecentlyViewed();
   }
 
@@ -363,6 +360,16 @@ export class ClientHomeComponent implements OnInit {
       });
   }
 
+  private loadProjectsSummary(): void {
+    this.projectsApi
+      .getMineSummary('as-client')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (summary) => this.applyProjectsSummary(summary),
+        error: () => undefined,
+      });
+  }
+
   private reloadInspiration(): void {
     this.loadingInspiration.set(true);
     const category = this.activeCategory();
@@ -373,15 +380,40 @@ export class ClientHomeComponent implements OnInit {
       .getInspiration({
         categoryId,
         search: this.searchQuery().trim() || null,
-        take: 60,
+        pageNumber: this.inspirationPage(),
+        pageSize: this.inspirationPageSize,
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (items) => {
-          this.applyInspiration(items);
+        next: (page) => {
+          this.applyInspiration(page.items);
+          this.inspirationTotalPages.set(Math.max(1, page.totalPages));
           this.loadingInspiration.set(false);
         },
         error: () => this.loadingInspiration.set(false),
+      });
+  }
+
+  private reloadProjects(): void {
+    this.loadingProjects.set(true);
+    const statusFilter = this.projectStatusFilter();
+
+    this.projectsApi
+      .getMine({
+        role: 'as-client',
+        pageNumber: this.projectsPage(),
+        pageSize: this.projectsPageSize,
+        status: statusFilter === 'all' ? null : statusFilter,
+        search: this.searchQuery().trim() || null,
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (page) => {
+          this.applyProjects(page.items);
+          this.projectsTotalPages.set(Math.max(1, page.totalPages));
+          this.loadingProjects.set(false);
+        },
+        error: () => this.loadingProjects.set(false),
       });
   }
 
@@ -392,16 +424,9 @@ export class ClientHomeComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
-          this.projectsApi
-            .getMine('as-client')
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-              next: (projects) => {
-                this.applyProjects(projects);
-                this.publishingId.set(null);
-              },
-              error: () => this.publishingId.set(null),
-            });
+          this.publishingId.set(null);
+          this.reloadProjects();
+          this.loadProjectsSummary();
         },
         error: () => this.publishingId.set(null),
       });
@@ -462,9 +487,27 @@ export class ClientHomeComponent implements OnInit {
   }
 
   private applyProjects(projects: ProjectDto[]): void {
-    const cards = projects.map((project) => this.mapProjectCard(project));
-    this.myProjects.set(cards);
-    this.upcomingDeadlines.set(this.buildDeadlines(projects));
+    this.myProjects.set(projects.map((project) => this.mapProjectCard(project)));
+  }
+
+  private applyProjectsSummary(summary: MyProjectsSummaryDto): void {
+    const inProgress = summary.inProgress + summary.open;
+    const total = summary.total;
+    const overallProgress =
+      total === 0
+        ? 0
+        : Math.round(((inProgress * 0.5 + summary.completed) / total) * 100);
+
+    this.projectSummary.set({
+      total,
+      inProgress,
+      draft: summary.draft,
+      completed: summary.completed,
+      cancelled: summary.cancelled,
+      overallProgress,
+    });
+
+    this.upcomingDeadlines.set(this.buildDeadlines(summary.upcomingDeadlines));
   }
 
   private mapProjectCard(project: ProjectDto): ClientProjectCard {
