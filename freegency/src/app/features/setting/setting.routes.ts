@@ -7,7 +7,7 @@ import { Privacy } from './privacy/privacy';
 import { Verification } from './verification/verification';
 import { Integrations } from './integrations/integrations';
 import { Dangerzone } from './dangerzone/dangerzone';
-import { Security } from './security/security';
+import { SecurityComponent } from './security/security.component';
 
 export const settingRoutes: Routes = [
   {
@@ -24,7 +24,7 @@ export const settingRoutes: Routes = [
         component: Account,
       },
      
-        { path: 'security', component: Security },
+        { path: 'security', component: SecurityComponent },
         { path: 'notifications', component: Notification },
         { path: 'payments', component: Payment },
         { path: 'privacy', component: Privacy },
