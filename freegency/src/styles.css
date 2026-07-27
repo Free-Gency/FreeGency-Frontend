@@ -760,3 +760,7 @@
     box-shadow: none;
   }
 }
+
+body.modal-open {
+  overflow: hidden;
+}
