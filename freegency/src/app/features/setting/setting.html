@@ -1,48 +1,88 @@
-<app-client-view-navbar></app-client-view-navbar>
-<div class="settings-container">
+<div class="min-h-dvh bg-[#f4f5f8]">
+  <app-client-view-navbar />
 
-  <aside class="sidebar">
+  <main
+    class="settings-shell-enter mx-auto w-full max-w-[1280px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10"
+  >
+    <div
+      class="grid grid-cols-1 items-start gap-5 lg:grid-cols-[272px_minmax(0,1fr)] lg:gap-7"
+    >
+      <aside
+        class="overflow-hidden rounded-[24px] border border-[#e8eaf0] bg-white p-4 shadow-[0_1px_2px_rgba(21,28,39,0.04)] sm:p-5"
+      >
+        <div class="mb-5 px-1.5 pt-1">
+          <h1 class="font-display text-[26px] leading-none font-bold tracking-[-0.35px] text-[#151c27]">
+            Settings
+          </h1>
+          <p class="mt-2 font-body text-sm leading-5 text-[#6b7285]">
+            Manage your preferences.
+          </p>
+        </div>
 
-    <ul>
-  <li routerLink="account" routerLinkActive="active">
-    Account
-  </li>
+        <nav class="flex flex-col gap-1" aria-label="Settings sections">
+          @for (item of navItems; track item.route) {
+            <a
+              [routerLink]="item.route"
+              routerLinkActive
+              [routerLinkActiveOptions]="{ exact: true }"
+              #rla="routerLinkActive"
+              class="group flex w-full items-center gap-3 rounded-2xl px-3 py-3 font-display text-sm transition-all"
+              [class.bg-[#4036e0]]="rla.isActive"
+              [class.text-white]="rla.isActive"
+              [class.font-semibold]="rla.isActive"
+              [class.shadow-[0_8px_20px_rgba(64,54,224,0.22)]]="rla.isActive"
+              [class.text-[#4b5160]]="!rla.isActive"
+              [class.font-medium]="!rla.isActive"
+              [class.hover:bg-[#f5f6fb]]="!rla.isActive"
+            >
+              <span
+                class="inline-flex size-9 shrink-0 items-center justify-center rounded-xl transition-colors"
+                [class.bg-white/15]="rla.isActive"
+                [class.bg-[#f0f1f7]]="!rla.isActive"
+                [class.group-hover:bg-[#e7e9f2]]="!rla.isActive"
+                aria-hidden="true"
+              >
+                <hugeicons-icon
+                  [icon]="item.icon"
+                  [size]="18"
+                  color="currentColor"
+                  [strokeWidth]="1.8"
+                />
+              </span>
+              <span class="truncate">{{ item.label }}</span>
+            </a>
+          }
 
-  <li routerLink="security" routerLinkActive="active">
-    Security
-  </li>
+          <div class="my-2 border-t border-[#eceef4]"></div>
 
-  <li routerLink="notifications" routerLinkActive="active">
-    Notifications
-  </li>
+          <a
+            [routerLink]="dangerItem.route"
+            routerLinkActive
+            [routerLinkActiveOptions]="{ exact: true }"
+            #dangerRla="routerLinkActive"
+            class="group flex w-full items-center gap-3 rounded-2xl px-3 py-3 font-display text-sm font-medium text-[#c62828] transition-colors"
+            [class.bg-[#fdecec]]="dangerRla.isActive"
+            [class.hover:bg-[#fff1f1]]="!dangerRla.isActive"
+          >
+            <span
+              class="inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#fdecec] text-[#c62828] transition-colors group-hover:bg-[#f9dede]"
+              aria-hidden="true"
+            >
+              <hugeicons-icon
+                [icon]="dangerItem.icon"
+                [size]="18"
+                color="currentColor"
+                [strokeWidth]="1.8"
+              />
+            </span>
+            <span class="truncate">{{ dangerItem.label }}</span>
+          </a>
+        </nav>
+      </aside>
 
-  <li routerLink="payments" routerLinkActive="active">
-    Payments
-  </li>
-
-  <li routerLink="privacy" routerLinkActive="active">
-    Privacy
-  </li>
-
-  <li routerLink="verification" routerLinkActive="active">
-    Identity Verification
-  </li>
-
-  <li routerLink="integrations" routerLinkActive="active">
-    Integrations
-  </li>
-
-  <li class="danger" routerLink="danger-zone" routerLinkActive="active">
-    Danger Zone
-  </li>
-</ul>
-
-  </aside>
-
-  <main class="content">
-
-    <router-outlet></router-outlet>
-
+      <section class="min-w-0">
+        <router-outlet />
+      </section>
+    </div>
   </main>
-
 </div>
