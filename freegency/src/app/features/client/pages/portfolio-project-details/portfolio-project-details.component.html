@@ -1,0 +1,345 @@
+<div class="details-page min-h-screen text-[#151c27]">
+  <app-client-view-navbar />
+
+  <main class="details-main mx-auto w-full max-w-[1200px] px-4 pb-24 pt-4 sm:px-6 lg:px-8">
+    <button
+      type="button"
+      class="details-back mb-6 inline-flex cursor-pointer items-center gap-2 font-body text-sm font-medium text-[#5c5a6e] transition-colors hover:text-[#4130d7]"
+      (click)="goBack()"
+    >
+      <hugeicons-icon [icon]="backIcon" [size]="18" color="currentColor" [strokeWidth]="2" />
+      Inspiration
+    </button>
+
+    @if (loading()) {
+      <div class="flex min-h-[40vh] items-center justify-center">
+        <p class="font-body text-sm text-[#5c5a6e]">Loading portfolio…</p>
+      </div>
+    } @else if (error(); as err) {
+      <div class="mx-auto flex max-w-md flex-col items-center py-20 text-center">
+        <p class="font-display text-2xl font-semibold tracking-tight">{{ err }}</p>
+        <a
+          routerLink="/client/home"
+          class="mt-6 inline-flex cursor-pointer rounded-xl bg-[#4130d7] px-6 py-3 font-display text-sm font-bold text-white"
+        >
+          Return home
+        </a>
+      </div>
+    } @else if (details(); as item) {
+      <section class="details-gallery mb-8">
+        <div class="details-hero overflow-hidden rounded-[22px] bg-[#171528]">
+          <img
+            [src]="heroImage()"
+            [alt]="item.title"
+            class="details-hero-image aspect-[16/10] w-full object-cover sm:aspect-[16/9]"
+          />
+        </div>
+
+        @if (gallery().length > 1) {
+          <div class="details-thumbs mt-3 flex gap-2 overflow-x-auto pb-1">
+            @for (url of gallery(); track url) {
+              <button
+                type="button"
+                class="details-thumb relative h-16 w-24 shrink-0 cursor-pointer overflow-hidden rounded-xl bg-[#e8e7ef] sm:h-[72px] sm:w-28"
+                [class.details-thumb-active]="heroImage() === url"
+                (click)="selectImage(url)"
+              >
+                <img [src]="url" alt="" class="size-full object-cover" loading="lazy" />
+              </button>
+            }
+          </div>
+        }
+      </section>
+
+      <div class="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-12">
+        <div class="min-w-0">
+          @if (item.categoryName) {
+            <p class="font-mono text-[11px] font-medium tracking-[0.16em] text-[#4130d7] uppercase">
+              {{ item.categoryName }}
+            </p>
+          }
+
+          <header class="details-header mt-2 flex flex-col gap-5 border-b border-[#e4e2ec] pb-7 sm:flex-row sm:items-end sm:justify-between">
+            <div class="min-w-0">
+              <h1 class="font-display text-[2rem] font-bold tracking-[-0.03em] sm:text-[2.5rem] sm:leading-[1.12]">
+                {{ item.title }}
+              </h1>
+              <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+                <div class="flex items-center gap-2.5">
+                  @if (item.creator?.avatarUrl) {
+                    <img
+                      [src]="item.creator!.avatarUrl!"
+                      [alt]="item.creator!.displayName"
+                      class="size-9 rounded-full object-cover"
+                    />
+                  } @else {
+                    <span
+                      class="inline-flex size-9 items-center justify-center rounded-full bg-[#4130d7] font-display text-xs font-bold text-white"
+                    >
+                      {{ initials(item.creator?.displayName || item.ownerName) }}
+                    </span>
+                  }
+                  <p class="font-display text-sm font-semibold">
+                    {{ item.creator?.displayName || item.ownerName || 'Freelancer' }}
+                  </p>
+                </div>
+
+                @if (reviews().length) {
+                  <span class="inline-flex items-center gap-1.5 font-body text-sm text-[#5c5a6e]">
+                    <hugeicons-icon [icon]="starIcon" [size]="14" color="#e2a008" [strokeWidth]="2" />
+                    {{ averageRating() | number: '1.1-1' }}
+                    <span class="text-[#8b8a97]">· {{ reviews().length }}</span>
+                  </span>
+                }
+              </div>
+            </div>
+
+            <div class="flex shrink-0 flex-wrap gap-2">
+              @if (item.projectUrl) {
+                <a
+                  [href]="item.projectUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[#4130d7] px-4 py-2.5 font-display text-sm font-bold text-white transition-opacity hover:opacity-90"
+                >
+                  <hugeicons-icon [icon]="linkIcon" [size]="16" color="currentColor" [strokeWidth]="2" />
+                  Live project
+                </a>
+              }
+              <a
+                routerLink="/client/create-project"
+                class="inline-flex cursor-pointer items-center rounded-xl border border-[#d9d7e4] bg-white/70 px-4 py-2.5 font-display text-sm font-bold text-[#151c27] transition-colors hover:border-[#4130d7] hover:text-[#4130d7]"
+              >
+                Start similar
+              </a>
+            </div>
+          </header>
+
+          <article class="details-section py-8">
+            <h2 class="font-display text-lg font-semibold tracking-tight">About</h2>
+            <p class="mt-3 max-w-3xl whitespace-pre-line font-body text-[15px] leading-7 text-[#464556]">
+              {{ item.description }}
+            </p>
+
+            @if (item.skills.length) {
+              <div class="mt-6 flex flex-wrap gap-2">
+                @for (skill of item.skills; track skill.id) {
+                  <span class="rounded-lg bg-[#ecebff] px-3 py-1.5 font-body text-sm font-medium text-[#3620ce]">
+                    {{ skill.name }}
+                  </span>
+                }
+              </div>
+            }
+          </article>
+
+          <section class="details-section border-t border-[#e4e2ec] pt-8">
+            <h2 class="font-display text-lg font-semibold tracking-tight">Reviews</h2>
+
+            @if (canReview()) {
+              <form
+                class="details-review-form mt-5 rounded-[20px] border border-[#e4e2ec] bg-white/80 p-5 sm:p-6"
+                (submit)="$event.preventDefault(); submitReview()"
+              >
+                <p class="font-display text-base font-semibold">Leave a review</p>
+
+                <div
+                  class="mt-3 flex items-center gap-1"
+                  (mouseleave)="hoverRating.set(0)"
+                  role="radiogroup"
+                  aria-label="Rating"
+                >
+                  @for (value of starChoices; track value) {
+                    <button
+                      type="button"
+                      class="cursor-pointer rounded-md p-1 transition-transform hover:scale-110"
+                      [attr.aria-checked]="ratingDraft() === value"
+                      role="radio"
+                      (mouseenter)="hoverRating.set(value)"
+                      (click)="ratingDraft.set(value); submitError.set(null)"
+                    >
+                      <hugeicons-icon
+                        [icon]="starIcon"
+                        [size]="26"
+                        [color]="value <= (hoverRating() || ratingDraft()) ? '#e2a008' : '#d4d2de'"
+                        [strokeWidth]="2"
+                      />
+                    </button>
+                  }
+                </div>
+
+                <textarea
+                  rows="3"
+                  maxlength="500"
+                  placeholder="What stood out? (optional)"
+                  class="mt-4 w-full resize-y rounded-xl border border-[#e4e2ec] bg-[#fbfbfc] px-4 py-3 font-body text-sm text-[#151c27] outline-none placeholder:text-[#9b9aab] focus:border-[#4130d7]"
+                  [value]="commentDraft()"
+                  (input)="onCommentInput($event)"
+                ></textarea>
+
+                @if (submitError()) {
+                  <p class="mt-2 font-body text-sm text-[#ba1a1a]">{{ submitError() }}</p>
+                }
+
+                <button
+                  type="submit"
+                  class="mt-3 inline-flex cursor-pointer items-center justify-center rounded-xl bg-[#c7ef2e] px-5 py-2.5 font-display text-sm font-bold text-[#171e00] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                  [disabled]="submitting()"
+                >
+                  {{ submitting() ? 'Submitting…' : 'Post review' }}
+                </button>
+              </form>
+            } @else if (!auth.session()) {
+              <p class="mt-4 font-body text-sm text-[#8b8a97]">
+                <a routerLink="/auth/login" class="font-semibold text-[#4130d7] underline-offset-2 hover:underline">
+                  Sign in
+                </a>
+                to leave a review.
+              </p>
+            }
+
+            @if (reviews().length) {
+              <ul class="mt-6 flex flex-col divide-y divide-[#eceaf3]">
+                @for (review of reviews(); track review.id) {
+                  <li class="flex gap-3 py-5 first:pt-0">
+                    @if (review.reviewerAvatar) {
+                      <img
+                        [src]="review.reviewerAvatar"
+                        [alt]="review.reviewerName"
+                        class="size-10 shrink-0 rounded-full object-cover"
+                      />
+                    } @else {
+                      <span
+                        class="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-[#ecebff] font-display text-xs font-bold text-[#4130d7]"
+                      >
+                        {{ initials(review.reviewerName) }}
+                      </span>
+                    }
+                    <div class="min-w-0 flex-1">
+                      <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                        <p class="font-display text-sm font-semibold">{{ review.reviewerName }}</p>
+                        <span class="font-body text-xs text-[#9b9aab]">
+                          {{ review.createdAt | date: 'MMM d, y' }}
+                        </span>
+                      </div>
+                      <div class="mt-1 flex items-center gap-0.5">
+                        @for (value of starChoices; track value) {
+                          <hugeicons-icon
+                            [icon]="starIcon"
+                            [size]="13"
+                            [color]="value <= review.rating ? '#e2a008' : '#d4d2de'"
+                            [strokeWidth]="2"
+                          />
+                        }
+                      </div>
+                      @if (review.comment) {
+                        <p class="mt-2 font-body text-sm leading-6 text-[#464556]">
+                          {{ review.comment }}
+                        </p>
+                      }
+                    </div>
+                  </li>
+                }
+              </ul>
+            } @else if (!canReview()) {
+              <p class="mt-4 font-body text-sm text-[#8b8a97]">No reviews yet.</p>
+            }
+          </section>
+        </div>
+
+        <aside class="details-aside lg:sticky lg:top-6 lg:self-start">
+          @if (item.creator; as creator) {
+            <div class="overflow-hidden rounded-[22px] border border-[#e4e2ec] bg-white/85">
+              <div class="space-y-4 p-5">
+                <div class="flex items-center gap-3">
+                  @if (creator.avatarUrl) {
+                    <img
+                      [src]="creator.avatarUrl"
+                      [alt]="creator.displayName"
+                      class="size-14 rounded-2xl object-cover"
+                    />
+                  } @else {
+                    <span
+                      class="inline-flex size-14 items-center justify-center rounded-2xl bg-[#4130d7] font-display text-lg font-bold text-white"
+                    >
+                      {{ initials(creator.displayName) }}
+                    </span>
+                  }
+                  <div class="min-w-0">
+                    <p class="truncate font-display text-base font-semibold">
+                      {{ creator.displayName }}
+                    </p>
+                    <p class="truncate font-body text-sm text-[#8b8a97]">
+                      {{ creator.headline || (creator.kind === 'Team' ? 'Team' : 'Freelancer') }}
+                    </p>
+                  </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2 text-xs text-[#5c5a6e]">
+                  @if (creator.ratingCount > 0) {
+                    <span class="inline-flex items-center gap-1 rounded-lg bg-[#f5f4f8] px-2.5 py-1">
+                      <hugeicons-icon [icon]="starIcon" [size]="12" color="#e2a008" [strokeWidth]="2" />
+                      {{ creator.averageRating | number: '1.1-1' }}
+                    </span>
+                  }
+                  @if (creator.kind === 'Team' && creator.membersCount > 0) {
+                    <span class="inline-flex items-center gap-1 rounded-lg bg-[#f5f4f8] px-2.5 py-1">
+                      <hugeicons-icon [icon]="teamIcon" [size]="12" color="currentColor" [strokeWidth]="2" />
+                      {{ creator.membersCount }} members
+                    </span>
+                  }
+                  @if (creator.country) {
+                    <span class="inline-flex items-center gap-1 rounded-lg bg-[#f5f4f8] px-2.5 py-1">
+                      <hugeicons-icon [icon]="locationIcon" [size]="12" color="currentColor" [strokeWidth]="2" />
+                      {{ creator.country }}
+                    </span>
+                  }
+                </div>
+
+                @if (creator.bio) {
+                  <p class="font-body text-sm leading-6 text-[#464556]">{{ creator.bio }}</p>
+                }
+
+                @if (creator.specialties.length) {
+                  <div class="flex flex-wrap gap-1.5">
+                    @for (spec of creator.specialties; track spec) {
+                      <span class="rounded-md bg-[#f5f4f8] px-2 py-1 font-body text-xs text-[#464556]">
+                        {{ spec }}
+                      </span>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          @if (item.budget != null || item.completionDate) {
+            <dl class="mt-4 space-y-3 px-1">
+              @if (item.budget != null) {
+                <div class="flex items-center gap-3">
+                  <hugeicons-icon [icon]="moneyIcon" [size]="18" color="#4130d7" [strokeWidth]="2" />
+                  <div>
+                    <dt class="font-body text-xs text-[#9b9aab]">Budget</dt>
+                    <dd class="font-display text-sm font-semibold">
+                      {{ item.budget | currency: 'USD':'symbol':'1.0-0' }}
+                    </dd>
+                  </div>
+                </div>
+              }
+              @if (item.completionDate) {
+                <div class="flex items-center gap-3">
+                  <hugeicons-icon [icon]="calendarIcon" [size]="18" color="#4130d7" [strokeWidth]="2" />
+                  <div>
+                    <dt class="font-body text-xs text-[#9b9aab]">Completed</dt>
+                    <dd class="font-display text-sm font-semibold">
+                      {{ item.completionDate | date: 'MMMM d, y' }}
+                    </dd>
+                  </div>
+                </div>
+              }
+            </dl>
+          }
+        </aside>
+      </div>
+    }
+  </main>
+</div>

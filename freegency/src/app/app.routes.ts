@@ -16,6 +16,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'client/inspiration/:id',
+    canActivate: [authGuard, clientModeGuard],
+    loadComponent: () =>
+      import(
+        './features/client/pages/portfolio-project-details/portfolio-project-details.component'
+      ).then((m) => m.PortfolioProjectDetailsComponent),
+  },
+  {
     path: 'client/create-project',
     canActivate: [authGuard, clientModeGuard],
     loadComponent: () =>
