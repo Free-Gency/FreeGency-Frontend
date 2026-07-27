@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 import { Setting } from './setting';
 import { Account } from './account/account';
-import { Notification } from './notification/notification';
 import { Payment } from './payment/payment';
 import { Privacy } from './privacy/privacy';
 import { Verification } from './verification/verification';

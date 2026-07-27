@@ -17,7 +17,7 @@ export class Payment {
   topUpAmount = 100;
   stripe: Stripe | null = null;
 
-elements: StripeElements | null = null;
+elements: StripeElements | null = null; 
   async ngOnInit() {
     this.stripe = await loadStripe(
         environment.stripePublicKey
@@ -67,7 +67,7 @@ elements: StripeElements | null = null;
 
         error: err => {
 
-          console.error(err);
+          console.error(err); 
 
         }
 
