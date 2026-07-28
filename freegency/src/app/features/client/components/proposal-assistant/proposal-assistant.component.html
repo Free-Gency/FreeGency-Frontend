@@ -145,7 +145,7 @@
             }
           }
 
-          <!-- Summarize / Rank: stacked essentials rows -->
+          <!-- Summarize / Rank: stacked essentials with clear bullets -->
           @if ((msg.intent === 'summarize' || msg.intent === 'rank') && msg.cards?.length) {
             <div class="fg-summary-list">
               @for (card of msg.cards; track card.proposalId || card.applicantName; let i = $index) {
@@ -156,34 +156,54 @@
                         <span class="fg-rank-num">{{ i + 1 }}</span>
                       }
                       @if (card.avatarUrl) {
-                        <img [src]="card.avatarUrl" alt="" class="fg-avatar" />
+                        <img [src]="card.avatarUrl" alt="" class="fg-avatar fg-avatar--sm" />
                       } @else {
-                        <div class="fg-avatar fg-avatar--ph">{{ initials(card.applicantName) }}</div>
+                        <div class="fg-avatar fg-avatar--ph fg-avatar--sm">{{ initials(card.applicantName) }}</div>
                       }
                       <div class="min-w-0">
                         <p class="fg-card-name">{{ card.applicantName }}</p>
                         <p class="fg-card-role">{{ card.applicantType === 'Team' ? 'Team' : 'Freelancer' }}</p>
                       </div>
                     </div>
-                    <div class="fg-summary-meta">
-                      @if (card.proposedBudget != null) {
-                        <span class="fg-bid" [class.fg-bid--over]="card.overBudget">
-                          ${{ card.proposedBudget | number: '1.0-0' }}
-                        </span>
-                      }
-                      @if (matchPercent(card); as pct) {
-                        <span class="fg-match-pct">{{ pct }}%</span>
-                      }
-                    </div>
-                  </div>
-                  <div class="fg-summary-points">
-                    @if (card.insight || card.strength) {
-                      <p><span class="fg-tag fg-tag--ok">{{ msg.intent === 'rank' ? 'Why here' : 'Strength' }}</span> {{ card.insight || card.strength }}</p>
-                    }
-                    @if (card.risk) {
-                      <p><span class="fg-tag fg-tag--warn">Risk</span> {{ card.risk }}</p>
+                    @if (matchPercent(card); as pct) {
+                      <span class="fg-match-pct">{{ pct }}%</span>
                     }
                   </div>
+                  <ul class="fg-summary-bullets">
+                    @if (card.proposedBudget != null) {
+                      <li>
+                        <span class="fg-bullet-label">Bid</span>
+                        <span [class.fg-bid--over]="card.overBudget"
+                          >${{ card.proposedBudget | number: '1.0-0' }}</span
+                        >
+                      </li>
+                    }
+                    @if (card.rating != null) {
+                      <li>
+                        <span class="fg-bullet-label">Rating</span>
+                        ★ {{ card.rating | number: '1.1-1'
+                        }}{{ card.reviewCount ? ' (' + card.reviewCount + ')' : '' }}
+                      </li>
+                    }
+                    @if (card.skills?.length) {
+                      <li>
+                        <span class="fg-bullet-label">Skills</span>
+                        {{ card.skills!.slice(0, 5).join(', ') }}
+                      </li>
+                    }
+                    @if (card.insight || card.strength || card.highlights?.[0]) {
+                      <li>
+                        <span class="fg-bullet-label">{{ msg.intent === 'rank' ? 'Why' : 'Approach' }}</span>
+                        {{ card.insight || card.strength || card.highlights?.[0] }}
+                      </li>
+                    }
+                    @if (card.risk || card.highlights?.[1]) {
+                      <li>
+                        <span class="fg-bullet-label">Watch-out</span>
+                        {{ card.risk || card.highlights?.[1] }}
+                      </li>
+                    }
+                  </ul>
                 </article>
               }
             </div>

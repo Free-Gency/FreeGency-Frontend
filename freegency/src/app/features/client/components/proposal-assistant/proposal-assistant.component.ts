@@ -480,6 +480,19 @@ export class ProposalAssistantComponent {
               ? normalized.cards.map((c, i) => this.mergeAiCard(c, intent, i))
               : [];
 
+          // Summarize should list everyone as bullet cards — fill gaps from local scoring
+          if (intent === 'summarize' && this.proposals().length > 0) {
+            const localCards = this.scoredProposals();
+            if (cards.length < localCards.length) {
+              cards = localCards.map((local, i) => {
+                const ai = cards.find(
+                  (c) => c.applicantName.toLowerCase() === local.applicantName.toLowerCase(),
+                );
+                return ai ? this.mergeAiCard({ ...local, ...ai }, intent, i) : local;
+              });
+            }
+          }
+
           const cleanReply = this.sanitizeReply(normalized.reply, intent, cards);
 
           if (
@@ -489,10 +502,13 @@ export class ProposalAssistantComponent {
           ) {
             const local = this.localResultForIntent(command, focus);
             if (local) {
-              // Prefer AI prose when present
+              const intro =
+                intent === 'summarize' || intent === 'rank'
+                  ? this.shortStructuredIntro(intent, local.cards?.length ? local.cards : cards, cleanReply)
+                  : cleanReply || local.content;
               this.pushAssistant({
                 ...local,
-                content: cleanReply || local.content,
+                content: intro,
               });
               return;
             }
@@ -540,8 +556,12 @@ export class ProposalAssistantComponent {
           }
 
           const followUps = this.followUpChips(intent, cards[0]?.applicantName ?? focus);
+          const displayContent =
+            (intent === 'summarize' || intent === 'rank') && cards.length
+              ? this.shortStructuredIntro(intent, cards, cleanReply)
+              : cleanReply;
           this.pushAssistant({
-            content: cleanReply,
+            content: displayContent,
             intent,
             cards,
             chips: this.chipsForIntent(intent ?? 'ask', normalized.chips.length ? normalized.chips : followUps),
@@ -711,7 +731,10 @@ export class ProposalAssistantComponent {
   }
 
   private buildSummarizeResult(): Omit<ChatMessage, 'id' | 'role'> {
-    const cards = this.scoredProposals();
+    const cards = this.scoredProposals().map((c) => ({
+      ...c,
+      insight: c.insight || c.strength || null,
+    }));
     if (!cards.length) {
       return {
         content: 'No proposals loaded for this project yet.',
@@ -719,8 +742,19 @@ export class ProposalAssistantComponent {
         resultTitle: 'Proposal essentials',
       };
     }
+    const budgets = cards
+      .map((c) => c.proposedBudget)
+      .filter((b): b is number => b != null);
+    const min = budgets.length ? Math.min(...budgets) : null;
+    const max = budgets.length ? Math.max(...budgets) : null;
+    const range =
+      min != null && max != null
+        ? min === max
+          ? `bids around $${min}`
+          : `bids from $${min} to $${max}`
+        : 'see bids below';
     return {
-      content: `Quick read across ${cards.length} proposal${cards.length === 1 ? '' : 's'} — bid, strength, and risk.`,
+      content: `${cards.length} proposal${cards.length === 1 ? '' : 's'} — ${range}.`,
       intent: 'summarize',
       resultTitle: 'Proposal essentials',
       cards,
@@ -1052,6 +1086,7 @@ export class ProposalAssistantComponent {
       .replace(/\bProposal\s*IDs?\b\s*:?\s*/gi, '')
       .replace(/\bUserId\b\s*:?\s*/gi, '')
       .replace(/\bTeamId\b\s*:?\s*/gi, '')
+      .replace(/\*\*/g, '')
       .replace(/\|/g, ' ')
       .replace(/-{3,}/g, ' ')
       .replace(/[ \t]{2,}/g, ' ')
@@ -1061,14 +1096,17 @@ export class ProposalAssistantComponent {
     const structured = ['summarize', 'compare', 'bestfit', 'rank', 'redflags', 'profile'].includes(
       intent ?? '',
     );
+    const looksLikeApplicantDump =
+      (text.match(/^\s*[-*•]/gm) || []).length >= 2 ||
+      (text.match(/\b\$\d+/g) || []).length >= 3;
     const looksBroken =
       !text ||
       text.length < 12 ||
       (text.match(/\|/g) || []).length >= 2 ||
       /proposal\s*id/i.test(text);
 
-    if (structured && cards.length && (looksBroken || text.length > 320)) {
-      return this.fallbackReplyFromCards(intent, cards) || text.slice(0, 220);
+    if (structured && cards.length && (looksBroken || looksLikeApplicantDump || text.length > 220)) {
+      return this.fallbackReplyFromCards(intent, cards) || text.slice(0, 160);
     }
 
     if (looksBroken && cards.length) {
@@ -1076,6 +1114,25 @@ export class ProposalAssistantComponent {
     }
 
     return text;
+  }
+
+  /** Short intro above structured summarize/rank cards — never a markdown dump. */
+  private shortStructuredIntro(
+    intent: string | null | undefined,
+    cards: AssistantProfileCard[],
+    rawReply?: string,
+  ): string {
+    const cleaned = (rawReply ?? '')
+      .replace(/\*\*/g, '')
+      .trim();
+    const isDump =
+      !cleaned ||
+      cleaned.length > 180 ||
+      (cleaned.match(/^\s*[-*•]/gm) || []).length >= 2 ||
+      (cleaned.match(/\b\$\d+/g) || []).length >= 2;
+
+    if (!isDump) return cleaned;
+    return this.fallbackReplyFromCards(intent, cards);
   }
 
   private fallbackReplyFromCards(
