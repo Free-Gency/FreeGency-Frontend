@@ -6,15 +6,14 @@ import {
   Add01Icon,
   ArrowDataTransferHorizontalIcon,
   ArrowUp01Icon,
-  CreditCardIcon,
   Money01Icon,
   SecurityCheckIcon,
-  Tick02Icon,
   Wallet01Icon,
 } from '@hugeicons/core-free-icons';
-import { loadStripe, Stripe, StripeElements } from '@stripe/stripe-js';
+import { loadStripe, Stripe, StripeElements, StripePaymentElement } from '@stripe/stripe-js';
 import { environment } from '../../../../environments/environment.development';
 import { Wallet } from '../../../shared/models/Wallet';
+import { ToastService } from '../../../shared/components/toast/toast.service';
 import { PaymentService } from '../Data-Access/payment-service';
 import { SignalrService } from '../../../core/Signalr/signalr-service';
 
@@ -27,15 +26,14 @@ import { SignalrService } from '../../../core/Signalr/signalr-service';
 })
 export class Payment implements OnInit {
   private paymentService = inject(PaymentService);
+  private toast = inject(ToastService);
 
   protected readonly walletIcon = Wallet01Icon as IconSvgObject;
   protected readonly moneyIcon = Money01Icon as IconSvgObject;
-  protected readonly cardIcon = CreditCardIcon as IconSvgObject;
   protected readonly addIcon = Add01Icon as IconSvgObject;
   protected readonly upIcon = ArrowUp01Icon as IconSvgObject;
   protected readonly transferIcon = ArrowDataTransferHorizontalIcon as IconSvgObject;
   protected readonly shieldIcon = SecurityCheckIcon as IconSvgObject;
-  protected readonly checkIcon = Tick02Icon as IconSvgObject;
   signalrService = inject(SignalrService);
   public wallet = signal<Wallet | null>(null);
   constructor() {
@@ -46,12 +44,13 @@ export class Payment implements OnInit {
   topUpAmount = 0;
   stripe: Stripe | null = null;
   elements: StripeElements | null = null;
+  private paymentElement: StripePaymentElement | null = null;
 
-  /** Static UI placeholders — replace when payment-methods API is ready. */
-  protected readonly mockMethods = [
-    { brand: 'Visa', last4: '4421', expiry: '12/26', selected: true },
-    { brand: 'Mastercard', last4: '8890', expiry: '08/27', selected: false },
-  ];
+  /** Stripe payment form is expanded after Top Up. */
+  protected readonly paymentFormOpen = signal(false);
+  /** True when Stripe reports the selected payment method fields are complete. */
+  protected readonly paymentFormComplete = signal(false);
+  protected readonly paying = signal(false);
 
   /** Static UI placeholders — replace when transactions API is ready. */
   protected readonly mockActivity = [
@@ -84,6 +83,21 @@ export class Payment implements OnInit {
     },
   ];
 
+  protected get canTopUp(): boolean {
+    return Number(this.topUpAmount) > 0;
+  }
+
+  protected get canPay(): boolean {
+    return (
+      this.paymentFormOpen() &&
+      Number(this.topUpAmount) > 0 &&
+      this.paymentFormComplete() &&
+      !!this.stripe &&
+      !!this.elements &&
+      !this.paying()
+    );
+  }
+
   async ngOnInit(): Promise<void> {
     this.stripe = await loadStripe(environment.stripePublicKey);
     this.loadWallet();
@@ -99,25 +113,37 @@ export class Payment implements OnInit {
   }
 
   topUp(): void {
-    if (this.topUpAmount <= 0) return;
+    if (!this.canTopUp) return;
 
     this.paymentService.createTopUp(this.topUpAmount).subscribe({
       next: async (res) => {
+        this.collapsePaymentForm();
+
         this.elements = this.stripe!.elements({
           clientSecret: res.clientSecret,
         });
 
-        const paymentElement = this.elements.create('payment');
-        paymentElement.mount('#payment-element');
+        this.paymentElement = this.elements.create('payment');
+        this.paymentFormComplete.set(false);
+        this.paymentFormOpen.set(true);
+
+        this.paymentElement.on('change', (event) => {
+          this.paymentFormComplete.set(event.complete);
+        });
+
+        this.paymentElement.mount('#payment-element');
       },
       error: (err) => {
         console.error(err);
+        this.toast.error('Could not start top up. Please try again.');
       },
     });
   }
 
   async pay(): Promise<void> {
-    if (!this.stripe || !this.elements) return;
+    if (!this.canPay || !this.stripe || !this.elements) return;
+
+    this.paying.set(true);
 
     const { error } = await this.stripe.confirmPayment({
       elements: this.elements,
@@ -127,12 +153,29 @@ export class Payment implements OnInit {
       redirect: 'if_required',
     });
 
+    this.paying.set(false);
+
     if (error) {
       console.error(error.message);
+      this.toast.error(error.message ?? 'Payment failed. Please try again.');
       return;
     }
 
-    alert('Payment Completed');
+    this.toast.success('Payment completed successfully.');
+    this.collapsePaymentForm();
+    this.topUpAmount = 0;
+    this.loadWallet();
+  }
+
+  private collapsePaymentForm(): void {
+    this.paymentElement?.unmount();
+    this.paymentElement = null;
+    this.elements = null;
+    this.paymentFormComplete.set(false);
+    this.paymentFormOpen.set(false);
+
+    const host = document.getElementById('payment-element');
+    if (host) host.innerHTML = '';
   }
 
   protected activityIcon(kind: 'wallet' | 'transfer' | 'up'): IconSvgObject {
