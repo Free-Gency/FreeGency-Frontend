@@ -28,7 +28,7 @@ export class SignalrService {
     .withAutomaticReconnect()
     .build();
 
-    this.hubConnection.start().catch(erorr=>console.log(erorr));
+    this.hubConnection.start().catch((erorr: any)=>console.log(erorr));
     this.hubConnection.on("WalletUpdated",(value:Wallet)=>{
       this.WalletSignal.set(value);
       console.log(this.WalletSignal());
@@ -36,7 +36,7 @@ export class SignalrService {
   }
   stopHubConnection(){
     if(this.hubConnection?.state===HubConnectionState.Connected){
-      this.hubConnection.stop().catch(error=>console.log(error));
+      this.hubConnection.stop().catch((error: any)=>console.log(error));
     }
   }
 }
