@@ -26,10 +26,13 @@ export class ProjectDetailsApiService {
       );
   }
 
-  update(id: string, request: UpdateProjectRequest): Observable<void> {
+  // The backend's Edit action reads UpdateProjectRequestDto.Id from the body
+  // (there's no [FromRoute] id parameter on the controller), so the id must
+  // be included in the request payload, not just the URL.
+  update(request: UpdateProjectRequest): Observable<void> {
     return this.http
       .put<{ isSuccess: boolean; message?: string | null }>(
-        `${this.baseUrl}/${id}`,
+        `${this.baseUrl}/${request.id}`,
         request,
       )
       .pipe(
