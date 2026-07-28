@@ -1,5 +1,5 @@
 import { CurrencyPipe } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, effect, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HugeiconsIconComponent, type IconSvgObject } from '@hugeicons/angular';
 import {
@@ -16,6 +16,7 @@ import { loadStripe, Stripe, StripeElements } from '@stripe/stripe-js';
 import { environment } from '../../../../environments/environment.development';
 import { Wallet } from '../../../shared/models/Wallet';
 import { PaymentService } from '../Data-Access/payment-service';
+import { SignalrService } from '../../../core/Signalr/signalr-service';
 
 @Component({
   selector: 'app-payment',
@@ -35,9 +36,14 @@ export class Payment implements OnInit {
   protected readonly transferIcon = ArrowDataTransferHorizontalIcon as IconSvgObject;
   protected readonly shieldIcon = SecurityCheckIcon as IconSvgObject;
   protected readonly checkIcon = Tick02Icon as IconSvgObject;
-
-  wallet = signal<Wallet | null>(null);
-  topUpAmount = 100;
+  signalrService=inject(SignalrService);
+  public wallet = signal<Wallet | null>(null);
+  constructor() {
+  effect(() => {
+    this.wallet.set(this.signalrService.WalletSignal());
+  });
+}
+  topUpAmount = 0;
   stripe: Stripe | null = null;
   elements: StripeElements | null = null;
 
