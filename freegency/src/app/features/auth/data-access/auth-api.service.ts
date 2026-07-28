@@ -8,12 +8,10 @@ import type {
   RegisterRequest,
   ResetPasswordRequest,
 } from '../../../core/auth/auth.models';
-
 @Injectable({ providedIn: 'root' })
 export class AuthApiService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiBaseUrl}/Auth`;
-
   login(request: LoginRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.baseUrl}/login`, request);
   }
