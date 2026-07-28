@@ -31,8 +31,13 @@ export class MyProjectsComponent implements OnInit {
   loadProjects(): void {
     this.loading.set(true);
     this.manageWorkService.getMyProjects('as-client').subscribe({
-      next: (projects: Project[]) => {
-        this.projects.set(projects);
+      next: (res: any) => {
+        // Handle direct array or wrapped responses like { data: [...] } or { $values: [...] }
+        const projectsList = Array.isArray(res) 
+          ? res 
+          : res?.data || res?.$values || [];
+
+        this.projects.set(projectsList);
         this.loading.set(false);
       },
       error: (err: HttpErrorResponse) => {
@@ -58,7 +63,8 @@ export class MyProjectsComponent implements OnInit {
 
   getTotalEscrow(): number { return 5100; }
   getActiveProjectCount(): number {
-    return this.projects().filter((p) => p.status === 'InProgress').length;
+    const list = Array.isArray(this.projects()) ? this.projects() : [];
+    return list.filter((p) => p.status === 'InProgress').length;
   }
   getReleasedToDate(): number { return 2450; }
   getAvailableBalance(): number { return 850; }
@@ -67,8 +73,9 @@ export class MyProjectsComponent implements OnInit {
 
   readonly filteredProjects = computed(() => {
     const filter = this.statusFilter();
-    if (filter === 'All') return this.projects();
-    return this.projects().filter((p) => p.status === filter);
+    const list = Array.isArray(this.projects()) ? this.projects() : [];
+    if (filter === 'All') return list;
+    return list.filter((p) => p.status === filter);
   });
 
   setStatusFilter(status: typeof this.statusFilter extends () => infer T ? T : never): void {
@@ -80,6 +87,7 @@ export class MyProjectsComponent implements OnInit {
   goToProposals(): void { /* wire to parent tab switch later */ }
   goToMilestones(): void { /* wire to parent tab switch later */ }
   getCount(status: string): number {
-    return this.projects().filter((p) => p.status === status).length;
+    const list = Array.isArray(this.projects()) ? this.projects() : [];
+    return list.filter((p) => p.status === status).length;
   }
 }

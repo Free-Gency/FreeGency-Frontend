@@ -29,10 +29,14 @@ export class ManageWorkComponent implements OnInit {
   loadProjects(): void {
     this.loadingProjects.set(true);
     this.manageWorkService.getMyProjects('as-client').subscribe({
-      next: (projects) => {
-        this.projects.set(projects);
-        if (projects.length > 0 && !this.selectedProjectId()) {
-          this.selectedProjectId.set(projects[0].id);
+      next: (res: any) => {
+        const projectsList = Array.isArray(res) 
+          ? res 
+          : res?.data || res?.$values || [];
+
+        this.projects.set(projectsList);
+        if (projectsList.length > 0 && !this.selectedProjectId()) {
+          this.selectedProjectId.set(projectsList[0].id);
         }
         this.loadingProjects.set(false);
       },
