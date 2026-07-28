@@ -1,13 +1,13 @@
 import { Routes } from '@angular/router';
 import { Setting } from './setting';
 import { Account } from './account/account';
-import { Notification } from './notification/notification';
+import { Notifications } from './notification/notification';
 import { Payment } from './payment/payment';
 import { Privacy } from './privacy/privacy';
 import { Verification } from './verification/verification';
 import { Integrations } from './integrations/integrations';
-import { Dangerzone } from './dangerzone/dangerzone';
-import { Security } from './security/security';
+import { DangerZone } from '../setting/dangerzone/dangerzone';
+import { SecurityComponent } from './security/security.component';
 
 export const settingRoutes: Routes = [
   {
@@ -23,14 +23,13 @@ export const settingRoutes: Routes = [
         path: 'account',
         component: Account,
       },
-     
-        { path: 'security', component: Security },
-        { path: 'notifications', component: Notification },
-        { path: 'payments', component: Payment },
-        { path: 'privacy', component: Privacy },
-        { path: 'verification', component: Verification },
-        { path: 'integrations', component: Integrations },
-        { path: 'danger-zone', component: Dangerzone },
+      { path: 'security', component: SecurityComponent },
+      { path: 'notifications', component: Notifications },
+      { path: 'payments', component: Payment },
+      { path: 'privacy', component: Privacy },
+      { path: 'verification', component: Verification },
+      { path: 'integrations', component: Integrations },
+      { path: 'danger-zone', component: DangerZone },
     ],
   },
 ];

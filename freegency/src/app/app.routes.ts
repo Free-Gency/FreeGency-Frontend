@@ -24,6 +24,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'client/inspiration/:id',
+    canActivate: [authGuard, clientModeGuard],
+    loadComponent: () =>
+      import(
+        './features/client/pages/portfolio-project-details/portfolio-project-details.component'
+      ).then((m) => m.PortfolioProjectDetailsComponent),
+  },
+  {
     path: 'client/create-project',
     canActivate: [authGuard, clientModeGuard],
     loadComponent: () =>
@@ -106,11 +114,17 @@ export const routes: Routes = [
     path: 'auth',
     loadChildren: () => import('./features/auth/auth.routes').then((m) => m.authRoutes),
   },
- {
-  path: 'settings',
-  loadChildren: () =>
-    import('./features/setting/setting.routes').then(m => m.settingRoutes),
-},
+  {
+    path: 'settings',
+    loadChildren: () =>
+      import('./features/setting/setting.routes').then((m) => m.settingRoutes),
+  },
+  {
+    path: 'projects',
+    canActivate: [authGuard],
+    loadChildren: () =>
+      import('./features/project/project.routes').then((m) => m.projectRoutes),
+  },
   { path: 'onboarding', redirectTo: 'auth/onboarding', pathMatch: 'full' },
   { path: 'sign-up', redirectTo: 'auth/sign-up', pathMatch: 'full' },
   { path: 'login', redirectTo: 'auth/login', pathMatch: 'full' },

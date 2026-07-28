@@ -1,0 +1,82 @@
+<div class="document-upload">
+  @if (!selectedFile()) {
+    <div 
+      class="upload-area"
+      [class.dragging]="isDragging()"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave($event)"
+      (drop)="onDrop($event)"
+    >
+      <div class="upload-content">
+        <div class="upload-icon">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <path d="M16 4V20M16 4L10 10M16 4L22 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M4 20V26C4 27.1046 4.89543 28 6 28H26C27.1046 28 28 27.1046 28 26V20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="upload-text">
+          <span class="upload-primary">Drag and drop your file here, or</span>
+          <label class="upload-link">
+            browse
+            <input
+              type="file"
+              [accept]="acceptedFormats()"
+              (change)="onFileSelected($event)"
+              class="file-input"
+              aria-label="Upload document"
+            />
+          </label>
+        </div>
+        <p class="upload-hint">
+          Supported formats: {{ acceptedFormatsList() }} • Max size: {{ maxFileSize() }}MB
+        </p>
+      </div>
+    </div>
+  } @else {
+    <div class="file-preview">
+      <div class="preview-content">
+        @if (previewUrl()) {
+          <div class="preview-image">
+            <img [src]="previewUrl()" alt="Document preview" />
+          </div>
+        } @else {
+          <div class="preview-file">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+              <rect x="8" y="4" width="32" height="40" rx="4" stroke="currentColor" stroke-width="2"/>
+              <path d="M16 16H32M16 24H32M16 32H24" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+        }
+        <div class="preview-info">
+          <span class="file-name">{{ selectedFile()?.name }}</span>
+          <span class="file-size">{{ formatFileSize(selectedFile()?.size || 0) }}</span>
+        </div>
+      </div>
+      
+      @if (uploadProgress() > 0) {
+        <div class="upload-progress">
+          <div class="progress-bar">
+            <div 
+              class="progress-fill" 
+              [style.width.%]="uploadProgress()"
+            ></div>
+          </div>
+          <span class="progress-text">{{ uploadProgress() }}%</span>
+        </div>
+      }
+      
+      <button 
+        type="button" 
+        class="remove-file" 
+        (click)="removeFile()"
+        [disabled]="isLoading()"
+        aria-label="Remove file"
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Remove
+      </button>
+    </div>
+  }
+</div>

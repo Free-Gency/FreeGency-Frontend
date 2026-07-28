@@ -1,338 +1,329 @@
-<section class="account">
-
-  <header class="account-header">
-
-    <h1 class="text-headline-md">
-      Account
+<section class="account-page flex w-full flex-col gap-5">
+  <header>
+    <h1 class="font-display text-[28px] leading-none font-bold tracking-[-0.4px] text-[#151c27]">
+      Account Profile
     </h1>
-
-    <p class="text-body-sm text-on-surface-variant">
-      Manage your personal information and hiring interests.
+    <p class="mt-2 font-body text-sm leading-6 text-[#6b7285]">
+      Manage your profile image and public identity information.
     </p>
-
   </header>
 
-  <!-- Tabs -->
+  <!-- Photo card -->
+  <div
+    class="grid grid-cols-1 gap-5 rounded-[24px] border border-[#e8eaf0] bg-white p-5 shadow-[0_1px_2px_rgba(21,28,39,0.04)] sm:p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center"
+  >
+    <div class="flex min-w-0 items-center gap-4 sm:gap-5">
+      <div class="relative shrink-0">
+        <div
+          class="flex size-[88px] items-center justify-center overflow-hidden rounded-full bg-[#ebe9ff] font-display text-2xl font-bold text-[#4036e0]"
+        >
+          @if (avatarUrl()) {
+            <img [src]="avatarUrl()!" alt="Profile photo" class="size-full object-cover" />
+          } @else {
+            <span> {{ profile()?.firstName?.charAt(0) }}{{ profile()?.lastName?.charAt(0) }} </span>
+          }
+        </div>
 
-  <div class="account-tabbar" role="tablist">
+        <label
+          class="absolute right-0 bottom-0 inline-flex size-8 cursor-pointer items-center justify-center rounded-full bg-[#4036e0] text-white shadow-[0_2px_8px_rgba(64,54,224,0.35)] transition-opacity hover:opacity-90"
+          aria-label="Upload new photo"
+        >
+          <hugeicons-icon [icon]="cameraIcon" [size]="16" color="currentColor" [strokeWidth]="2" />
+          <input
+            type="file"
+            class="sr-only"
+            accept="image/png,image/jpeg"
+            (change)="onPhotoSelected($event)"
+          />
+        </label>
+      </div>
 
-    <button
-      type="button"
-      class="account-tab"
-      [class.account-tab--active]="activeTab() === 'profile'"
-      (click)="setTab('profile')">
-
-      Profile
-
-    </button>
-
-    <button
-      type="button"
-      class="account-tab"
-      [class.account-tab--active]="activeTab() === 'interests'"
-      (click)="setTab('interests')">
-
-      Interests
-
-    </button>
-
-  </div>
-
-  <!-- ================= Profile ================= -->
-
-  @if(activeTab() === 'profile'){
-
-  <form [formGroup]="form">
-
-    <div class="account-body">
-
-      <!-- Photo -->
-
-      <div class="card photo-card">
-
-        <div class="photo-left">
-
-          <div class="avatar">
-
-            @if(avatarUrl()){
-
-            <img
-              [src]="avatarUrl()!"
-              alt="Profile Photo">
-
-            }
-
-            @else if(profile()?.profileImage){
-
-            <img
-              [src]="profile()?.profileImage!"
-              alt="Profile Photo">
-
-            }
-
-            @else{
-
-            <span>
-
-              {{ profile()?.firstName?.charAt(0) }}
-              {{ profile()?.lastName?.charAt(0) }}
-
+      <div class="min-w-0 flex-1">
+        <div class="flex flex-wrap items-center gap-2">
+          <p class="truncate font-display text-lg font-semibold text-[#151c27] sm:text-xl">
+            {{ form.controls.firstName.value || profile()?.firstName }}
+            {{ form.controls.lastName.value || profile()?.lastName }}
+          </p>
+          @if (profile()?.isVerified) {
+            <span
+              class="inline-flex items-center rounded-full bg-[#ebe9ff] px-2.5 py-0.5 font-body text-[11px] font-semibold text-[#4036e0]"
+            >
+              Verified
             </span>
-
-            }
-
-          </div>
-
-          <div>
-
-            <p class="text-body-md font-semibold">
-
-              {{ form.controls.firstName.value }}
-              {{ form.controls.lastName.value }}
-
-            </p>
-
-            <p class="text-body-sm text-on-surface-variant">
-
-              {{ form.controls.email.value }}
-
-            </p>
-
-          </div>
-
+          }
         </div>
 
-        <div class="photo-actions">
-
-          <button
-            type="button"
-            class="btn btn-secondary"
-            (click)="removePhoto()">
-
-            Remove
-
-          </button>
-
-          <label class="btn btn-primary">
-
-            Upload new photo
-
-            <input
-              type="file"
-              class="sr-only"
-              accept="image/png,image/jpeg"
-              (change)="onPhotoSelected($event)">
-
-          </label>
-
-        </div>
-
-      </div>
-
-      <!-- Information -->
-
-      <div class="card info-card">
-
-        <div class="field-row">
-
-          <div class="field">
-
-            <label class="field-label">
-
-              First Name
-
-            </label>
-
-            <input
-              type="text"
-              class="input"
-              formControlName="firstName">
-
-          </div>
-
-          <div class="field">
-
-            <label class="field-label">
-
-              Last Name
-
-            </label>
-
-            <input
-              type="text"
-              class="input"
-              formControlName="lastName">
-
-          </div>
-
-        </div>
-
-        <div class="field">
-
-          <label class="field-label">
-
-            Email
-
-          </label>
-
-          <input
-            class="input"
-            formControlName="email"
-            readonly>
-
-        </div>
-
-        <div class="field">
-
-          <label class="field-label">
-
-            Country
-
-          </label>
-
-          <input
-            class="input"
-            formControlName="country">
-
-        </div>
-
-        <div class="field">
-
-          <label class="field-label">
-
-            Bio
-
-          </label>
-
-          <textarea
-            rows="4"
-            class="input textarea"
-            formControlName="bio">
-
-          </textarea>
-
-        </div>
-
-      </div>
-
-      <div class="save-bar">
-
-        <button
-          type="button"
-          class="btn btn-secondary"
-          [disabled]="savingProfile()"
-          (click)="resetForm()">
-
-          Cancel
-
-        </button>
-
-        <button
-          type="button"
-          class="btn btn-primary"
-          [disabled]="savingProfile() || form.invalid || (!form.dirty && !imageChanged())"
-          (click)="saveProfile()">
-
-          {{ savingProfile() ? 'Saving...' : 'Save Changes' }}
-
-        </button>
-
-      </div>
-
-    </div>
-
-  </form>
-
-  }
-
-  <!-- ================= Interests ================= -->
-
-  @if(activeTab() === 'interests'){
-
-  <div class="account-body">
-
-    <div class="card interests-card">
-
-      <div class="mb-6">
-
-        <h2 class="text-lg font-semibold">
-
-          Your Interests
-
-        </h2>
-
-        <p class="text-body-sm text-on-surface-variant mt-1">
-
-          Select the categories you're interested in.
-
+        <p class="mt-1 truncate font-body text-sm text-[#6b7285]">
+          {{ form.controls.email.value || profile()?.email }}
         </p>
 
+        <div class="mt-3 flex flex-wrap gap-2">
+          @if (profile()?.country) {
+            <span
+              class="inline-flex items-center gap-1.5 rounded-full bg-[#f4f5f8] px-3 py-1 font-body text-xs font-medium text-[#4b5160]"
+            >
+              <hugeicons-icon
+                [icon]="locationIcon"
+                [size]="14"
+                color="currentColor"
+                [strokeWidth]="1.8"
+              />
+              {{ profile()?.country }}
+            </span>
+          }
+          <span
+            class="inline-flex items-center rounded-full bg-[#f4f5f8] px-3 py-1 font-body text-xs font-medium text-[#4b5160]"
+          >
+            {{ profile()?.projectsPostedCount ?? 0 }} projects
+          </span>
+          <span
+            class="inline-flex items-center rounded-full bg-[#f4f5f8] px-3 py-1 font-body text-xs font-medium text-[#4b5160]"
+          >
+            {{ profile()?.averageRating ?? 0 | number: '1.0-1' }} rating
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex w-full shrink-0 flex-col gap-3 sm:w-auto sm:flex-row lg:justify-end">
+      <label
+        class="inline-flex h-11 cursor-pointer items-center justify-center rounded-xl bg-[#4036e0] px-5 font-display text-sm font-semibold text-white transition-opacity hover:opacity-90"
+      >
+        Upload New
+        <input
+          type="file"
+          class="sr-only"
+          accept="image/png,image/jpeg"
+          (change)="onPhotoSelected($event)"
+        />
+      </label>
+
+      <button
+        type="button"
+        class="inline-flex h-11 cursor-pointer items-center justify-center rounded-xl border border-[#d8dce8] bg-white px-5 font-display text-sm font-semibold text-[#4b5160] transition-colors hover:bg-[#f7f8fb]"
+        (click)="removePhoto()"
+      >
+        Remove
+      </button>
+    </div>
+  </div>
+
+  <!-- Profile + interests form -->
+  <form
+    class="rounded-[20px] border border-[#e8eaf0] bg-white p-5 sm:p-6"
+    [formGroup]="form"
+    (ngSubmit)="saveAll()"
+  >
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
+      <div class="flex flex-col gap-2">
+        <label
+          class="font-body text-[11px] font-bold tracking-[1.2px] text-[#6b7285] uppercase"
+          for="account-first-name"
+        >
+          First Name
+        </label>
+        <input
+          id="account-first-name"
+          type="text"
+          formControlName="firstName"
+          class="account-field h-12 rounded-[14px] border border-[#e1e4ee] bg-[#fafbfc] px-4 font-body text-sm leading-none text-[#151c27] outline-none transition-colors focus:border-[#4036e0] focus:bg-white"
+        />
       </div>
 
-      <div class="flex flex-wrap gap-3">
+      <div class="flex flex-col gap-2">
+        <label
+          class="font-body text-[11px] font-bold tracking-[1.2px] text-[#6b7285] uppercase"
+          for="account-last-name"
+        >
+          Last Name
+        </label>
+        <input
+          id="account-last-name"
+          type="text"
+          formControlName="lastName"
+          class="account-field h-12 rounded-[14px] border border-[#e1e4ee] bg-[#fafbfc] px-4 font-body text-sm leading-none text-[#151c27] outline-none transition-colors focus:border-[#4036e0] focus:bg-white"
+        />
+      </div>
 
-        @for (category of categories(); track category.id) {
+      <div class="flex flex-col gap-2">
+        <label
+          class="font-body text-[11px] font-bold tracking-[1.2px] text-[#6b7285] uppercase"
+          for="account-email"
+        >
+          Email Address
+        </label>
+        <input
+          id="account-email"
+          type="email"
+          formControlName="email"
+          readonly
+          class="account-field h-12 cursor-default rounded-[14px] border border-[#e1e4ee] bg-[#f3f4f8] px-4 font-body text-sm leading-none text-[#6b7285] outline-none"
+        />
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label
+          class="font-body text-[11px] font-bold tracking-[1.2px] text-[#6b7285] uppercase"
+          for="account-country"
+        >
+          Location
+        </label>
+        <div class="relative">
+          <span
+            class="pointer-events-none absolute top-1/2 left-4 z-[1] -translate-y-1/2 text-[#8b91a1]"
+            aria-hidden="true"
+          >
+            <hugeicons-icon
+              [icon]="locationIcon"
+              [size]="18"
+              color="currentColor"
+              [strokeWidth]="1.8"
+            />
+          </span>
+          <input
+            id="account-country"
+            type="text"
+            formControlName="country"
+            placeholder="City, Country"
+            class="account-field h-12 w-full rounded-[14px] border border-[#e1e4ee] bg-[#fafbfc] py-0 pr-4 pl-11 font-body text-sm leading-none text-[#151c27] outline-none transition-colors focus:border-[#4036e0] focus:bg-white"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-5 flex flex-col gap-2">
+      <label
+        class="font-body text-[11px] font-bold tracking-[1.2px] text-[#6b7285] uppercase"
+        for="account-bio"
+      >
+        Professional Bio
+      </label>
+      <div class="relative">
+        <textarea
+          id="account-bio"
+          rows="5"
+          formControlName="bio"
+          [attr.maxlength]="bioMax"
+          placeholder="Tell clients about your background and expertise..."
+          class="account-bio min-h-[140px] w-full resize-y rounded-[14px] border border-[#e1e4ee] bg-[#fafbfc] px-4 pt-4 pb-4 font-body text-sm leading-6 text-[#151c27] outline-none transition-colors focus:border-[#4036e0] focus:bg-white"
+        ></textarea>
+        <p class="mt-1.5 text-right font-body text-xs text-[#8b91a1]">
+          {{ bioLength() }} / {{ bioMax }} characters
+        </p>
+      </div>
+    </div>
+
+    <div class="mt-6 border-t border-[#eceef4] pt-6">
+      <h2 class="font-display text-base font-semibold text-[#151c27]">Interests & Expertise</h2>
+      <p class="mt-1 font-body text-sm text-[#6b7285]">
+        These tags appear on your profile to help match you with relevant projects.
+      </p>
+
+      <div class="mt-4 flex flex-wrap gap-2">
+        @for (interest of interests(); track interest.id) {
+          <span
+            class="inline-flex items-center gap-1.5 rounded-full bg-[#ebe9ff] px-3.5 py-2 font-body text-sm font-medium text-[#4036e0]"
+          >
+            {{ interest.nameEn || interest.name }}
+            <button
+              type="button"
+              class="inline-flex size-4 cursor-pointer items-center justify-center rounded-full text-[#4036e0] transition-opacity hover:opacity-70"
+              [attr.aria-label]="'Remove ' + (interest.nameEn || interest.name)"
+              (click)="removeInterest(interest.id)"
+            >
+              <hugeicons-icon
+                [icon]="cancelIcon"
+                [size]="12"
+                color="currentColor"
+                [strokeWidth]="2.5"
+              />
+            </button>
+          </span>
+        } @empty {
+          <p class="font-body text-sm text-[#8b91a1]">No interests selected yet.</p>
+        }
+      </div>
+
+      <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <label class="sr-only" for="account-add-interest">Add another interest</label>
+        <div class="relative min-w-0 flex-1">
+          <select
+            id="account-add-interest"
+            class="account-select h-12 w-full cursor-pointer appearance-none rounded-[14px] border border-[#e1e4ee] bg-[#fafbfc] py-0 pr-12 pl-4 font-body text-sm leading-none text-[#151c27] outline-none transition-colors focus:border-[#4036e0] focus:bg-white"
+            [value]="pendingCategoryId()"
+            (change)="onPendingCategoryChange($event)"
+          >
+            <option value="">Add another skill...</option>
+            @for (category of availableCategories(); track category.id) {
+              <option [value]="category.id">{{ category.nameEn }}</option>
+            }
+          </select>
+
+          <span
+            class="pointer-events-none absolute top-1/2 right-4 flex size-5 -translate-y-1/2 items-center justify-center text-[#6b7285]"
+            aria-hidden="true"
+          >
+            <hugeicons-icon
+              [icon]="arrowDownIcon"
+              [size]="18"
+              color="currentColor"
+              [strokeWidth]="2"
+            />
+          </span>
+        </div>
 
         <button
           type="button"
-          (click)="toggleInterest(category)"
-          class="flex items-center gap-2 rounded-full border px-4 py-2 transition-all"
-
-          [class.bg-indigo-600]="isSelected(category.id)"
-          [class.text-white]="isSelected(category.id)"
-          [class.border-indigo-600]="isSelected(category.id)"
-
-          [class.bg-white]="!isSelected(category.id)"
-          [class.border-gray-300]="!isSelected(category.id)"
-          [class.hover:bg-gray-100]="!isSelected(category.id)">
-
-          <span>
-
-            {{ isSelected(category.id) ? '✔' : '☐' }}
-
-          </span>
-
-          <span>
-
-            {{ category.nameEn }}
-
-          </span>
-
-        </button>
-
-        }
-
-      </div>
-
-    </div>
-
-    <div class="save-bar mt-8">
-
-      <button
-        type="button"
-        class="btn btn-secondary"
-        [disabled]="savingInterests()"
-        (click)="resetInterests()"
+          class="inline-flex h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-[14px] bg-[#4036e0] px-5 font-display text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+          [disabled]="!pendingCategoryId()"
+          (click)="addPendingInterest()"
         >
-        
-        Cancel
+          <hugeicons-icon [icon]="addIcon" [size]="18" color="currentColor" [strokeWidth]="2" />
+          Add
+        </button>
+      </div>
+    </div>
 
+    <div class="mt-8 flex items-center justify-end gap-4">
+      <button
+        type="button"
+        class="cursor-pointer font-display text-sm font-semibold text-[#6b7285] transition-colors hover:text-[#151c27] disabled:cursor-not-allowed disabled:opacity-50"
+        [disabled]="saving()"
+        (click)="resetAll()"
+      >
+        Cancel
       </button>
 
       <button
-        type="button"
-        class="btn btn-primary"
-         [disabled]="savingInterests() || !interestsChanged()"
-        (click)="saveInterests()">
-
-        {{ savingInterests() ? 'Saving...' : 'Save Changes' }}
-
+        type="submit"
+        class="inline-flex h-12 cursor-pointer items-center justify-center rounded-[14px] bg-[#4036e0] px-6 font-display text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+        [disabled]="saving() || !canSave()"
+      >
+        {{ saving() ? 'Saving...' : 'Save Changes' }}
       </button>
-
     </div>
+  </form>
 
-  </div>
+  <!-- Verification banner -->
+  <aside
+    class="flex flex-col gap-4 rounded-2xl bg-[#4036e0] p-5 text-white sm:flex-row sm:items-center sm:gap-5 sm:p-6"
+  >
+    <span
+      class="inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-white/15"
+      aria-hidden="true"
+    >
+      <hugeicons-icon [icon]="shieldIcon" [size]="22" color="currentColor" [strokeWidth]="1.8" />
+    </span>
 
-  }
-
+    <p class="font-body text-sm leading-6 text-white/90 sm:text-[15px]">
+      Boost your visibility. Navigate to
+      <a
+        routerLink="/settings/verification"
+        class="font-semibold text-white underline underline-offset-2 transition-opacity hover:opacity-90"
+      >
+        Identity verification
+      </a>
+      to submit official documents and earn your professional verified badge.
+    </p>
+  </aside>
 </section>

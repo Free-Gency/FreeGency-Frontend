@@ -1,0 +1,179 @@
+<div class="project-page min-h-dvh bg-background">
+  <app-client-view-navbar />
+
+  <main class="content-container py-8 lg:py-12">
+    @if (loading()) {
+      <div class="loading-state">
+        <div class="skeleton skeleton-title"></div>
+        <div class="skeleton skeleton-text"></div>
+        <div class="skeleton skeleton-text short"></div>
+        <div class="skeleton skeleton-card"></div>
+      </div>
+    } @else if (error()) {
+      <div class="error-state">
+        <p class="text-body-md text-error">{{ error() }}</p>
+        <button class="btn btn-secondary btn-sm" (click)="loadProject()">Retry</button>
+      </div>
+    } @else if (project(); as p) {
+      <app-project-overview
+        [project]="p"
+        [isOwner]="isOwner()"
+        [proposalsCount]="proposalsCount()"
+        (edit)="showEdit.set(true)"
+        (delete)="showDelete.set(true)"
+      />
+
+      <!-- Tabs -->
+      <nav class="flex items-center gap-md border-b border-outline-variant mt-md mb-md overflow-x-auto">
+        @for (tab of tabs; track tab.key) {
+          <button
+            type="button"
+            class="relative py-sm text-body-md font-semibold whitespace-nowrap transition-colors cursor-pointer"
+            [class]="activeTab() === tab.key ? 'text-primary' : 'text-on-surface-variant hover:text-on-surface'"
+            (click)="activeTab.set(tab.key)"
+          >
+            {{ tab.label }}
+            @if (tab.key === 'proposals' && proposalsCount() > 0) {
+              <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 ml-1 rounded-full bg-surface-container-high text-on-surface-variant font-mono text-[11px] font-medium align-middle">
+                {{ proposalsCount() }}
+              </span>
+            }
+            @if (tab.key === 'files' && filesCount() > 0) {
+              <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 ml-1 rounded-full bg-surface-container-high text-on-surface-variant font-mono text-[11px] font-medium align-middle">
+                {{ filesCount() }}
+              </span>
+            }
+            @if (activeTab() === tab.key) {
+              <span class="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-primary"></span>
+            }
+          </button>
+        }
+
+        <button
+          type="button"
+          class="ml-auto shrink-0 p-1.5 rounded-sm text-outline hover:text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer"
+          [attr.aria-label]="contentCollapsed() ? 'Expand section' : 'Collapse section'"
+          [attr.aria-expanded]="!contentCollapsed()"
+          (click)="toggleContent()"
+        >
+          <svg
+            width="18" height="18" viewBox="0 0 18 18" fill="none"
+            class="transition-transform duration-200"
+            [class.rotate-180]="contentCollapsed()"
+          >
+            <path d="M4.5 7L9 11.5L13.5 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </nav>
+
+      <div [class.hidden]="contentCollapsed()">
+        <!-- Overview tab -->
+        <div [class.hidden]="activeTab() !== 'overview'" class="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-md">
+          <div class="card flex flex-col gap-sm">
+            <span class="text-label-mono text-on-surface-variant">Project Description</span>
+            <p class="text-body-md text-on-surface whitespace-pre-wrap">{{ p.description }}</p>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-sm border-t border-outline-variant pt-sm mt-xs">
+              <div class="flex flex-col gap-1">
+                <span class="text-label-mono text-on-surface-variant">Category</span>
+                <span class="text-body-sm text-on-surface">{{ p.categoryName }}</span>
+              </div>
+              <div class="flex flex-col gap-1">
+                <span class="text-label-mono text-on-surface-variant">Visibility</span>
+                <span class="text-body-sm text-on-surface">{{ p.visibility }}</span>
+              </div>
+              @if (p.estimatedDurationDays) {
+                <div class="flex flex-col gap-1">
+                  <span class="text-label-mono text-on-surface-variant">Duration</span>
+                  <span class="text-body-sm text-on-surface">{{ p.estimatedDurationDays }} days</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <aside class="flex flex-col gap-md">
+            @if (p.specialties.length || p.skills.length) {
+              <div class="card flex flex-col gap-sm">
+                @if (p.specialties.length) {
+                  <div class="flex flex-col gap-xs">
+                    <span class="text-label-mono text-on-surface-variant">Specialties</span>
+                    <div class="flex flex-wrap gap-xs">
+                      @for (s of p.specialties; track s) {
+                        <span class="chip chip-active">{{ s }}</span>
+                      }
+                    </div>
+                  </div>
+                }
+                @if (p.skills.length) {
+                  <div class="flex flex-col gap-xs">
+                    <span class="text-label-mono text-on-surface-variant">Required Skills</span>
+                    <div class="flex flex-wrap gap-xs">
+                      @for (s of p.skills; track s) {
+                        <span class="chip bg-surface-container-low text-on-surface border border-outline-variant">{{ s }}</span>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+
+            <div class="card flex items-center gap-sm">
+              <div class="w-11 h-11 rounded-full overflow-hidden shrink-0">
+                @if (p.clientAvatarUrl && p.clientAvatarUrl !== 'Default') {
+                  <img [src]="p.clientAvatarUrl" [alt]="p.clientName" class="w-full h-full object-cover" />
+                } @else {
+                  <div class="w-full h-full flex items-center justify-center bg-primary-container text-on-primary-container text-headline-md">
+                    {{ p.clientName.charAt(0) }}
+                  </div>
+                }
+              </div>
+              <div class="flex flex-col flex-1 min-w-0">
+                <span class="text-body-md font-semibold text-on-surface">{{ p.clientName }}</span>
+                <span class="text-body-sm text-on-surface-variant">Client</span>
+              </div>
+              <div class="flex flex-col items-end shrink-0">
+                <span class="text-label-mono text-on-surface">{{ p.clientRating.toFixed(1) }}</span>
+                <span class="text-body-sm text-on-surface-variant">rating</span>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <!-- Proposals tab -->
+        <div [class.hidden]="activeTab() !== 'proposals'">
+          <app-project-proposals
+            [projectId]="p.id"
+            [projectStatus]="p.status"
+            [isOwner]="isOwner()"
+            (proposalsChanged)="onProposalsChanged()"
+            (countChanged)="proposalsCount.set($event)"
+          />
+        </div>
+
+        <!-- Milestones tab -->
+        <div [class.hidden]="activeTab() !== 'milestones'">
+          <app-project-milestones [projectId]="p.id" />
+        </div>
+
+        <!-- Files tab -->
+        <div [class.hidden]="activeTab() !== 'files'">
+          <app-project-files [projectId]="p.id" />
+        </div>
+
+        <!-- Activity tab -->
+        <div [class.hidden]="activeTab() !== 'activity'">
+          <app-project-activity [projectId]="p.id" />
+        </div>
+      </div>
+
+      <app-project-edit-modal
+        [project]="p"
+        [isOpen]="showEdit()"
+        (closed)="showEdit.set(false)"
+        (saved)="onEditSaved($event)"
+      />
+
+      <app-project-delete-dialog [projectId]="p.id" [isOpen]="showDelete()" (closed)="showDelete.set(false)" />
+    }
+  </main>
+</div>

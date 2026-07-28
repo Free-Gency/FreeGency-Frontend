@@ -1,0 +1,161 @@
+@if (isOpen()) {
+  <div 
+    class="modal-backdrop" 
+    (click)="closeOnBackdrop($event)"
+    (keydown)="handleKeyDown($event)"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-labelledby]="'modal-title-' + type()"
+    tabindex="-1"
+  >
+    <div class="modal-container" @fadeSlide>
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <div class="header-content">
+          <div class="header-icon" [class.icon-danger]="type() === 'delete'" [class.icon-warning]="type() === 'deactivate'">
+            @if (type() === 'deactivate') {
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 2C6.477 2 2 6.477 2 12C2 17.523 6.477 22 12 22C17.523 22 22 17.523 22 12C22 6.477 17.523 2 12 2ZM11 7H13V13H11V7ZM11 15H13V17H11V15Z" fill="currentColor"/>
+              </svg>
+            } @else {
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 2C6.477 2 2 6.477 2 12C2 17.523 6.477 22 12 22C17.523 22 22 17.523 22 12C22 6.477 17.523 2 12 2ZM12 18C11.45 18 11 17.55 11 17C11 16.45 11.45 16 12 16C12.55 16 13 16.45 13 17C13 17.55 12.55 18 12 18ZM13 13C13 13.55 12.55 14 12 14C11.45 14 11 13.55 11 13V8C11 7.45 11.45 7 12 7C12.55 7 13 7.45 13 8V13Z" fill="currentColor"/>
+              </svg>
+            }
+          </div>
+          <div>
+            <h2 [id]="'modal-title-' + type()" class="modal-title">{{ title() }}</h2>
+            <p class="modal-description">{{ description() }}</p>
+          </div>
+        </div>
+        <button 
+          class="close-button" 
+          (click)="close()"
+          aria-label="Close dialog"
+          type="button"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Error Alert -->
+      @if (error()) {
+        <div class="alert alert-error" role="alert">
+          <svg class="alert-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M8 1C4.134 1 1 4.134 1 8C1 11.866 4.134 15 8 15C11.866 15 15 11.866 15 8C15 4.134 11.866 1 8 1ZM8 13C5.239 13 3 10.761 3 8C3 5.239 5.239 3 8 3C10.761 3 13 5.239 13 8C13 10.761 10.761 13 8 13ZM7 5H9V9H7V5ZM7 10H9V12H7V10Z" fill="currentColor"/>
+          </svg>
+          <p class="alert-text">{{ error() }}</p>
+        </div>
+      }
+
+      <!-- Confirmation Form -->
+      <form [formGroup]="confirmationForm" (ngSubmit)="onSubmit()" class="confirmation-form" novalidate>
+        @if (type() === 'delete') {
+          <!-- Password Field for Delete -->
+          <div class="form-group">
+            <label for="password" class="form-label">Enter your password to confirm</label>
+            <div class="input-wrapper">
+              <input
+                id="password"
+                [type]="showPassword() ? 'text' : 'password'"
+                formControlName="password"
+                class="form-input"
+                [class.input-error]="getFieldError('password')"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+              />
+              <button 
+                type="button"
+                class="toggle-visibility"
+                (click)="showPassword.set(!showPassword())"
+                [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+              >
+                @if (showPassword()) {
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M8 3C4.364 3 1.258 5.28 0 8.5C1.258 11.72 4.364 14 8 14C11.636 14 14.742 11.72 16 8.5C14.742 5.28 11.636 3 8 3ZM8 12C6.067 12 4.5 10.433 4.5 8.5C4.5 6.567 6.067 5 8 5C9.933 5 11.5 6.567 11.5 8.5C11.5 10.433 9.933 12 8 12ZM8 6.5C6.895 6.5 6 7.395 6 8.5C6 9.605 6.895 10.5 8 10.5C9.105 10.5 10 9.605 10 8.5C10 9.605 9.105 10.5 8 10.5Z" fill="currentColor"/>
+                  </svg>
+                } @else {
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M14.793 1.207C14.605 1.019 14.352 0.913 14.086 0.913C13.82 0.913 13.567 1.019 13.379 1.207L11.477 3.109C10.398 2.559 9.211 2.255 8 2.255C4.364 2.255 1.258 4.535 0 7.755C0.494 8.879 1.174 9.887 2 10.756L1.207 11.549C1.019 11.737 0.913 11.99 0.913 12.256C0.913 12.522 1.019 12.775 1.207 12.963C1.395 13.151 1.648 13.257 1.914 13.257C2.18 13.257 2.433 13.151 2.621 12.963L14.793 0.791C14.981 0.603 15.087 0.35 15.087 0.084C15.087 -0.182 14.981 -0.435 14.793 -0.623C14.605 -0.811 14.352 -0.917 14.086 -0.917C13.82 -0.917 13.567 -0.811 13.379 -0.623L11.477 1.279Z" fill="currentColor"/>
+                  </svg>
+                }
+              </button>
+            </div>
+            @if (getFieldError('password')) {
+              <p class="error-message" role="alert">{{ getFieldError('password') }}</p>
+            }
+          </div>
+        }
+
+        <!-- Reason Field -->
+        <div class="form-group">
+          <label for="reason" class="form-label">
+            @if (type() === 'delete') {
+              Tell us why you're leaving (optional)
+            } @else {
+              Reason for deactivation (optional)
+            }
+          </label>
+          <textarea
+            id="reason"
+            formControlName="reason"
+            class="form-textarea"
+            rows="3"
+            [placeholder]="type() === 'delete' ? 'Your feedback helps us improve...' : 'Taking a break? Let us know why...'"
+          ></textarea>
+        </div>
+
+        <!-- Confirmation Checkbox -->
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input 
+              type="checkbox" 
+              formControlName="confirmation"
+              class="checkbox-input"
+            />
+            <span class="checkbox-custom"></span>
+            <span class="checkbox-text">
+              @if (type() === 'deactivate') {
+                I understand that my profile will be hidden and I can reactivate at any time.
+              } @else {
+                I understand that this action is permanent and cannot be undone.
+              }
+            </span>
+          </label>
+          @if (getFieldError('confirmation')) {
+            <p class="error-message" role="alert">{{ getFieldError('confirmation') }}</p>
+          }
+        </div>
+
+        <!-- Form Actions -->
+        <div class="modal-actions">
+          <button 
+            type="button" 
+            class="btn btn-secondary" 
+            (click)="close()"
+            [disabled]="isLoading()"
+          >
+            Cancel
+          </button>
+          <button 
+            type="submit" 
+            [class]="'btn ' + confirmButtonClass()"
+            [disabled]="isLoading() || !confirmationForm.get('confirmation')?.value"
+          >
+            @if (isLoading()) {
+              <svg class="spinner" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-opacity="0.25" stroke-width="2"/>
+                <path d="M8 1C11.866 1 15 4.134 15 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <span>Processing...</span>
+            } @else {
+              <span>{{ confirmButtonText() }}</span>
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

@@ -1,0 +1,18 @@
+
+.btn-sm {
+  height: 36px;
+  padding: 0 var(--spacing-sm);
+  font-size: 14px;
+  width: auto;
+  border-radius: var(--radius-sm);
+}
+
+.btn-danger {
+  background-color: var(--color-error);
+  color: var(--color-on-error);
+  border: none;
+}
+
+.btn-danger:hover {
+  opacity: 0.9;
+}

@@ -1,1 +1,243 @@
-<p>verification works!</p>
+<div class="identity-verification-page">
+  <div class="identity-container">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="header-content">
+        <div class="header-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M9 12L11 14L15 10M20.618 5.984C19.845 4.584 18.87 3.35 17.734 2.316C16.599 1.282 15.317 0.461 13.948 0C12.579 -0.461 11.132 -0.539 9.724 0C8.316 0.539 7.016 1.282 5.882 2.316C4.748 3.35 3.773 4.584 3 5.984C2.227 7.384 1.667 9.02 1.333 10.75C0.999 12.48 0.999 14.24 1.333 16C1.667 17.76 2.227 19.416 3 20.816C3.773 22.216 4.748 23.45 5.882 24.484C7.016 25.518 8.316 26.261 9.724 26.8C11.132 27.339 12.579 27.417 14.008 26.8C15.437 26.183 16.718 25.518 17.852 24.484C18.986 23.45 19.961 22.216 20.734 20.816C21.507 19.416 22.067 17.76 22.401 16C22.735 14.24 22.735 12.48 22.401 10.75" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="page-title">Identity Verification</h1>
+          <p class="page-description">Verified accounts get a badge on their profile and unlock higher escrow limits.</p>
+        </div>
+      </div>
+      
+      @if (isVerified()) {
+        <div class="verified-badge">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M10 0L12.5 7.5L20 10L12.5 12.5L10 20L7.5 12.5L0 10L7.5 7.5L10 0Z" fill="currentColor"/>
+          </svg>
+          <span>Verified Account</span>
+        </div>
+      }
+    </div>
+
+    <!-- Progress Overview -->
+    @if (!isVerified() && overallStatus() !== 'not_started') {
+      <div class="progress-overview">
+        <div class="progress-header">
+          <h2 class="progress-title">Verification Progress</h2>
+          <span class="progress-count">{{ completedSteps() }}/{{ totalSteps() }} steps completed</span>
+        </div>
+        <div class="progress-bar">
+          <div 
+            class="progress-fill" 
+            [style.width.%]="progressPercentage()"
+          ></div>
+        </div>
+      </div>
+    }
+
+    <!-- Benefits Section -->
+    <section class="settings-section">
+      <div class="section-card">
+        <div class="card-header">
+          <h2 class="card-title">Benefits of Verification</h2>
+          <p class="card-description">Unlock these premium features by verifying your identity.</p>
+        </div>
+        
+        <div class="benefits-grid">
+          @for (benefit of benefits(); track benefit.title) {
+            <div class="benefit-item" [class.benefit-available]="benefit.available">
+              <div class="benefit-icon">
+                @if (benefit.icon === 'badge') {
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 2L15 8L22 10L15 12L12 18L9 12L2 10L9 8L12 2Z" fill="currentColor"/>
+                  </svg>
+                } @else if (benefit.icon === 'escrow') {
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" stroke-width="2"/>
+                    <path d="M3 10H21" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                } @else if (benefit.icon === 'support') {
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 13.5997 2.37562 15.1116 3.04346 16.4525C3.22094 16.8088 3.28001 17.2161 3.17712 17.6006L2.58151 19.8267C2.32295 20.793 3.20701 21.677 4.17335 21.4185L6.39939 20.8229C6.78393 20.72 7.19121 20.7791 7.54753 20.9565C8.88837 21.6244 10.4003 22 12 22Z" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                } @else if (benefit.icon === 'featured') {
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor"/>
+                  </svg>
+                }
+              </div>
+              <div class="benefit-content">
+                <h3 class="benefit-title">{{ benefit.title }}</h3>
+                <p class="benefit-description">{{ benefit.description }}</p>
+              </div>
+              @if (benefit.available) {
+                <svg class="benefit-check" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d="M16.667 5L7.5 14.167L3.333 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Verification Steps -->
+    <section class="settings-section">
+      <div class="section-card">
+        <div class="card-header">
+          <h2 class="card-title">Verification Steps</h2>
+          <p class="card-description">Complete all steps to get verified. Each step typically takes 1-2 business days for review.</p>
+        </div>
+        
+        <div class="steps-list">
+          @for (step of verificationData().steps; track step.id) {
+            <div class="step-item">
+              <div class="step-info">
+                <div class="step-icon">
+                  @if (getStepIcon(step.type) === 'id-card') {
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <rect x="3" y="5" width="18" height="14" rx="3" stroke="currentColor" stroke-width="2"/>
+                      <circle cx="8.5" cy="10.5" r="2" stroke="currentColor" stroke-width="2"/>
+                      <path d="M5 17C6.5 14 10.5 14 12 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                      <path d="M15 9H19M15 12H18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                  } @else if (getStepIcon(step.type) === 'home') {
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M3 12L12 3L21 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M5 10V20H19V10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <rect x="9" y="14" width="6" height="6" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                  } @else if (getStepIcon(step.type) === 'camera') {
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M15 4.5H9L7.5 7.5H4.5C3.94772 7.5 3.5 7.94772 3.5 8.5V18C3.5 18.5523 3.94772 19 4.5 19H19.5C20.0523 19 20.5 18.5523 20.5 18V8.5C20.5 7.94772 20.0523 7.5 19.5 7.5H16.5L15 4.5Z" stroke="currentColor" stroke-width="2"/>
+                      <circle cx="12" cy="12.5" r="3.5" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                  }
+                </div>
+                <div class="step-details">
+                  <div class="step-header">
+                    <h3 class="step-title">{{ step.label }}</h3>
+                    <app-verification-status-badge
+                      [status]="step.status"
+                      [size]="'sm'"
+                    ></app-verification-status-badge>
+                  </div>
+                  <p class="step-description">{{ step.description }}</p>
+                  
+                  @if (step.status === 'rejected' && step.rejectionReason) {
+                    <div class="rejection-reason">
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M7 13.5C10.5899 13.5 13.5 10.5899 13.5 7C13.5 3.41015 10.5899 0.5 7 0.5C3.41015 0.5 0.5 3.41015 0.5 7C0.5 10.5899 3.41015 13.5 7 13.5ZM6.25 4.5H7.75V8.5H6.25V4.5ZM6.25 9.5H7.75V11H6.25V9.5Z" fill="currentColor"/>
+                      </svg>
+                      <span>{{ step.rejectionReason }}</span>
+                    </div>
+                  }
+                  
+                  @if (step.submittedAt && step.status === 'under_review') {
+                    <p class="review-info">Submitted {{ step.submittedAt | date:'mediumDate' }} • Review typically takes 1-2 business days</p>
+                  }
+                </div>
+              </div>
+              
+              <div class="step-action">
+                @if (step.status === 'not_started') {
+                  <button 
+                    class="btn btn-primary"
+                    (click)="startVerification(step.id)"
+                    [disabled]="isLoading()"
+                  >
+                    Start verification
+                  </button>
+                }
+                
+                @if (step.status === 'in_progress') {
+                  <button 
+                    class="btn btn-primary"
+                    (click)="showUploadSection.set(true); activeStepId.set(step.id)"
+                    [disabled]="isLoading()"
+                  >
+                    Continue
+                  </button>
+                }
+                
+                @if (step.status === 'rejected') {
+                  <button 
+                    class="btn btn-primary"
+                    (click)="retryVerification(step.id)"
+                    [disabled]="isLoading()"
+                  >
+                    Retry
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Upload Section -->
+    @if (showUploadSection() && activeStepId()) {
+      <section class="settings-section">
+        <div class="section-card">
+          <div class="card-header">
+            <h2 class="card-title">Upload Document</h2>
+            <p class="card-description">Please ensure your document is clear, valid, and not expired.</p>
+          </div>
+          
+          <div class="upload-container">
+            <app-document-upload
+              [stepId]="activeStepId()!"
+              [documentType]="'government_id'"
+              (uploadStarted)="onFileSelected(activeStepId()!, $event)"
+              (uploadError)="showToast($event, 'error')"
+            ></app-document-upload>
+            
+            <div class="upload-tips">
+              <h4 class="tips-title">Tips for successful verification:</h4>
+              <ul class="tips-list">
+                <li>Ensure your document is valid and not expired</li>
+                <li>All corners of the document must be visible</li>
+                <li>Text must be clearly readable</li>
+                <li>Avoid glare and shadows</li>
+                <li>Use a dark background for contrast</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+    }
+  </div>
+
+  <!-- Toast Notification -->
+  @if (toastMessage()) {
+    <div 
+      class="toast" 
+      [class.toast-success]="toastType() === 'success'"
+      [class.toast-error]="toastType() === 'error'"
+      role="alert"
+      aria-live="polite"
+    >
+      <svg 
+        class="toast-icon" 
+        width="16" 
+        height="16" 
+        viewBox="0 0 16 16" 
+        fill="none" 
+        aria-hidden="true"
+      >
+        @if (toastType() === 'success') {
+          <path d="M8 0C3.589 0 0 3.589 0 8C0 12.411 3.589 16 8 16C12.411 16 16 12.411 16 8C16 3.589 12.411 0 8 0ZM11.78 5.78L7.28 10.28C7.14 10.42 6.96 10.5 6.77 10.5C6.58 10.5 6.4 10.43 6.26 10.29L4.22 8.22C3.93 7.93 3.93 7.45 4.22 7.16C4.51 6.87 4.99 6.87 5.28 7.16L6.76 8.66L10.71 4.71C11 4.42 11.48 4.42 11.77 4.71C12.06 5 12.06 5.48 11.77 5.77L11.78 5.78Z" fill="currentColor"/>
+        } @else {
+          <path d="M8 0C3.589 0 0 3.589 0 8C0 12.411 3.589 16 8 16C12.411 16 16 12.411 16 8C16 3.589 12.411 0 8 0ZM11 11C10.74 11.26 10.3 11.26 10.04 11L8 8.96L5.96 11C5.7 11.26 5.26 11.26 5 11C4.74 10.74 4.74 10.3 5 10.04L7.04 8L5 5.96C4.74 5.7 4.74 5.26 5 5C5.26 4.74 5.7 4.74 5.96 5L8 7.04L10.04 5C10.3 4.74 10.74 4.74 11 5C11.26 5.26 11.26 5.7 11 5.96L8.96 8L11 10.04C11.26 10.3 11.26 10.74 11 11Z" fill="currentColor"/>
+        }
+      </svg>
+      <span class="toast-text">{{ toastMessage() }}</span>
+    </div>
+  }
+</div>

@@ -1,0 +1,50 @@
+
+<div class="card flex flex-col gap-sm">
+  <h2 class="text-headline-md">Activity</h2>
+
+  @if (loading()) {
+    <p class="text-body-md text-on-surface-variant text-center py-sm">Loading activity...</p>
+  } @else if (events().length === 0) {
+    <p class="text-body-md text-on-surface-variant text-center py-sm">No activity yet.</p>
+  } @else {
+    <div class="flex flex-col">
+      @for (e of events(); track e.id; let last = $last) {
+        <div class="flex gap-sm">
+          <div class="flex flex-col items-center shrink-0">
+            <div
+              class="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+              [class]="eventColorClasses(e.eventType)"
+            >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <path [attr.d]="eventIconPath(e.eventType)" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            @if (!last || hasMore()) {
+              <div class="w-0.5 flex-1 bg-outline-variant mt-1"></div>
+            }
+          </div>
+          <div class="flex flex-col gap-0.5 pb-sm min-w-0">
+            <div class="flex items-center justify-between gap-xs">
+              <span class="text-body-md font-semibold text-on-surface">{{ eventLabel(e.eventType) }}</span>
+              <span class="text-body-sm text-on-surface-variant shrink-0">{{ relativeTime(e.createdAt) }}</span>
+            </div>
+            <p class="text-body-sm text-on-surface-variant truncate">
+              {{ e.actorUserName }}@if (e.milestoneTitle) { <span> · {{ e.milestoneTitle }}</span> }
+            </p>
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (hasMore()) {
+      <button
+        type="button"
+        class="btn btn-secondary btn-sm self-center"
+        [disabled]="loadingMore()"
+        (click)="loadMore()"
+      >
+        {{ loadingMore() ? 'Loading...' : 'Load More' }}
+      </button>
+    }
+  }
+</div>

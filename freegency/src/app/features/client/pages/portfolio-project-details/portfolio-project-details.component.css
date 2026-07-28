@@ -1,0 +1,91 @@
+.details-page {
+  background:
+    radial-gradient(1200px 520px at 12% -8%, rgba(65, 48, 215, 0.08), transparent 55%),
+    radial-gradient(900px 420px at 92% 8%, rgba(199, 239, 46, 0.14), transparent 50%),
+    linear-gradient(180deg, #f7f6fb 0%, #f2f1f6 48%, #efedf4 100%);
+}
+
+.details-main {
+  animation: details-enter 0.45s ease-out both;
+}
+
+.details-back,
+.details-gallery,
+.details-header,
+.details-section,
+.details-aside,
+.details-review-form {
+  animation: details-enter 0.55s ease-out both;
+}
+
+.details-gallery {
+  animation-delay: 0.04s;
+}
+
+.details-header {
+  animation-delay: 0.1s;
+}
+
+.details-aside {
+  animation-delay: 0.14s;
+}
+
+.details-hero-image {
+  animation: details-hero-zoom 0.9s ease-out both;
+}
+
+.details-thumb {
+  opacity: 0.72;
+  transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.details-thumb:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.details-thumb-active {
+  opacity: 1;
+  box-shadow: 0 0 0 2px #4130d7;
+}
+
+@keyframes details-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes details-hero-zoom {
+  from {
+    transform: scale(1.04);
+    opacity: 0.9;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .details-main,
+  .details-back,
+  .details-gallery,
+  .details-header,
+  .details-section,
+  .details-aside,
+  .details-review-form,
+  .details-hero-image {
+    animation: none;
+  }
+
+  .details-thumb {
+    transition: none;
+  }
+}

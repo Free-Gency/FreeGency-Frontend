@@ -852,4 +852,10 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+}
+
+body.modal-open {
+  overflow: hidden;
+
 }
