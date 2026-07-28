@@ -8,7 +8,8 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs';
 import { HugeiconsIconComponent, type IconSvgObject } from '@hugeicons/angular';
 import {
   ArrowDown01Icon,
@@ -47,7 +48,15 @@ export class ClientViewNavbarComponent implements OnInit {
   protected readonly logoutIcon = Logout01Icon as IconSvgObject;
 
   protected readonly profileImage = this.auth.profileImage;
-  protected readonly activeNav = signal('Hire Talent');
+
+  protected readonly navItems = [
+    { label: 'Hire Talent', dropdown: true, route: null },
+    { label: 'Manage Work', dropdown: false, route: '/client/manage-work' },
+    { label: 'Reports', dropdown: true, route: null },
+    { label: 'Messages', dropdown: false, route: '/client/messages' },
+  ] as const;
+  
+  protected readonly activeNav = signal(this.getActiveLabelFromUrl(this.router.url));
   protected readonly searchScope = signal<ClientSearchScope>('Projects');
   protected readonly searchScopeOpen = signal(false);
   protected readonly accountMenuOpen = signal(false);
@@ -77,14 +86,16 @@ export class ClientViewNavbarComponent implements OnInit {
     () => this.auth.session()?.activeProfileMode ?? 'Client',
   );
 
-  protected readonly navItems = [
-    { label: 'Hire Talent', dropdown: true },
-    { label: 'Manage Work', dropdown: false },
-    { label: 'Reports', dropdown: true },
-    { label: 'Messages', dropdown: false },
-  ] as const;
-
   ngOnInit(): void {
+    this.router.events
+      .pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((event) => {
+        this.activeNav.set(this.getActiveLabelFromUrl(event.urlAfterRedirects));
+      });
+
     this.profileApi
       .getClientProfile()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -101,9 +112,11 @@ export class ClientViewNavbarComponent implements OnInit {
     return this.searchScope() === 'Projects' ? 'Search projects' : 'Search talents';
   }
 
-  protected selectNav(label: string): void {
-    this.activeNav.set(label);
+  protected selectNav(item: (typeof this.navItems)[number]): void {
     this.closeMenus();
+    if (item.route) {
+      void this.router.navigate([item.route]);
+    }
   }
 
   protected toggleSearchScope(event: MouseEvent): void {
@@ -142,5 +155,10 @@ export class ClientViewNavbarComponent implements OnInit {
   private closeMenus(): void {
     this.searchScopeOpen.set(false);
     this.accountMenuOpen.set(false);
+  }
+
+  private getActiveLabelFromUrl(url: string): string {
+    const match = this.navItems.find((item) => item.route && url.startsWith(item.route));
+    return match?.label ?? 'Hire Talent';
   }
 }

@@ -16,6 +16,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'client/manage-work',
+    canActivate: [authGuard, clientModeGuard],
+    loadComponent: () =>
+      import('./features/client/pages/manage-work/manage-work.component').then(
+        (m) => m.ManageWorkComponent,
+      ),
+  },
+  {
     path: 'client/create-project',
     canActivate: [authGuard, clientModeGuard],
     loadComponent: () =>
