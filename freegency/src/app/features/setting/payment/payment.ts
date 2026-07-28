@@ -36,13 +36,13 @@ export class Payment implements OnInit {
   protected readonly transferIcon = ArrowDataTransferHorizontalIcon as IconSvgObject;
   protected readonly shieldIcon = SecurityCheckIcon as IconSvgObject;
   protected readonly checkIcon = Tick02Icon as IconSvgObject;
-  signalrService=inject(SignalrService);
+  signalrService = inject(SignalrService);
   public wallet = signal<Wallet | null>(null);
   constructor() {
-  effect(() => {
-    this.wallet.set(this.signalrService.WalletSignal());
-  });
-}
+    effect(() => {
+      this.wallet.set(this.signalrService.WalletSignal());
+    });
+  }
   topUpAmount = 0;
   stripe: Stripe | null = null;
   elements: StripeElements | null = null;

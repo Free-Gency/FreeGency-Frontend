@@ -10,21 +10,12 @@ import { Observable } from 'rxjs';
 export class PaymentService {
   private http = inject(HttpClient);
   private apiUrl = environment.apiBaseUrl;
-    getWallet(): Observable<Wallet> {
-
-    return this.http.get<Wallet>(
-      `${this.apiUrl}/api/v1/wallet/me`
-    );
-
+  getWallet(): Observable<Wallet> {
+    return this.http.get<Wallet>(`${this.apiUrl}/api/v1/wallet/me`);
   }
-   createTopUp(amount: number): Observable<TopUpResponse> {
-
-    return this.http.post<TopUpResponse>(
-      `${this.apiUrl}/api/v1/wallet/topup`,
-      {
-        amount
-      }
-    );
-
+  createTopUp(amount: number): Observable<TopUpResponse> {
+    return this.http.post<TopUpResponse>(`${this.apiUrl}/api/v1/wallet/topup`, {
+      amount,
+    });
   }
 }
