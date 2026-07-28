@@ -66,6 +66,9 @@ export class Account implements OnInit {
   interestsChanged = signal(false);
   readonly avatarUrl = signal<string | null>(null);
   readonly pendingCategoryId = signal('');
+  /** Form dirty/valid are not signals — keep mirrors so canSave recomputes. */
+  readonly formDirty = signal(false);
+  readonly formValid = signal(true);
 
   readonly form = this.fb.group({
     firstName: ['', Validators.required],
@@ -88,7 +91,7 @@ export class Account implements OnInit {
 
   readonly canSave = computed(() => {
     const profileDirty =
-      this.form.valid && (this.form.dirty || this.imageChanged());
+      this.formValid() && (this.formDirty() || this.imageChanged());
     return profileDirty || this.interestsChanged();
   });
 
@@ -97,9 +100,22 @@ export class Account implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((value) => this.bioLength.set(value?.length ?? 0));
 
+    this.form.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.syncFormState());
+
+    this.form.statusChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.syncFormState());
+
     this.loadProfile();
     this.loadInterest();
     this.loadCategories();
+  }
+
+  private syncFormState(): void {
+    this.formDirty.set(this.form.dirty);
+    this.formValid.set(this.form.valid);
   }
 
   loadProfile(refreshImage = false): void {
@@ -115,6 +131,7 @@ export class Account implements OnInit {
         });
         this.bioLength.set(profile.bio?.length ?? 0);
         this.form.markAsPristine();
+        this.syncFormState();
 
         const profileImage = refreshImage
           ? this.withCacheBust(profile.profileImage)
@@ -191,8 +208,9 @@ export class Account implements OnInit {
   saveAll(): void {
     if (this.saving()) return;
 
+    this.syncFormState();
     const shouldSaveProfile =
-      this.form.valid && (this.form.dirty || this.imageChanged());
+      this.formValid() && (this.formDirty() || this.imageChanged());
     const shouldSaveInterests = this.interestsChanged();
 
     if (!shouldSaveProfile && !shouldSaveInterests) return;
@@ -305,6 +323,7 @@ export class Account implements OnInit {
       bio: profile.bio ?? '',
     });
     this.form.markAsPristine();
+    this.syncFormState();
     this.avatarUrl.set(profile.profileImage ?? null);
     this.selectedImage = null;
     this.imageChanged.set(false);
