@@ -1,0 +1,301 @@
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full">
+  <!-- Left Sidebar: Info Banner & Dynamic Projects List -->
+  <aside class="order-1 lg:order-1 lg:col-span-3 shrink-0 flex flex-col gap-4 w-full">
+    <!-- Info Banner with Hugeicons Icon -->
+    <div class="bg-[#EAE5FF] text-[#3323A5] rounded-2xl p-4 flex items-center gap-3">
+      <div
+        class="w-8 h-8 rounded-full bg-[#3323A5] text-white flex items-center justify-center shrink-0"
+      >
+        <hugeicons-icon [icon]="ideaIcon" class="w-4 h-4"></hugeicons-icon>
+      </div>
+      <p class="text-xs font-semibold leading-snug">
+        You have <span class="font-extrabold">6 new proposals</span> across all projects.
+      </p>
+    </div>
+
+    <!-- Projects List Header -->
+    <div class="flex items-center justify-between px-2 mt-2">
+      <span class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant/60"
+        >PROJECTS</span
+      >
+      <button
+        class="text-on-surface-variant hover:text-on-surface text-lg font-bold line-height-none"
+      >
+        +
+      </button>
+    </div>
+
+    <!-- Sidebar Dynamic Project List -->
+    <div class="flex flex-col gap-1">
+      @if (projects().length === 0) {
+        <div class="p-4 text-xs text-center text-on-surface-variant/60">No projects found.</div>
+      } @else {
+        @for (project of projects(); track project.id) {
+          <button
+            type="button"
+            (click)="selectProject(project.id)"
+            [ngClass]="
+              activeProjectId() === project.id
+                ? 'bg-[#E3DFFF] text-on-primary-fixed font-semibold'
+                : 'text-on-surface hover:bg-surface-container-low font-medium'
+            "
+            class="flex items-center justify-between px-4 py-2.5 rounded-full text-xs transition-colors text-left w-full"
+          >
+            <span class="truncate max-w-35">{{ project.title }}</span>
+            <span
+              [ngClass]="
+                activeProjectId() === project.id
+                  ? 'bg-black/10'
+                  : 'bg-black/5 text-on-surface-variant'
+              "
+              class="px-2 py-0.5 rounded-full text-[11px] font-bold shrink-0 ml-2"
+            >
+              {{ project.proposalCount ?? project.proposalCount ?? 0 }}
+            </span>
+          </button>
+        }
+      }
+    </div>
+  </aside>
+
+  <!-- AI Ranking Card -->
+  <div class="order-2 lg:order-3 lg:col-span-3 shrink-0 flex flex-col gap-4 w-full">
+    <div class="bg-[#4130D7] text-white rounded-[24px] p-5 flex flex-col gap-3">
+      <div class="flex items-center justify-between">
+        <p class="text-sm font-bold flex items-center gap-1.5">
+          <span>✨</span>
+          <span>AI Ranking</span>
+        </p>
+
+        <button
+          type="button"
+          role="switch"
+          [attr.aria-checked]="aiRankingEnabled()"
+          (click)="toggleAiRanking()"
+          class="w-12 h-6 rounded-full relative p-0.5 transition-colors cursor-pointer shrink-0"
+          [ngClass]="aiRankingEnabled() ? 'bg-[#D8F272]' : 'bg-white/30'"
+        >
+          <span
+            class="block w-5 h-5 rounded-full transition-transform duration-200"
+            [ngClass]="aiRankingEnabled() ? 'translate-x-6 bg-[#1A1A1A]' : 'translate-x-0 bg-white'"
+          >
+          </span>
+        </button>
+      </div>
+
+      <p class="text-xs text-white/80 leading-relaxed font-normal">
+        Automatically rank proposals based on project requirements and skill match.
+      </p>
+    </div>
+
+    <!-- Project Overview Container -->
+    <div class="hidden lg:flex bg-[#2B2B2F] text-white rounded-[24px] p-6 flex-col gap-5">
+      <p class="text-[10px] font-bold uppercase tracking-wider text-white/50">PROJECT OVERVIEW</p>
+
+      <div>
+        <p class="text-xs text-white/60 mb-1">Total Proposals</p>
+        <p class="text-3xl font-extrabold text-white">
+          {{ proposalsResource.value()?.length ?? 0 }}
+        </p>
+      </div>
+
+      <div class="h-px bg-white/10"></div>
+
+      <div>
+        <p class="text-xs text-white/60 mb-1">Avg Bid</p>
+        <p class="text-2xl font-bold text-white">
+          {{ proposalsResource.value() ? (getAvgBid() | number: '1.0-0') : '0' }}
+          <span class="text-xs font-normal text-white/70">USD</span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Middle Main Content: Proposals Feed -->
+  <main class="order-3 lg:order-2 lg:col-span-6 flex flex-col gap-4 w-full">
+    <div class="flex items-center justify-between gap-4 mb-1">
+      <div class="relative flex-1 max-w">
+        <input
+          type="search"
+          placeholder="Search proposals..."
+          class="w-full h-10 pl-10 pr-4 bg-white border border-outline-variant/30 rounded-full text-xs text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary"
+        />
+        <svg
+          class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant/50 pointer-events-none"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          />
+        </svg>
+      </div>
+
+      <div class="flex items-center gap-2 text-xs text-on-surface-variant shrink-0">
+        <span class="font-medium text-on-surface-variant/70">Sort by:</span>
+        <div class="relative">
+          <select
+            class="h-10 border border-outline-variant/30 rounded-full pl-4 pr-8 bg-white font-bold text-on-surface text-xs appearance-none focus:outline-none cursor-pointer"
+          >
+            <option>Newest</option>
+            <option>Oldest</option>
+          </select>
+          <svg
+            class="w-3.5 h-3.5 absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant/60 pointer-events-none"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    @if (proposalsResource.isLoading()) {
+      <div class="flex justify-center p-12">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    } @else if (proposalsResource.error()) {
+      <div class="bg-white rounded-3xl p-6 border border-error text-error text-center text-sm">
+        Failed to load proposals.
+        <button (click)="proposalsResource.reload()" class="underline font-bold ml-2">
+          Try again
+        </button>
+      </div>
+    } @else if (!proposalsResource.value() || proposalsResource.value()?.length === 0) {
+      <div class="bg-white rounded-[24px] p-12 text-center border border-outline-variant/20">
+        <p class="text-sm text-on-surface-variant">No proposals yet for this project.</p>
+      </div>
+    } @else {
+      @for (proposal of proposalsResource.value(); track proposal.id) {
+        <div
+          class="bg-white rounded-[24px] border border-outline-variant/30 p-6 flex flex-col gap-4"
+        >
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex items-start gap-3.5">
+              @if (proposal.applicantAvatarUrl) {
+                <img
+                  [src]="proposal.applicantAvatarUrl"
+                  alt=""
+                  class="w-11 h-11 rounded-full object-cover shrink-0"
+                />
+              } @else {
+                <div
+                  class="w-11 h-11 rounded-full bg-primary-container text-primary flex items-center justify-center text-sm font-bold shrink-0"
+                >
+                  {{ getInitials(getApplicantDisplayName(proposal)) }}
+                </div>
+              }
+
+              <div>
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <h3 class="text-base font-bold text-on-surface leading-snug">
+                    {{ getApplicantDisplayName(proposal) }}
+                  </h3>
+                  <span class="text-xs text-on-surface-variant/70 font-normal">
+                    ({{ proposal.applicantType || 'Individual' }})
+                  </span>
+                </div>
+
+                <div class="flex items-center gap-2 text-xs text-on-surface-variant mt-1">
+                  <span class="text-amber-500 font-bold"
+                    >★ {{ getFakeRating(proposal) | number: '1.1-1' }}</span
+                  >
+                  <span class="text-on-surface-variant/60"
+                    >({{ getFakeReviewCount(proposal) }} reviews)</span
+                  >
+                  <span class="text-on-surface-variant/40">·</span>
+                  <a href="javascript:void(0)" class="text-[#4130D7] font-semibold hover:underline"
+                    >View profile</a
+                  >
+                </div>
+              </div>
+            </div>
+
+            <div class="flex flex-col items-end gap-1.5 shrink-0">
+              <span class="px-3 py-1 rounded-full text-xs font-bold bg-[#D8F272] text-[#2B3800]">
+                {{ proposal.proposedBudget | number }} USD
+              </span>
+              @if (aiRankingEnabled()) {
+                <span
+                  class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#DDEBFF] text-[#003882]"
+                >
+                  {{ getFakeMatch(proposal) }}% Match
+                </span>
+              }
+            </div>
+          </div>
+
+          <p class="text-xs text-on-surface-variant/80 leading-relaxed line-clamp-2">
+            {{ proposal.coverLetter }}
+          </p>
+
+          <a
+            href="javascript:void(0)"
+            class="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4130D7] hover:underline w-fit"
+          >
+            <span class="text-xs">✨</span>
+            <span>AI Summary</span>
+          </a>
+
+          @if (proposal.status === 'Pending') {
+            <div
+              class="pt-2 border-t border-outline-variant/15 flex items-center justify-end gap-3"
+            >
+              <button
+                class="px-6 h-9 rounded-full border border-outline-variant/60 text-xs font-bold text-on-surface hover:bg-surface-container-low transition-colors"
+                [disabled]="actionInProgress() === proposal.id"
+                (click)="reject(proposal)"
+              >
+                Decline
+              </button>
+              <button
+                class="px-6 h-9 rounded-full bg-[#4130D7] hover:bg-[#5B4FF0] text-xs font-bold text-white transition-colors"
+                [disabled]="actionInProgress() === proposal.id"
+                (click)="accept(proposal)"
+              >
+                Accept Proposal
+              </button>
+            </div>
+          } @else {
+            <div class="pt-2 border-t border-outline-variant/15 flex justify-end">
+              <span
+                class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-surface-container-high text-on-surface-variant"
+              >
+                {{ proposal.status }}
+              </span>
+            </div>
+          }
+        </div>
+      }
+    }
+  </main>
+
+  <!-- Mobile Project Overview Footer Box -->
+  <div
+    class="order-4 lg:hidden w-full bg-[#2B2B2F] text-white rounded-[24px] p-6 flex flex-col gap-5"
+  >
+    <p class="text-[10px] font-bold uppercase tracking-wider text-white/50">PROJECT OVERVIEW</p>
+
+    <div>
+      <p class="text-xs text-white/60 mb-1">Total Proposals</p>
+      <p class="text-3xl font-extrabold text-white">{{ proposalsResource.value()?.length ?? 0 }}</p>
+    </div>
+
+    <div class="h-px bg-white/10"></div>
+
+    <div>
+      <p class="text-xs text-white/60 mb-1">Avg Bid</p>
+      <p class="text-2xl font-bold text-white">
+        {{ proposalsResource.value() ? (getAvgBid() | number: '1.0-0') : '0' }}
+        <span class="text-xs font-normal text-white/70">USD</span>
+      </p>
+    </div>
+  </div>
+</div>

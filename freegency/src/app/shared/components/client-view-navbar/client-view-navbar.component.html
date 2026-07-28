@@ -26,7 +26,7 @@
           [class.bg-[#fcfcfc]]="activeNav() !== item.label"
           [class.text-[#27253f]]="activeNav() !== item.label"
           [class.hover:bg-[#eceaf8]]="activeNav() !== item.label"
-          (click)="selectNav(item.label)"
+          (click)="selectNav(item)"
         >
           <span>{{ item.label }}</span>
           @if (item.dropdown) {

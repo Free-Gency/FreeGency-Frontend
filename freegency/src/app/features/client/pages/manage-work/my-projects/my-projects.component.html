@@ -1,0 +1,362 @@
+<div class="flex flex-col lg:flex-row gap-6 items-start w-full">
+  <!-- Left Sidebar: Status Filter -->
+  <aside
+    class="w-full lg:w-48 shrink-0 flex flex-row lg:flex-col gap-1 overflow-x-auto lg:overflow-visible no-scrollbar"
+  >
+    <p
+      class="hidden lg:block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant/60 px-3 mb-2"
+    >
+      STATUS
+    </p>
+
+    <button
+      type="button"
+      class="flex items-center justify-between px-3.5 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap lg:whitespace-normal"
+      [ngClass]="
+        statusFilter() === 'All'
+          ? 'bg-[#E3DFFF] text-primary font-semibold'
+          : 'text-on-surface hover:bg-surface-container-low'
+      "
+      (click)="setStatusFilter('All')"
+    >
+      <span>All projects</span>
+      <span class="text-xs px-2 py-0.5 rounded-full bg-black/5 font-semibold">{{
+        projects().length
+      }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="flex items-center justify-between px-3.5 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap lg:whitespace-normal"
+      [ngClass]="
+        statusFilter() === 'Draft'
+          ? 'bg-[#E3DFFF] text-primary font-semibold'
+          : 'text-on-surface hover:bg-surface-container-low'
+      "
+      (click)="setStatusFilter('Draft')"
+    >
+      <span>Draft</span>
+      <span class="text-xs px-2 py-0.5 rounded-full bg-black/5 font-semibold">{{
+        getCount('Draft')
+      }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="flex items-center justify-between px-3.5 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap lg:whitespace-normal"
+      [ngClass]="
+        statusFilter() === 'Open'
+          ? 'bg-[#E3DFFF] text-primary font-semibold'
+          : 'text-on-surface hover:bg-surface-container-low'
+      "
+      (click)="setStatusFilter('Open')"
+    >
+      <span>Open</span>
+      <span class="text-xs px-2 py-0.5 rounded-full bg-black/5 font-semibold">{{
+        getCount('Open')
+      }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="flex items-center justify-between px-3.5 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap lg:whitespace-normal"
+      [ngClass]="
+        statusFilter() === 'InProgress'
+          ? 'bg-[#E3DFFF] text-primary font-semibold'
+          : 'text-on-surface hover:bg-surface-container-low'
+      "
+      (click)="setStatusFilter('InProgress')"
+    >
+      <span>In progress</span>
+      <span class="text-xs px-2 py-0.5 rounded-full bg-black/5 font-semibold">{{
+        getCount('InProgress')
+      }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="flex items-center justify-between px-3.5 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap lg:whitespace-normal"
+      [ngClass]="
+        statusFilter() === 'Completed'
+          ? 'bg-[#E3DFFF] text-primary font-semibold'
+          : 'text-on-surface hover:bg-surface-container-low'
+      "
+      (click)="setStatusFilter('Completed')"
+    >
+      <span>Completed</span>
+      <span class="text-xs px-2 py-0.5 rounded-full bg-black/5 font-semibold">{{
+        getCount('Completed')
+      }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="flex items-center justify-between px-3.5 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap lg:whitespace-normal"
+      [ngClass]="
+        statusFilter() === 'Cancelled'
+          ? 'bg-[#E3DFFF] text-primary font-semibold'
+          : 'text-on-surface hover:bg-surface-container-low'
+      "
+      (click)="setStatusFilter('Cancelled')"
+    >
+      <span>Cancelled</span>
+      <span class="text-xs px-2 py-0.5 rounded-full bg-black/5 font-semibold">{{
+        getCount('Cancelled')
+      }}</span>
+    </button>
+  </aside>
+
+  <!-- Main Column: Projects -->
+  <div class="flex-1 flex flex-col gap-4 w-full">
+    <!-- Search & Sort Controls -->
+    <div class="flex items-center justify-between gap-4 mb-3">
+      <!-- Search Bar -->
+      <div class="relative flex-1 max-w">
+        <input
+          type="search"
+          placeholder="Search projects..."
+          class="w-full h-11 pl-11 pr-4 bg-white border border-outline-variant/30 rounded-full text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary"
+        />
+        <svg
+          class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/70 pointer-events-none"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          />
+        </svg>
+      </div>
+
+      <!-- Sort Dropdown -->
+      <div class="flex items-center gap-2.5 shrink-0">
+        <span class="text-xs font-semibold text-on-surface-variant/70">Sort by:</span>
+        <div class="relative">
+          <select
+            class="h-11 border border-outline-variant/30 rounded-full pl-5 pr-10 bg-white font-bold text-on-surface text-sm appearance-none focus:outline-none cursor-pointer"
+          >
+            <option>Newest</option>
+            <option>Oldest</option>
+          </select>
+          <svg
+            class="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant/70 pointer-events-none"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- State Handlers -->
+    @if (loading()) {
+      <div class="flex justify-center p-12">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    } @else if (error()) {
+      <div class="card p-6 border-error text-error text-center">
+        {{ error() }}
+        <button (click)="loadProjects()" class="link ml-2">Try again</button>
+      </div>
+    } @else if (filteredProjects().length === 0) {
+      <div class="bg-white rounded-[24px] p-12 text-center border border-outline-variant/20">
+        <p class="text-base text-on-surface-variant">
+          {{
+            projects().length === 0
+              ? "You haven't created any projects yet."
+              : 'No projects match this filter.'
+          }}
+        </p>
+        @if (projects().length === 0) {
+          <button class="btn btn-primary mt-4 w-fit mx-auto px-6">Create your first project</button>
+        }
+      </div>
+    } @else {
+      <!-- Cards List -->
+      @for (project of filteredProjects(); track project.id) {
+        <div class="bg-white rounded-[24px] border border-outline-variant/30 overflow-hidden">
+          <div class="p-6">
+            <div class="flex justify-between items-start gap-4">
+              <!-- Left side: Inline Title + Status Pill -->
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2.5 flex-wrap">
+                  <h2 class="text-lg font-bold text-on-surface truncate max-w-full">
+                    {{ project.title }}
+                  </h2>
+                  <span
+                    class="shrink-0 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                    [ngClass]="{
+                      'bg-[#D8F272] text-[#2B3800]': project.status === 'Open',
+                      'bg-[#C4C0FF] text-[#110068]': project.status === 'InProgress',
+                      'bg-surface-container-highest text-on-surface-variant':
+                        project.status === 'Draft',
+                      'bg-[#E5E1E4] text-[#464555]': project.status === 'Completed',
+                      'bg-tertiary-fixed text-on-tertiary-fixed': project.status === 'Cancelled',
+                    }"
+                  >
+                    {{ project.status === 'InProgress' ? 'IN PROGRESS' : project.status }}
+                  </span>
+                </div>
+
+                <p class="text-xs text-on-surface-variant/70 mt-1 font-normal">
+                  {{ project.categoryName }}
+                </p>
+              </div>
+
+              <!-- Right side: Budget & Subtext -->
+              <div class="text-right shrink-0">
+                <div class="text-xl font-bold text-on-surface leading-tight">
+                  {{ getBudgetDisplay(project) }}
+                </div>
+                <div class="text-[11px] text-on-surface-variant/60 mt-0.5">
+                  @if (project.status === 'Open') {
+                    Closes in 7 days
+                  } @else if (project.status === 'Completed') {
+                    Closed 3 weeks ago
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- Middle Section Dynamic Visuals -->
+            <div class="mt-4">
+              @if (project.status === 'InProgress') {
+                <!-- Progress Bar -->
+                <div class="space-y-1.5 max-w-lg">
+                  <div class="flex justify-between text-xs font-semibold">
+                    <span class="text-on-surface">Milestone 2 of 4 · 800 USD in escrow</span>
+                    <span class="text-primary font-bold">50%</span>
+                  </div>
+                  <div class="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
+                    <div class="bg-primary h-full rounded-full" style="width: 50%"></div>
+                  </div>
+                </div>
+              } @else if (project.status === 'Completed') {
+                <!-- Rating Pill -->
+                <div
+                  class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EFF7DF] text-[#3D4C00] text-xs font-semibold"
+                >
+                  <span class="text-amber-500">★</span> Rated 5.0 · Paid in full
+                </div>
+              } @else {
+                <!-- Proposals Count Tag -->
+                <div
+                  class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-low text-on-surface-variant text-xs font-semibold"
+                >
+                  <svg
+                    class="w-3.5 h-3.5 text-on-surface-variant/70"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                    />
+                  </svg>
+                  <span>{{ project.proposalCount || 3 }} proposals received</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Divider & Action Footer -->
+          <div class="border-t border-outline-variant/15 px-6 py-3 flex justify-end bg-white">
+            <button
+              class="btn btn-primary !w-auto px-5 !h-9 text-xs font-bold rounded-full flex items-center gap-1.5"
+            >
+              <span>{{ project.status === 'Draft' ? 'Edit draft' : 'View details' }}</span>
+              <span>→</span>
+            </button>
+          </div>
+        </div>
+      }
+    }
+  </div>
+
+  <!-- Right Sidebar Widgets -->
+  <div class="w-full lg:w-80 shrink-0 flex flex-col gap-4">
+    <!-- Escrow Card -->
+    <div class="bg-inverse-surface text-inverse-on-surface rounded-[28px] p-6 flex flex-col gap-4">
+      <div>
+        <p class="text-[10px] font-bold text-white/60 uppercase tracking-wider mb-1">
+          TOTAL LOCKED IN ESCROW
+        </p>
+        <p class="text-3xl font-extrabold text-white">{{ getTotalEscrow() | number }}</p>
+        <p class="text-xs text-white/50 mt-1">
+          Across {{ getActiveProjectCount() }} active projects
+        </p>
+      </div>
+
+      <div class="h-px bg-white/10"></div>
+
+      <div>
+        <p class="text-[10px] font-bold text-white/60 uppercase tracking-wider mb-1">
+          RELEASED TO DATE
+        </p>
+        <p class="text-2xl font-bold text-white">{{ getReleasedToDate() | number }}</p>
+        <p class="text-xs text-white/50 mt-1">Since your first project</p>
+      </div>
+
+      <div class="h-px bg-white/10"></div>
+
+      <div>
+        <p class="text-[10px] font-bold text-white/60 uppercase tracking-wider mb-1">
+          AVAILABLE BALANCE
+        </p>
+        <p class="text-2xl font-bold text-white mb-1">{{ getAvailableBalance() | number }}</p>
+        <p class="text-xs text-white/50">Manage your balance and transactions</p>
+      </div>
+
+      <button
+        class="btn btn-primary !bg-[#4130D7] hover:!bg-[#5B4FF0] text-white w-full rounded-full mt-2 !h-11 text-sm font-semibold"
+      >
+        Manage Wallet
+      </button>
+    </div>
+
+    <!-- Needs Attention Widget -->
+    <div class="bg-inverse-surface text-inverse-on-surface rounded-[28px] p-6 flex flex-col gap-3">
+      <p class="text-base font-bold text-white mb-1">Needs attention</p>
+
+      @if (getProposalsAwaitingReview() > 0) {
+        <button
+          class="flex items-center justify-between bg-white/5 rounded-2xl p-4 hover:bg-white/10 transition-colors text-left"
+          (click)="goToProposals()"
+        >
+          <div>
+            <p class="text-2xl font-bold text-white">{{ getProposalsAwaitingReview() }}</p>
+            <p class="text-xs text-white/60 mt-0.5">proposals to review</p>
+          </div>
+          <span class="text-white/60 text-base">→</span>
+        </button>
+      }
+
+      @if (getMilestonesAwaitingApproval() > 0) {
+        <button
+          class="flex items-center justify-between bg-white/5 rounded-2xl p-4 hover:bg-white/10 transition-colors text-left"
+          (click)="goToMilestones()"
+        >
+          <div>
+            <p class="text-2xl font-bold text-white">{{ getMilestonesAwaitingApproval() }}</p>
+            <p class="text-xs text-white/60 mt-0.5">milestones awaiting approval</p>
+          </div>
+          <span class="text-white/60 text-base">→</span>
+        </button>
+      }
+
+      @if (getProposalsAwaitingReview() === 0 && getMilestonesAwaitingApproval() === 0) {
+        <p class="text-sm text-white/60">You're all caught up.</p>
+      }
+    </div>
+  </div>
+</div>
