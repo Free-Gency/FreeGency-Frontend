@@ -1,0 +1,419 @@
+<!-- Hidden symbol sprite — white fill hardcoded -->
+<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" class="absolute overflow-hidden" aria-hidden="true">
+  <symbol id="fg-mark-fill" viewBox="0 0 43.3594 43.3594">
+    <path fill="#fff" d="M32.6589 31.5676C35.8692 27.9956 35.0237 22.9685 30.8138 20.4838C28.9218 19.3671 26.8139 19.0511 24.6782 18.8069C23.0937 18.6258 21.8849 17.8844 21.2416 16.3333C20.6683 14.9512 20.8342 13.6858 21.6422 12.4565C22.7673 10.745 24.4829 10.628 26.2298 10.8642C28.3819 11.1552 30.511 11.6163 32.7367 12.0196C33.0331 10.4409 33.6162 8.85556 35.1799 7.79371C36.4278 6.94633 37.7453 6.86215 39.1672 7.09927C40.589 7.3364 42.7009 9.18093 43.1684 11.0987C43.8161 13.7554 42.8495 15.5823 39.7588 17.4711C40.9538 18.9894 41.7599 20.6942 42.3195 22.5424C42.8379 24.2547 42.7987 25.9944 42.8068 27.74C42.8166 29.8464 42.2797 31.8252 41.2481 33.6454C39.2604 37.1527 36.4949 39.8996 32.8891 41.714C31.5348 42.3955 29.6478 42.0894 28.2222 40.4767C27.2042 39.3251 26.9002 37.4459 27.8124 36.0521C28.3353 35.2531 29.167 34.6484 29.8917 33.9917C30.7839 33.1832 31.7094 32.4116 32.6589 31.5676Z"/>
+    <path fill="#fff" d="M1.69221 36.4005C2.48972 34.6721 2.6845 34.441 4.42049 33.1748C2.70139 31.2193 1.46513 28.9943 0.776393 26.4802C0.164343 24.2461 -0.330516 21.9715 0.27654 19.6777C0.826705 17.5989 2.72639 16.5286 5.04672 16.9616C6.47359 17.2278 8.12729 18.7553 8.20061 20.867C8.29353 23.5435 8.79592 26.1582 11.032 28.0023C13.7219 30.2207 16.3581 30.5758 19.3513 28.9217C21.3344 27.8258 22.7923 26.1517 24.1434 24.3816C25.088 23.144 26.8597 22.4352 28.3182 22.8385C29.9945 23.302 31.1151 24.6065 31.4677 26.1834C31.7537 27.4621 31.3788 28.5625 30.6346 29.4738C28.33 32.2956 25.8209 34.9168 22.4765 36.5436C20.0071 37.7448 17.426 38.3581 14.6574 37.9304C13.8034 37.7985 12.9362 37.7511 12.1574 37.6732C11.9118 38.5454 11.7886 39.5241 11.3745 40.3582C9.73081 43.6691 5.77007 44.2855 3.16179 41.9834C1.55339 40.5637 0.974059 38.6264 1.69221 36.4005Z"/>
+    <path fill="#fff" d="M28.4956 8.4696C27.76 8.47119 27.0765 8.4868 26.4188 8.36424C23.8044 7.87709 21.5577 8.58371 19.6808 10.4255C17.69 12.379 17.4257 14.8228 18.0918 17.3498C18.512 18.9435 19.3554 20.4206 19.8834 21.9922C20.3955 23.5163 19.686 24.7821 18.6109 25.7783C16.3986 27.8281 13.146 26.7237 11.9596 24.3314C10.2952 20.9753 9.24175 17.5277 9.52853 13.7578C9.6078 12.7159 9.85771 11.6869 10.0521 10.5145C8.20776 10.3587 6.52328 9.77799 5.4123 8.1291C4.61782 6.94995 4.54625 5.63051 4.60212 4.2727C4.66925 2.64128 6.12614 0.800379 8.03099 0.276688C11.1625 -0.584253 13.443 0.597064 14.7877 3.35931C16.3345 2.56872 17.7611 1.67044 19.3062 1.08553C22.4062 -0.0880587 25.6603 -0.0538935 28.8638 0.506311C30.5555 0.802163 32.2479 2.36048 32.017 5.06118C31.884 6.61654 30.2641 8.38245 28.4956 8.4696Z"/>
+  </symbol>
+</svg>
+
+<!-- FAB + hint -->
+<div class="fg-assist-dock pointer-events-none">
+  @if (!open() && hintVisible()) {
+    <button
+      type="button"
+      class="fg-hint pointer-events-auto"
+      (click)="openPanel()"
+    >
+      <span class="fg-hint-icon" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 43.3594 43.3594"><use href="#fg-mark-fill"/></svg>
+      </span>
+      <span class="fg-hint-text">
+        Review
+        <span class="fg-hint-count">{{ hintCount() }}</span>
+        proposal{{ hintCount() === 1 ? '' : 's' }} with AI
+      </span>
+    </button>
+  }
+
+  <button
+    type="button"
+    class="fg-fab pointer-events-auto"
+    [class.fg-fab--pulse]="!open() && hintVisible()"
+    [attr.aria-expanded]="open()"
+    [attr.aria-label]="open() ? 'Close FreeGency Assistant' : 'Open FreeGency Assistant'"
+    (click)="toggle()"
+  >
+    @if (open()) {
+      <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    } @else {
+      <svg width="24" height="24" viewBox="0 0 43.3594 43.3594" aria-hidden="true">
+        <use href="#fg-mark-fill"/>
+      </svg>
+    }
+  </button>
+</div>
+
+@if (open()) {
+  <div class="fg-panel" role="dialog" aria-label="FreeGency Assistant">
+    <!-- Header -->
+    <header class="fg-header">
+      <div class="fg-header-row">
+        <div class="fg-brand-chip" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 43.3594 43.3594"><use href="#fg-mark-fill"/></svg>
+        </div>
+        <div class="fg-header-copy">
+          <p class="fg-header-title">FreeGency Assistant</p>
+          <p class="fg-header-status">
+            <span class="fg-online-dot" [class.fg-online-dot--busy]="sending()"></span>
+            {{ sending() ? 'Writing…' : 'Online · AI-powered' }}
+          </p>
+        </div>
+        <button type="button" class="fg-icon-btn" aria-label="Minimize" (click)="close()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" d="M5 12h14" />
+          </svg>
+        </button>
+        <button type="button" class="fg-icon-btn" aria-label="Close" (click)="close()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="fg-context-pill">{{ contextLabel() }}</div>
+    </header>
+
+    <!-- Thread -->
+    <div class="fg-thread">
+      @for (msg of messages(); track msg.id) {
+        <div
+          class="fg-turn"
+          [class.fg-turn--user]="msg.role === 'user'"
+          [class.fg-turn--rtl]="isRtl(msg.content)"
+        >
+          @if (msg.proactive) {
+            <div class="fg-alert">
+              <p class="fg-alert-title">Heads-up</p>
+              <p class="fg-alert-body">{{ msg.content }}</p>
+              <button type="button" class="fg-alert-link" (click)="onChipClick('Red flags')">
+                View details →
+              </button>
+            </div>
+          } @else if (msg.role === 'user') {
+            <div
+              class="fg-bubble fg-bubble--user"
+              [class.fg-bubble--cmd]="msg.content.trim().startsWith('/')"
+              [attr.dir]="isRtl(msg.content) ? 'rtl' : 'ltr'"
+            >
+              {{ msg.content }}
+            </div>
+          } @else if (msg.error) {
+            <div class="fg-bubble fg-bubble--error">{{ msg.content }}</div>
+          } @else if (msg.role === 'assistant') {
+            @if (msg.resultTitle || intentLabel(msg.intent)) {
+              <div class="fg-result-badge" [attr.data-intent]="msg.intent">
+                {{ msg.resultTitle || intentLabel(msg.intent) }}
+              </div>
+            }
+
+            @if (msg.intent === 'help') {
+              <div class="fg-help">
+                @if (msg.content) {
+                  <p class="fg-help-intro">{{ msg.content }}</p>
+                }
+                @for (group of helpGroups; track group.title) {
+                  <p class="fg-help-group">{{ group.title }}</p>
+                  @for (cmd of group.commands; track cmd.id) {
+                    <button type="button" class="fg-help-row" (click)="pickCommand(cmd)">
+                      <span class="fg-help-slash">{{ cmd.slash }}</span>
+                      <span>{{ cmd.description }}</span>
+                      @if (cmd.usage && cmd.needsArg) {
+                        <span class="fg-help-usage">{{ cmd.usage }}</span>
+                      }
+                    </button>
+                  }
+                }
+              </div>
+            } @else if (msg.intent === 'draft' && msg.draftBody) {
+              <div class="fg-draft">
+                <p class="fg-draft-hint">Here’s a draft you can copy and send:</p>
+                <pre class="fg-draft-body">{{ msg.draftBody }}</pre>
+                <button type="button" class="fg-btn fg-btn--solid fg-draft-copy" (click)="copyDraft(msg.draftBody)">
+                  Copy draft
+                </button>
+              </div>
+            } @else if (msg.intent === 'questions' && msg.content) {
+              <div class="fg-questions">
+                <pre class="fg-questions-body">{{ msg.content }}</pre>
+              </div>
+            } @else if (msg.content) {
+              <div class="fg-bubble fg-bubble--ai" [attr.dir]="isRtl(msg.content) ? 'rtl' : 'ltr'">
+                {{ msg.content }}
+              </div>
+            }
+          }
+
+          <!-- Summarize / Rank: stacked essentials rows -->
+          @if ((msg.intent === 'summarize' || msg.intent === 'rank') && msg.cards?.length) {
+            <div class="fg-summary-list">
+              @for (card of msg.cards; track card.proposalId || card.applicantName; let i = $index) {
+                <article class="fg-summary-row" [class.fg-summary-row--top]="msg.intent === 'rank' && i === 0">
+                  <div class="fg-summary-top">
+                    <div class="fg-card-identity">
+                      @if (msg.intent === 'rank') {
+                        <span class="fg-rank-num">{{ i + 1 }}</span>
+                      }
+                      @if (card.avatarUrl) {
+                        <img [src]="card.avatarUrl" alt="" class="fg-avatar" />
+                      } @else {
+                        <div class="fg-avatar fg-avatar--ph">{{ initials(card.applicantName) }}</div>
+                      }
+                      <div class="min-w-0">
+                        <p class="fg-card-name">{{ card.applicantName }}</p>
+                        <p class="fg-card-role">{{ card.applicantType === 'Team' ? 'Team' : 'Freelancer' }}</p>
+                      </div>
+                    </div>
+                    <div class="fg-summary-meta">
+                      @if (card.proposedBudget != null) {
+                        <span class="fg-bid" [class.fg-bid--over]="card.overBudget">
+                          ${{ card.proposedBudget | number: '1.0-0' }}
+                        </span>
+                      }
+                      @if (matchPercent(card); as pct) {
+                        <span class="fg-match-pct">{{ pct }}%</span>
+                      }
+                    </div>
+                  </div>
+                  <div class="fg-summary-points">
+                    @if (card.insight || card.strength) {
+                      <p><span class="fg-tag fg-tag--ok">{{ msg.intent === 'rank' ? 'Why here' : 'Strength' }}</span> {{ card.insight || card.strength }}</p>
+                    }
+                    @if (card.risk) {
+                      <p><span class="fg-tag fg-tag--warn">Risk</span> {{ card.risk }}</p>
+                    }
+                  </div>
+                </article>
+              }
+            </div>
+          }
+
+          <!-- Red flags: alert cards -->
+          @if (msg.intent === 'redflags' && msg.cards?.length) {
+            <div class="fg-flag-list">
+              @for (card of msg.cards; track card.proposalId || card.applicantName) {
+                <article class="fg-flag-card">
+                  <div class="fg-card-identity">
+                    @if (card.avatarUrl) {
+                      <img [src]="card.avatarUrl" alt="" class="fg-avatar" />
+                    } @else {
+                      <div class="fg-avatar fg-avatar--ph">{{ initials(card.applicantName) }}</div>
+                    }
+                    <div class="min-w-0 flex-1">
+                      <p class="fg-card-name">{{ card.applicantName }}</p>
+                      @if (card.proposedBudget != null) {
+                        <p class="fg-card-role">${{ card.proposedBudget | number: '1.0-0' }} bid</p>
+                      }
+                    </div>
+                  </div>
+                  <ul class="fg-flag-ul">
+                    @for (f of card.flags || []; track f) {
+                      <li>{{ f }}</li>
+                    }
+                  </ul>
+                </article>
+              }
+            </div>
+          }
+
+          <!-- Compare / bestfit / profile / why: rich cards -->
+          @if (
+            msg.cards?.length &&
+            msg.intent !== 'summarize' &&
+            msg.intent !== 'rank' &&
+            msg.intent !== 'redflags'
+          ) {
+            <div
+              class="fg-cards"
+              [class.fg-cards--compare]="msg.intent === 'compare' && msg.cards!.length === 2"
+              [class.fg-cards--hero]="msg.intent === 'bestfit' || msg.intent === 'why'"
+            >
+              @if (msg.intent === 'compare' && msg.cards!.length === 2) {
+                <span class="fg-vs" aria-hidden="true">VS</span>
+              }
+              @for (card of msg.cards; track card.applicantName + (card.proposalId || ''); let i = $index) {
+                <article
+                  class="fg-card"
+                  [class.fg-card--compact]="msg.intent === 'compare'"
+                  [class.fg-card--top]="isTopChoice(card, i, msg.cards!.length) || !!card.topChoice"
+                  [class.fg-card--profile]="msg.intent === 'profile'"
+                >
+                  @if (isTopChoice(card, i, msg.cards!.length) || card.topChoice) {
+                    <span class="fg-top-badge">★ Top choice</span>
+                  }
+
+                  <div class="fg-card-head">
+                    <div class="fg-card-identity">
+                      @if (card.avatarUrl) {
+                        <img [src]="card.avatarUrl" alt="" class="fg-avatar" [class.fg-avatar--sm]="msg.intent === 'compare'" />
+                      } @else {
+                        <div
+                          class="fg-avatar fg-avatar--ph"
+                          [class.fg-avatar--sm]="msg.intent === 'compare'"
+                        >
+                          {{ initials(card.applicantName) }}
+                        </div>
+                      }
+                      <div class="min-w-0">
+                        <p class="fg-card-name">{{ card.applicantName }}</p>
+                        <p class="fg-card-role">
+                          {{ card.applicantType === 'Team' ? 'Team' : 'Freelancer' }}
+                          @if (card.rating != null) {
+                            <span class="fg-card-rating">· ★ {{ card.rating | number: '1.1-1' }}</span>
+                            @if (card.reviewCount) {
+                              <span>({{ card.reviewCount }})</span>
+                            }
+                          }
+                        </p>
+                      </div>
+                    </div>
+                    @if (matchPercent(card); as pct) {
+                      <div class="fg-match">
+                        <span class="fg-match-pct">{{ pct }}%</span>
+                        <span class="fg-match-cap">match</span>
+                      </div>
+                    }
+                  </div>
+
+                  <div class="fg-card-meta">
+                    @if (card.proposedBudget != null) {
+                      <span class="fg-meta-pill" [class.fg-bid--over]="card.overBudget">
+                        ${{ card.proposedBudget | number: '1.0-0' }}
+                      </span>
+                    }
+                    @if (card.applicantType === 'Team') {
+                      <span class="fg-meta-pill fg-meta-pill--muted">Team delivery</span>
+                    } @else {
+                      <span class="fg-meta-pill fg-meta-pill--muted">Solo</span>
+                    }
+                  </div>
+
+                  @if (card.skills?.length && (msg.intent === 'compare' || msg.intent === 'profile' || msg.intent === 'bestfit' || msg.intent === 'why')) {
+                    <div class="fg-skills">
+                      @for (skill of card.skills!.slice(0, msg.intent === 'compare' ? 4 : 6); track skill) {
+                        <span class="fg-skill">{{ skill }}</span>
+                      }
+                    </div>
+                  }
+
+                  @if (msg.intent === 'compare') {
+                    <div class="fg-compare-points">
+                      @if (card.strength || card.highlights?.[0]) {
+                        <p><span class="fg-tag fg-tag--ok">Pros</span> {{ card.strength || card.highlights?.[0] }}</p>
+                      }
+                      @if (card.risk || card.highlights?.[1]) {
+                        <p><span class="fg-tag fg-tag--warn">Cons</span> {{ card.risk || card.highlights?.[1] }}</p>
+                      }
+                      @if (!(card.strength || card.highlights?.[0]) && cardInsight(card); as insight) {
+                        <p class="fg-compare-insight">{{ insight }}</p>
+                      }
+                    </div>
+                  } @else {
+                    @if (cardInsight(card); as insight) {
+                      <div class="fg-insight">
+                        <span class="fg-insight-label">AI INSIGHT</span>
+                        <p>{{ insight }}</p>
+                      </div>
+                    }
+
+                    @if (card.coverSnippet && msg.intent === 'profile') {
+                      <p class="fg-cover">{{ card.coverSnippet }}</p>
+                    }
+                  }
+
+                  <div class="fg-card-actions" [class.fg-card-actions--compact]="msg.intent === 'compare'">
+                    <button type="button" class="fg-btn fg-btn--ghost" (click)="onViewProfile(card)">
+                      Profile
+                    </button>
+                    <button type="button" class="fg-btn fg-btn--solid" (click)="onMessage(card)">
+                      Message
+                    </button>
+                  </div>
+                </article>
+              }
+            </div>
+          }
+
+          @if (msg.actions?.length) {
+            <div class="fg-actions">
+              @for (action of msg.actions; track action.type + (action.label || '')) {
+                @if (action.type === 'open_milestones' && action.projectId) {
+                  <a
+                    class="fg-milestone-tip"
+                    [href]="'/projects/' + action.projectId"
+                    (click)="dismissTip()"
+                  >
+                    {{ action.label || 'Open milestones' }} →
+                  </a>
+                }
+                @if (action.type === 'copy_draft' && action.payload) {
+                  <button type="button" class="fg-chip" (click)="copyDraft(action.payload)">
+                    {{ action.label || 'Copy draft' }}
+                  </button>
+                }
+              }
+            </div>
+          }
+
+          @if (msg.chips?.length) {
+            <div class="fg-chips" [attr.dir]="isRtl(msg.content) ? 'rtl' : null">
+              @for (chip of msg.chips; track chip) {
+                <button type="button" class="fg-chip" (click)="onChipClick(chip)">
+                  {{ chip }}
+                </button>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      @if (sending()) {
+        <div class="fg-bubble fg-bubble--ai fg-typing" aria-live="polite" aria-label="Assistant is typing">
+          <span class="fg-type-node"></span>
+          <span class="fg-type-node"></span>
+          <span class="fg-type-node"></span>
+        </div>
+      }
+
+      <div #messagesEnd></div>
+    </div>
+
+    <!-- Composer + palette -->
+    <div class="fg-composer-wrap">
+      @if (showPalette() && filteredCommands().length) {
+        <div class="fg-palette" role="listbox">
+          @for (cmd of filteredCommands(); track cmd.id) {
+            <button type="button" class="fg-palette-row" (click)="pickCommand(cmd)">
+              <span class="fg-palette-cmd">{{ cmd.slash }}</span>
+              <span class="fg-palette-desc">{{ cmd.description }}</span>
+            </button>
+          }
+        </div>
+      }
+
+      <div class="fg-composer">
+        <input
+          #composerInput
+          type="text"
+          [placeholder]="composerPlaceholder()"
+          [ngModel]="draft()"
+          (ngModelChange)="onDraftChange($event)"
+          (keydown)="onComposerKeydown($event)"
+          [disabled]="sending()"
+        />
+        <button
+          type="button"
+          class="fg-send"
+          [disabled]="sending() || !draft().trim()"
+          (click)="send()"
+          aria-label="Send"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff">
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+}

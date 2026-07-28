@@ -377,3 +377,15 @@
     </div>
   </div>
 </div>
+
+@if (selectedProject(); as project) {
+  <app-proposal-assistant
+    [project]="project"
+    [proposals]="proposals()"
+    [proposalCount]="totalCount()"
+    [acceptTip]="assistantAcceptTip()"
+    (dismissAcceptTip)="dismissAssistantAcceptTip()"
+    (viewProfile)="onAssistantViewProfile($event)"
+    (messageApplicant)="onAssistantMessage($event)"
+  />
+}

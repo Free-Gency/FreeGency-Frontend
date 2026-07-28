@@ -9,16 +9,19 @@ import {
 } from '../../../data-access/manage-work.service';
 import { Proposal, PagedResponse } from '../../../../../shared/models/Proposal';
 import { Project } from '../../../../../shared/models/Project';
+import { ProposalAssistantComponent } from '../../../components/proposal-assistant/proposal-assistant.component';
+import { ToastService } from '../../../../../shared/components/toast/toast.service';
 
 @Component({
   selector: 'app-proposals',
   standalone: true,
-  imports: [CommonModule, HugeiconsIconComponent],
+  imports: [CommonModule, HugeiconsIconComponent, ProposalAssistantComponent],
   templateUrl: './proposals.html',
 })
 export class Proposals implements OnInit {
   private readonly manageWorkService = inject(ManageWorkService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(ToastService);
   private rankingRequestId = 0;
 
   readonly ideaIcon = Idea01Icon;
@@ -41,6 +44,8 @@ export class Proposals implements OnInit {
   readonly rankingError = signal<string | null>(null);
   readonly rankingById = signal<Record<string, RankedProposal>>({});
   readonly aiSummary = signal<string | null>(null);
+  /** Soft tip after accept — shown once in the assistant */
+  readonly assistantAcceptTip = signal(false);
 
   readonly page = signal(1);
   readonly pageSize = 10;
@@ -53,6 +58,12 @@ export class Proposals implements OnInit {
   private searchDebounceHandle: ReturnType<typeof setTimeout> | null = null;
 
   readonly activeProjectId = computed(() => this.selectedProjectId() ?? '');
+
+  readonly selectedProject = computed(() => {
+    const id = this.selectedProjectId();
+    if (!id) return null;
+    return this.projects().find((p) => p.id === id) ?? null;
+  });
 
   readonly proposalsResource = rxResource<
     PagedResponse<Proposal>,
@@ -158,6 +169,7 @@ export class Proposals implements OnInit {
     this.rankingById.set({});
     this.aiSummary.set(null);
     this.rankingError.set(null);
+    this.assistantAcceptTip.set(false);
     this.page.set(1);
   }
 
@@ -272,6 +284,7 @@ export class Proposals implements OnInit {
       .subscribe({
         next: () => {
           this.actionInProgress.set(null);
+          this.assistantAcceptTip.set(true);
           this.proposalsResource.reload();
           if (this.aiRankingEnabled() && this.activeProjectId()) {
             this.loadRanking(this.activeProjectId());
@@ -279,6 +292,26 @@ export class Proposals implements OnInit {
         },
         error: () => this.actionInProgress.set(null),
       });
+  }
+
+  dismissAssistantAcceptTip(): void {
+    this.assistantAcceptTip.set(false);
+  }
+
+  onAssistantViewProfile(event: { userId?: string | null; teamId?: string | null }): void {
+    if (event.teamId) {
+      this.toast.success('Open this team from the proposal card to view the full profile.');
+      return;
+    }
+    this.toast.success('Open this applicant from the proposal card to view the full profile.');
+  }
+
+  onAssistantMessage(event: {
+    proposalId?: string | null;
+    chatRoomId?: string | null;
+    name: string;
+  }): void {
+    this.toast.success(`Messaging ${event.name} will open once chat is connected.`);
   }
 
   reject(proposal: Proposal): void {
