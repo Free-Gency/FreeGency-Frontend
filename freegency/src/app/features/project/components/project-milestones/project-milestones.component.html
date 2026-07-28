@@ -4,7 +4,8 @@
   <div class="flex flex-col gap-md">
     @if (loading()) {
       <p class="text-body-md text-on-surface-variant text-center py-md">Loading milestones...</p>
-    } @else {
+    }
+    @else {
       @if (escrow(); as e) {
         <div class="card flex flex-col gap-sm">
           <div class="flex items-center gap-xs">

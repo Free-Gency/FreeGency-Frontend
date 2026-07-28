@@ -1,0 +1,8 @@
+
+.btn-sm {
+  height: 36px;
+  padding: 0 var(--spacing-sm);
+  font-size: 14px;
+  width: auto;
+  border-radius: var(--radius-sm);
+}

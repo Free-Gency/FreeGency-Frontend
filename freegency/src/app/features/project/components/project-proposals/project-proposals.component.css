@@ -1,5 +1,3 @@
-
-
 .btn-sm {
   height: 36px;
   padding: 0 var(--spacing-sm);
@@ -34,4 +32,22 @@
 .status-withdrawn {
   background-color: var(--color-surface-container-high);
   color: var(--color-outline);
+}
+
+/* Subtle left accent so proposals still awaiting the owner's decision
+   stand out from ones already resolved. */
+.proposal-card-pending {
+  border-left: 3px solid var(--color-primary);
+}
+
+/* Loading placeholder for proposal cards */
+.proposal-skeleton {
+  background: linear-gradient(90deg, var(--color-surface) 25%, var(--color-surface-variant) 50%, var(--color-surface) 75%);
+  background-size: 200% 100%;
+  animation: proposal-shimmer 1.5s infinite ease-in-out;
+}
+
+@keyframes proposal-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }

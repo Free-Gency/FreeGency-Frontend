@@ -1,6 +1,7 @@
+
 import { Component, inject, input, OnInit, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of, catchError } from 'rxjs';
 import { ProjectMilestonesApiService } from '../../data-access/project-milestones-api.service';
 import { ProjectMilestone } from '../../models/project-milestone';
 import { ProjectEscrow } from '../../models/project-escrow';
@@ -29,8 +30,11 @@ export class ProjectMilestonesComponent implements OnInit {
     this.loading.set(true);
 
     forkJoin({
+      // A project without escrow set up yet (e.g. plan not agreed) returns
+      // a 404 here — that's an expected state, not a load failure, so we
+      // fall back to null instead of letting it fail the whole forkJoin.
       milestones: this.milestonesApi.getMilestones(this.projectId()),
-      escrow: this.milestonesApi.getEscrow(this.projectId()),
+      escrow: this.milestonesApi.getEscrow(this.projectId()).pipe(catchError(() => of(null))),
     }).subscribe({
       next: (result) => {
         this.milestones.set(result.milestones);

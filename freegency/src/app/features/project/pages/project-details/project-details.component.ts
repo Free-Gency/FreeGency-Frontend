@@ -36,6 +36,7 @@ export class ProjectDetailsComponent {
   private readonly projectApi = inject(ProjectDetailsApiService);
   private readonly auth = inject(AuthService);
 
+  protected readonly contentCollapsed = signal(false);
   protected readonly project = signal<ProjectDetail | null>(null);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
@@ -47,8 +48,10 @@ export class ProjectDetailsComponent {
   // tab panels stay mounted (just hidden) and fetch on init regardless of
   // which tab is active.
   protected readonly proposalsCount = signal(0);
+  protected readonly filesCount = signal(0);
 
   protected readonly activeTab = signal<ProjectTab>('overview');
+  
   protected readonly tabs: { key: ProjectTab; label: string }[] = [
     { key: 'overview', label: 'Overview' },
     { key: 'proposals', label: 'Proposals' },
@@ -60,7 +63,6 @@ export class ProjectDetailsComponent {
   protected readonly isOwner = computed(() => {
     const p = this.project();
     const userId = this.auth.session()?.id;
-      console.log('clientId:', p?.clientId, typeof p?.clientId, '| userId:', userId, typeof userId);
     return !!p && !!userId && p.clientId === userId;
   });
 
@@ -100,5 +102,9 @@ export class ProjectDetailsComponent {
 
   protected onEditSaved(updated: ProjectDetail) {
     this.project.set(updated);
+  }
+
+  protected toggleContent() {
+    this.contentCollapsed.update((collapsed) => !collapsed);
   }
 }

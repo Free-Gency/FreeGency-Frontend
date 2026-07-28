@@ -1,0 +1,8 @@
+
+.upload-kind-select {
+  height: 36px;
+  padding: 0 32px 0 var(--spacing-sm);
+  font-size: 14px;
+  width: auto;
+  border-radius: var(--radius-sm);
+}
