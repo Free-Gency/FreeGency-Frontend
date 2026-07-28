@@ -1,10 +1,9 @@
-import { Component, OnInit, inject, signal, effect } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ClientViewNavbarComponent } from '../../../../shared/components/client-view-navbar/client-view-navbar.component';
 import { MyProjectsComponent } from './my-projects/my-projects.component';
 import { Proposals } from './proposals/proposals';
 import { ManageWorkService } from '../../data-access/manage-work.service';
-import { Project } from '../../../../shared/models/Project';
 
 export type ManageWorkTab = 'my-projects' | 'proposals' | 'milestones' | 'members';
 
@@ -18,41 +17,32 @@ export class ManageWorkComponent implements OnInit {
   private readonly manageWorkService = inject(ManageWorkService);
 
   readonly activeTab = signal<ManageWorkTab>('my-projects');
-  readonly projects = signal<Project[]>([]);
-  readonly selectedProjectId = signal<string | null>(null);
-  readonly loadingProjects = signal(false);
+  /** Full totals — not tied to current page size */
+  readonly projectsTotal = signal(0);
+  readonly proposalsTotal = signal(0);
 
   ngOnInit(): void {
-    this.loadProjects();
+    this.loadProjectsTotal();
+    this.loadProposalsTotal();
   }
 
-  loadProjects(): void {
-    this.loadingProjects.set(true);
-    this.manageWorkService.getMyProjects('as-client').subscribe({
-      next: (res: any) => {
-        const projectsList = Array.isArray(res) 
-          ? res 
-          : res?.data || res?.$values || [];
-
-        this.projects.set(projectsList);
-        if (projectsList.length > 0 && !this.selectedProjectId()) {
-          this.selectedProjectId.set(projectsList[0].id);
-        }
-        this.loadingProjects.set(false);
-      },
-      error: () => this.loadingProjects.set(false),
+  loadProjectsTotal(): void {
+    this.manageWorkService.getMyProjectsSummary('as-client').subscribe({
+      next: (summary) => this.projectsTotal.set(summary.total),
+      error: () => undefined,
     });
+  }
+
+  loadProposalsTotal(): void {
+    this.manageWorkService
+      .getProposals({ pageNumber: 1, pageSize: 1 })
+      .subscribe({
+        next: (page) => this.proposalsTotal.set(page.totalCount),
+        error: () => undefined,
+      });
   }
 
   setTab(tab: ManageWorkTab): void {
     this.activeTab.set(tab);
-  }
-
-  selectProject(projectId: string): void {
-    this.selectedProjectId.set(projectId);
-  }
-
-  get selectedProject(): Project | undefined {
-    return this.projects().find((p) => p.id === this.selectedProjectId());
   }
 }

@@ -37,7 +37,7 @@
             : 'bg-black/5 text-on-surface-variant'
         "
       >
-        {{ projects().length }}
+        {{ projectsTotal() }}
       </span>
     </button>
 
@@ -60,7 +60,7 @@
             : 'bg-black/5 text-on-surface-variant'
         "
       >
-        4
+        {{ proposalsTotal() }}
       </span>
     </button>
 
@@ -115,8 +115,7 @@
     @if (activeTab() === 'my-projects') {
       <app-my-projects></app-my-projects>
     } @else if (activeTab() === 'proposals') {
-      <app-proposals [projects]="projects()" [projectId]="selectedProjectId() ?? ''">
-      </app-proposals>
+      <app-proposals></app-proposals>
     } @else if (activeTab() === 'milestones') {
       <div class="bg-white rounded-3xl p-12 text-center border border-outline-variant/20">
         <p class="text-base text-on-surface-variant">Milestones feature coming soon.</p>

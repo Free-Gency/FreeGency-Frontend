@@ -9,7 +9,9 @@
         <hugeicons-icon [icon]="ideaIcon" class="w-4 h-4"></hugeicons-icon>
       </div>
       <p class="text-xs font-semibold leading-snug">
-        You have <span class="font-extrabold">6 new proposals</span> across all projects.
+        You have
+        <span class="font-extrabold">{{ allProposalsTotal() }} proposals</span>
+        across all projects.
       </p>
     </div>
 
@@ -27,7 +29,9 @@
 
     <!-- Sidebar Dynamic Project List -->
     <div class="flex flex-col gap-1">
-      @if (projects().length === 0) {
+      @if (loadingProjects()) {
+        <div class="p-4 text-xs text-center text-on-surface-variant/60">Loading projects…</div>
+      } @else if (projects().length === 0) {
         <div class="p-4 text-xs text-center text-on-surface-variant/60">No projects found.</div>
       } @else {
         @for (project of projects(); track project.id) {
@@ -50,10 +54,34 @@
               "
               class="px-2 py-0.5 rounded-full text-[11px] font-bold shrink-0 ml-2"
             >
-              {{ project.proposalCount ?? 0 }}
+              {{ project.proposalCount }}
             </span>
           </button>
         }
+      }
+
+      @if (projectsTotalPages() > 1) {
+        <div class="flex items-center justify-between gap-2 px-1 pt-2">
+          <button
+            type="button"
+            class="text-[11px] font-semibold text-on-surface-variant hover:text-on-surface disabled:opacity-40 disabled:cursor-not-allowed"
+            [disabled]="projectsPage() <= 1"
+            (click)="goProjectsPage(-1)"
+          >
+            Previous
+          </button>
+          <span class="text-[10px] text-on-surface-variant/70">
+            {{ projectsPage() }} / {{ projectsTotalPages() }}
+          </span>
+          <button
+            type="button"
+            class="text-[11px] font-semibold text-on-surface-variant hover:text-on-surface disabled:opacity-40 disabled:cursor-not-allowed"
+            [disabled]="projectsPage() >= projectsTotalPages()"
+            (click)="goProjectsPage(1)"
+          >
+            Next
+          </button>
+        </div>
       }
     </div>
   </aside>
@@ -86,6 +114,23 @@
       <p class="text-xs text-white/80 leading-relaxed font-normal">
         Automatically rank proposals based on project requirements and skill match.
       </p>
+
+      @if (!activeProjectId()) {
+        <p class="text-[11px] text-white/60 leading-snug">
+          Select a project from the left to enable AI ranking.
+        </p>
+      } @else if (rankingLoading()) {
+        <p class="text-[11px] text-[#D8F272] font-semibold">Ranking proposals…</p>
+      } @else if (rankingError()) {
+        <p class="text-[11px] text-red-200 leading-snug">{{ rankingError() }}</p>
+      } @else if (aiRankingEnabled() && rankedCount() > 0) {
+        <p class="text-[11px] text-[#D8F272] font-semibold">
+          Ranked {{ rankedCount() }} proposal{{ rankedCount() === 1 ? '' : 's' }}
+        </p>
+        @if (aiSummary()) {
+          <p class="text-[11px] text-white/70 leading-snug line-clamp-3">{{ aiSummary() }}</p>
+        }
+      }
     </div>
 
     <!-- Project Overview Container -->
@@ -95,7 +140,7 @@
       <div>
         <p class="text-xs text-white/60 mb-1">Total Proposals</p>
         <p class="text-3xl font-extrabold text-white">
-          {{ proposalsResource.value()?.length ?? 0 }}
+          {{ totalCount() }}
         </p>
       </div>
 
@@ -104,7 +149,7 @@
       <div>
         <p class="text-xs text-white/60 mb-1">Avg Bid</p>
         <p class="text-2xl font-bold text-white">
-          {{ proposalsResource.value() ? (getAvgBid() | number: '1.0-0') : '0' }}
+          {{ proposals().length ? (getAvgBid() | number: '1.0-0') : '0' }}
           <span class="text-xs font-normal text-white/70">USD</span>
         </p>
       </div>
@@ -119,6 +164,7 @@
           type="search"
           placeholder="Search proposals..."
           class="w-full h-10 pl-10 pr-4 bg-white border border-outline-variant/30 rounded-full text-xs text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary"
+          (input)="onSearchInput($any($event.target).value)"
         />
         <svg
           class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant/50 pointer-events-none"
@@ -140,9 +186,13 @@
         <div class="relative">
           <select
             class="h-10 border border-outline-variant/30 rounded-full pl-4 pr-8 bg-white font-bold text-on-surface text-xs appearance-none focus:outline-none cursor-pointer"
+            [value]="sortOption()"
+            (change)="onSortChange($any($event.target).value)"
           >
-            <option>Newest</option>
-            <option>Oldest</option>
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="budget-high">Highest bid</option>
+            <option value="budget-low">Lowest bid</option>
           </select>
           <svg
             class="w-3.5 h-3.5 absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant/60 pointer-events-none"
@@ -168,12 +218,12 @@
           Try again
         </button>
       </div>
-    } @else if (!proposalsResource.value() || proposalsResource.value()?.length === 0) {
+    } @else if (proposals().length === 0) {
       <div class="bg-white rounded-[24px] p-12 text-center border border-outline-variant/20">
         <p class="text-sm text-on-surface-variant">No proposals yet for this project.</p>
       </div>
     } @else {
-      @for (proposal of proposalsResource.value(); track proposal.id) {
+      @for (proposal of proposals(); track proposal.id) {
         <div
           class="bg-white rounded-[24px] border border-outline-variant/30 p-6 flex flex-col gap-4"
         >
@@ -222,11 +272,14 @@
               <span class="px-3 py-1 rounded-full text-xs font-bold bg-[#D8F272] text-[#2B3800]">
                 {{ proposal.proposedBudget | number }} USD
               </span>
-              @if (aiRankingEnabled()) {
+              @if (aiRankingEnabled() && getMatch(proposal) !== null) {
                 <span
                   class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#DDEBFF] text-[#003882]"
                 >
-                  {{ getFakeMatch(proposal) }}% Match
+                  @if (getRank(proposal); as rank) {
+                    #{{ rank }} ·
+                  }
+                  {{ getMatch(proposal) }}% Match
                 </span>
               }
             </div>
@@ -236,13 +289,14 @@
             {{ proposal.coverLetter }}
           </p>
 
-          <a
-            href="javascript:void(0)"
-            class="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4130D7] hover:underline w-fit"
-          >
-            <span class="text-xs">✨</span>
-            <span>AI Summary</span>
-          </a>
+          @if (aiRankingEnabled() && getAiReasoning(proposal); as reasoning) {
+            <p
+              class="inline-flex items-start gap-1.5 text-xs font-medium text-[#4130D7] bg-[#EAE5FF]/60 rounded-2xl px-3 py-2 leading-relaxed"
+            >
+              <span class="shrink-0">✨</span>
+              <span>{{ reasoning }}</span>
+            </p>
+          }
 
           @if (proposal.status === 'Pending') {
             <div
@@ -274,6 +328,30 @@
           }
         </div>
       }
+
+      @if (totalPages() > 1) {
+        <div class="flex items-center justify-center gap-4 pt-2">
+          <button
+            type="button"
+            class="cursor-pointer rounded-full border border-outline-variant/30 px-4 py-2 text-sm text-on-surface-variant transition-colors hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-40"
+            [disabled]="page() <= 1"
+            (click)="goToPage(-1)"
+          >
+            Previous
+          </button>
+          <span class="text-sm text-on-surface-variant">
+            Page {{ page() }} of {{ totalPages() }}
+          </span>
+          <button
+            type="button"
+            class="cursor-pointer rounded-full border border-outline-variant/30 px-4 py-2 text-sm text-on-surface-variant transition-colors hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-40"
+            [disabled]="page() >= totalPages()"
+            (click)="goToPage(1)"
+          >
+            Next
+          </button>
+        </div>
+      }
     }
   </main>
 
@@ -285,7 +363,7 @@
 
     <div>
       <p class="text-xs text-white/60 mb-1">Total Proposals</p>
-      <p class="text-3xl font-extrabold text-white">{{ proposalsResource.value()?.length ?? 0 }}</p>
+      <p class="text-3xl font-extrabold text-white">{{ totalCount() }}</p>
     </div>
 
     <div class="h-px bg-white/10"></div>
@@ -293,7 +371,7 @@
     <div>
       <p class="text-xs text-white/60 mb-1">Avg Bid</p>
       <p class="text-2xl font-bold text-white">
-        {{ proposalsResource.value() ? (getAvgBid() | number: '1.0-0') : '0' }}
+        {{ proposals().length ? (getAvgBid() | number: '1.0-0') : '0' }}
         <span class="text-xs font-normal text-white/70">USD</span>
       </p>
     </div>

@@ -21,7 +21,7 @@
     >
       <span>All projects</span>
       <span class="text-xs px-2 py-0.5 rounded-full bg-black/5 font-semibold">{{
-        projects().length
+        summary()?.total ?? 0
       }}</span>
     </button>
 
@@ -116,6 +116,7 @@
           type="search"
           placeholder="Search projects..."
           class="w-full h-11 pl-11 pr-4 bg-white border border-outline-variant/30 rounded-full text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary"
+          (input)="onSearchInput($any($event.target).value)"
         />
         <svg
           class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/70 pointer-events-none"
@@ -138,9 +139,15 @@
         <div class="relative">
           <select
             class="h-11 border border-outline-variant/30 rounded-full pl-5 pr-10 bg-white font-bold text-on-surface text-sm appearance-none focus:outline-none cursor-pointer"
+            [value]="sortOption()"
+            (change)="onSortChange($any($event.target).value)"
           >
-            <option>Newest</option>
-            <option>Oldest</option>
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="title-asc">Title A–Z</option>
+            <option value="title-desc">Title Z–A</option>
+            <option value="budget-high">Highest budget</option>
+            <option value="budget-low">Lowest budget</option>
           </select>
           <svg
             class="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant/70 pointer-events-none"
@@ -169,12 +176,12 @@
       <div class="bg-white rounded-[24px] p-12 text-center border border-outline-variant/20">
         <p class="text-base text-on-surface-variant">
           {{
-            projects().length === 0
+            (summary()?.total ?? 0) === 0
               ? "You haven't created any projects yet."
               : 'No projects match this filter.'
           }}
         </p>
-        @if (projects().length === 0) {
+        @if ((summary()?.total ?? 0) === 0) {
           <button class="btn btn-primary mt-4 w-fit mx-auto px-6">Create your first project</button>
         }
       </div>
@@ -272,12 +279,38 @@
           <!-- Divider & Action Footer -->
           <div class="border-t border-outline-variant/15 px-6 py-3 flex justify-end bg-white">
             <button
+              type="button"
               class="btn btn-primary !w-auto px-5 !h-9 text-xs font-bold rounded-full flex items-center gap-1.5"
+              (click)="openProject(project)"
             >
               <span>{{ project.status === 'Draft' ? 'Edit draft' : 'View details' }}</span>
               <span>→</span>
             </button>
           </div>
+        </div>
+      }
+
+      @if (totalPages() > 1) {
+        <div class="flex items-center justify-center gap-4 pt-2">
+          <button
+            type="button"
+            class="cursor-pointer rounded-full border border-outline-variant/30 px-4 py-2 text-sm text-on-surface-variant transition-colors hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-40"
+            [disabled]="page() <= 1"
+            (click)="goToPage(-1)"
+          >
+            Previous
+          </button>
+          <span class="text-sm text-on-surface-variant">
+            Page {{ page() }} of {{ totalPages() }}
+          </span>
+          <button
+            type="button"
+            class="cursor-pointer rounded-full border border-outline-variant/30 px-4 py-2 text-sm text-on-surface-variant transition-colors hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-40"
+            [disabled]="page() >= totalPages()"
+            (click)="goToPage(1)"
+          >
+            Next
+          </button>
         </div>
       }
     }
