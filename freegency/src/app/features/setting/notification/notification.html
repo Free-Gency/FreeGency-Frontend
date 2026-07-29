@@ -1,207 +1,133 @@
 <div class="notifications-page">
   <div class="notifications-container">
-    <!-- Page Header -->
+
+    <!-- Header -->
     <div class="page-header">
       <h1 class="page-title">Notifications</h1>
-      <p class="page-description">Choose what notifications you want to receive and how you want to receive them.</p>
+      <p class="page-description">
+        Choose how you would like to receive notifications.
+      </p>
     </div>
 
-    <!-- Email Notifications Section -->
     <section class="settings-section">
       <div class="section-card">
+
         <div class="card-header">
           <div class="card-header-content">
             <div class="card-icon card-icon-email">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                <path d="M2.003 5.884L10 9.882L17.997 5.884C17.967 4.013 16.448 2.5 14.5 2.5H5.5C3.552 2.5 2.033 4.013 2.003 5.884Z" fill="currentColor"/>
-                <path d="M18 8.118L10 12.118L2 8.118V14.5C2 16.433 3.567 18 5.5 18H14.5C16.433 18 18 16.433 18 14.5V8.118Z" fill="currentColor"/>
-              </svg>
+              <!-- نفس الـ icon -->
             </div>
+
             <div>
-              <h2 class="card-title">Email Notifications</h2>
-              <p class="card-description">Manage the email notifications you receive about your account activity.</p>
-            </div>
-          </div>
-        </div>
-        
-        <div class="settings-list">
-          @for (setting of emailSettings(); track setting.id) {
-            <div class="setting-item">
-              <div class="setting-info">
-                <h3 class="setting-label">{{ setting.label }}</h3>
-                <p class="setting-description">{{ setting.description }}</p>
-              </div>
-              <div class="setting-action">
-                <app-toggle-switch
-                  [checked]="setting.enabled"
-                  (toggled)="onEmailToggle(setting)"
-                  [ariaLabel]="'Toggle ' + setting.label + ' email notification'"
-                ></app-toggle-switch>
-              </div>
-            </div>
-          }
-        </div>
-      </div>
-    </section>
-
-    <!-- Push Notifications Section -->
-    <section class="settings-section">
-      <div class="section-card">
-        <div class="card-header">
-          <div class="card-header-content">
-            <div class="card-icon card-icon-push">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                <path d="M10 2C6.686 2 4 4.686 4 8V12L2 14V15H18V14L16 12V8C16 4.686 13.314 2 10 2Z" fill="currentColor"/>
-                <path d="M10 18C11.105 18 12 17.105 12 16H8C8 17.105 8.895 18 10 18Z" fill="currentColor"/>
-              </svg>
-            </div>
-            <div>
-              <h2 class="card-title">Push Notifications</h2>
-              <p class="card-description">Get instant notifications in your browser when important events happen.</p>
-            </div>
-          </div>
-        </div>
-        
-        <div class="settings-list">
-          @for (setting of pushSettings(); track setting.id) {
-            <div class="setting-item">
-              <div class="setting-info">
-                <h3 class="setting-label">{{ setting.label }}</h3>
-                <p class="setting-description">{{ setting.description }}</p>
-              </div>
-              <div class="setting-action">
-                <app-toggle-switch
-                  [checked]="setting.enabled"
-                  (toggled)="onPushToggle(setting)"
-                  [ariaLabel]="'Toggle ' + setting.label + ' push notification'"
-                ></app-toggle-switch>
-              </div>
-            </div>
-          }
-        </div>
-      </div>
-    </section>
-
-    <!-- Notification Preferences Section -->
-    <section class="settings-section">
-      <div class="section-card">
-        <div class="card-header">
-          <div class="card-header-content">
-            <div class="card-icon card-icon-preferences">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                <path d="M10 13C11.657 13 13 11.657 13 10C13 8.343 11.657 7 10 7C8.343 7 7 8.343 7 10C7 11.657 8.343 13 10 13Z" fill="currentColor"/>
-                <path fill-rule="evenodd" clip-rule="evenodd" d="M18.5 10C18.5 14.694 14.694 18.5 10 18.5C5.306 18.5 1.5 14.694 1.5 10C1.5 5.306 5.306 1.5 10 1.5C14.694 1.5 18.5 5.306 18.5 10ZM17 10C17 13.866 13.866 17 10 17C6.134 17 3 13.866 3 10C3 6.134 6.134 3 10 3C13.866 3 17 6.134 17 10Z" fill="currentColor"/>
-              </svg>
-            </div>
-            <div>
-              <h2 class="card-title">Preferences</h2>
-              <p class="card-description">Customize how and when you receive notifications.</p>
-            </div>
-          </div>
-        </div>
-        
-        <div class="settings-list">
-          <!-- Digest Frequency -->
-          <div class="setting-item">
-            <div class="setting-info">
-              <h3 class="setting-label">Email Digest</h3>
-              <p class="setting-description">Choose how often you want to receive a summary of notifications.</p>
-            </div>
-            <div class="setting-action">
-              <select 
-                class="select-input"
-                [ngModel]="selectedDigestFrequency()"
-                (ngModelChange)="onDigestFrequencyChange($event)"
-                aria-label="Select digest frequency"
-              >
-                @for (frequency of digestFrequencies; track frequency.value) {
-                  <option [value]="frequency.value">{{ frequency.label }}</option>
-                }
-              </select>
-            </div>
-          </div>
-
-          <!-- Quiet Hours -->
-          <div class="setting-item">
-            <div class="setting-info">
-              <h3 class="setting-label">Quiet Hours</h3>
-              <p class="setting-description">Pause all notifications during specific hours.</p>
-            </div>
-            <div class="setting-action">
-              <app-toggle-switch
-                [checked]="quietHoursEnabled()"
-                (toggled)="onQuietHoursToggle($event)"
-                ariaLabel="Toggle quiet hours"
-              ></app-toggle-switch>
-            </div>
-          </div>
-
-          @if (quietHoursEnabled()) {
-            <div class="quiet-hours-schedule" @fadeIn>
-              <div class="time-range">
-                <div class="time-input-group">
-                  <label for="quietStart" class="time-label">From</label>
-                  <input
-                    id="quietStart"
-                    type="time"
-                    class="time-input"
-                    [ngModel]="quietHoursStart()"
-                    (ngModelChange)="onQuietHoursTimeChange('start', $event)"
-                    aria-label="Quiet hours start time"
-                  />
-                </div>
-                <div class="time-separator">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                    <path d="M4 10H16M16 10L12 6M16 10L12 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </div>
-                <div class="time-input-group">
-                  <label for="quietEnd" class="time-label">To</label>
-                  <input
-                    id="quietEnd"
-                    type="time"
-                    class="time-input"
-                    [ngModel]="quietHoursEnd()"
-                    (ngModelChange)="onQuietHoursTimeChange('end', $event)"
-                    aria-label="Quiet hours end time"
-                  />
-                </div>
-              </div>
-              <p class="quiet-hours-note">
-                Notifications will be paused between these hours. You'll receive them after quiet hours end.
+              <h2 class="card-title">Notification Settings</h2>
+              <p class="card-description">
+                Enable or disable notifications for each activity.
               </p>
             </div>
-          }
+          </div>
         </div>
+
+        <div class="notification-table">
+
+          <div class="table-header">
+            <div>Notification</div>
+            <div>In App</div>
+            <div>Email</div>
+          </div>
+
+          <!-- New Message -->
+          <div class="table-row">
+            <div class="notification-info">
+              <h3>New Messages</h3>
+              <p>Receive notifications when someone sends you a message.</p>
+            </div>
+
+            <div class="table-action">
+              <app-toggle-switch
+                [checked]="settings()?.newMessageInApp ?? false"
+                (toggled)="toggle('newMessageInApp')">
+              </app-toggle-switch>
+            </div>
+
+            <div class="table-action">
+              <app-toggle-switch
+                checked]="settings()?.newMessageEmail ?? false"
+
+                (toggled)="toggle('newMessageEmail')">
+              </app-toggle-switch>
+            </div>
+          </div>
+
+          <!-- Proposal -->
+          <div class="table-row">
+            <div class="notification-info">
+              <h3>Proposal Received</h3>
+              <p>Receive notifications when a freelancer submits a proposal.</p>
+            </div>
+
+            <div class="table-action">
+              <app-toggle-switch
+                [checked]="settings()?.proposalReceivedInApp ?? false"
+                (toggled)="toggle('proposalReceivedInApp')">
+              </app-toggle-switch>
+            </div>
+
+            <div class="table-action">
+              <app-toggle-switch
+                [checked]="settings()?.proposalReceivedEmail ?? false"
+                (toggled)="toggle('proposalReceivedEmail')">
+              </app-toggle-switch>
+            </div>
+          </div>
+
+          <!-- Milestone -->
+          <div class="table-row">
+            <div class="notification-info">
+              <h3>Milestone Added</h3>
+              <p>Receive notifications when a milestone is added.</p>
+            </div>
+
+            <div class="table-action">
+              <app-toggle-switch
+                [checked]="settings()?.milestoneAddedInApp ?? false"
+                (toggled)="toggle('milestoneAddedInApp')">
+              </app-toggle-switch>
+            </div>
+
+            <div class="table-action">
+              <app-toggle-switch
+                [checked]="settings()?.milestoneAddedEmail ?? false"
+                (toggled)="toggle('milestoneAddedEmail')">
+              </app-toggle-switch>
+            </div>
+          </div>
+
+          <!-- Wallet -->
+          <div class="table-row">
+            <div class="notification-info">
+              <h3>Wallet Updated</h3>
+              <p>Receive notifications whenever your wallet balance changes.</p>
+            </div>
+
+            <div class="table-action">
+              <app-toggle-switch
+                [checked]="settings()?.walletUpdatedInApp ?? false"
+                (toggled)="toggle('walletUpdatedInApp')">
+              </app-toggle-switch>
+            </div>
+
+            <div class="table-action">
+              <app-toggle-switch
+                [checked]="settings()?.walletUpdatedEmail ?? false"
+                (toggled)="toggle('walletUpdatedEmail')">
+              </app-toggle-switch>
+            </div>
+          </div>
+
+        </div>
+
       </div>
     </section>
-  </div>
 
-  <!-- Toast Notification -->
-  @if (toastMessage()) {
-    <div 
-      class="toast" 
-      [class.toast-success]="toastType() === 'success'"
-      [class.toast-error]="toastType() === 'error'"
-      @fadeSlide
-      role="alert"
-      aria-live="polite"
-    >
-      <svg 
-        class="toast-icon" 
-        width="16" 
-        height="16" 
-        viewBox="0 0 16 16" 
-        fill="none" 
-        aria-hidden="true"
-      >
-        @if (toastType() === 'success') {
-          <path d="M8 0C3.589 0 0 3.589 0 8C0 12.411 3.589 16 8 16C12.411 16 16 12.411 16 8C16 3.589 12.411 0 8 0ZM11.78 5.78L7.28 10.28C7.14 10.42 6.96 10.5 6.77 10.5C6.58 10.5 6.4 10.43 6.26 10.29L4.22 8.22C3.93 7.93 3.93 7.45 4.22 7.16C4.51 6.87 4.99 6.87 5.28 7.16L6.76 8.66L10.71 4.71C11 4.42 11.48 4.42 11.77 4.71C12.06 5 12.06 5.48 11.77 5.77L11.78 5.78Z" fill="currentColor"/>
-        } @else {
-          <path d="M8 0C3.589 0 0 3.589 0 8C0 12.411 3.589 16 8 16C12.411 16 16 12.411 16 8C16 3.589 12.411 0 8 0ZM11 11C10.74 11.26 10.3 11.26 10.04 11L8 8.96L5.96 11C5.7 11.26 5.26 11.26 5 11C4.74 10.74 4.74 10.3 5 10.04L7.04 8L5 5.96C4.74 5.7 4.74 5.26 5 5C5.26 4.74 5.7 4.74 5.96 5L8 7.04L10.04 5C10.3 4.74 10.74 4.74 11 5C11.26 5.26 11.26 5.7 11 5.96L8.96 8L11 10.04C11.26 10.3 11.26 10.74 11 11Z" fill="currentColor"/>
-        }
-      </svg>
-      <span class="toast-text">{{ toastMessage() }}</span>
-    </div>
-  }
+  </div>
 </div>
