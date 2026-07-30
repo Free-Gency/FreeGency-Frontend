@@ -1,27 +1,16 @@
-.btn-sm {
-  height: 36px;
-  padding: 0 var(--spacing-sm);
-  font-size: 14px;
-  width: auto;
-  border-radius: var(--radius-sm);
-}
-
-.status-badge {
-  width: fit-content;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-size: 11px;
-  padding: 2px 10px;
-}
-
 .status-pending {
-  background-color: var(--color-surface-container-high);
-  color: var(--color-on-surface-variant);
+  background-color: #f0edef;
+  color: #464555;
 }
 
-.status-accepted {
-  background-color: var(--color-secondary-container);
-  color: var(--color-on-secondary-container);
+.status-viewed {
+  background-color: #e8f0ff;
+  color: #1a4a9c;
+}
+
+.status-discussion {
+  background-color: #e3dfff;
+  color: #110068;
 }
 
 .status-rejected {
@@ -30,24 +19,35 @@
 }
 
 .status-withdrawn {
-  background-color: var(--color-surface-container-high);
-  color: var(--color-outline);
+  background-color: #e5e1e4;
+  color: #78767f;
 }
 
-/* Subtle left accent so proposals still awaiting the owner's decision
-   stand out from ones already resolved. */
+.status-expired {
+  background-color: #f5e6ff;
+  color: #6b2d8b;
+}
+
 .proposal-card-pending {
-  border-left: 3px solid var(--color-primary);
+  border-left: 3px solid #4130d7;
 }
 
-/* Loading placeholder for proposal cards */
 .proposal-skeleton {
-  background: linear-gradient(90deg, var(--color-surface) 25%, var(--color-surface-variant) 50%, var(--color-surface) 75%);
+  background: linear-gradient(
+    90deg,
+    #f5f5f5 25%,
+    #ebebeb 50%,
+    #f5f5f5 75%
+  );
   background-size: 200% 100%;
   animation: proposal-shimmer 1.5s infinite ease-in-out;
 }
 
 @keyframes proposal-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }

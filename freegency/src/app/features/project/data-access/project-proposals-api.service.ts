@@ -48,38 +48,38 @@ export class ProjectProposalsApiService {
           }
           return {
             items: res.data.items,
-            // Falls back to items.length if the API doesn't return a totalCount yet.
             totalCount: res.data.totalCount ?? res.data.items.length,
           };
         }),
       );
   }
 
-  accept(proposalId: string): Observable<void> {
-    return this.http
-      .post<{ isSuccess: boolean; message?: string | null }>(
-        `${this.baseUrl}/api/v1/proposals/${proposalId}/accept`,
-        null,
-      )
-      .pipe(
-        map((res) => {
-          if (!res.isSuccess) {
-            throw new Error(res.message || 'Failed to accept proposal.');
-          }
-        }),
-      );
+  view(proposalId: string): Observable<void> {
+    return this.postAction(proposalId, 'view');
+  }
+
+  startDiscussion(proposalId: string): Observable<void> {
+    return this.postAction(proposalId, 'start-discussion');
+  }
+
+  closeDiscussion(proposalId: string): Observable<void> {
+    return this.postAction(proposalId, 'close-discussion');
   }
 
   reject(proposalId: string): Observable<void> {
+    return this.postAction(proposalId, 'reject');
+  }
+
+  private postAction(proposalId: string, action: string): Observable<void> {
     return this.http
       .post<{ isSuccess: boolean; message?: string | null }>(
-        `${this.baseUrl}/api/v1/proposals/${proposalId}/reject`,
+        `${this.baseUrl}/api/v1/proposals/${proposalId}/${action}`,
         null,
       )
       .pipe(
         map((res) => {
           if (!res.isSuccess) {
-            throw new Error(res.message || 'Failed to reject proposal.');
+            throw new Error(res.message || `Failed to ${action} proposal.`);
           }
         }),
       );

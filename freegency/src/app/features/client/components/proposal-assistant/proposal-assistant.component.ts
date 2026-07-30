@@ -396,7 +396,7 @@ export class ProposalAssistantComponent {
 
     this.pushAssistant({
       content:
-        'Proposal accepted. Next, you can sketch an initial milestone plan from the project page so kickoff is clearer for both sides.',
+        'Discussion started. Next step is the milestone plan — Accept Plan is the real hire, not starting the discussion. Open milestones when a plan is proposed.',
       intent: 'ask',
       actions: [
         {

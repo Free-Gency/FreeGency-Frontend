@@ -1,4 +1,3 @@
-
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ProjectDetailsApiService } from '../../data-access/project-details-api.service';
@@ -36,22 +35,17 @@ export class ProjectDetailsComponent {
   private readonly projectApi = inject(ProjectDetailsApiService);
   private readonly auth = inject(AuthService);
 
-  protected readonly contentCollapsed = signal(false);
   protected readonly project = signal<ProjectDetail | null>(null);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly showEdit = signal(false);
   protected readonly showDelete = signal(false);
 
-  // Count is tracked here (instead of inside the Proposals tab) so the
-  // "Proposals" stat card in the header can show it immediately, since all
-  // tab panels stay mounted (just hidden) and fetch on init regardless of
-  // which tab is active.
   protected readonly proposalsCount = signal(0);
   protected readonly filesCount = signal(0);
 
   protected readonly activeTab = signal<ProjectTab>('overview');
-  
+
   protected readonly tabs: { key: ProjectTab; label: string }[] = [
     { key: 'overview', label: 'Overview' },
     { key: 'proposals', label: 'Proposals' },
@@ -87,6 +81,7 @@ export class ProjectDetailsComponent {
     this.projectApi.getById(id).subscribe({
       next: (project) => {
         this.project.set(project);
+        this.proposalsCount.set(project.proposalCount ?? this.proposalsCount());
         this.loading.set(false);
       },
       error: (err) => {
@@ -102,9 +97,11 @@ export class ProjectDetailsComponent {
 
   protected onEditSaved(updated: ProjectDetail) {
     this.project.set(updated);
-  }
-
-  protected toggleContent() {
-    this.contentCollapsed.update((collapsed) => !collapsed);
+    this.showEdit.set(false);
+    // Refresh from server so category/budget stay in sync after save
+    this.projectApi.getById(updated.id).subscribe({
+      next: (project) => this.project.set(project),
+      error: () => {},
+    });
   }
 }

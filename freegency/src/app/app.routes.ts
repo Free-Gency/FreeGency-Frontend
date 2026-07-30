@@ -128,5 +128,13 @@ export const routes: Routes = [
   { path: 'onboarding', redirectTo: 'auth/onboarding', pathMatch: 'full' },
   { path: 'sign-up', redirectTo: 'auth/sign-up', pathMatch: 'full' },
   { path: 'login', redirectTo: 'auth/login', pathMatch: 'full' },
+  {
+    path: 'demo/proposal-flow',
+    data: { demoFile: 'proposal-milestone-flow.html' },
+    loadComponent: () =>
+      import('./features/demo/static-demo-redirect').then(
+        (m) => m.StaticDemoRedirect,
+      ),
+  },
   { path: '**', redirectTo: '' },
 ];

@@ -1,4 +1,4 @@
-import { Component, inject, input, OnInit, signal } from '@angular/core';
+import { Component, inject, input, OnInit, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ProjectFilesApiService } from '../../data-access/project-files-api.service';
 import { ProjectFile } from '../../models/project-file';
@@ -15,12 +15,16 @@ export type FileIconKind = 'image' | 'pdf' | 'doc' | 'sheet' | 'archive' | 'code
 })
 export class ProjectFilesComponent implements OnInit {
   readonly projectId = input.required<string>();
+  readonly isOwner = input(false);
+  readonly countChanged = output<number>();
 
   protected readonly files = signal<ProjectFile[]>([]);
   protected readonly loading = signal(true);
   protected readonly uploading = signal(false);
   protected readonly deletingId = signal<string | null>(null);
   protected readonly kindFilter = signal<KindFilter>('All');
+  protected readonly dragOver = signal(false);
+  protected readonly uploadError = signal<string | null>(null);
 
   private readonly filesApi = inject(ProjectFilesApiService);
 
@@ -34,12 +38,8 @@ export class ProjectFilesComponent implements OnInit {
   protected readonly kindOrder: FileKind[] = ['Brief', 'Deliverable', 'Shared', 'Other'];
   protected readonly filterOptions: KindFilter[] = ['All', 'Brief', 'Deliverable', 'Shared', 'Other'];
 
-  // Matches the C# enum's declaration order, used only as a fallback if the
-  // API serializes FileKind as a number instead of a string.
   private readonly kindByIndex: FileKind[] = ['Brief', 'Deliverable', 'Shared', 'Other'];
 
-  // Which kind the next upload will be tagged as. Previously this wasn't
-  // exposed at all, so every upload silently landed in "Brief".
   protected uploadKind: FileKind = 'Brief';
 
   private readonly extensionMap: Record<string, FileIconKind> = {
@@ -59,16 +59,14 @@ export class ProjectFilesComponent implements OnInit {
     this.loading.set(true);
     this.filesApi.getByProjectId(this.projectId()).subscribe({
       next: (files) => {
-        // Previously this assumed fileKind always arrives as one of the
-        // known string labels. If the API ever sends it as a raw enum
-        // number (or an unrecognized string), the files loaded fine but
-        // silently matched no group below and never rendered. Normalizing
-        // here means the count and the list can never drift apart again.
-        this.files.set(files.map((f) => ({ ...f, fileKind: this.normalizeKind(f.fileKind) })));
+        const normalized = files.map((f) => ({ ...f, fileKind: this.normalizeKind(f.fileKind) }));
+        this.files.set(normalized);
+        this.countChanged.emit(normalized.length);
         this.loading.set(false);
       },
       error: () => {
         this.loading.set(false);
+        this.countChanged.emit(0);
       },
     });
   }
@@ -87,8 +85,6 @@ export class ProjectFilesComponent implements OnInit {
     this.kindFilter.set(kind);
   }
 
-  // Which section headers to render: every kind that has files when "All"
-  // is selected, or just the one kind the user picked.
   protected get visibleKinds(): FileKind[] {
     return this.kindFilter() === 'All' ? this.kindOrder : [this.kindFilter() as FileKind];
   }
@@ -106,12 +102,60 @@ export class ProjectFilesComponent implements OnInit {
     return this.extensionMap[ext] ?? 'generic';
   }
 
+  protected fileIconBg(fileName: string): string {
+    const kind = this.fileIconKind(fileName);
+    switch (kind) {
+      case 'image':
+        return 'bg-[#E3DFFF] text-[#4130D7]';
+      case 'pdf':
+        return 'bg-error-container text-error';
+      case 'sheet':
+        return 'bg-[#EFF7DF] text-[#3D4C00]';
+      default:
+        return 'bg-[#F0EDEF] text-on-surface-variant';
+    }
+  }
+
+  protected formatDate(date: string): string {
+    return new Date(date).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  }
+
+  protected onDragOver(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.dragOver.set(true);
+  }
+
+  protected onDragLeave(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.dragOver.set(false);
+  }
+
+  protected onDrop(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.dragOver.set(false);
+    const fileList = event.dataTransfer?.files;
+    if (fileList?.length) {
+      this.uploadFileList(fileList);
+    }
+  }
+
   protected uploadFiles(event: Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files?.length) return;
+    this.uploadFileList(input.files, input);
+  }
 
+  private uploadFileList(fileList: FileList, input?: HTMLInputElement) {
+    this.uploadError.set(null);
     const formData = new FormData();
-    for (const file of Array.from(input.files)) {
+    for (const file of Array.from(fileList)) {
       formData.append('files', file);
     }
     formData.append('fileKind', this.uploadKind);
@@ -121,10 +165,12 @@ export class ProjectFilesComponent implements OnInit {
       next: () => {
         this.uploading.set(false);
         this.loadFiles();
-        input.value = '';
+        if (input) input.value = '';
       },
-      error: () => {
+      error: (err) => {
         this.uploading.set(false);
+        this.uploadError.set(err.message || 'Failed to upload files.');
+        if (input) input.value = '';
       },
     });
   }

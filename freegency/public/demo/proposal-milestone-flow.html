@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FreeGency — Proposal & Milestone Negotiation Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --surface: #fcf8fb;
+      --surface-low: #f6f3f5;
+      --surface-container: #f0edef;
+      --surface-high: #eae7ea;
+      --on-surface: #1b1b1d;
+      --on-variant: #464555;
+      --outline: #c7c4d8;
+      --primary: #4130d7;
+      --primary-container: #5b4ff0;
+      --primary-fixed: #e3dfff;
+      --on-primary: #fff;
+      --secondary: #c7ef2e;
+      --secondary-ink: #3d4c00;
+      --error: #ba1a1a;
+      --error-container: #ffdad6;
+      --success: #1b7a3d;
+      --success-bg: #e6f6ec;
+      --warn: #8a5a00;
+      --warn-bg: #fff3d6;
+      --info: #3323a5;
+      --info-bg: #eae5ff;
+      --radius: 16px;
+      --radius-lg: 24px;
+      --shadow: 0 8px 28px rgba(27, 27, 29, 0.08);
+      --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
+      --font-body: Inter, system-ui, sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: var(--font-body);
+      color: var(--on-surface);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #ebe7ff 0%, transparent 55%),
+        radial-gradient(900px 500px at 100% 0%, #f3ffc9 0%, transparent 50%),
+        var(--surface);
+    }
+    button, input, textarea, select { font: inherit; }
+    button { cursor: pointer; }
+    h1, h2, h3, h4 { font-family: var(--font-display); margin: 0; }
+
+    .app {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 20px 20px 48px;
+    }
+
+    /* Top bar */
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      padding: 14px 18px;
+      background: rgba(255,255,255,.82);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--outline);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-mark {
+      width: 36px; height: 36px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-container));
+      color: #fff; display: grid; place-items: center;
+      font-family: var(--font-display); font-weight: 800; font-size: 14px;
+    }
+    .brand h1 { font-size: 16px; font-weight: 800; }
+    .brand p { margin: 2px 0 0; font-size: 12px; color: var(--on-variant); }
+
+    .top-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+    .role-switch {
+      display: inline-flex;
+      padding: 4px;
+      background: var(--surface-container);
+      border-radius: 999px;
+      border: 1px solid var(--outline);
+    }
+    .role-switch button {
+      border: 0; background: transparent; color: var(--on-variant);
+      padding: 8px 14px; border-radius: 999px; font-weight: 600; font-size: 13px;
+    }
+    .role-switch button.active {
+      background: var(--primary); color: var(--on-primary);
+    }
+
+    .btn {
+      border: 1px solid transparent;
+      border-radius: 999px;
+      padding: 9px 16px;
+      font-weight: 600;
+      font-size: 13px;
+      transition: .15s ease;
+    }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-container); }
+    .btn-secondary {
+      background: var(--secondary); color: var(--secondary-ink); border-color: #afd500;
+    }
+    .btn-ghost {
+      background: #fff; border-color: var(--outline); color: var(--on-surface);
+    }
+    .btn-ghost:hover:not(:disabled) { background: var(--surface-low); }
+    .btn-danger {
+      background: var(--error-container); color: var(--error); border-color: #ffb4ab;
+    }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+    .principle {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      background: var(--info-bg);
+      color: var(--info);
+      border-radius: var(--radius);
+      border: 1px solid #c4c0ff;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .principle strong { font-family: var(--font-display); }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+    @media (max-width: 960px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: #fff;
+      border: 1px solid var(--outline);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .panel-hd {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--outline);
+      display: flex; justify-content: space-between; align-items: center; gap: 8px;
+      background: linear-gradient(180deg, #fff, var(--surface-low));
+    }
+    .panel-hd h2 { font-size: 14px; font-weight: 700; }
+    .panel-bd { padding: 14px 16px; }
+
+    .steps { display: flex; flex-direction: column; gap: 8px; }
+    .step {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 14px;
+      border: 1px solid transparent;
+      color: var(--on-variant);
+      font-size: 12px;
+    }
+    .step .n {
+      width: 28px; height: 28px; border-radius: 999px;
+      display: grid; place-items: center;
+      background: var(--surface-container);
+      font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+    }
+    .step.active {
+      background: var(--primary-fixed);
+      color: #110068;
+      border-color: #c4c0ff;
+    }
+    .step.active .n { background: var(--primary); color: #fff; }
+    .step.done { color: var(--success); }
+    .step.done .n { background: var(--success-bg); color: var(--success); }
+    .step strong { display: block; font-size: 13px; color: inherit; margin-bottom: 2px; }
+
+    .legend { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; border-radius: 999px;
+      font-size: 11px; font-weight: 600;
+      border: 1px solid transparent;
+      font-family: var(--font-mono);
+    }
+    .st-pending { background: #f0edef; color: #464555; }
+    .st-viewed { background: #e8f0ff; color: #1a4a9c; }
+    .st-discussion { background: var(--primary-fixed); color: #110068; }
+    .st-withdrawn { background: #eee; color: #666; }
+    .st-rejected { background: var(--error-container); color: var(--error); }
+    .st-expired { background: #f5e6ff; color: #6b2d8b; }
+    .st-notapplied { background: #fff3d6; color: #8a5a00; }
+    .st-accepted { background: var(--success-bg); color: var(--success); }
+    .st-changes { background: var(--warn-bg); color: var(--warn); }
+    .st-funded { background: #e0f2fe; color: #075985; }
+
+    .screen-title {
+      display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px;
+      align-items: flex-start; margin-bottom: 14px;
+    }
+    .screen-title h2 { font-size: 22px; font-weight: 800; letter-spacing: -.02em; }
+    .screen-title p { margin: 4px 0 0; color: var(--on-variant); font-size: 13px; max-width: 560px; }
+
+    .card-list { display: flex; flex-direction: column; gap: 10px; }
+    .card {
+      border: 1px solid var(--outline);
+      border-radius: var(--radius);
+      padding: 14px;
+      background: #fff;
+      transition: .15s ease;
+    }
+    .card:hover { border-color: #a8a4c8; }
+    .card.selected { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(65,48,215,.12); }
+    .card-row {
+      display: flex; justify-content: space-between; gap: 12px; align-items: flex-start;
+    }
+    .avatar {
+      width: 40px; height: 40px; border-radius: 14px;
+      display: grid; place-items: center;
+      font-weight: 800; color: #fff; flex-shrink: 0;
+      font-family: var(--font-display);
+    }
+    .meta { font-size: 12px; color: var(--on-variant); margin-top: 4px; }
+    .card-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+    .grid-2 {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    }
+    @media (max-width: 720px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+    .field label { font-size: 12px; font-weight: 600; color: var(--on-variant); }
+    .field input, .field textarea, .field select {
+      border: 1px solid var(--outline);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: var(--surface-low);
+      outline: none;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(65,48,215,.12);
+      background: #fff;
+    }
+    .field textarea { min-height: 88px; resize: vertical; }
+
+    .banner {
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex; justify-content: space-between; gap: 8px; align-items: center;
+    }
+    .banner.wait-client { background: var(--warn-bg); color: var(--warn); }
+    .banner.wait-you { background: var(--info-bg); color: var(--info); }
+    .banner.success { background: var(--success-bg); color: var(--success); }
+    .banner.danger { background: var(--error-container); color: var(--error); }
+
+    .chat {
+      display: flex; flex-direction: column;
+      min-height: 420px;
+      max-height: 640px;
+    }
+    .chat-log {
+      flex: 1; overflow: auto; padding: 12px;
+      background: var(--surface-low);
+      border: 1px solid var(--outline);
+      border-radius: var(--radius);
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .bubble {
+      max-width: min(92%, 520px);
+      padding: 10px 12px;
+      border-radius: 16px;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .bubble.me {
+      align-self: flex-end;
+      background: var(--primary);
+      color: #fff;
+      border-bottom-right-radius: 6px;
+    }
+    .bubble.them {
+      align-self: flex-start;
+      background: #fff;
+      border: 1px solid var(--outline);
+      border-bottom-left-radius: 6px;
+    }
+    .bubble .who {
+      font-size: 10px; font-weight: 700; opacity: .75;
+      margin-bottom: 4px; text-transform: uppercase; letter-spacing: .04em;
+      font-family: var(--font-mono);
+    }
+    .chat-compose {
+      display: flex; gap: 8px; margin-top: 10px;
+    }
+    .chat-compose input {
+      flex: 1; border: 1px solid var(--outline); border-radius: 999px;
+      padding: 10px 14px; background: #fff;
+    }
+
+    .plan-card {
+      align-self: stretch;
+      max-width: 100%;
+      background: #fff;
+      border: 1px solid #c4c0ff;
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: 0 6px 18px rgba(65,48,215,.08);
+    }
+    .plan-card .plan-hd {
+      display: flex; justify-content: space-between; gap: 8px; align-items: center;
+      margin-bottom: 10px;
+    }
+    .plan-card h3 { font-size: 14px; }
+    .ms-item {
+      border: 1px solid var(--outline);
+      border-radius: 12px;
+      padding: 10px;
+      margin-bottom: 8px;
+      background: var(--surface-low);
+      position: relative;
+    }
+    .ms-item .tag {
+      position: absolute; top: 8px; right: 8px;
+      font-size: 10px; font-weight: 800; font-family: var(--font-mono);
+      padding: 2px 8px; border-radius: 999px;
+    }
+    .tag-new { background: var(--secondary); color: var(--secondary-ink); }
+    .tag-updated { background: var(--warn-bg); color: var(--warn); }
+    .ms-item h4 { font-size: 13px; margin-bottom: 4px; padding-right: 70px; }
+    .ms-item p { margin: 0; font-size: 12px; color: var(--on-variant); }
+    .ms-meta {
+      display: flex; gap: 12px; margin-top: 8px;
+      font-family: var(--font-mono); font-size: 11px; color: var(--on-variant);
+    }
+
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(27,27,29,.45);
+      display: none; align-items: center; justify-content: center;
+      padding: 20px; z-index: 50;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      width: min(560px, 100%);
+      background: #fff;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--outline);
+      box-shadow: var(--shadow);
+      max-height: 90vh; overflow: auto;
+    }
+    .modal-hd {
+      padding: 16px 18px; border-bottom: 1px solid var(--outline);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .modal-bd { padding: 16px 18px; }
+    .modal-ft {
+      padding: 12px 18px 16px; display: flex; justify-content: flex-end; gap: 8px;
+      border-top: 1px solid var(--outline);
+    }
+
+    .toast-wrap {
+      position: fixed; right: 18px; bottom: 18px; z-index: 60;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .toast {
+      background: #1b1b1d; color: #fff; padding: 12px 14px;
+      border-radius: 14px; font-size: 13px; max-width: 320px;
+      box-shadow: var(--shadow); animation: slide .25s ease;
+    }
+    @keyframes slide {
+      from { transform: translateY(10px); opacity: 0; }
+      to { transform: none; opacity: 1; }
+    }
+
+    .split-view {
+      display: grid; grid-template-columns: 1.1fr .9fr; gap: 12px;
+    }
+    @media (max-width: 900px) { .split-view { grid-template-columns: 1fr; } }
+
+    .hint {
+      font-size: 12px; color: var(--on-variant); line-height: 1.4;
+      background: var(--surface-container); border-radius: 12px; padding: 10px 12px;
+    }
+
+    .empty {
+      text-align: center; padding: 36px 16px; color: var(--on-variant); font-size: 13px;
+    }
+
+    .kbd {
+      font-family: var(--font-mono); font-size: 11px;
+      background: var(--surface-high); padding: 2px 6px; border-radius: 6px;
+    }
+
+    .scenario-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">FG</div>
+        <div>
+          <h1>Proposal & Milestone Flow</h1>
+          <p>Interactive demo · Accept Proposal ≠ Hire · Accept Milestone Plan = Hire</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <div class="role-switch" role="tablist" aria-label="Active role">
+          <button type="button" id="roleClient" class="active" onclick="setRole('client')">Client</button>
+          <button type="button" id="roleDev" onclick="setRole('developer')">Developer</button>
+        </div>
+        <button class="btn btn-ghost btn-sm" type="button" onclick="resetDemo()">Reset</button>
+      </div>
+    </header>
+
+    <div class="principle" id="principleBanner">
+      <span>✦</span>
+      <div>
+        <strong>Core rule:</strong>
+        Accepting a proposal only opens Discussion. The real Hire happens when both sides accept the Milestone Plan and Milestone #1 is funded.
+      </div>
+    </div>
+
+    <div class="layout">
+      <aside class="panel">
+        <div class="panel-hd">
+          <h2>Flow progress</h2>
+          <span class="chip st-discussion" id="projectChip">Open</span>
+        </div>
+        <div class="panel-bd">
+          <div class="steps" id="steps"></div>
+          <div class="legend">
+            <span class="chip st-notapplied">Not Applied</span>
+            <span class="chip st-pending">Pending</span>
+            <span class="chip st-viewed">Viewed</span>
+            <span class="chip st-discussion">In Discussion</span>
+            <span class="chip st-rejected">Rejected</span>
+            <span class="chip st-withdrawn">Withdrawn</span>
+          </div>
+          <div class="hint" style="margin-top:14px">
+            Only <strong>one</strong> active Discussion per project.
+            Closing Discussion returns the proposal to <span class="kbd">Viewed</span> — not Rejected.
+          </div>
+          <div class="scenario-btns">
+            <button class="btn btn-secondary btn-sm" type="button" onclick="jumpToHirePath()">Jump → Hire path</button>
+            <button class="btn btn-ghost btn-sm" type="button" onclick="jumpToClosePath()">Jump → Close path</button>
+          </div>
+        </div>
+      </aside>
+
+      <main class="panel">
+        <div class="panel-hd">
+          <h2 id="mainTitle">Client · Proposals</h2>
+          <div id="mainActions"></div>
+        </div>
+        <div class="panel-bd" id="main"></div>
+      </main>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modal"></div>
+  <div class="toast-wrap" id="toasts"></div>
+
+  <script>
+    const PROJECT = {
+      title: "E-commerce Dashboard (React + .NET)",
+      budget: "$2,000 – $3,500",
+      timeline: "6–8 weeks",
+      category: "Web Development · Full Stack",
+    };
+
+    const MAX_PLAN_VERSIONS = 6;
+
+    const STEPS = [
+      { id: "apply", label: "Apply / Proposals", desc: "Developer applies · Client reviews" },
+      { id: "view", label: "View Proposal", desc: "Pending → Viewed" },
+      { id: "discuss", label: "Start Discussion", desc: "One active chat only" },
+      { id: "plan", label: "Milestone Plan", desc: "Full-plan versions v1…vN" },
+      { id: "decide", label: "Accept or Close", desc: "Hire cascade · or back to Viewed" },
+      { id: "fund", label: "Fund & Deliver", desc: "Escrow M1 · submit · release" },
+    ];
+
+    function initialState() {
+      return {
+        role: "client",
+        screen: "proposals", // client default
+        selectedId: null,
+        activeDiscussionId: null,
+        waitingOn: null, // 'client' | 'developer'
+        projectStatus: "Open",
+        appliedAsDev: false,
+        myProposalId: "p1",
+        messages: [],
+        plan: null, // current plan object
+        planVersion: 0,
+        hiredId: null,
+        funded: false,
+        submitted: false,
+        released: false,
+        proposals: [
+          {
+            id: "p1",
+            name: "Sara Hassan",
+            type: "Individual",
+            initials: "SH",
+            color: "#4130d7",
+            budget: 2800,
+            timeline: "7 weeks",
+            rating: 4.9,
+            cover: "I’ve shipped 3 similar dashboards with React + .NET. I’d keep the MVP lean and ship analytics first.",
+            approach: "React + TanStack Query · ASP.NET Minimal APIs · SQL Server · Stripe webhooks · CI via GitHub Actions.",
+            portfolio: "https://portfolio.example/sara/dashboard",
+            status: "Pending",
+            rejectReason: null,
+          },
+          {
+            id: "p2",
+            name: "Omar Khaled",
+            type: "Individual",
+            initials: "OK",
+            color: "#a10f3a",
+            budget: 2200,
+            timeline: "8 weeks",
+            rating: 4.7,
+            cover: "Strong backend focus. Can harden auth, roles, and reporting early.",
+            approach: ".NET 8 · EF Core · Redis cache · Angular optional for admin later.",
+            portfolio: "https://portfolio.example/omar/commerce",
+            status: "Pending",
+            rejectReason: null,
+          },
+          {
+            id: "p3",
+            name: "PixelForge Team",
+            type: "Team",
+            initials: "PF",
+            color: "#526600",
+            budget: 3400,
+            timeline: "6 weeks",
+            rating: 5.0,
+            cover: "Two seniors + one designer. Dedicated lead for your project.",
+            approach: "Team: Lead FE (React), BE (.NET), Design (Figma → tokens). Weekly demos.",
+            portfolio: "https://pixelforge.example/cases/retail",
+            status: "Pending",
+            rejectReason: null,
+            teamRoles: ["Nour — Lead FE", "Hassan — Backend", "Lina — Design"],
+          },
+        ],
+      };
+    }
+
+    let state = initialState();
+
+    function toast(text) {
+      const el = document.createElement("div");
+      el.className = "toast";
+      el.textContent = text;
+      document.getElementById("toasts").appendChild(el);
+      setTimeout(() => el.remove(), 3200);
+    }
+
+    function statusChip(status) {
+      const map = {
+        "Not Applied": "st-notapplied",
+        Pending: "st-pending",
+        Viewed: "st-viewed",
+        "In Discussion": "st-discussion",
+        Withdrawn: "st-withdrawn",
+        Rejected: "st-rejected",
+        Expired: "st-expired",
+        Accepted: "st-accepted",
+        "Changes Requested": "st-changes",
+        Proposed: "st-discussion",
+        Funded: "st-funded",
+        Submitted: "st-viewed",
+        Released: "st-accepted",
+        Open: "st-pending",
+        Hired: "st-accepted",
+        Completed: "st-accepted",
+      };
+      return `<span class="chip ${map[status] || "st-pending"}">${status}</span>`;
+    }
+
+    function proposalById(id) {
+      return state.proposals.find((p) => p.id === id);
+    }
+
+    function activeDiscussionCount() {
+      return state.proposals.filter((p) => p.status === "In Discussion").length;
+    }
+
+    function currentStepIndex() {
+      if (state.released) return 5;
+      if (state.hiredId) return 5;
+      if (state.plan && (state.plan.status === "Proposed" || state.plan.status === "Changes Requested")) return 3;
+      if (state.activeDiscussionId) return 3;
+      if (state.proposals.some((p) => p.status === "Viewed" || p.status === "In Discussion")) return 2;
+      if (state.appliedAsDev || state.proposals.some((p) => p.status !== "Pending")) return 1;
+      return 0;
+    }
+
+    function renderSteps() {
+      const idx = currentStepIndex();
+      document.getElementById("steps").innerHTML = STEPS.map((s, i) => {
+        let cls = "step";
+        if (i < idx) cls += " done";
+        if (i === idx) cls += " active";
+        if (state.hiredId && i >= 4) cls = "step done";
+        if (state.released && i === 5) cls = "step active done";
+        return `<div class="${cls}"><div class="n">${i + 1}</div><div><strong>${s.label}</strong>${s.desc}</div></div>`;
+      }).join("");
+      const hd = document.querySelector("aside.panel .panel-hd");
+      if (hd) hd.innerHTML = `<h2>Flow progress</h2>${statusChip(state.projectStatus)}`;
+    }
+
+    function setRole(role) {
+      state.role = role;
+      document.getElementById("roleClient").classList.toggle("active", role === "client");
+      document.getElementById("roleDev").classList.toggle("active", role === "developer");
+
+      if (role === "developer") {
+        if (state.activeDiscussionId) state.screen = "chat";
+        else if (state.appliedAsDev) state.screen = "my-proposals";
+        else state.screen = "find-work";
+      } else {
+        if (state.activeDiscussionId) state.screen = "chat";
+        else if (state.selectedId) state.screen = "proposal-detail";
+        else state.screen = "proposals";
+      }
+      render();
+    }
+
+    function resetDemo() {
+      state = initialState();
+      toast("Demo reset");
+      render();
+    }
+
+    function jumpToHirePath() {
+      state = initialState();
+      state.appliedAsDev = true;
+      state.proposals[0].status = "In Discussion";
+      state.proposals[1].status = "Viewed";
+      state.proposals[2].status = "Pending";
+      state.activeDiscussionId = "p1";
+      state.selectedId = "p1";
+      state.projectStatus = "In Discussion";
+      state.waitingOn = "developer";
+      state.messages = [
+        { from: "client", text: "Loved your approach — can we break this into milestones?" },
+        { from: "developer", text: "Absolutely. I’ll propose a plan now." },
+      ];
+      state.role = "developer";
+      state.screen = "chat";
+      document.getElementById("roleClient").classList.remove("active");
+      document.getElementById("roleDev").classList.add("active");
+      toast("Jumped to Discussion — propose a Milestone Plan as Developer");
+      render();
+    }
+
+    function jumpToClosePath() {
+      jumpToHirePath();
+      state.role = "client";
+      document.getElementById("roleDev").classList.remove("active");
+      document.getElementById("roleClient").classList.add("active");
+      state.waitingOn = "client";
+      proposePlanInternal([
+        { name: "Discovery & Architecture", dod: "Wireframes + API map approved", amount: 600, due: "2026-08-20", tag: null },
+        { name: "MVP Dashboard", dod: "Orders + analytics live on staging", amount: 1400, due: "2026-09-10", tag: null },
+        { name: "Payments & Launch", dod: "Stripe live · production deploy", amount: 800, due: "2026-09-25", tag: null },
+      ], false);
+      toast("Jumped to Client deciding — try Close Discussion (returns to Viewed)");
+      render();
+    }
+
+    /* ---------- Actions ---------- */
+
+    function applyAsDeveloper() {
+      const budget = Number(document.getElementById("fBudget").value) || 2800;
+      const timeline = document.getElementById("fTimeline").value || "7 weeks";
+      const cover = document.getElementById("fCover").value;
+      const approach = document.getElementById("fApproach").value;
+      const type = document.getElementById("fType").value;
+
+      const mine = proposalById("p1");
+      mine.budget = budget;
+      mine.timeline = timeline;
+      mine.cover = cover;
+      mine.approach = approach;
+      mine.type = type;
+      mine.status = "Pending";
+      state.appliedAsDev = true;
+      state.screen = "my-proposals";
+      toast("Proposal submitted · status: Pending");
+      render();
+    }
+
+    function viewProposal(id) {
+      const p = proposalById(id);
+      if (p.status === "Pending") {
+        p.status = "Viewed";
+        toast(`${p.name}: Pending → Viewed`);
+      }
+      state.selectedId = id;
+      state.screen = "proposal-detail";
+      render();
+    }
+
+    function startDiscussion(id) {
+      if (state.activeDiscussionId && state.activeDiscussionId !== id) {
+        toast("Close the current Discussion first — only one allowed");
+        return;
+      }
+      const p = proposalById(id);
+      if (["Rejected", "Withdrawn", "Expired"].includes(p.status)) {
+        toast("Cannot discuss a closed proposal");
+        return;
+      }
+      p.status = "In Discussion";
+      state.activeDiscussionId = id;
+      state.selectedId = id;
+      state.projectStatus = "In Discussion";
+      state.waitingOn = "developer";
+      state.messages = [
+        { from: "system", text: `Discussion started with ${p.name}. Accept Proposal ≠ Hire — negotiate the Milestone Plan next.` },
+        { from: "client", text: `Hi ${p.name.split(" ")[0]} — interested in your proposal. Let’s align on scope and milestones.` },
+      ];
+      state.screen = "chat";
+      toast("Discussion opened · Waiting on Developer to propose a plan");
+      render();
+    }
+
+    function closeDiscussion() {
+      if (!state.activeDiscussionId) return;
+      const p = proposalById(state.activeDiscussionId);
+      p.status = "Viewed";
+      toast(`${p.name}: In Discussion → Viewed (not Rejected)`);
+      state.activeDiscussionId = null;
+      state.plan = null;
+      state.waitingOn = null;
+      state.projectStatus = "Open";
+      state.messages.push({ from: "system", text: "Discussion closed. Client can reopen later or start with another candidate." });
+      state.screen = state.role === "client" ? "proposals" : "my-proposals";
+      render();
+    }
+
+    function reopenDiscussion(id) {
+      startDiscussion(id);
+    }
+
+    function sendChat() {
+      const input = document.getElementById("chatInput");
+      if (!input || !input.value.trim()) return;
+      const from = state.role === "client" ? "client" : "developer";
+      state.messages.push({ from, text: input.value.trim() });
+      state.waitingOn = from === "client" ? "developer" : "client";
+      render();
+      const log = document.querySelector(".chat-log");
+      if (log) log.scrollTop = log.scrollHeight;
+    }
+
+    function openProposeModal(isRevision = false) {
+      if (state.planVersion >= MAX_PLAN_VERSIONS) {
+        toast(`Version cap reached (${MAX_PLAN_VERSIONS}). Close or accept.`);
+        return;
+      }
+      const prev = state.plan?.milestones || [
+        { name: "Discovery & Architecture", dod: "Wireframes + API map approved", amount: 600, due: "2026-08-20" },
+        { name: "MVP Dashboard", dod: "Orders + analytics live on staging", amount: 1400, due: "2026-09-10" },
+        { name: "Payments & Launch", dod: "Stripe live · production deploy", amount: 800, due: "2026-09-25" },
+      ];
+
+      const rows = prev.map((m, i) => `
+        <div class="grid-2" data-ms="${i}">
+          <div class="field"><label>Milestone name</label><input value="${escapeAttr(m.name)}" data-k="name" /></div>
+          <div class="field"><label>Amount (USD)</label><input type="number" value="${m.amount}" data-k="amount" /></div>
+          <div class="field" style="grid-column:1/-1"><label>Definition of Done</label><input value="${escapeAttr(m.dod)}" data-k="dod" /></div>
+          <div class="field"><label>Due date</label><input type="date" value="${m.due}" data-k="due" /></div>
+        </div>
+      `).join("<hr style='border:none;border-top:1px solid #e5e1e4;margin:8px 0' />");
+
+      openModal(
+        isRevision ? `Propose plan v${state.planVersion + 1}` : "Propose Milestone Plan (v1)",
+        `
+          <p class="hint" style="margin-bottom:12px">Full-plan versioning: you send a complete plan each time. Changed/added milestones get <strong>Updated</strong> / <strong>New</strong> tags.</p>
+          <div id="msForm">${rows}</div>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="addMilestoneRow()">+ Add milestone</button>
+          ${state.plan?.changeComment ? `<p class="hint" style="margin-top:12px"><strong>Client feedback:</strong> ${escapeHtml(state.plan.changeComment)}</p>` : ""}
+        `,
+        `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+         <button class="btn btn-primary" onclick="submitPlanFromModal(${isRevision})">${isRevision ? "Send v" + (state.planVersion + 1) : "Send plan v1"}</button>`
+      );
+    }
+
+    function addMilestoneRow() {
+      const form = document.getElementById("msForm");
+      const i = form.querySelectorAll("[data-ms]").length;
+      const wrap = document.createElement("div");
+      wrap.innerHTML = `<hr style='border:none;border-top:1px solid #e5e1e4;margin:8px 0' />
+        <div class="grid-2" data-ms="${i}">
+          <div class="field"><label>Milestone name</label><input value="New milestone" data-k="name" /></div>
+          <div class="field"><label>Amount (USD)</label><input type="number" value="400" data-k="amount" /></div>
+          <div class="field" style="grid-column:1/-1"><label>Definition of Done</label><input value="Describe done criteria" data-k="dod" /></div>
+          <div class="field"><label>Due date</label><input type="date" value="2026-10-01" data-k="due" /></div>
+        </div>`;
+      form.append(...wrap.childNodes);
+    }
+
+    function readMilestonesFromModal() {
+      return [...document.querySelectorAll("#msForm [data-ms]")].map((row) => {
+        const get = (k) => row.querySelector(`[data-k="${k}"]`).value;
+        return {
+          name: get("name"),
+          dod: get("dod"),
+          amount: Number(get("amount")) || 0,
+          due: get("due"),
+        };
+      });
+    }
+
+    function submitPlanFromModal(isRevision) {
+      const milestones = readMilestonesFromModal();
+      proposePlanInternal(milestones, isRevision);
+      closeModal();
+      render();
+    }
+
+    function proposePlanInternal(milestones, isRevision) {
+      const prev = state.plan?.milestones || [];
+      const tagged = milestones.map((m, i) => {
+        if (!isRevision) return { ...m, tag: null };
+        if (i >= prev.length) return { ...m, tag: "New" };
+        const p = prev[i];
+        const changed = p.name !== m.name || p.dod !== m.dod || p.amount !== m.amount || p.due !== m.due;
+        return { ...m, tag: changed ? "Updated" : null };
+      });
+      // brand-new rows beyond length already New; also if name is totally new at end
+      state.planVersion += 1;
+      state.plan = {
+        version: state.planVersion,
+        status: "Proposed",
+        milestones: tagged,
+        changeComment: null,
+      };
+      state.waitingOn = "client";
+      state.messages.push({
+        from: "developer",
+        type: "plan",
+        planSnapshot: JSON.parse(JSON.stringify(state.plan)),
+      });
+      toast(`Milestone Plan v${state.planVersion} proposed · Waiting on Client`);
+    }
+
+    function requestChanges() {
+      openModal(
+        "Request changes",
+        `<div class="field"><label>General comment on the whole plan</label>
+         <textarea id="changeComment" placeholder="e.g. Merge M1+M2, lower M3 budget, add a QA milestone…"></textarea></div>
+         <p class="hint">One comment for the full plan — not per-milestone approvals.</p>`,
+        `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+         <button class="btn btn-primary" onclick="confirmRequestChanges()">Send change request</button>`
+      );
+    }
+
+    function confirmRequestChanges() {
+      const comment = document.getElementById("changeComment").value.trim() || "Please revise the plan.";
+      state.plan.status = "Changes Requested";
+      state.plan.changeComment = comment;
+      state.waitingOn = "developer";
+      state.messages.push({ from: "client", text: `Request Changes on plan v${state.plan.version}: ${comment}` });
+      closeModal();
+      toast("Changes requested · Waiting on Developer for next full version");
+      render();
+    }
+
+    function acceptPlan() {
+      const hired = proposalById(state.activeDiscussionId);
+      state.plan.status = "Accepted";
+      state.hiredId = hired.id;
+      state.projectStatus = "Hired";
+      state.waitingOn = "client";
+
+      // Reject cascade
+      state.proposals.forEach((p) => {
+        if (p.id === hired.id) return;
+        if (["Rejected", "Withdrawn", "Expired"].includes(p.status)) return;
+        p.status = "Rejected";
+        p.rejectReason = "Client hired another candidate for this project";
+      });
+      hired.status = "In Discussion"; // stays as hired collaborator; UI shows Hired project
+
+      state.messages.push({
+        from: "system",
+        text: `Milestone Plan v${state.plan.version} accepted → Hire locked with ${hired.name}. Other proposals Rejected.`,
+      });
+      toast("Hire complete · Other proposals Rejected (cascade)");
+      state.screen = "hire-success";
+      render();
+    }
+
+    function fundMilestone1() {
+      state.plan.status = "Funded";
+      state.funded = true;
+      state.waitingOn = "developer";
+      state.messages.push({ from: "system", text: "Milestone #1 funded in escrow. Developer can start work." });
+      toast("Escrow locked for Milestone #1 only");
+      render();
+    }
+
+    function submitMilestone() {
+      state.plan.status = "Submitted";
+      state.submitted = true;
+      state.waitingOn = "client";
+      state.messages.push({ from: "developer", text: "Submitted Milestone #1 for review (14-day auto-release window)." });
+      toast("Milestone submitted · Client has 14 days");
+      render();
+    }
+
+    function releaseMilestone() {
+      state.plan.status = "Released";
+      state.released = true;
+      state.projectStatus = "Completed";
+      state.waitingOn = null;
+      state.messages.push({ from: "system", text: "Funds released from escrow → Developer. Project can continue to next milestones or complete." });
+      toast("Funds released");
+      render();
+    }
+
+    function withdrawProposal() {
+      const mine = proposalById("p1");
+      if (!state.appliedAsDev) return;
+      if (mine.status === "In Discussion" && state.activeDiscussionId === "p1") {
+        state.activeDiscussionId = null;
+        state.projectStatus = "Open";
+        state.plan = null;
+      }
+      mine.status = "Withdrawn";
+      toast("Proposal withdrawn · stays visible as Withdrawn");
+      state.screen = "my-proposals";
+      render();
+    }
+
+    /* ---------- Modal helpers ---------- */
+    function openModal(title, body, footer) {
+      const el = document.getElementById("modal");
+      el.className = "modal-backdrop open";
+      el.innerHTML = `<div class="modal" role="dialog">
+        <div class="modal-hd"><h3 style="font-size:16px">${title}</h3>
+          <button class="btn btn-ghost btn-sm" onclick="closeModal()">✕</button></div>
+        <div class="modal-bd">${body}</div>
+        <div class="modal-ft">${footer}</div>
+      </div>`;
+      el.onclick = (e) => { if (e.target === el) closeModal(); };
+    }
+    function closeModal() {
+      const el = document.getElementById("modal");
+      el.className = "modal-backdrop";
+      el.innerHTML = "";
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+    function escapeAttr(s) { return escapeHtml(s).replace(/\n/g, " "); }
+
+    /* ---------- Screens ---------- */
+
+    function render() {
+      renderSteps();
+      const title = document.getElementById("mainTitle");
+      const actions = document.getElementById("mainActions");
+      const main = document.getElementById("main");
+      actions.innerHTML = "";
+
+      if (state.role === "developer") {
+        if (state.screen === "find-work") renderFindWork(title, actions, main);
+        else if (state.screen === "apply") renderApply(title, actions, main);
+        else if (state.screen === "my-proposals") renderMyProposals(title, actions, main);
+        else if (state.screen === "chat") renderChat(title, actions, main);
+        else if (state.screen === "hire-success") renderHireSuccess(title, actions, main);
+        else renderMyProposals(title, actions, main);
+      } else {
+        if (state.screen === "proposals") renderProposals(title, actions, main);
+        else if (state.screen === "proposal-detail") renderProposalDetail(title, actions, main);
+        else if (state.screen === "chat") renderChat(title, actions, main);
+        else if (state.screen === "hire-success") renderHireSuccess(title, actions, main);
+        else renderProposals(title, actions, main);
+      }
+    }
+
+    function renderFindWork(title, actions, main) {
+      title.textContent = "Developer · Find Work";
+      actions.innerHTML = `<button class="btn btn-ghost btn-sm" onclick="state.screen='my-proposals';render()">My proposals</button>`;
+      main.innerHTML = `
+        <div class="screen-title">
+          <div>
+            <h2>${PROJECT.title}</h2>
+            <p>${PROJECT.category} · Budget ${PROJECT.budget} · Client timeline ${PROJECT.timeline}</p>
+          </div>
+          ${statusChip("Not Applied")}
+        </div>
+        <div class="card">
+          <p style="margin:0 0 10px;font-size:13px;line-height:1.5;color:var(--on-variant)">
+            Build a multi-tenant e-commerce admin: orders, inventory, analytics, and Stripe payouts.
+            Stack preference: React + .NET. Fixed or milestone-friendly.
+          </p>
+          <div class="card-actions">
+            <button class="btn btn-primary" onclick="state.screen='apply';render()">Apply to project</button>
+          </div>
+        </div>
+        <p class="hint" style="margin-top:12px">Status before applying is <strong>Not Applied</strong> — distinct from Pending.</p>
+      `;
+    }
+
+    function renderApply(title, actions, main) {
+      title.textContent = "Developer · Apply";
+      actions.innerHTML = `<button class="btn btn-ghost btn-sm" onclick="state.screen='find-work';render()">Back</button>`;
+      main.innerHTML = `
+        <div class="screen-title">
+          <div>
+            <h2>Submit proposal</h2>
+            <p>Milestones are NOT part of the apply form — you negotiate them later in Discussion.</p>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>Applicant type</label>
+            <select id="fType"><option>Individual</option><option>Team</option></select>
+          </div>
+          <div class="field"><label>Proposed budget (USD)</label>
+            <input id="fBudget" type="number" value="2800" />
+          </div>
+          <div class="field"><label>Proposed timeline</label>
+            <input id="fTimeline" value="7 weeks" />
+          </div>
+          <div class="field"><label>Portfolio link (project-specific)</label>
+            <input value="https://portfolio.example/sara/dashboard" />
+          </div>
+        </div>
+        <div class="field"><label>Cover letter</label>
+          <textarea id="fCover">I’ve shipped 3 similar dashboards with React + .NET. I’d keep the MVP lean and ship analytics first.</textarea>
+        </div>
+        <div class="field"><label>Your approach / Tech stack (separate from cover letter)</label>
+          <textarea id="fApproach">React + TanStack Query · ASP.NET Minimal APIs · SQL Server · Stripe webhooks · CI via GitHub Actions.</textarea>
+        </div>
+        <div class="field"><label>Attachments</label>
+          <input type="text" value="case-study-dashboard.pdf" disabled />
+        </div>
+        <div class="card-actions">
+          <button class="btn btn-primary" onclick="applyAsDeveloper()">Submit proposal</button>
+        </div>
+      `;
+    }
+
+    function renderMyProposals(title, actions, main) {
+      title.textContent = "Developer · My proposals";
+      actions.innerHTML = `<button class="btn btn-ghost btn-sm" onclick="state.screen='find-work';render()">Find work</button>`;
+      const mine = proposalById("p1");
+      if (!state.appliedAsDev) {
+        main.innerHTML = `<div class="empty">You haven’t applied yet · status would show as Not Applied on Find Work.</div>`;
+        return;
+      }
+      main.innerHTML = `
+        <div class="card ${state.activeDiscussionId === "p1" ? "selected" : ""}">
+          <div class="card-row">
+            <div>
+              <strong style="font-family:var(--font-display)">${PROJECT.title}</strong>
+              <div class="meta">Your bid $${mine.budget} · ${mine.timeline} · ${mine.type}</div>
+            </div>
+            ${statusChip(mine.status)}
+          </div>
+          <div class="card-actions">
+            ${mine.status === "In Discussion" ? `<button class="btn btn-primary btn-sm" onclick="state.screen='chat';render()">Open chat</button>` : ""}
+            ${!["Rejected","Withdrawn","In Discussion"].includes(mine.status) ? `<button class="btn btn-danger btn-sm" onclick="withdrawProposal()">Withdraw</button>` : ""}
+            ${mine.status === "Withdrawn" ? `<span class="hint">Visible as Withdrawn — not deleted.</span>` : ""}
+            ${mine.rejectReason ? `<span class="hint">${escapeHtml(mine.rejectReason)}</span>` : ""}
+          </div>
+        </div>
+        ${state.hiredId === "p1" ? `<div class="banner success" style="margin-top:12px">You’re hired · Milestone plan accepted</div>` : ""}
+      `;
+    }
+
+    function renderProposals(title, actions, main) {
+      title.textContent = "Client · Home · Proposals";
+      actions.innerHTML = state.activeDiscussionId
+        ? `<button class="btn btn-primary btn-sm" onclick="state.screen='chat';render()">Open active Discussion</button>`
+        : "";
+      main.innerHTML = `
+        <div class="screen-title">
+          <div>
+            <h2>${PROJECT.title}</h2>
+            <p>${state.proposals.length} proposals · ${activeDiscussionCount()} in discussion · Project ${state.projectStatus}</p>
+          </div>
+        </div>
+        <div class="card-list">
+          ${state.proposals.map((p) => `
+            <div class="card ${state.selectedId === p.id ? "selected" : ""}">
+              <div class="card-row">
+                <div style="display:flex;gap:12px">
+                  <div class="avatar" style="background:${p.color}">${p.initials}</div>
+                  <div>
+                    <strong style="font-family:var(--font-display)">${p.name}</strong>
+                    <div class="meta">${p.type} · ★ ${p.rating} · $${p.budget} · ${p.timeline}</div>
+                    ${p.rejectReason ? `<div class="meta" style="color:var(--error)">${escapeHtml(p.rejectReason)}</div>` : ""}
+                  </div>
+                </div>
+                ${statusChip(p.status)}
+              </div>
+              <div class="card-actions">
+                <button class="btn btn-ghost btn-sm" onclick="viewProposal('${p.id}')">View Proposal</button>
+                ${p.status === "In Discussion"
+                  ? `<button class="btn btn-primary btn-sm" onclick="state.selectedId='${p.id}';state.screen='chat';render()">Open Discussion</button>`
+                  : `<button class="btn btn-primary btn-sm" onclick="startDiscussion('${p.id}')" ${state.activeDiscussionId && state.activeDiscussionId !== p.id ? "disabled" : ""} ${["Rejected","Withdrawn","Expired"].includes(p.status) ? "disabled" : ""}>Start Discussion</button>`
+                }
+                ${p.status === "Viewed" && !state.activeDiscussionId && !state.hiredId
+                  ? `<button class="btn btn-secondary btn-sm" onclick="reopenDiscussion('${p.id}')">Reopen Discussion</button>` : ""}
+              </div>
+            </div>
+          `).join("")}
+        </div>
+        ${state.activeDiscussionId ? `<p class="hint" style="margin-top:12px">Another Discussion is blocked until you Close Discussion with ${proposalById(state.activeDiscussionId).name}.</p>` : ""}
+      `;
+    }
+
+    function renderProposalDetail(title, actions, main) {
+      const p = proposalById(state.selectedId);
+      title.textContent = "Client · Proposal detail";
+      actions.innerHTML = `<button class="btn btn-ghost btn-sm" onclick="state.screen='proposals';render()">Back to list</button>`;
+      main.innerHTML = `
+        <div class="screen-title">
+          <div style="display:flex;gap:12px;align-items:center">
+            <div class="avatar" style="background:${p.color}">${p.initials}</div>
+            <div>
+              <h2>${p.name}</h2>
+              <p>${p.type} · ★ ${p.rating}</p>
+            </div>
+          </div>
+          ${statusChip(p.status)}
+        </div>
+        <div class="grid-2">
+          <div class="card"><div class="meta">Budget</div><strong>$${p.budget}</strong></div>
+          <div class="card"><div class="meta">Proposed timeline</div><strong>${p.timeline}</strong></div>
+        </div>
+        <div class="field" style="margin-top:12px"><label>Cover letter</label><div class="card">${escapeHtml(p.cover)}</div></div>
+        <div class="field"><label>Approach / Tech stack</label><div class="card">${escapeHtml(p.approach)}</div></div>
+        <div class="field"><label>Portfolio</label><div class="card"><a href="#" onclick="return false">${escapeHtml(p.portfolio)}</a></div></div>
+        ${p.teamRoles ? `<div class="field"><label>Team roles on this project</label><div class="card">${p.teamRoles.map(r => escapeHtml(r)).join("<br>")}</div></div>` : ""}
+        <div class="card-actions">
+          <button class="btn btn-primary" onclick="startDiscussion('${p.id}')"
+            ${state.activeDiscussionId && state.activeDiscussionId !== p.id ? "disabled" : ""}
+            ${["Rejected","Withdrawn","Expired","In Discussion"].includes(p.status) ? "disabled" : ""}>
+            Start Discussion
+          </button>
+          ${p.status === "In Discussion" ? `<button class="btn btn-secondary" onclick="state.screen='chat';render()">Open Discussion</button>` : ""}
+        </div>
+        <p class="hint" style="margin-top:12px">Viewing this proposal auto-moved it to <strong>Viewed</strong>. Starting Discussion does <em>not</em> hire or reject others.</p>
+      `;
+    }
+
+    function renderPlanCard(plan, interactive) {
+      const canClientAct = interactive && state.role === "client" && plan.status === "Proposed" && state.plan && state.plan.version === plan.version;
+      const canDevRevise = interactive && state.role === "developer" && state.plan && state.plan.status === "Changes Requested";
+      return `
+        <div class="plan-card">
+          <div class="plan-hd">
+            <h3>Milestone Plan · v${plan.version}</h3>
+            ${statusChip(plan.status)}
+          </div>
+          ${plan.milestones.map((m, i) => `
+            <div class="ms-item">
+              ${m.tag === "New" ? `<span class="tag tag-new">New</span>` : ""}
+              ${m.tag === "Updated" ? `<span class="tag tag-updated">Updated</span>` : ""}
+              <h4>#${i + 1} ${escapeHtml(m.name)}</h4>
+              <p>${escapeHtml(m.dod)}</p>
+              <div class="ms-meta"><span>$${m.amount}</span><span>Due ${m.due}</span></div>
+            </div>
+          `).join("")}
+          <div class="ms-meta" style="margin-bottom:10px">Total · $${plan.milestones.reduce((s, m) => s + m.amount, 0)} · Version ${plan.version}/${MAX_PLAN_VERSIONS}</div>
+          ${canClientAct ? `
+            <div class="card-actions">
+              <button class="btn btn-primary btn-sm" onclick="acceptPlan()">Accept this plan</button>
+              <button class="btn btn-ghost btn-sm" onclick="requestChanges()">Request Changes</button>
+            </div>` : ""}
+          ${canDevRevise && plan.version === state.plan.version ? `
+            <div class="card-actions">
+              <button class="btn btn-primary btn-sm" onclick="openProposeModal(true)">Send revised full plan (v${state.planVersion + 1})</button>
+            </div>` : ""}
+        </div>
+      `;
+    }
+
+    function renderChat(title, actions, main) {
+      const p = proposalById(state.activeDiscussionId);
+      if (!p) {
+        main.innerHTML = `<div class="empty">No active discussion</div>`;
+        return;
+      }
+      title.textContent = `${state.role === "client" ? "Client" : "Developer"} · Discussion`;
+      actions.innerHTML = `
+        ${state.role === "client" && !state.hiredId ? `<button class="btn btn-danger btn-sm" onclick="closeDiscussion()">Close Discussion</button>` : ""}
+        <button class="btn btn-ghost btn-sm" onclick="state.screen=state.role==='client'?'proposals':'my-proposals';render()">Back</button>
+      `;
+
+      let waitBanner = "";
+      if (state.hiredId && state.funded && state.submitted && !state.released) {
+        waitBanner = `<div class="banner wait-client">Waiting on Client · Approve / request changes (auto-release in 14 days)</div>`;
+      } else if (state.hiredId && state.funded && !state.submitted) {
+        waitBanner = `<div class="banner wait-you">Waiting on Developer · Submit Milestone #1</div>`;
+      } else if (state.hiredId && !state.funded) {
+        waitBanner = `<div class="banner wait-client">Hire locked · Waiting on Client to fund Milestone #1</div>`;
+      } else if (state.waitingOn === "client") {
+        waitBanner = state.role === "client"
+          ? `<div class="banner wait-you">Waiting on You</div>`
+          : `<div class="banner wait-client">Waiting on Client</div>`;
+      } else if (state.waitingOn === "developer") {
+        waitBanner = state.role === "developer"
+          ? `<div class="banner wait-you">Waiting on You</div>`
+          : `<div class="banner wait-client">Waiting on Developer</div>`;
+      }
+
+      const log = state.messages.map((m) => {
+        if (m.type === "plan") {
+          return renderPlanCard(m.planSnapshot, true);
+        }
+        if (m.from === "system") {
+          return `<div class="hint">${escapeHtml(m.text)}</div>`;
+        }
+        const mine = (state.role === "client" && m.from === "client") || (state.role === "developer" && m.from === "developer");
+        return `<div class="bubble ${mine ? "me" : "them"}"><div class="who">${m.from}</div>${escapeHtml(m.text)}</div>`;
+      }).join("");
+
+      let sideActions = "";
+      if (!state.hiredId) {
+        if (state.role === "developer" && (!state.plan || state.plan.status === "Changes Requested")) {
+          sideActions = `<button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="openProposeModal(${!!state.plan})">
+            ${state.plan ? "Propose revised plan" : "Propose Milestone Plan"}
+          </button>`;
+        }
+        if (state.role === "client") {
+          sideActions = `<p class="hint">When a plan card arrives, use <strong>Accept this plan</strong> (Hire) or <strong>Request Changes</strong>. Or Close Discussion to return the proposal to Viewed.</p>`;
+        }
+      } else {
+        if (state.role === "client" && !state.funded) {
+          sideActions = `<button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="fundMilestone1()">Fund Milestone #1 (escrow)</button>
+            <p class="hint">Progressive funding — only M1 locks now (Upwork-style).</p>`;
+        }
+        if (state.role === "developer" && state.funded && !state.submitted) {
+          sideActions = `<button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="submitMilestone()">Submit Milestone #1</button>`;
+        }
+        if (state.role === "client" && state.submitted && !state.released) {
+          sideActions = `<button class="btn btn-secondary" style="width:100%;margin-bottom:8px" onclick="releaseMilestone()">Approve & release funds</button>
+            <p class="hint">No reply in 14 days → Auto-release.</p>`;
+        }
+      }
+
+      main.innerHTML = `
+        <div class="screen-title">
+          <div>
+            <h2>Chat with ${p.name}</h2>
+            <p>${PROJECT.title} · Proposal ${p.status}</p>
+          </div>
+          ${statusChip(p.status)}
+        </div>
+        ${waitBanner}
+        <div class="split-view">
+          <div class="chat">
+            <div class="chat-log">${log || `<div class="empty">No messages yet</div>`}</div>
+            ${!state.hiredId || (!state.released) ? `
+            <div class="chat-compose">
+              <input id="chatInput" placeholder="Write a message…" onkeydown="if(event.key==='Enter')sendChat()" />
+              <button class="btn btn-primary" onclick="sendChat()">Send</button>
+            </div>` : ""}
+          </div>
+          <div>
+            <div class="card" style="margin-bottom:10px">
+              <strong style="font-family:var(--font-display);font-size:13px">Negotiation panel</strong>
+              <div class="meta" style="margin:8px 0">Plan status: ${state.plan ? statusChip(state.plan.status) + " v" + state.plan.version : "—"}</div>
+              ${sideActions}
+            </div>
+            <div class="hint">
+              <strong>Remember</strong><br/>
+              Accept plan = Hire<br/>
+              Close Discussion = back to Viewed<br/>
+              Reject cascade only on Hire
+            </div>
+          </div>
+        </div>
+      `;
+      const logEl = main.querySelector(".chat-log");
+      if (logEl) logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function renderHireSuccess(title, actions, main) {
+      const hired = proposalById(state.hiredId);
+      title.textContent = "Hire complete";
+      actions.innerHTML = `<button class="btn btn-primary btn-sm" onclick="state.screen='chat';render()">Continue to funding</button>
+        <button class="btn btn-ghost btn-sm" onclick="state.screen='proposals';state.role='client';document.getElementById('roleClient').classList.add('active');document.getElementById('roleDev').classList.remove('active');render()">See reject cascade</button>`;
+      main.innerHTML = `
+        <div class="banner success">Accept Milestone Plan = Hire · ${hired.name} is hired</div>
+        <div class="screen-title">
+          <div>
+            <h2>What just happened</h2>
+            <p>Plan v${state.plan.version} accepted. All other proposals (Pending / Viewed / In Discussion) flipped to Rejected with a unified reason.</p>
+          </div>
+        </div>
+        <div class="card-list">
+          ${state.proposals.map((p) => `
+            <div class="card">
+              <div class="card-row">
+                <div><strong>${p.name}</strong><div class="meta">${p.id === hired.id ? "Hired collaborator" : (p.rejectReason || p.status)}</div></div>
+                ${p.id === hired.id ? statusChip("Accepted") : statusChip(p.status)}
+              </div>
+            </div>
+          `).join("")}
+        </div>
+        <div class="card-actions" style="margin-top:14px">
+          <button class="btn btn-primary" onclick="state.screen='chat';render()">Fund Milestone #1</button>
+        </div>
+      `;
+    }
+
+    // boot
+    render();
+  </script>
+</body>
+</html>

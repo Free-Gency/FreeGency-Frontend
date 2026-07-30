@@ -277,9 +277,9 @@ export class Proposals implements OnInit {
     return this.rankingById()[proposal.id.toLowerCase()]?.rank ?? null;
   }
 
-  accept(proposal: Proposal): void {
+  startDiscussion(proposal: Proposal): void {
     this.actionInProgress.set(proposal.id);
-    this.manageWorkService.acceptProposal(proposal.id)
+    this.manageWorkService.startDiscussion(proposal.id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
@@ -289,6 +289,28 @@ export class Proposals implements OnInit {
           if (this.aiRankingEnabled() && this.activeProjectId()) {
             this.loadRanking(this.activeProjectId());
           }
+        },
+        error: () => this.actionInProgress.set(null),
+      });
+  }
+
+  viewProposal(proposal: Proposal): void {
+    if (proposal.status !== 'Pending') return;
+    this.manageWorkService.viewProposal(proposal.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => this.proposalsResource.reload(),
+      });
+  }
+
+  closeDiscussion(proposal: Proposal): void {
+    this.actionInProgress.set(proposal.id);
+    this.manageWorkService.closeDiscussion(proposal.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.actionInProgress.set(null);
+          this.proposalsResource.reload();
         },
         error: () => this.actionInProgress.set(null),
       });

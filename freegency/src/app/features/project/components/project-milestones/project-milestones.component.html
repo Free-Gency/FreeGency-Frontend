@@ -1,48 +1,157 @@
-
-
 @if (showSection) {
-  <div class="flex flex-col gap-md">
+  <div class="flex flex-col gap-4">
     @if (loading()) {
-      <p class="text-body-md text-on-surface-variant text-center py-md">Loading milestones...</p>
+      <div class="bg-white rounded-[24px] border border-outline-variant/30 p-12 flex justify-center">
+        <div class="h-8 w-8 animate-spin rounded-full border-2 border-[#4130D7] border-t-transparent"></div>
+      </div>
     }
     @else {
+      @if (actionError()) {
+        <p class="text-sm text-error px-1">{{ actionError() }}</p>
+      }
+
+      @if (latestPlan(); as plan) {
+        <div class="bg-white rounded-[24px] border border-[#C4C0FF] p-5 md:p-6 flex flex-col gap-4">
+          <div class="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Milestone plan</p>
+              <p class="text-lg font-extrabold text-on-surface">Version {{ plan.version }} · {{ plan.status }}</p>
+            </div>
+            @if (plan.changeComment) {
+              <p class="text-xs text-[#8A5A00] bg-[#FFF3D6] rounded-xl px-3 py-2 max-w-md">{{ plan.changeComment }}</p>
+            }
+          </div>
+
+          <div class="flex flex-col gap-2">
+            @for (item of plan.items; track item.id) {
+              <div class="relative rounded-2xl border border-outline-variant/30 bg-surface-container-low p-4">
+                @if (item.changeTag === 'New') {
+                  <span class="absolute top-3 right-3 text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#C7EF2E] text-[#3D4C00]">New</span>
+                }
+                @if (item.changeTag === 'Updated') {
+                  <span class="absolute top-3 right-3 text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#FFF3D6] text-[#8A5A00]">Updated</span>
+                }
+                <p class="text-sm font-bold text-on-surface pr-16">#{{ item.sortOrder }} {{ item.title }}</p>
+                <p class="text-xs text-on-surface-variant mt-1">{{ item.definitionOfDone }}</p>
+                <div class="flex gap-3 mt-2 text-[11px] font-mono text-on-surface-variant">
+                  <span>${{ item.amount | number }}</span>
+                  @if (item.dueDate) {
+                    <span>Due {{ item.dueDate | date: 'mediumDate' }}</span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
+          @if (canAcceptPlan()) {
+            <div class="flex flex-col gap-2 pt-1">
+              <textarea
+                class="w-full rounded-2xl border border-outline-variant/40 bg-white px-3 py-2 text-sm min-h-[72px]"
+                placeholder="Request changes — one comment for the whole plan…"
+                [ngModel]="changeComment()"
+                (ngModelChange)="changeComment.set($event)"
+              ></textarea>
+              <div class="flex flex-wrap gap-2 justify-end">
+                <button
+                  type="button"
+                  class="px-5 h-9 rounded-full border border-outline-variant/50 text-xs font-bold disabled:opacity-50"
+                  [disabled]="actionBusy()"
+                  (click)="requestChanges()"
+                >
+                  Request Changes
+                </button>
+                <button
+                  type="button"
+                  class="px-5 h-9 rounded-full bg-[#4130D7] text-white text-xs font-bold disabled:opacity-50"
+                  [disabled]="actionBusy()"
+                  (click)="acceptPlan()"
+                >
+                  Accept this plan (Hire)
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
       @if (escrow(); as e) {
-        <div class="card flex flex-col gap-sm">
-          <div class="flex items-center gap-xs">
-            <span class="text-label-mono text-on-surface-variant">Escrow</span>
-            <span class="chip" [class]="e.fundingStatus === 'Completed' ? 'rs-released' : 'rs-locked'">{{ e.fundingStatus }}</span>
-            <span class="text-body-md text-on-surface font-semibold ml-auto">{{ e.totalAmount | number }} USD</span>
+        <div class="bg-inverse-surface text-inverse-on-surface rounded-[28px] p-6 flex flex-col gap-4">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <p class="text-[10px] font-bold text-white/60 uppercase tracking-wider mb-1">Escrow</p>
+              <p class="text-2xl font-extrabold text-white">{{ e.totalAmount | number }} USD</p>
+            </div>
+            <span
+              class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+              [class]="e.fundingStatus === 'Completed' ? 'bg-[#D8F272] text-[#2B3800]' : 'bg-[#C4C0FF] text-[#110068]'"
+            >
+              {{ e.fundingStatus }}
+            </span>
           </div>
-          <div class="flex items-center gap-xs">
-            <span class="text-label-mono text-on-surface-variant">Released</span>
-            <span class="text-body-md text-on-surface">{{ e.totalReleased | number }} / {{ e.totalAmount | number }}</span>
+
+          <div class="h-px bg-white/10"></div>
+
+          <div>
+            <div class="flex items-center justify-between text-xs mb-2">
+              <span class="text-white/60 font-semibold">Released</span>
+              <span class="text-white font-bold">{{ e.totalReleased | number }} / {{ e.totalAmount | number }}</span>
+            </div>
+            <div class="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+              <div class="h-full rounded-full bg-[#4130D7] transition-[width] duration-400 ease-out" [style.width.%]="releasePercent"></div>
+            </div>
           </div>
-          <div class="w-full h-1.5 rounded-full bg-outline-variant overflow-hidden">
-            <div class="h-full rounded-full bg-primary transition-[width] duration-400 ease-out" [style.width.%]="releasePercent"></div>
-          </div>
-          <div class="flex items-center gap-xs">
-            <span class="text-label-mono text-on-surface-variant">Plan Status</span>
-            <span class="text-body-sm text-on-surface">{{ e.planStatus }}</span>
+
+          <div class="flex items-center justify-between gap-3 flex-wrap">
+            <div class="flex items-center gap-3">
+              <span class="text-[10px] font-bold text-white/60 uppercase tracking-wider">Plan Status</span>
+              <span class="text-sm font-semibold text-white">{{ e.planStatus }}</span>
+            </div>
+            @if (canFundNext()) {
+              <button
+                type="button"
+                class="px-4 h-9 rounded-full bg-[#C7EF2E] text-[#3D4C00] text-xs font-bold disabled:opacity-50"
+                [disabled]="actionBusy()"
+                (click)="fundNext()"
+              >
+                Fund next milestone
+              </button>
+            }
           </div>
         </div>
       }
 
-      @if (milestones().length === 0) {
-        <p class="text-body-md text-on-surface-variant text-center py-md">No milestones defined.</p>
-      } @else {
-        <div class="flex flex-col gap-sm">
+      @if (milestones().length === 0 && !latestPlan()) {
+        <div class="bg-white rounded-[24px] border border-outline-variant/20 p-12 text-center">
+          <p class="text-base text-on-surface-variant">No milestones yet.</p>
+          <p class="text-xs text-on-surface-variant mt-2">After Start Discussion, the developer proposes a full milestone plan here.</p>
+        </div>
+      } @else if (milestones().length > 0) {
+        <div class="flex flex-col gap-3">
           @for (m of milestones(); track m.id) {
-            <div class="card flex flex-col gap-1">
-              <div class="flex items-center justify-between gap-sm">
-                <span class="text-body-md font-semibold text-on-surface">{{ m.title }}</span>
-                <span class="text-body-md text-on-surface font-semibold">{{ m.amount | number }} USD</span>
+            <div class="bg-white rounded-[24px] border border-outline-variant/30 p-5 md:p-6 flex flex-col gap-2">
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-base font-bold text-on-surface">{{ m.title }}</span>
+                <span class="text-base font-extrabold text-on-surface">{{ m.amount | number }} USD</span>
               </div>
               @if (m.description) {
-                <p class="text-body-sm text-on-surface-variant">{{ m.description }}</p>
+                <p class="text-sm text-on-surface-variant">{{ m.description }}</p>
               }
-              <div class="flex gap-xs pt-1">
-                <span class="chip ws-chip" [class]="workStatusClass(m.workStatus)">{{ m.workStatus }}</span>
-                <span class="chip rs-chip" [class]="releaseStatusClass(m.releaseStatus)">{{ m.releaseStatus }}</span>
+              <div class="flex gap-2 pt-1 flex-wrap items-center">
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ws-chip" [class]="workStatusClass(m.workStatus)">{{ m.workStatus }}</span>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider rs-chip" [class]="releaseStatusClass(m.releaseStatus)">{{ m.releaseStatus }}</span>
+                @if (m.isFunded) {
+                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#E0F2FE] text-[#075985]">Funded</span>
+                }
+                @if (isOwner() && m.workStatus === 'Submitted' && m.releaseStatus === 'Pending') {
+                  <button
+                    type="button"
+                    class="ml-auto px-4 h-8 rounded-full bg-[#4130D7] text-white text-[11px] font-bold disabled:opacity-50"
+                    [disabled]="actionBusy()"
+                    (click)="approveRelease(m.id)"
+                  >
+                    Approve &amp; release
+                  </button>
+                }
               </div>
             </div>
           }

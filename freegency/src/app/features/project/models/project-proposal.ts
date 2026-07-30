@@ -1,6 +1,10 @@
-
-export type ProposalStatus = 'Pending' | 'Accepted' | 'Rejected' | 'Withdrawn';
-
+export type ProposalStatus =
+  | 'Pending'
+  | 'Viewed'
+  | 'InDiscussion'
+  | 'Rejected'
+  | 'Withdrawn'
+  | 'Expired';
 
 export interface ProjectProposal {
   id: string;
@@ -13,8 +17,12 @@ export interface ProjectProposal {
   applicantName: string;
   applicantAvatarUrl: string | null;
   coverLetter: string;
+  approach: string;
+  proposedTimeline: string | null;
+  portfolioUrl: string | null;
   proposedBudget: number;
   status: ProposalStatus;
+  rejectReason: string | null;
   appliedAt: string;
   responseAt: string | null;
   chatRoomId: string | null;

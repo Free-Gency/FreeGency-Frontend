@@ -1,8 +1,6 @@
-
 export type ReleaseStatus = 'Locked' | 'InReview' | 'Pending' | 'Released';
 export type WorkStatus = 'NotStarted' | 'InProgress' | 'Submitted' | 'ChangesRequested' | 'Approved';
 export type FileKind = 'Brief' | 'Deliverable' | 'Shared' | 'Other';
-
 
 export interface ProjectMilestone {
   id: string;
@@ -15,14 +13,14 @@ export interface ProjectMilestone {
   releaseStatus: ReleaseStatus;
   workStatus: WorkStatus;
   proposedByUserId: string | null;
+  dueDate: string | null;
+  isFunded: boolean;
   submittedAt: string | null;
   availableAt: string | null;
   releasedAt: string | null;
   createdAt: string;
   files: MilestoneFile[];
 }
-
-
 
 export interface MilestoneFile {
   id: string;

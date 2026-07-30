@@ -179,9 +179,21 @@ export class ManageWorkService {
       );
   }
 
-  acceptProposal(id: string): Observable<void> {
+  viewProposal(id: string): Observable<void> {
     return this.http
-      .post<ApiResponse<void>>(`${this.proposalsUrl}/${id}/accept`, {})
+      .post<ApiResponse<void>>(`${this.proposalsUrl}/${id}/view`, {})
+      .pipe(map(() => void 0));
+  }
+
+  startDiscussion(id: string): Observable<void> {
+    return this.http
+      .post<ApiResponse<void>>(`${this.proposalsUrl}/${id}/start-discussion`, {})
+      .pipe(map(() => void 0));
+  }
+
+  closeDiscussion(id: string): Observable<void> {
+    return this.http
+      .post<ApiResponse<void>>(`${this.proposalsUrl}/${id}/close-discussion`, {})
       .pipe(map(() => void 0));
   }
 
