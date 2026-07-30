@@ -106,16 +106,16 @@
           </div>
           <div class="rounded-[18px] border border-outline-variant/20 bg-[#FBFBFB] px-4 py-3">
             <p class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant/60">
-              Portfolio
+              Similar links
             </p>
-            @if (proposal.portfolioUrl) {
+            @if (proposal.similarLinksUrl) {
               <a
                 class="mt-1.5 inline-flex text-sm font-bold text-[#4130D7] hover:underline"
-                [href]="proposal.portfolioUrl"
+                [href]="proposal.similarLinksUrl"
                 target="_blank"
                 rel="noopener"
               >
-                Open portfolio ↗
+                Open similar work ↗
               </a>
             } @else {
               <p class="mt-1.5 text-sm text-on-surface-variant">Not provided</p>

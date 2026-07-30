@@ -12,7 +12,7 @@ export interface ProposalDetailModel {
   coverLetter: string;
   approach?: string | null;
   proposedTimeline?: string | null;
-  portfolioUrl?: string | null;
+  similarLinksUrl?: string | null;
   proposedBudget: number;
   status: string;
   rejectReason?: string | null;

@@ -21,7 +21,7 @@ export interface Proposal {
   coverLetter: string;
   approach: string;
   proposedTimeline: string | null;
-  portfolioUrl: string | null;
+  similarLinksUrl: string | null;
   proposedBudget: number;
   status: ProposalStatus;
   rejectReason: string | null;

@@ -1054,7 +1054,7 @@
           <div class="field"><label>Proposed timeline</label>
             <input id="fTimeline" value="7 weeks" />
           </div>
-          <div class="field"><label>Portfolio link (project-specific)</label>
+          <div class="field"><label>Similar links URL (project-specific)</label>
             <input value="https://portfolio.example/sara/dashboard" />
           </div>
         </div>
@@ -1164,7 +1164,7 @@
         </div>
         <div class="field" style="margin-top:12px"><label>Cover letter</label><div class="card">${escapeHtml(p.cover)}</div></div>
         <div class="field"><label>Approach / Tech stack</label><div class="card">${escapeHtml(p.approach)}</div></div>
-        <div class="field"><label>Portfolio</label><div class="card"><a href="#" onclick="return false">${escapeHtml(p.portfolio)}</a></div></div>
+        <div class="field"><label>Similar links</label><div class="card"><a href="#" onclick="return false">${escapeHtml(p.portfolio)}</a></div></div>
         ${p.teamRoles ? `<div class="field"><label>Team roles on this project</label><div class="card">${p.teamRoles.map(r => escapeHtml(r)).join("<br>")}</div></div>` : ""}
         <div class="card-actions">
           <button class="btn btn-primary" onclick="startDiscussion('${p.id}')"
