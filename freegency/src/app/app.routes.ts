@@ -24,6 +24,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'client/messages',
+    canActivate: [authGuard, clientModeGuard],
+    loadComponent: () =>
+      import('./features/client/pages/client-messages/client-messages.component').then(
+        (m) => m.ClientMessagesComponent,
+      ),
+  },
+  {
     path: 'client/inspiration/:id',
     canActivate: [authGuard, clientModeGuard],
     loadComponent: () =>

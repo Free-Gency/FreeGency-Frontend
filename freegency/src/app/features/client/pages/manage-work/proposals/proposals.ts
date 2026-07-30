@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal, computed, DestroyRef, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { Idea01Icon } from '@hugeicons/core-free-icons';
@@ -10,18 +11,26 @@ import {
 import { Proposal, PagedResponse } from '../../../../../shared/models/Proposal';
 import { Project } from '../../../../../shared/models/Project';
 import { ProposalAssistantComponent } from '../../../components/proposal-assistant/proposal-assistant.component';
+import { ProposalDetailDrawerComponent } from '../../../../project/components/proposal-detail-drawer/proposal-detail-drawer.component';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 
 @Component({
   selector: 'app-proposals',
   standalone: true,
-  imports: [CommonModule, HugeiconsIconComponent, ProposalAssistantComponent],
+  imports: [
+    CommonModule,
+    HugeiconsIconComponent,
+    ProposalAssistantComponent,
+    ProposalDetailDrawerComponent,
+  ],
   templateUrl: './proposals.html',
+  styleUrl: './proposals.css',
 })
 export class Proposals implements OnInit {
   private readonly manageWorkService = inject(ManageWorkService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(ToastService);
+  private readonly router = inject(Router);
   private rankingRequestId = 0;
 
   readonly ideaIcon = Idea01Icon;
@@ -46,6 +55,10 @@ export class Proposals implements OnInit {
   readonly aiSummary = signal<string | null>(null);
   /** Soft tip after accept — shown once in the assistant */
   readonly assistantAcceptTip = signal(false);
+  readonly selectedProposal = signal<Proposal | null>(null);
+  readonly detailOpen = signal(false);
+  /** Project IDs that already have an InDiscussion proposal (one discussion at a time). */
+  readonly discussionProjectIds = signal<ReadonlySet<string>>(new Set());
 
   readonly page = signal(1);
   readonly pageSize = 10;
@@ -115,6 +128,8 @@ export class Proposals implements OnInit {
     this.loadAllProposalsTotal();
   }
 
+  private discussionLockRequestId = 0;
+
   constructor() {
     effect(() => {
       const enabled = this.aiRankingEnabled();
@@ -127,6 +142,122 @@ export class Proposals implements OnInit {
         this.rankingError.set(null);
       }
     });
+
+    effect(() => {
+      this.activeProjectId();
+      this.refreshDiscussionLock();
+    });
+
+    effect(() => {
+      const list = this.proposals();
+      if (!list.length) return;
+      const current = this.discussionProjectIds();
+      let next: Set<string> | null = null;
+      for (const p of list) {
+        if (p.status === 'InDiscussion' && !current.has(p.projectId)) {
+          if (!next) next = new Set(current);
+          next.add(p.projectId);
+        }
+      }
+      if (next) this.discussionProjectIds.set(next);
+    });
+  }
+
+  private refreshDiscussionLock(): void {
+    const requestId = ++this.discussionLockRequestId;
+    const projectId = this.activeProjectId() || undefined;
+    this.manageWorkService
+      .getProposals({
+        projectId,
+        status: 'InDiscussion',
+        pageNumber: 1,
+        pageSize: 100,
+      })
+      .subscribe({
+        next: (page) => {
+          if (requestId !== this.discussionLockRequestId) return;
+          const ids = new Set(page.items.map((p) => p.projectId));
+          for (const p of this.proposals()) {
+            if (p.status === 'InDiscussion') ids.add(p.projectId);
+          }
+          this.discussionProjectIds.set(ids);
+        },
+        error: () => undefined,
+      });
+  }
+
+  hasActiveDiscussionFor(proposal: Proposal): boolean {
+    return this.discussionProjectIds().has(proposal.projectId);
+  }
+
+  canStartDiscussion(proposal: Proposal): boolean {
+    return (
+      (proposal.status === 'Pending' || proposal.status === 'Viewed') &&
+      !this.hasActiveDiscussionFor(proposal)
+    );
+  }
+
+  cleanDisplayText(value: string | null | undefined): string {
+    if (!value?.trim()) return '';
+    return value
+      .replace(/\u00C2·/g, '·')
+      .replace(/Â·/g, '·')
+      .replace(/â€"/g, '–')
+      .replace(/â€“/g, '–')
+      .replace(/\u00C2\u00A0/g, ' ')
+      .replace(/[\u2013\u2014]/g, '–')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  getSkills(proposal: Proposal): string[] {
+    const fromApi = (proposal.skills ?? []).map((s) => s.trim()).filter(Boolean);
+    if (fromApi.length) return fromApi.slice(0, 6);
+    return this.tagsFromApproach(proposal.approach).slice(0, 6);
+  }
+
+  getSpecialties(proposal: Proposal): string[] {
+    return (proposal.specialties ?? []).map((s) => s.trim()).filter(Boolean).slice(0, 4);
+  }
+
+  tagsFromApproach(approach: string | null | undefined): string[] {
+    const cleaned = this.cleanDisplayText(approach);
+    if (!cleaned) return [];
+    return cleaned
+      .split(/[·•|,+/]+/)
+      .map((t) => t.trim())
+      .filter((t) => t.length > 1 && t.length < 40);
+  }
+
+  statusChipClass(status: string): string {
+    const map: Record<string, string> = {
+      Pending: 'status-pending',
+      Viewed: 'status-viewed',
+      InDiscussion: 'status-discussion',
+      Rejected: 'status-rejected',
+      Withdrawn: 'status-withdrawn',
+      Expired: 'status-expired',
+    };
+    return map[status] ?? 'status-pending';
+  }
+
+  statusLabel(status: string): string {
+    return status === 'InDiscussion' ? 'IN DISCUSSION' : status.toUpperCase();
+  }
+
+  canOpenMessages(proposal: Proposal): boolean {
+    return proposal.status === 'InDiscussion' && !!proposal.chatRoomId;
+  }
+
+  goToMessages(chatRoomId: string): void {
+    void this.router.navigate(['/client/messages'], {
+      queryParams: { room: chatRoomId },
+    });
+  }
+
+  onDrawerGoToMessages(chatRoomId: string): void {
+    this.closeDetail();
+    this.goToMessages(chatRoomId);
   }
 
   loadProjects(): void {
@@ -277,6 +408,46 @@ export class Proposals implements OnInit {
     return this.rankingById()[proposal.id.toLowerCase()]?.rank ?? null;
   }
 
+  openDetail(proposal: Proposal): void {
+    this.selectedProposal.set(proposal);
+    this.detailOpen.set(true);
+    if (proposal.status === 'Pending') {
+      this.manageWorkService
+        .viewProposal(proposal.id)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: () => {
+            this.selectedProposal.update((p) =>
+              p && p.id === proposal.id ? { ...p, status: 'Viewed' } : p,
+            );
+            this.proposalsResource.reload();
+          },
+        });
+    }
+  }
+
+  closeDetail(): void {
+    this.detailOpen.set(false);
+    this.selectedProposal.set(null);
+  }
+
+  canStartFromDetail(proposal: Proposal | null): boolean {
+    return !!proposal && this.canStartDiscussion(proposal);
+  }
+
+  canCloseFromDetail(proposal: Proposal | null): boolean {
+    return !!proposal && proposal.status === 'InDiscussion';
+  }
+
+  canRejectFromDetail(proposal: Proposal | null): boolean {
+    return (
+      !!proposal &&
+      (proposal.status === 'Pending' ||
+        proposal.status === 'Viewed' ||
+        proposal.status === 'InDiscussion')
+    );
+  }
+
   startDiscussion(proposal: Proposal): void {
     this.actionInProgress.set(proposal.id);
     this.manageWorkService.startDiscussion(proposal.id)
@@ -285,7 +456,9 @@ export class Proposals implements OnInit {
         next: () => {
           this.actionInProgress.set(null);
           this.assistantAcceptTip.set(true);
+          this.closeDetail();
           this.proposalsResource.reload();
+          this.refreshDiscussionLock();
           if (this.aiRankingEnabled() && this.activeProjectId()) {
             this.loadRanking(this.activeProjectId());
           }
@@ -294,13 +467,23 @@ export class Proposals implements OnInit {
       });
   }
 
+  onDrawerStartDiscussion(id: string): void {
+    const proposal = this.selectedProposal() ?? this.proposals().find((p) => p.id === id);
+    if (proposal) this.startDiscussion(proposal);
+  }
+
+  onDrawerCloseDiscussion(id: string): void {
+    const proposal = this.selectedProposal() ?? this.proposals().find((p) => p.id === id);
+    if (proposal) this.closeDiscussion(proposal);
+  }
+
+  onDrawerReject(id: string): void {
+    const proposal = this.selectedProposal() ?? this.proposals().find((p) => p.id === id);
+    if (proposal) this.reject(proposal);
+  }
+
   viewProposal(proposal: Proposal): void {
-    if (proposal.status !== 'Pending') return;
-    this.manageWorkService.viewProposal(proposal.id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => this.proposalsResource.reload(),
-      });
+    this.openDetail(proposal);
   }
 
   closeDiscussion(proposal: Proposal): void {
@@ -310,7 +493,9 @@ export class Proposals implements OnInit {
       .subscribe({
         next: () => {
           this.actionInProgress.set(null);
+          this.closeDetail();
           this.proposalsResource.reload();
+          this.refreshDiscussionLock();
         },
         error: () => this.actionInProgress.set(null),
       });
@@ -333,7 +518,11 @@ export class Proposals implements OnInit {
     chatRoomId?: string | null;
     name: string;
   }): void {
-    this.toast.success(`Messaging ${event.name} will open once chat is connected.`);
+    if (event.chatRoomId) {
+      this.goToMessages(event.chatRoomId);
+      return;
+    }
+    this.toast.success(`Start a discussion with ${event.name} first to open messages.`);
   }
 
   reject(proposal: Proposal): void {
@@ -343,7 +532,9 @@ export class Proposals implements OnInit {
       .subscribe({
         next: () => {
           this.actionInProgress.set(null);
+          this.closeDetail();
           this.proposalsResource.reload();
+          this.refreshDiscussionLock();
           if (this.aiRankingEnabled() && this.activeProjectId()) {
             this.loadRanking(this.activeProjectId());
           }

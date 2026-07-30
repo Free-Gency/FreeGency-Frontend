@@ -1,3 +1,31 @@
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0.6;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.drawer-backdrop {
+  animation: fade-in 0.18s ease;
+}
+
+.drawer-panel {
+  animation: slide-in 0.22s ease;
+}
+
 .status-pending {
   background-color: #f0edef;
   color: #464555;
@@ -27,4 +55,3 @@
   background-color: #f5e6ff;
   color: #6b2d8b;
 }
-

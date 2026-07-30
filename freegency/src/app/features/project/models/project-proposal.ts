@@ -27,4 +27,6 @@ export interface ProjectProposal {
   responseAt: string | null;
   chatRoomId: string | null;
   attachmentUrls: string[];
+  skills?: string[] | null;
+  specialties?: string[] | null;
 }

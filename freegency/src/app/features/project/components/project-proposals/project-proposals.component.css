@@ -28,10 +28,6 @@
   color: #6b2d8b;
 }
 
-.proposal-card-pending {
-  border-left: 3px solid #4130d7;
-}
-
 .proposal-skeleton {
   background: linear-gradient(
     90deg,

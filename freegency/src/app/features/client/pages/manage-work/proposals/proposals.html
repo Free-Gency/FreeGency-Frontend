@@ -249,7 +249,7 @@
                     {{ getApplicantDisplayName(proposal) }}
                   </h3>
                   <span class="text-xs text-on-surface-variant/70 font-normal">
-                    ({{ proposal.applicantType || 'Individual' }})
+                    ({{ proposal.applicantType === 'Team' ? 'Team' : 'Individual' }})
                   </span>
                 </div>
 
@@ -261,7 +261,9 @@
                     >({{ getFakeReviewCount(proposal) }} reviews)</span
                   >
                   <span class="text-on-surface-variant/40">·</span>
-                  <a href="javascript:void(0)" class="text-[#4130D7] font-semibold hover:underline"
+                  <a
+                    href="javascript:void(0)"
+                    class="text-[#4130D7] font-semibold hover:underline"
                     >View profile</a
                   >
                 </div>
@@ -289,70 +291,132 @@
             {{ proposal.coverLetter }}
           </p>
 
+          @if (proposal.proposedTimeline || getSpecialties(proposal).length || getSkills(proposal).length || proposal.approach) {
+            <div class="flex flex-wrap gap-2">
+              @if (proposal.proposedTimeline) {
+                <span
+                  class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#E8F0FF] text-[#1A4A9C]"
+                >
+                  {{ cleanDisplayText(proposal.proposedTimeline) }}
+                </span>
+              }
+              @for (spec of getSpecialties(proposal); track spec) {
+                <span
+                  class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#E3DFFF] text-[#110068]"
+                >
+                  {{ spec }}
+                </span>
+              }
+              @for (skill of getSkills(proposal).slice(0, 4); track skill) {
+                <span
+                  class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#F0EDEF] text-on-surface"
+                >
+                  {{ skill }}
+                </span>
+              }
+            </div>
+          }
+
           @if (aiRankingEnabled() && getAiReasoning(proposal); as reasoning) {
             <p
-              class="inline-flex items-start gap-1.5 text-xs font-medium text-[#4130D7] bg-[#EAE5FF]/60 rounded-2xl px-3 py-2 leading-relaxed"
+              class="inline-flex items-start gap-1.5 w-full text-xs font-medium text-[#4130D7] bg-[#EAE5FF]/60 rounded-2xl px-3 py-2 leading-relaxed"
             >
               <span class="shrink-0">✨</span>
-              <span>{{ reasoning }}</span>
+              <span class="line-clamp-2 min-w-0">{{ reasoning }}</span>
             </p>
           }
 
+          @if (proposal.status === 'Rejected' && proposal.rejectReason) {
+            <div class="rounded-2xl bg-error-container/35 px-3.5 py-2.5">
+              <p class="text-[10px] font-bold uppercase tracking-wider text-on-error-container/80">
+                Rejection reason
+              </p>
+              <p class="mt-1 text-xs font-semibold text-on-error-container leading-relaxed">
+                {{ proposal.rejectReason }}
+              </p>
+            </div>
+          }
+
           @if (proposal.status === 'Pending' || proposal.status === 'Viewed') {
-            <div
-              class="pt-2 border-t border-outline-variant/15 flex items-center justify-end gap-3"
-            >
-              <button
-                class="px-6 h-9 rounded-full border border-outline-variant/60 text-xs font-bold text-on-surface hover:bg-surface-container-low transition-colors"
-                [disabled]="actionInProgress() === proposal.id"
-                (click)="reject(proposal)"
-              >
-                Decline
-              </button>
-              @if (proposal.status === 'Pending') {
+            <div class="pt-2 border-t border-outline-variant/15 flex flex-col items-end gap-2">
+              <div class="flex flex-wrap items-center justify-end gap-2">
                 <button
-                  class="px-6 h-9 rounded-full border border-outline-variant/60 text-xs font-bold text-on-surface hover:bg-surface-container-low transition-colors"
-                  [disabled]="actionInProgress() === proposal.id"
-                  (click)="viewProposal(proposal)"
+                  type="button"
+                  class="h-9 px-5 rounded-full border border-outline-variant/60 text-xs font-bold text-on-surface hover:bg-surface-container-low transition-colors"
+                  (click)="openDetail(proposal)"
                 >
-                  View
+                  View Proposal
                 </button>
-              }
-              <button
-                class="px-6 h-9 rounded-full bg-[#4130D7] hover:bg-[#5B4FF0] text-xs font-bold text-white transition-colors"
-                [disabled]="actionInProgress() === proposal.id"
-                (click)="startDiscussion(proposal)"
-              >
-                Start Discussion
-              </button>
+                <button
+                  type="button"
+                  class="h-9 px-5 rounded-full border border-outline-variant/60 text-xs font-bold text-on-surface hover:bg-surface-container-low transition-colors disabled:opacity-50"
+                  [disabled]="actionInProgress() === proposal.id"
+                  (click)="reject(proposal)"
+                >
+                  Decline
+                </button>
+                @if (canStartDiscussion(proposal)) {
+                  <button
+                    type="button"
+                    class="h-9 px-5 rounded-full bg-[#4130D7] hover:bg-[#5B4FF0] text-xs font-bold text-white transition-colors disabled:opacity-50"
+                    [disabled]="actionInProgress() === proposal.id"
+                    (click)="startDiscussion(proposal)"
+                  >
+                    Start Discussion
+                  </button>
+                }
+              </div>
             </div>
           } @else if (proposal.status === 'InDiscussion') {
-            <div
-              class="pt-2 border-t border-outline-variant/15 flex items-center justify-end gap-3"
-            >
-              <button
-                class="px-6 h-9 rounded-full border border-outline-variant/60 text-xs font-bold text-on-surface hover:bg-surface-container-low transition-colors"
-                [disabled]="actionInProgress() === proposal.id"
-                (click)="closeDiscussion(proposal)"
-              >
-                Close Discussion
-              </button>
+            <div class="pt-2 border-t border-outline-variant/15 flex flex-col items-end gap-2">
+              <div class="flex flex-wrap items-center justify-end gap-2">
+                <button
+                  type="button"
+                  class="h-9 px-5 rounded-full border border-outline-variant/60 text-xs font-bold text-on-surface hover:bg-surface-container-low transition-colors"
+                  (click)="openDetail(proposal)"
+                >
+                  View Proposal
+                </button>
+                @if (canOpenMessages(proposal)) {
+                  <button
+                    type="button"
+                    class="h-9 px-5 rounded-full bg-[#4130D7] hover:bg-[#5B4FF0] text-xs font-bold text-white transition-colors"
+                    (click)="goToMessages(proposal.chatRoomId!)"
+                  >
+                    Go to messages
+                  </button>
+                }
+                <button
+                  type="button"
+                  class="h-9 px-5 rounded-full border border-outline-variant/60 text-xs font-bold text-on-surface hover:bg-surface-container-low transition-colors disabled:opacity-50"
+                  [disabled]="actionInProgress() === proposal.id"
+                  (click)="closeDiscussion(proposal)"
+                >
+                  Close Discussion
+                </button>
+              </div>
               <span
-                class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#E3DFFF] text-[#110068]"
+                class="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider"
+                [class]="statusChipClass(proposal.status)"
               >
-                In Discussion
+                {{ statusLabel(proposal.status) }}
               </span>
             </div>
           } @else {
-            <div class="pt-2 border-t border-outline-variant/15 flex flex-col items-end gap-1">
-              <span
-                class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-surface-container-high text-on-surface-variant"
+            <div class="pt-2 border-t border-outline-variant/15 flex flex-col items-end gap-2">
+              <button
+                type="button"
+                class="h-9 px-5 rounded-full border border-outline-variant/60 text-xs font-bold text-on-surface hover:bg-surface-container-low transition-colors"
+                (click)="openDetail(proposal)"
               >
-                {{ proposal.status }}
+                View Proposal
+              </button>
+              <span
+                class="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider"
+                [class]="statusChipClass(proposal.status)"
+              >
+                {{ statusLabel(proposal.status) }}
               </span>
-              @if (proposal.rejectReason) {
-                <span class="text-[11px] text-error text-right max-w-xs">{{ proposal.rejectReason }}</span>
-              }
             </div>
           }
         </div>
@@ -418,3 +482,17 @@
     (messageApplicant)="onAssistantMessage($event)"
   />
 }
+
+<app-proposal-detail-drawer
+  [open]="detailOpen()"
+  [proposal]="selectedProposal()"
+  [busy]="actionInProgress() !== null"
+  [canStartDiscussion]="canStartFromDetail(selectedProposal())"
+  [canCloseDiscussion]="canCloseFromDetail(selectedProposal())"
+  [canReject]="canRejectFromDetail(selectedProposal())"
+  (closed)="closeDetail()"
+  (startDiscussion)="onDrawerStartDiscussion($event)"
+  (closeDiscussion)="onDrawerCloseDiscussion($event)"
+  (reject)="onDrawerReject($event)"
+  (goToMessages)="onDrawerGoToMessages($event)"
+/>

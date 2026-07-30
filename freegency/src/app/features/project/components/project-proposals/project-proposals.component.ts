@@ -1,21 +1,25 @@
 import { Component, computed, inject, input, output, signal, OnInit, OnDestroy } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { ProjectProposalsApiService } from '../../data-access/project-proposals-api.service';
 import { ProjectStatus } from '../../models/project-detail';
 import { ProjectProposal, ProposalStatus } from '../../models/project-proposal';
+import { ProposalDetailDrawerComponent } from '../proposal-detail-drawer/proposal-detail-drawer.component';
 
 type SortOption = 'newest' | 'budget-high' | 'budget-low';
 type StatusFilter = 'All' | ProposalStatus;
 
 @Component({
   selector: 'app-project-proposals',
-  imports: [DecimalPipe, FormsModule],
+  imports: [DecimalPipe, FormsModule, ProposalDetailDrawerComponent],
   templateUrl: './project-proposals.component.html',
   styleUrl: './project-proposals.component.css',
 })
 export class ProjectProposalsComponent implements OnInit, OnDestroy {
+  private readonly proposalsApi = inject(ProjectProposalsApiService);
+  private readonly router = inject(Router);
   readonly projectId = input.required<string>();
   readonly projectStatus = input.required<ProjectStatus>();
   readonly isOwner = input(false);
@@ -28,10 +32,9 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
   protected readonly loading = signal(true);
   protected readonly actionId = signal<string | null>(null);
   protected readonly actionError = signal<string | null>(null);
-  protected readonly expandedIds = signal<Set<string>>(new Set());
-  /** True when any proposal is In Discussion — only one allowed. */
+  protected readonly selectedProposal = signal<ProjectProposal | null>(null);
+  protected readonly detailOpen = signal(false);
   protected readonly hasActiveDiscussion = signal(false);
-  /** True after hire (project InProgress) — discussion actions locked. */
   protected readonly isHired = computed(() => this.projectStatus() === 'InProgress');
 
   protected readonly searchTerm = signal('');
@@ -56,12 +59,26 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
     { key: 'budget-low', label: 'Lowest Budget' },
   ];
 
-  private readonly proposalsApi = inject(ProjectProposalsApiService);
   private readonly search$ = new Subject<string>();
 
   protected readonly canManageDiscussion = computed(
     () => this.isOwner() && this.projectStatus() === 'Open' && !this.isHired(),
   );
+
+  protected readonly selectedCanStart = computed(() => {
+    const p = this.selectedProposal();
+    return !!p && this.canShowStartDiscussion(p);
+  });
+
+  protected readonly selectedCanClose = computed(() => {
+    const p = this.selectedProposal();
+    return !!p && this.canShowCloseDiscussion(p);
+  });
+
+  protected readonly selectedCanReject = computed(() => {
+    const p = this.selectedProposal();
+    return !!p && this.canShowReject(p);
+  });
 
   ngOnInit() {
     this.refreshDiscussionLock();
@@ -136,6 +153,13 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
             this.hasActiveDiscussion.set(true);
           }
 
+          const selectedId = this.selectedProposal()?.id;
+          if (selectedId) {
+            const refreshed = result.items.find((p) => p.id === selectedId) ?? null;
+            this.selectedProposal.set(refreshed);
+            if (!refreshed) this.detailOpen.set(false);
+          }
+
           if (this.isDefaultFilter) {
             this.countChanged.emit(result.totalCount);
           }
@@ -162,16 +186,32 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
       });
   }
 
-  protected canShowView(p: ProjectProposal): boolean {
-    return this.canManageDiscussion() && p.status === 'Pending';
-  }
-
   protected canShowStartDiscussion(p: ProjectProposal): boolean {
     return (
       this.canManageDiscussion() &&
       (p.status === 'Pending' || p.status === 'Viewed') &&
       !this.hasActiveDiscussion()
     );
+  }
+
+  protected cleanDisplayText(value: string | null | undefined): string {
+    if (!value?.trim()) return '';
+    return value
+      .replace(/\u00C2·/g, '·')
+      .replace(/Â·/g, '·')
+      .replace(/â€"/g, '–')
+      .replace(/â€“/g, '–')
+      .replace(/\u00C2\u00A0/g, ' ')
+      .replace(/[\u2013\u2014]/g, '–')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  protected goToMessages(chatRoomId: string): void {
+    this.closeDetail();
+    void this.router.navigate(['/client/messages'], {
+      queryParams: { room: chatRoomId },
+    });
   }
 
   protected canShowCloseDiscussion(p: ProjectProposal): boolean {
@@ -185,27 +225,27 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
     );
   }
 
-  protected isExpanded(id: string): boolean {
-    return this.expandedIds().has(id);
-  }
-
-  protected toggleExpand(id: string) {
-    const next = new Set(this.expandedIds());
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    this.expandedIds.set(next);
-    // Viewing details marks Pending → Viewed
-    const p = this.proposals().find((x) => x.id === id);
-    if (p && p.status === 'Pending' && this.isOwner()) {
-      this.viewProposal(id);
+  protected openDetail(p: ProjectProposal) {
+    this.selectedProposal.set(p);
+    this.detailOpen.set(true);
+    if (this.isOwner() && p.status === 'Pending') {
+      this.markViewed(p.id);
     }
   }
 
-  protected viewProposal(id: string) {
+  protected closeDetail() {
+    this.detailOpen.set(false);
+    this.selectedProposal.set(null);
+  }
+
+  private markViewed(id: string) {
     this.proposalsApi.view(id).subscribe({
       next: () => {
         this.proposals.update((list) =>
           list.map((p) => (p.id === id && p.status === 'Pending' ? { ...p, status: 'Viewed' } : p)),
+        );
+        this.selectedProposal.update((p) =>
+          p && p.id === id && p.status === 'Pending' ? { ...p, status: 'Viewed' } : p,
         );
       },
       error: () => {},
@@ -213,7 +253,7 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
   }
 
   protected startDiscussion(id: string) {
-    const target = this.proposals().find((p) => p.id === id);
+    const target = this.proposals().find((p) => p.id === id) ?? this.selectedProposal();
     if (!target || !this.canShowStartDiscussion(target)) return;
 
     this.actionId.set(id);
@@ -223,6 +263,7 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
         this.actionId.set(null);
         this.hasActiveDiscussion.set(true);
         this.proposalsChanged.emit();
+        this.closeDetail();
         this.loadProposals();
       },
       error: (err) => {
@@ -242,6 +283,7 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
         this.actionId.set(null);
         this.hasActiveDiscussion.set(false);
         this.proposalsChanged.emit();
+        this.closeDetail();
         this.loadProposals();
       },
       error: (err) => {
@@ -259,6 +301,7 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
         this.actionId.set(null);
         this.proposalsChanged.emit();
         this.refreshDiscussionLock();
+        this.closeDetail();
         this.loadProposals();
       },
       error: (err) => {
