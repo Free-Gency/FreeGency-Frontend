@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 
 /** Minimal shape shared by manage-work + project proposal models. */
@@ -6,7 +6,9 @@ export interface ProposalDetailModel {
   id: string;
   projectTitle?: string;
   applicantType: string;
+  teamId?: string | null;
   teamName?: string | null;
+  userId?: string | null;
   applicantName?: string | null;
   applicantAvatarUrl?: string | null;
   coverLetter: string;
@@ -45,11 +47,24 @@ export class ProposalDetailDrawerComponent {
   readonly closeDiscussion = output<string>();
   readonly reject = output<string>();
   readonly goToMessages = output<string>();
+  readonly viewProfile = output<{ userId?: string | null; teamId?: string | null; name: string }>();
 
   protected readonly p = computed(() => this.proposal());
 
   protected displayName(p: ProposalDetailModel): string {
     return p.applicantName?.trim() || p.teamName?.trim() || 'Applicant';
+  }
+
+  protected attachments(p: ProposalDetailModel): string[] {
+    return (p.attachmentUrls ?? []).filter((url) => !!url?.trim());
+  }
+
+  protected openProfile(p: ProposalDetailModel): void {
+    this.viewProfile.emit({
+      userId: p.userId ?? null,
+      teamId: p.teamId ?? null,
+      name: this.displayName(p),
+    });
   }
 
   protected initials(p: ProposalDetailModel): string {
@@ -97,13 +112,16 @@ export class ProposalDetailDrawerComponent {
   }
 
   protected skills(p: ProposalDetailModel): string[] {
-    const fromApi = (p.skills ?? []).map((s) => s.trim()).filter(Boolean);
-    if (fromApi.length) return fromApi.slice(0, 8);
-    return this.tagsFromApproach(p.approach).slice(0, 8);
+    return (p.skills ?? []).map((s) => s.trim()).filter(Boolean).slice(0, 10);
   }
 
   protected specialties(p: ProposalDetailModel): string[] {
-    return (p.specialties ?? []).map((s) => s.trim()).filter(Boolean).slice(0, 6);
+    return (p.specialties ?? []).map((s) => s.trim()).filter(Boolean).slice(0, 8);
+  }
+
+  protected approachTags(p: ProposalDetailModel): string[] {
+    if (this.skills(p).length) return [];
+    return this.tagsFromApproach(p.approach).slice(0, 8);
   }
 
   protected tagsFromApproach(approach: string | null | undefined): string[] {

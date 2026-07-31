@@ -505,12 +505,24 @@ export class Proposals implements OnInit {
     this.assistantAcceptTip.set(false);
   }
 
-  onAssistantViewProfile(event: { userId?: string | null; teamId?: string | null }): void {
+  onDrawerViewProfile(event: {
+    userId?: string | null;
+    teamId?: string | null;
+    name: string;
+  }): void {
+    this.onAssistantViewProfile(event);
+  }
+
+  onAssistantViewProfile(event: { userId?: string | null; teamId?: string | null; name?: string }): void {
     if (event.teamId) {
-      this.toast.success('Open this team from the proposal card to view the full profile.');
+      this.toast.success(
+        `Team profile for ${event.name ?? 'this team'} will open once the public profile page is connected.`,
+      );
       return;
     }
-    this.toast.success('Open this applicant from the proposal card to view the full profile.');
+    this.toast.success(
+      `Profile for ${event.name ?? 'this applicant'} will open once the public profile page is connected.`,
+    );
   }
 
   onAssistantMessage(event: {

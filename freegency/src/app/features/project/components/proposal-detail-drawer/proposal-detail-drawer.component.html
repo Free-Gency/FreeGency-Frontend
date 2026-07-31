@@ -1,272 +1,380 @@
 @if (open() && p(); as proposal) {
   <div
-    class="drawer-backdrop fixed inset-0 z-[80] flex justify-end bg-black/40"
+    class="drawer-backdrop fixed inset-0 z-[80] flex justify-end bg-[#1B1B1D]/50 backdrop-blur-[3px]"
     role="presentation"
     (click)="onBackdrop($event)"
   >
     <aside
-      class="drawer-panel flex h-full w-full max-w-[520px] flex-col bg-white shadow-[-12px_0_40px_rgba(27,27,29,0.14)]"
+      class="drawer-panel flex h-full w-full max-w-[560px] flex-col overflow-hidden bg-[#F7F5F2]"
       role="dialog"
       aria-modal="true"
       [attr.aria-label]="'Proposal from ' + displayName(proposal)"
       (click)="$event.stopPropagation()"
     >
-      <header class="shrink-0 border-b border-outline-variant/20 px-5 pb-4 pt-5 sm:px-6">
-        <div class="flex items-start justify-between gap-3">
-          <div class="min-w-0">
-            <p class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant/60">
+      <!-- Top bar only stays fixed -->
+      <div class="drawer-chrome shrink-0">
+        <div class="flex items-center justify-between gap-3 px-5 py-4 sm:px-6">
+          <div class="flex items-center gap-2">
+            <span class="chrome-dot" aria-hidden="true"></span>
+            <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#4130D7]">
               Proposal detail
             </p>
-            <h2 class="mt-1 text-xl font-extrabold text-on-surface leading-snug">
-              {{ displayName(proposal) }}
-            </h2>
-            @if (proposal.projectTitle) {
-              <p class="mt-1 truncate text-sm text-on-surface-variant">
-                {{ proposal.projectTitle }}
-              </p>
-            }
           </div>
           <button
             type="button"
-            class="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full border border-outline-variant/40 bg-white text-on-surface-variant transition-colors hover:bg-[#F0EDEF]"
+            class="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full border border-[#E0D9CE] bg-white text-on-surface-variant transition hover:bg-[#F0EDEF]"
             (click)="closed.emit()"
             aria-label="Close"
           >
-            ✕
+            <span class="material-symbols-outlined text-[18px]">close</span>
           </button>
         </div>
+      </div>
 
-        <div class="mt-3 flex flex-wrap items-center gap-2">
-          <span
-            class="inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
-            [class]="statusChipClass(proposal.status)"
-          >
-            {{ statusLabel(proposal.status) }}
-          </span>
-          <span
-            class="inline-flex rounded-full bg-[#F0EDEF] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant"
-          >
-            {{ proposal.applicantType === 'Team' ? 'Team' : 'Individual' }}
-          </span>
-          <span class="text-xs text-on-surface-variant/70">
-            Applied {{ formatDate(proposal.appliedAt) }}
-          </span>
-        </div>
-      </header>
-
+      <!-- Scroll body — identity scrolls with content -->
       <div class="flex min-h-0 flex-1 flex-col gap-4 overflow-auto px-5 py-5 sm:px-6">
-        <div class="flex items-start justify-between gap-3">
-          <div class="flex items-start gap-3 min-w-0">
-            @if (proposal.applicantAvatarUrl) {
-              <img
-                class="size-12 shrink-0 rounded-full object-cover"
-                [src]="proposal.applicantAvatarUrl"
-                [alt]="displayName(proposal)"
-              />
-            } @else {
-              <div
-                class="inline-flex size-12 shrink-0 items-center justify-center rounded-full bg-[#E3DFFF] text-sm font-bold text-[#4130D7]"
-              >
-                {{ initials(proposal) }}
+        <header>
+          <div class="identity-card">
+            <div class="identity-glow" aria-hidden="true"></div>
+
+            <div class="relative flex items-start gap-4">
+              @if (proposal.applicantAvatarUrl) {
+                <img
+                  class="size-16 shrink-0 rounded-full object-cover ring-[3px] ring-white shadow-md"
+                  [src]="proposal.applicantAvatarUrl"
+                  [alt]="displayName(proposal)"
+                />
+              } @else {
+                <div
+                  class="inline-flex size-16 shrink-0 items-center justify-center rounded-full bg-[#4130D7] text-lg font-extrabold text-white shadow-md ring-[3px] ring-white"
+                >
+                  {{ initials(proposal) }}
+                </div>
+              }
+
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-start justify-between gap-2">
+                  <h2 class="text-[1.35rem] font-extrabold leading-snug tracking-[-0.03em] text-on-surface">
+                    {{ displayName(proposal) }}
+                  </h2>
+                  <button
+                    type="button"
+                    class="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-[#4130D7]/30 bg-white/90 px-3 text-[11px] font-bold text-[#4130D7] shadow-sm transition hover:bg-[#E3DFFF]"
+                    (click)="openProfile(proposal)"
+                  >
+                    <span class="material-symbols-outlined text-[15px]">person</span>
+                    View profile
+                  </button>
+                </div>
+
+                @if (proposal.projectTitle) {
+                  <p class="mt-1 truncate text-sm font-medium text-on-surface-variant">
+                    {{ proposal.projectTitle }}
+                  </p>
+                }
+
+                <p class="mt-1.5 text-xs text-on-surface-variant/75">
+                  {{
+                    proposal.applicantType === 'Team'
+                      ? 'Agency / team delivery'
+                      : 'Independent freelancer'
+                  }}
+                  · Applied {{ formatDate(proposal.appliedAt) }}
+                </p>
+
+                <div class="mt-3 flex flex-wrap items-center gap-2">
+                  <span
+                    class="inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider"
+                    [class]="statusChipClass(proposal.status)"
+                  >
+                    {{ statusLabel(proposal.status) }}
+                  </span>
+                  <span
+                    class="inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant shadow-sm"
+                  >
+                    <span class="material-symbols-outlined text-[12px]">
+                      {{ proposal.applicantType === 'Team' ? 'groups' : 'person' }}
+                    </span>
+                    {{ proposal.applicantType === 'Team' ? 'Team' : 'Individual' }}
+                  </span>
+                </div>
               </div>
-            }
+            </div>
+
+            <div class="budget-strip relative mt-5">
+              <div class="min-w-0">
+                <p class="text-[10px] font-bold uppercase tracking-[0.08em] text-white/65">
+                  Proposed budget
+                </p>
+                <p class="mt-0.5 flex items-baseline gap-1.5">
+                  <span class="text-[1.75rem] font-extrabold tracking-[-0.04em] text-white">
+                    {{ proposal.proposedBudget | number }}
+                  </span>
+                  <span class="text-sm font-semibold text-white/75">USD</span>
+                </p>
+              </div>
+
+              <div class="flex shrink-0 flex-col items-end gap-2">
+                @if (proposal.proposedTimeline) {
+                  <div class="rounded-2xl bg-white/15 px-3.5 py-2 text-right backdrop-blur-sm">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-white/65">
+                      Timeline
+                    </p>
+                    <p class="text-sm font-bold text-white">{{ proposal.proposedTimeline }}</p>
+                  </div>
+                }
+                <span class="budget-lime-tag">Offer</span>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- Meta row -->
+        <div class="grid gap-3 sm:grid-cols-2">
+          <div class="meta-tile">
+            <span class="meta-icon material-symbols-outlined">schedule</span>
             <div class="min-w-0">
-              <p class="text-base font-bold text-on-surface">{{ displayName(proposal) }}</p>
-              <p class="mt-0.5 text-sm text-on-surface-variant">
-                {{
-                  proposal.applicantType === 'Team'
-                    ? 'Agency / team delivery'
-                    : 'Independent freelancer'
-                }}
+              <p class="section-label">Timeline</p>
+              <p class="mt-1 truncate text-sm font-semibold text-on-surface">
+                {{ proposal.proposedTimeline || 'Not specified' }}
               </p>
             </div>
           </div>
-
-          <div class="flex flex-col items-end gap-1 shrink-0">
-            <span
-              class="px-3 py-1.5 rounded-full text-sm font-extrabold bg-[#D8F272] text-[#2B3800]"
-            >
-              {{ proposal.proposedBudget | number }}
-              <span class="text-[10px] font-bold opacity-80">USD</span>
-            </span>
-            <span class="text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/60">
-              Bid
-            </span>
+          <div class="meta-tile">
+            <span class="meta-icon material-symbols-outlined">link</span>
+            <div class="min-w-0">
+              <p class="section-label">Similar links</p>
+              @if (proposal.similarLinksUrl) {
+                <a
+                  class="mt-1 inline-flex items-center gap-1 truncate text-sm font-bold text-[#4130D7] hover:underline"
+                  [href]="proposal.similarLinksUrl"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  Open similar work
+                  <span class="material-symbols-outlined text-[14px]">north_east</span>
+                </a>
+              } @else {
+                <p class="mt-1 text-sm text-on-surface-variant">Not provided</p>
+              }
+            </div>
           </div>
         </div>
 
-        <div class="grid gap-3 sm:grid-cols-2">
-          <div class="rounded-[18px] border border-outline-variant/20 bg-[#FBFBFB] px-4 py-3">
-            <p class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant/60">
-              Timeline
-            </p>
-            <p class="mt-1.5 text-sm font-semibold text-on-surface">
-              {{ proposal.proposedTimeline || 'Not specified' }}
-            </p>
+        <!-- Specialties & skills -->
+        <section class="section-card">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="section-icon material-symbols-outlined">workspace_premium</span>
+              <p class="section-label !tracking-[0.05em]">Specialties</p>
+            </div>
+            <span class="count-pill">{{ specialties(proposal).length || 0 }}</span>
           </div>
-          <div class="rounded-[18px] border border-outline-variant/20 bg-[#FBFBFB] px-4 py-3">
-            <p class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant/60">
-              Similar links
-            </p>
-            @if (proposal.similarLinksUrl) {
-              <a
-                class="mt-1.5 inline-flex text-sm font-bold text-[#4130D7] hover:underline"
-                [href]="proposal.similarLinksUrl"
-                target="_blank"
-                rel="noopener"
-              >
-                Open similar work ↗
-              </a>
-            } @else {
-              <p class="mt-1.5 text-sm text-on-surface-variant">Not provided</p>
-            }
-          </div>
-        </div>
+          @if (specialties(proposal).length) {
+            <div class="mt-3 flex flex-wrap gap-2">
+              @for (spec of specialties(proposal); track spec) {
+                <span class="chip-specialty">{{ spec }}</span>
+              }
+            </div>
+          } @else {
+            <p class="mt-2.5 text-sm text-on-surface-variant">No specialties listed yet.</p>
+          }
 
-        @if (specialties(proposal).length || skills(proposal).length) {
-          <section class="rounded-[18px] border border-outline-variant/20 bg-white px-4 py-3">
-            @if (specialties(proposal).length) {
-              <p class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant/60">
-                Specialties
-              </p>
-              <div class="mt-2 flex flex-wrap gap-2">
-                @for (spec of specialties(proposal); track spec) {
-                  <span
-                    class="rounded-full bg-[#E3DFFF] px-2.5 py-1 text-[11px] font-semibold text-[#110068]"
-                  >
-                    {{ spec }}
-                  </span>
-                }
+          <div class="mt-4 border-t border-[#E8E4DE] pt-3.5">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="section-icon material-symbols-outlined">psychology</span>
+                <p class="section-label !tracking-[0.05em]">Skills</p>
               </div>
-            }
+              <span class="count-pill">
+                {{ skills(proposal).length || approachTags(proposal).length || 0 }}
+              </span>
+            </div>
             @if (skills(proposal).length) {
-              <p
-                class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant/60"
-                [class.mt-3]="specialties(proposal).length > 0"
-              >
-                Skills
-              </p>
-              <div class="mt-2 flex flex-wrap gap-2">
+              <div class="mt-3 flex flex-wrap gap-2">
                 @for (skill of skills(proposal); track skill) {
-                  <span
-                    class="rounded-full bg-[#F0EDEF] px-2.5 py-1 text-[11px] font-semibold text-on-surface"
-                  >
-                    {{ skill }}
-                  </span>
+                  <span class="chip-skill">{{ skill }}</span>
                 }
               </div>
+            } @else if (approachTags(proposal).length) {
+              <div class="mt-3 flex flex-wrap gap-2">
+                @for (tag of approachTags(proposal); track tag) {
+                  <span class="chip-skill">{{ tag }}</span>
+                }
+              </div>
+            } @else {
+              <p class="mt-2.5 text-sm text-on-surface-variant">No skills listed yet.</p>
             }
-          </section>
-        }
-
-        <section class="rounded-[18px] border border-outline-variant/20 bg-[#FBFBFB] px-4 py-3">
-          <h3 class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant/60">
-            Cover letter
-          </h3>
-          <p class="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-on-surface/80">
-            {{ proposal.coverLetter }}
-          </p>
+          </div>
         </section>
 
-        <section class="rounded-[18px] border border-[#C4C0FF]/50 bg-[#EAE5FF]/40 px-4 py-3">
-          <h3 class="text-[11px] font-bold uppercase tracking-wider text-[#110068]/70">
-            Approach / Tech stack
-          </h3>
-          <p class="mt-2 text-sm leading-relaxed text-on-surface/80">
-            {{ cleanText(proposal.approach) || 'No approach provided yet.' }}
-          </p>
-        </section>
-
-        @if (proposal.attachmentUrls?.length) {
-          <section class="rounded-[18px] border border-outline-variant/20 bg-white px-4 py-3">
-            <h3 class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant/60">
-              Attachments
-            </h3>
-            <div class="mt-2 flex flex-wrap gap-2">
-              @for (url of proposal.attachmentUrls!; track url; let i = $index) {
+        <!-- Attachments -->
+        <section class="section-card">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="section-icon material-symbols-outlined">attach_file</span>
+              <p class="section-label !tracking-[0.05em]">Attachments</p>
+            </div>
+            <span class="count-pill">{{ attachments(proposal).length }}</span>
+          </div>
+          @if (attachments(proposal).length) {
+            <div class="mt-3 flex flex-col gap-2">
+              @for (url of attachments(proposal); track url; let i = $index) {
                 <a
                   [href]="url"
                   target="_blank"
                   rel="noopener"
-                  class="inline-flex rounded-full bg-[#F0EDEF] px-3 py-1.5 text-xs font-semibold text-on-surface hover:bg-[#E3DFFF] hover:text-[#4130D7]"
+                  class="attachment-row"
                 >
-                  Attachment {{ i + 1 }}
+                  <span class="attachment-index">{{ i + 1 }}</span>
+                  <span class="min-w-0 flex-1 truncate text-xs font-semibold text-on-surface">
+                    Attachment {{ i + 1 }}
+                  </span>
+                  <span class="inline-flex items-center gap-0.5 text-[11px] font-bold text-[#4130D7]">
+                    Open
+                    <span class="material-symbols-outlined text-[14px]">north_east</span>
+                  </span>
                 </a>
               }
             </div>
-          </section>
-        }
+          } @else {
+            <div class="empty-attach mt-3">
+              <span class="material-symbols-outlined text-[22px] text-on-surface-variant/45">
+                folder_off
+              </span>
+              <p class="mt-1.5 text-sm text-on-surface-variant">No attachments uploaded</p>
+            </div>
+          }
+        </section>
+
+        <!-- Cover letter -->
+        <section class="section-card">
+          <div class="flex items-center gap-2">
+            <span class="section-icon material-symbols-outlined">mail</span>
+            <p class="section-label !tracking-[0.05em]">Cover letter</p>
+          </div>
+          <div class="cover-quote mt-3">
+            <p class="whitespace-pre-wrap break-words text-sm leading-[1.7] text-on-surface/90">
+              {{ proposal.coverLetter }}
+            </p>
+          </div>
+        </section>
+
+        <!-- Approach -->
+        <section class="section-card section-card-accent">
+          <div class="flex items-center gap-2">
+            <span class="section-icon section-icon-accent material-symbols-outlined">bolt</span>
+            <p class="section-label !tracking-[0.05em] !text-[#110068]/75">Approach / Tech stack</p>
+          </div>
+          <p class="mt-3 text-sm leading-[1.7] text-on-surface/90">
+            {{ cleanText(proposal.approach) || 'No approach provided yet.' }}
+          </p>
+        </section>
 
         @if (proposal.rejectReason) {
-          <div class="rounded-[16px] border border-error/20 bg-error-container/40 px-4 py-3">
-            <p class="text-[10px] font-bold uppercase tracking-wider text-on-error-container/80">
-              Rejection reason
-            </p>
-            <p class="mt-1 text-sm font-semibold leading-relaxed text-on-error-container">
-              {{ proposal.rejectReason }}
-            </p>
+          <div class="reject-banner">
+            <div class="flex items-start gap-3">
+              <span class="material-symbols-outlined mt-0.5 text-[20px] text-[#93000A]">
+                report
+              </span>
+              <div class="min-w-0">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-[#93000A]/80">
+                  Rejection reason
+                </p>
+                <p class="mt-1.5 text-sm font-semibold leading-relaxed text-[#410002]">
+                  {{ proposal.rejectReason }}
+                </p>
+              </div>
+            </div>
           </div>
         }
 
         @if (proposal.status === 'Pending' || proposal.status === 'Viewed') {
-          <p class="rounded-[16px] bg-[#EAE5FF] px-3.5 py-2.5 text-xs leading-relaxed text-[#3323A5]">
-            Viewing a pending proposal marks it as <strong>Viewed</strong>. Starting discussion is
-            not a hire — hire happens when you accept the milestone plan.
-          </p>
+          <div class="tip-banner">
+            <span class="material-symbols-outlined shrink-0 text-[18px] text-[#3323A5]">
+              lightbulb
+            </span>
+            <p class="text-xs leading-relaxed text-[#3323A5]">
+              Starting discussion is not a hire — hire happens when you accept the milestone plan.
+            </p>
+          </div>
         } @else if (proposal.status === 'InDiscussion') {
-          <p class="rounded-[16px] bg-[#EAE5FF] px-3.5 py-2.5 text-xs leading-relaxed text-[#3323A5]">
-            You’re in discussion — continue in messages, then negotiate the milestone plan to hire.
-          </p>
+          <div class="tip-banner">
+            <span class="material-symbols-outlined shrink-0 text-[18px] text-[#3323A5]">
+              chat
+            </span>
+            <p class="text-xs leading-relaxed text-[#3323A5]">
+              Continue in messages, then negotiate the milestone plan to hire.
+            </p>
+          </div>
         }
       </div>
 
-      <footer class="shrink-0 space-y-2 border-t border-outline-variant/20 bg-[#FBFBFB] px-5 py-4 sm:px-6">
-        @if (canOpenMessages(proposal)) {
-          <button
-            type="button"
-            class="btn btn-primary !w-full !h-11 text-sm font-bold rounded-full"
-            (click)="goToMessages.emit(proposal.chatRoomId!)"
-          >
-            Go to messages
-          </button>
-        }
-        @if (canStartDiscussion()) {
-          <button
-            type="button"
-            class="btn btn-primary !w-full !h-11 text-sm font-bold rounded-full disabled:opacity-45"
-            [disabled]="busy()"
-            (click)="startDiscussion.emit(proposal.id)"
-          >
-            Start Discussion
-          </button>
-        }
-        @if (canCloseDiscussion()) {
-          <button
-            type="button"
-            class="inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-full border border-outline-variant/40 bg-white text-sm font-bold text-on-surface transition-colors hover:bg-[#F0EDEF] disabled:opacity-45"
-            [disabled]="busy()"
-            (click)="closeDiscussion.emit(proposal.id)"
-          >
-            Close Discussion
-          </button>
-        }
-        @if (canReject()) {
-          <button
-            type="button"
-            class="inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-full bg-error-container text-sm font-bold text-on-error-container transition-colors hover:opacity-90 disabled:opacity-45"
-            [disabled]="busy()"
-            (click)="reject.emit(proposal.id)"
-          >
-            Reject proposal
-          </button>
-        }
-        <button
-          type="button"
-          class="inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-full border border-outline-variant/40 bg-white text-sm font-bold text-on-surface transition-colors hover:bg-[#F0EDEF]"
-          (click)="closed.emit()"
-        >
-          Close
-        </button>
+      <!-- Footer actions -->
+      <footer class="drawer-footer shrink-0 px-5 py-4 sm:px-6">
+        <div class="flex flex-col gap-2.5">
+          @if (canOpenMessages(proposal)) {
+            <button
+              type="button"
+              class="btn-primary"
+              (click)="goToMessages.emit(proposal.chatRoomId!)"
+            >
+              <span class="material-symbols-outlined text-[18px]">forum</span>
+              Go to messages
+            </button>
+          }
+          @if (canStartDiscussion()) {
+            <button
+              type="button"
+              class="btn-primary"
+              [disabled]="busy()"
+              (click)="startDiscussion.emit(proposal.id)"
+            >
+              <span class="material-symbols-outlined text-[18px]">chat_bubble</span>
+              Start Discussion
+            </button>
+          }
+          @if (canCloseDiscussion()) {
+            <button
+              type="button"
+              class="btn-secondary"
+              [disabled]="busy()"
+              (click)="closeDiscussion.emit(proposal.id)"
+            >
+              Close Discussion
+            </button>
+          }
+
+          @if (canReject()) {
+            <div class="grid gap-2.5 sm:grid-cols-2">
+              <button
+                type="button"
+                class="btn-ghost order-2 sm:order-1"
+                [disabled]="busy()"
+                (click)="closed.emit()"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                class="btn-danger order-1 sm:order-2"
+                [disabled]="busy()"
+                (click)="reject.emit(proposal.id)"
+              >
+                <span class="material-symbols-outlined text-[18px]">cancel</span>
+                Reject
+              </button>
+            </div>
+          } @else {
+            <button
+              type="button"
+              class="btn-ghost"
+              (click)="closed.emit()"
+            >
+              Close
+            </button>
+          }
+        </div>
       </footer>
     </aside>
   </div>

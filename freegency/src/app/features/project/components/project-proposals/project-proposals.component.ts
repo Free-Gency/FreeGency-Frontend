@@ -7,6 +7,7 @@ import { ProjectProposalsApiService } from '../../data-access/project-proposals-
 import { ProjectStatus } from '../../models/project-detail';
 import { ProjectProposal, ProposalStatus } from '../../models/project-proposal';
 import { ProposalDetailDrawerComponent } from '../proposal-detail-drawer/proposal-detail-drawer.component';
+import { ToastService } from '../../../../shared/components/toast/toast.service';
 
 type SortOption = 'newest' | 'budget-high' | 'budget-low';
 type StatusFilter = 'All' | ProposalStatus;
@@ -20,6 +21,7 @@ type StatusFilter = 'All' | ProposalStatus;
 export class ProjectProposalsComponent implements OnInit, OnDestroy {
   private readonly proposalsApi = inject(ProjectProposalsApiService);
   private readonly router = inject(Router);
+  private readonly toast = inject(ToastService);
   readonly projectId = input.required<string>();
   readonly projectStatus = input.required<ProjectStatus>();
   readonly isOwner = input(false);
@@ -212,6 +214,22 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
     void this.router.navigate(['/client/messages'], {
       queryParams: { room: chatRoomId },
     });
+  }
+
+  protected onViewProfile(event: {
+    userId?: string | null;
+    teamId?: string | null;
+    name: string;
+  }): void {
+    if (event.teamId) {
+      this.toast.success(
+        `Team profile for ${event.name} will open once the public profile page is connected.`,
+      );
+      return;
+    }
+    this.toast.success(
+      `Profile for ${event.name} will open once the public profile page is connected.`,
+    );
   }
 
   protected canShowCloseDiscussion(p: ProjectProposal): boolean {
