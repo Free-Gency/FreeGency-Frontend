@@ -1,133 +1,151 @@
-<div class="notifications-page">
-  <div class="notifications-container">
+<section class="notifications-page flex w-full flex-col gap-5">
+  <header>
+    <h1 class="font-display text-[28px] leading-none font-bold tracking-[-0.4px] text-[#151c27]">
+      Notifications
+    </h1>
+    <p class="mt-2 font-body text-sm leading-6 text-[#6b7285]">
+      Choose how you would like to receive notifications for each activity.
+    </p>
+  </header>
 
-    <!-- Header -->
-    <div class="page-header">
-      <h1 class="page-title">Notifications</h1>
-      <p class="page-description">
-        Choose how you would like to receive notifications.
-      </p>
+  <div
+    class="overflow-hidden rounded-[24px] border border-[#e8eaf0] bg-white shadow-[0_1px_2px_rgba(21,28,39,0.04)]"
+  >
+    <!-- Card header -->
+    <div class="flex items-start gap-4 border-b border-[#f0f1f5] px-5 py-5 sm:px-6 sm:py-6">
+      <span
+        class="inline-flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-[#ebe9ff] text-[#4036e0]"
+        aria-hidden="true"
+      >
+        <hugeicons-icon
+          [icon]="notificationIcon"
+          [size]="22"
+          color="currentColor"
+          [strokeWidth]="1.8"
+        />
+      </span>
+
+      <div class="min-w-0">
+        <h2 class="font-display text-lg font-semibold text-[#151c27]">Notification Settings</h2>
+        <p class="mt-1 font-body text-sm leading-6 text-[#6b7285]">
+          Enable or disable In-App and Email alerts for each activity.
+        </p>
+      </div>
     </div>
 
-    <section class="settings-section">
-      <div class="section-card">
-
-        <div class="card-header">
-          <div class="card-header-content">
-            <div class="card-icon card-icon-email">
-              <!-- نفس الـ icon -->
+    @if (loading()) {
+      <div class="flex flex-col gap-0 px-5 py-2 sm:px-6" aria-busy="true" aria-label="Loading settings">
+        @for (i of [1, 2, 3, 4]; track i) {
+          <div class="flex items-center gap-4 border-b border-[#f0f1f5] py-5 last:border-b-0">
+            <div class="size-10 shrink-0 animate-pulse rounded-[12px] bg-[#f0f1f5]"></div>
+            <div class="flex min-w-0 flex-1 flex-col gap-2">
+              <div class="h-4 w-36 max-w-full animate-pulse rounded bg-[#f0f1f5]"></div>
+              <div class="h-3 w-56 max-w-full animate-pulse rounded bg-[#f4f5f8]"></div>
             </div>
-
-            <div>
-              <h2 class="card-title">Notification Settings</h2>
-              <p class="card-description">
-                Enable or disable notifications for each activity.
-              </p>
-            </div>
+            <div class="hidden h-7 w-12 animate-pulse rounded-full bg-[#f0f1f5] sm:block"></div>
+            <div class="hidden h-7 w-12 animate-pulse rounded-full bg-[#f0f1f5] sm:block"></div>
           </div>
-        </div>
-
-        <div class="notification-table">
-
-          <div class="table-header">
-            <div>Notification</div>
-            <div>In App</div>
-            <div>Email</div>
-          </div>
-
-          <!-- New Message -->
-          <div class="table-row">
-            <div class="notification-info">
-              <h3>New Messages</h3>
-              <p>Receive notifications when someone sends you a message.</p>
-            </div>
-
-            <div class="table-action">
-              <app-toggle-switch
-                [checked]="settings()?.newMessageInApp ?? false"
-                (toggled)="toggle('newMessageInApp')">
-              </app-toggle-switch>
-            </div>
-
-            <div class="table-action">
-              <app-toggle-switch
-                checked]="settings()?.newMessageEmail ?? false"
-
-                (toggled)="toggle('newMessageEmail')">
-              </app-toggle-switch>
-            </div>
-          </div>
-
-          <!-- Proposal -->
-          <div class="table-row">
-            <div class="notification-info">
-              <h3>Proposal Received</h3>
-              <p>Receive notifications when a freelancer submits a proposal.</p>
-            </div>
-
-            <div class="table-action">
-              <app-toggle-switch
-                [checked]="settings()?.proposalReceivedInApp ?? false"
-                (toggled)="toggle('proposalReceivedInApp')">
-              </app-toggle-switch>
-            </div>
-
-            <div class="table-action">
-              <app-toggle-switch
-                [checked]="settings()?.proposalReceivedEmail ?? false"
-                (toggled)="toggle('proposalReceivedEmail')">
-              </app-toggle-switch>
-            </div>
-          </div>
-
-          <!-- Milestone -->
-          <div class="table-row">
-            <div class="notification-info">
-              <h3>Milestone Added</h3>
-              <p>Receive notifications when a milestone is added.</p>
-            </div>
-
-            <div class="table-action">
-              <app-toggle-switch
-                [checked]="settings()?.milestoneAddedInApp ?? false"
-                (toggled)="toggle('milestoneAddedInApp')">
-              </app-toggle-switch>
-            </div>
-
-            <div class="table-action">
-              <app-toggle-switch
-                [checked]="settings()?.milestoneAddedEmail ?? false"
-                (toggled)="toggle('milestoneAddedEmail')">
-              </app-toggle-switch>
-            </div>
-          </div>
-
-          <!-- Wallet -->
-          <div class="table-row">
-            <div class="notification-info">
-              <h3>Wallet Updated</h3>
-              <p>Receive notifications whenever your wallet balance changes.</p>
-            </div>
-
-            <div class="table-action">
-              <app-toggle-switch
-                [checked]="settings()?.walletUpdatedInApp ?? false"
-                (toggled)="toggle('walletUpdatedInApp')">
-              </app-toggle-switch>
-            </div>
-
-            <div class="table-action">
-              <app-toggle-switch
-                [checked]="settings()?.walletUpdatedEmail ?? false"
-                (toggled)="toggle('walletUpdatedEmail')">
-              </app-toggle-switch>
-            </div>
-          </div>
-
-        </div>
-
+        }
       </div>
-    </section>
+    } @else {
+      <!-- Column labels (desktop) -->
+      <div
+        class="notification-grid border-b border-[#f0f1f5] bg-[#fafafb] px-5 py-3 sm:px-6"
+        aria-hidden="true"
+      >
+        <div class="font-body text-[11px] font-bold tracking-[1.2px] text-[#8b90a0] uppercase">
+          Notification
+        </div>
+        <div
+          class="hidden items-center justify-center gap-1.5 font-body text-[11px] font-bold tracking-[1.2px] text-[#8b90a0] uppercase sm:flex"
+        >
+          <hugeicons-icon
+            [icon]="inAppIcon"
+            [size]="14"
+            color="currentColor"
+            [strokeWidth]="2"
+          />
+          In App
+        </div>
+        <div
+          class="hidden items-center justify-center gap-1.5 font-body text-[11px] font-bold tracking-[1.2px] text-[#8b90a0] uppercase sm:flex"
+        >
+          <hugeicons-icon
+            [icon]="emailIcon"
+            [size]="14"
+            color="currentColor"
+            [strokeWidth]="2"
+          />
+          Email
+        </div>
+      </div>
 
+      <ul class="flex flex-col">
+        @for (row of rows; track row.inAppKey) {
+          <li
+            class="notification-grid group border-b border-[#f0f1f5] px-5 py-5 transition-colors last:border-b-0 hover:bg-[#fafafb] sm:px-6"
+          >
+            <div class="flex min-w-0 items-start gap-3.5">
+              <span
+                class="inline-flex size-10 shrink-0 items-center justify-center rounded-[12px] bg-[#f4f5f8] text-[#4b5160] transition-colors group-hover:bg-[#ebe9ff] group-hover:text-[#4036e0]"
+                aria-hidden="true"
+              >
+                <hugeicons-icon
+                  [icon]="row.icon"
+                  [size]="18"
+                  color="currentColor"
+                  [strokeWidth]="1.8"
+                />
+              </span>
+
+              <div class="min-w-0">
+                <h3 class="font-display text-sm font-semibold text-[#151c27] sm:text-[15px]">
+                  {{ row.title }}
+                </h3>
+                <p class="mt-0.5 font-body text-xs leading-5 text-[#6b7285] sm:text-[13px] sm:leading-5">
+                  {{ row.description }}
+                </p>
+
+                <!-- Mobile channel toggles -->
+                <div class="mt-3 flex flex-wrap items-center gap-4 sm:hidden">
+                  <label class="inline-flex items-center gap-2.5">
+                    <span class="font-body text-xs font-medium text-[#6b7285]">In App</span>
+                    <app-toggle-switch
+                      [checked]="settings()?.[row.inAppKey] ?? false"
+                      [ariaLabel]="'Toggle in-app for ' + row.title"
+                      (toggled)="toggle(row.inAppKey)"
+                    />
+                  </label>
+                  <label class="inline-flex items-center gap-2.5">
+                    <span class="font-body text-xs font-medium text-[#6b7285]">Email</span>
+                    <app-toggle-switch
+                      [checked]="settings()?.[row.emailKey] ?? false"
+                      [ariaLabel]="'Toggle email for ' + row.title"
+                      (toggled)="toggle(row.emailKey)"
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="hidden items-center justify-center sm:flex">
+              <app-toggle-switch
+                [checked]="settings()?.[row.inAppKey] ?? false"
+                [ariaLabel]="'Toggle in-app for ' + row.title"
+                (toggled)="toggle(row.inAppKey)"
+              />
+            </div>
+
+            <div class="hidden items-center justify-center sm:flex">
+              <app-toggle-switch
+                [checked]="settings()?.[row.emailKey] ?? false"
+                [ariaLabel]="'Toggle email for ' + row.title"
+                (toggled)="toggle(row.emailKey)"
+              />
+            </div>
+          </li>
+        }
+      </ul>
+    }
   </div>
-</div>
+</section>
