@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment.development';
 import { DatePipe } from '@angular/common';
 import { ClientViewNavbarComponent } from "../../shared/components/client-view-navbar/client-view-navbar.component";
 import { ChatSignalrService } from '../../core/Signalr/chat-signalr-service';
+import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-chat',
@@ -15,7 +16,7 @@ import { ChatSignalrService } from '../../core/Signalr/chat-signalr-service';
 })
 export class ChatComponent {
   private http = inject(HttpClient);
-
+private auth = inject(AuthService);
 private chatSignalr = inject(ChatSignalrService);
   private apiUrl =
     `${environment.apiBaseUrl}/api/v1/Chat`;
@@ -40,7 +41,8 @@ selectedFile = signal<File | null>(null);
   ngOnInit(): void {
      this.chatSignalr.listenReceiveMessage(
     (message)=>{
-
+       message.isMine =
+    message.senderId === this.auth.session()?.profileId;
 
       this.messages.update(old=>[
         ...old,
@@ -50,40 +52,40 @@ selectedFile = signal<File | null>(null);
 
     }
   );
-  this.chatSignalr.listenRoomUpdated(
-    (update:RoomUpdated)=>{
+this.chatSignalr.listenRoomUpdated((update: RoomUpdated) => {
 
-      this.chatRooms.update(rooms =>
+  this.chatRooms.update(rooms => {
 
-        rooms.map(room =>
+    const index = rooms.findIndex(r => r.id === update.roomId);
 
-          room.id === update.roomId
+    if (index === -1)
+      return rooms;
 
-          ? {
-              ...room,
+    const room = {
+      ...rooms[index],
 
-              lastMessage:update.lastMessage,
+      lastMessage: update.lastMessage,
+      lastMessageType: update.lastMessageType,
+      lastMessageAt: update.lastMessageAt,
+      lastMessageSender: update.lastMessageSender,
 
-              lastMessageType:update.lastMessageType,
+      unreadCount:
+        this.selectedRoom()?.id === update.roomId
+          ? 0
+          : rooms[index].unreadCount + 1
+    };
 
-              lastMessageAt:update.lastMessageAt,
+    const updated = [...rooms];
 
-              lastMessageSender:update.lastMessageSender,
+    updated.splice(index, 1);
 
-              unreadCount:
-                this.selectedRoom()?.id === room.id
-                ? 0
-                : room.unreadCount + 1
-            }
+    updated.unshift(room);
 
-          : room
+    return updated;
 
-        )
+  });
 
-      );
-
-    }
-  );
+});
     this.loadChatRooms();
 
   }
@@ -280,6 +282,42 @@ onFileSelected(event:any)
  {
    this.selectedFile.set(file);
  }
+
+}
+startDiscussion(proposalId: string) {
+
+  return this.http.post<string>(
+    `${this.apiUrl}/Start-Discussion`,
+    {
+      proposalId
+    }
+  );
+
+}
+moveRoomToTop(roomId: string, lastMessage: string, lastMessageAt: string) {
+
+  this.chatRooms.update(rooms => {
+
+    const index = rooms.findIndex(r => r.id === roomId);
+
+    if (index === -1)
+      return rooms;
+
+    const room = {
+      ...rooms[index],
+      lastMessage,
+      lastMessageAt
+    };
+
+    const updated = [...rooms];
+
+    updated.splice(index, 1);
+
+    updated.unshift(room);
+
+    return updated;
+
+  });
 
 }
 }

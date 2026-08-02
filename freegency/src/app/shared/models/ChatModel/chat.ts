@@ -79,3 +79,6 @@ export interface RoomUpdated {
   senderId: string;
 
 }
+export interface StartDiscussionRequest {
+  proposalId: string;
+}

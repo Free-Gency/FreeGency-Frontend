@@ -30,6 +30,8 @@ export interface AuthResponse {
   expiresIn: number;
   refreshToken: string;
   refreshTokenExpiration: string;
+  profileId:string;
+  activeMode:string;
 }
 
 export interface ResetPasswordRequest {
@@ -53,4 +55,5 @@ export interface StoredSession {
   token: string;
   refreshToken: string;
   refreshTokenExpiration: string;
+  profileId:string;
 }

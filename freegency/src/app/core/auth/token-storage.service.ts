@@ -41,6 +41,7 @@ export class TokenStorageService {
         token: parsed.token,
         refreshToken: parsed.refreshToken,
         refreshTokenExpiration: parsed.refreshTokenExpiration ?? '',
+        profileId:parsed.profileId!
       };
     } catch {
       this.clear();
