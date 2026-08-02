@@ -180,26 +180,35 @@ export class ManageWorkService {
   }
 
   viewProposal(id: string): Observable<void> {
-    return this.http
-      .post<ApiResponse<void>>(`${this.proposalsUrl}/${id}/view`, {})
-      .pipe(map(() => void 0));
+    return this.postProposalAction(id, 'view');
   }
 
   startDiscussion(id: string): Observable<void> {
-    return this.http
-      .post<ApiResponse<void>>(`${this.proposalsUrl}/${id}/start-discussion`, {})
-      .pipe(map(() => void 0));
+    return this.postProposalAction(id, 'start-discussion');
   }
 
   closeDiscussion(id: string): Observable<void> {
-    return this.http
-      .post<ApiResponse<void>>(`${this.proposalsUrl}/${id}/close-discussion`, {})
-      .pipe(map(() => void 0));
+    return this.postProposalAction(id, 'close-discussion');
   }
 
   rejectProposal(id: string): Observable<void> {
+    return this.postProposalAction(id, 'reject');
+  }
+
+  private postProposalAction(id: string, action: string): Observable<void> {
     return this.http
-      .post<ApiResponse<void>>(`${this.proposalsUrl}/${id}/reject`, {})
-      .pipe(map(() => void 0));
+      .post<ApiResponse<void> & { message?: string | null; error?: { message?: string } | null }>(
+        `${this.proposalsUrl}/${id}/${action}`,
+        {},
+      )
+      .pipe(
+        map((res) => {
+          if (!res.isSuccess) {
+            throw new Error(
+              res.message || res.error?.message || `Failed to ${action.replace(/-/g, ' ')}.`,
+            );
+          }
+        }),
+      );
   }
 }

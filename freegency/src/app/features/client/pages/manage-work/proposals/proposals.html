@@ -207,6 +207,31 @@
       </div>
     </div>
 
+    @if (hasActiveDiscussion()) {
+      <div class="flex items-start gap-3 rounded-[20px] bg-[#EAE5FF] text-[#3323A5] px-4 py-3">
+        <div
+          class="mt-0.5 w-7 h-7 rounded-full bg-[#4130D7] text-white flex items-center justify-center shrink-0"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path
+              d="M2.5 7.3L5.5 10.3L11.5 3.7"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <p class="text-sm font-bold">One discussion is active</p>
+          <p class="text-xs mt-0.5 opacity-80">
+            Close it before starting another. Accept Proposal ≠ Hire — hire happens when you accept
+            the milestone plan.
+          </p>
+        </div>
+      </div>
+    }
+
     @if (proposalsResource.isLoading()) {
       <div class="flex justify-center p-12">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>

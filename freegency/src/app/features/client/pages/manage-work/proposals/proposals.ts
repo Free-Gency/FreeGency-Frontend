@@ -13,6 +13,7 @@ import { Project } from '../../../../../shared/models/Project';
 import { ProposalAssistantComponent } from '../../../components/proposal-assistant/proposal-assistant.component';
 import { ProposalDetailDrawerComponent } from '../../../../project/components/proposal-detail-drawer/proposal-detail-drawer.component';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import { extractApiError } from '../../../../../core/http/api-error';
 
 @Component({
   selector: 'app-proposals',
@@ -59,6 +60,14 @@ export class Proposals implements OnInit {
   readonly detailOpen = signal(false);
   /** Project IDs that already have an InDiscussion proposal (one discussion at a time). */
   readonly discussionProjectIds = signal<ReadonlySet<string>>(new Set());
+
+  /** True when the currently filtered project (or any visible proposal's project) has an active discussion. */
+  readonly hasActiveDiscussion = computed(() => {
+    const projectId = this.activeProjectId();
+    const locks = this.discussionProjectIds();
+    if (projectId) return locks.has(projectId);
+    return locks.size > 0 && this.proposals().some((p) => locks.has(p.projectId));
+  });
 
   readonly page = signal(1);
   readonly pageSize = 10;
@@ -147,20 +156,6 @@ export class Proposals implements OnInit {
       this.activeProjectId();
       this.refreshDiscussionLock();
     });
-
-    effect(() => {
-      const list = this.proposals();
-      if (!list.length) return;
-      const current = this.discussionProjectIds();
-      let next: Set<string> | null = null;
-      for (const p of list) {
-        if (p.status === 'InDiscussion' && !current.has(p.projectId)) {
-          if (!next) next = new Set(current);
-          next.add(p.projectId);
-        }
-      }
-      if (next) this.discussionProjectIds.set(next);
-    });
   }
 
   private refreshDiscussionLock(): void {
@@ -176,11 +171,7 @@ export class Proposals implements OnInit {
       .subscribe({
         next: (page) => {
           if (requestId !== this.discussionLockRequestId) return;
-          const ids = new Set(page.items.map((p) => p.projectId));
-          for (const p of this.proposals()) {
-            if (p.status === 'InDiscussion') ids.add(p.projectId);
-          }
-          this.discussionProjectIds.set(ids);
+          this.discussionProjectIds.set(new Set(page.items.map((p) => p.projectId)));
         },
         error: () => undefined,
       });
@@ -449,6 +440,13 @@ export class Proposals implements OnInit {
   }
 
   startDiscussion(proposal: Proposal): void {
+    if (!this.canStartDiscussion(proposal)) {
+      this.toast.error(
+        'Another discussion is already active. Close it before starting a new one.',
+      );
+      return;
+    }
+
     this.actionInProgress.set(proposal.id);
     this.manageWorkService.startDiscussion(proposal.id)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -463,7 +461,19 @@ export class Proposals implements OnInit {
             this.loadRanking(this.activeProjectId());
           }
         },
-        error: () => this.actionInProgress.set(null),
+        error: (err) => {
+          this.actionInProgress.set(null);
+          this.toast.error(
+            extractApiError(
+              err,
+              err instanceof Error
+                ? err.message
+                : 'Another discussion is already active. Close it before starting a new one.',
+            ),
+          );
+          this.refreshDiscussionLock();
+          this.proposalsResource.reload();
+        },
       });
   }
 
@@ -497,7 +507,10 @@ export class Proposals implements OnInit {
           this.proposalsResource.reload();
           this.refreshDiscussionLock();
         },
-        error: () => this.actionInProgress.set(null),
+        error: (err) => {
+          this.actionInProgress.set(null);
+          this.toast.error(extractApiError(err, 'Could not close discussion.'));
+        },
       });
   }
 
@@ -551,7 +564,10 @@ export class Proposals implements OnInit {
             this.loadRanking(this.activeProjectId());
           }
         },
-        error: () => this.actionInProgress.set(null),
+        error: (err) => {
+          this.actionInProgress.set(null);
+          this.toast.error(extractApiError(err, 'Could not reject proposal.'));
+        },
       });
   }
 

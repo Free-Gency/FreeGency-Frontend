@@ -8,6 +8,7 @@ import { ProjectStatus } from '../../models/project-detail';
 import { ProjectProposal, ProposalStatus } from '../../models/project-proposal';
 import { ProposalDetailDrawerComponent } from '../proposal-detail-drawer/proposal-detail-drawer.component';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
+import { extractApiError } from '../../../../core/http/api-error';
 
 type SortOption = 'newest' | 'budget-high' | 'budget-low';
 type StatusFilter = 'All' | ProposalStatus;
@@ -150,10 +151,7 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
           this.proposals.set(result.items);
           this.totalCount.set(result.totalCount);
           this.loading.set(false);
-
-          if (result.items.some((p) => p.status === 'InDiscussion')) {
-            this.hasActiveDiscussion.set(true);
-          }
+          this.refreshDiscussionLock();
 
           const selectedId = this.selectedProposal()?.id;
           if (selectedId) {
@@ -272,7 +270,12 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
 
   protected startDiscussion(id: string) {
     const target = this.proposals().find((p) => p.id === id) ?? this.selectedProposal();
-    if (!target || !this.canShowStartDiscussion(target)) return;
+    if (!target || !this.canShowStartDiscussion(target)) {
+      this.toast.error(
+        'Another discussion is already active. Close it before starting a new one.',
+      );
+      return;
+    }
 
     this.actionId.set(id);
     this.actionError.set(null);
@@ -286,7 +289,14 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.actionId.set(null);
-        this.actionError.set(err.message || 'Could not start discussion.');
+        const message = extractApiError(
+          err,
+          err instanceof Error
+            ? err.message
+            : 'Another discussion is already active. Close it before starting a new one.',
+        );
+        this.actionError.set(message);
+        this.toast.error(message);
         this.refreshDiscussionLock();
         this.loadProposals();
       },
@@ -306,7 +316,9 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.actionId.set(null);
-        this.actionError.set(err.message || 'Could not close discussion.');
+        const message = extractApiError(err, 'Could not close discussion.');
+        this.actionError.set(message);
+        this.toast.error(message);
       },
     });
   }

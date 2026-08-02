@@ -136,14 +136,18 @@ export const routes: Routes = [
   {
     path: 'developer/my-teams',
     canActivate: [authGuard, developerModeGuard],
-    data: {
-      title: 'My Teams',
-      description: 'View and manage the teams you belong to or lead.',
-    },
     loadComponent: () =>
-      import(
-        './features/developer/pages/developer-placeholder/developer-placeholder.component'
-      ).then((m) => m.DeveloperPlaceholderComponent),
+      import('./features/developer/pages/my-teams/my-teams.component').then(
+        (m) => m.MyTeamsComponent,
+      ),
+  },
+  {
+    path: 'developer/my-teams/:teamId',
+    canActivate: [authGuard, developerModeGuard],
+    loadComponent: () =>
+      import('./features/developer/pages/team-detail/team-detail.component').then(
+        (m) => m.TeamDetailComponent,
+      ),
   },
   {
     path: 'developer/jobs',
