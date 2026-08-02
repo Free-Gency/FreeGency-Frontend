@@ -1,27 +1,15 @@
 import { Component, computed, inject } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
-import { HugeiconsIconComponent, type IconSvgObject } from '@hugeicons/angular';
-import { Logout01Icon } from '@hugeicons/core-free-icons';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { DeveloperViewNavbarComponent } from '../../../../shared/components/developer-view-navbar/developer-view-navbar.component';
 
 @Component({
   selector: 'app-developer-dashboard',
-  imports: [HugeiconsIconComponent, RouterLink],
+  imports: [DeveloperViewNavbarComponent],
   templateUrl: './developer-dashboard.component.html',
   styleUrl: './developer-dashboard.component.css',
 })
 export class DeveloperDashboardComponent {
   private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
 
-  protected readonly logoutIcon = Logout01Icon as IconSvgObject;
-
-  protected readonly firstName = computed(
-    () => this.auth.session()?.firstName?.trim() || 'there',
-  );
-
-  protected logout(): void {
-    this.auth.logout();
-    void this.router.navigateByUrl('/auth/login');
-  }
+  protected readonly firstName = computed(() => this.auth.session()?.firstName?.trim() || 'there');
 }

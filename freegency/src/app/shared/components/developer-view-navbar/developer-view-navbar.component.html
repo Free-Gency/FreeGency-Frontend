@@ -13,11 +13,11 @@
       />
     </a>
 
-    <nav class="hidden items-center gap-1.5 xl:flex" aria-label="Primary">
+    <nav class="hidden items-center gap-1 xl:flex" aria-label="Primary">
       @for (item of navItems; track item.label) {
         <button
           type="button"
-          class="inline-flex cursor-pointer items-center justify-center gap-1 rounded-[40px] px-4 py-2 font-body text-sm leading-normal whitespace-nowrap transition-colors 2xl:px-5"
+          class="inline-flex cursor-pointer items-center justify-center gap-1 rounded-[40px] px-3 py-2 font-body text-sm leading-normal whitespace-nowrap transition-colors 2xl:px-4"
           [class.bg-[#27253f]]="activeNav() === item.label"
           [class.text-[#f7f7f7]]="activeNav() === item.label"
           [class.bg-[#fcfcfc]]="activeNav() !== item.label"

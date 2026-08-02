@@ -114,12 +114,60 @@ export const routes: Routes = [
       ).then((m) => m.DeveloperDashboardComponent),
   },
   {
+    path: 'developer/explore',
+    canActivate: [authGuard, developerModeGuard],
+    data: {
+      title: 'Explore',
+      description: 'Discover talent, inspiration, and opportunities across FreeGency.',
+    },
+    loadComponent: () =>
+      import(
+        './features/developer/pages/developer-placeholder/developer-placeholder.component'
+      ).then((m) => m.DeveloperPlaceholderComponent),
+  },
+  {
     path: 'developer/manage-work',
     canActivate: [authGuard, developerModeGuard],
     loadComponent: () =>
       import(
         './features/developer/pages/developer-manage-work/developer-manage-work.component'
       ).then((m) => m.DeveloperManageWorkComponent),
+  },
+  {
+    path: 'developer/my-teams',
+    canActivate: [authGuard, developerModeGuard],
+    data: {
+      title: 'My Teams',
+      description: 'View and manage the teams you belong to or lead.',
+    },
+    loadComponent: () =>
+      import(
+        './features/developer/pages/developer-placeholder/developer-placeholder.component'
+      ).then((m) => m.DeveloperPlaceholderComponent),
+  },
+  {
+    path: 'developer/jobs',
+    canActivate: [authGuard, developerModeGuard],
+    data: {
+      title: 'Jobs',
+      description: 'Browse open jobs and apply to projects that match your skills.',
+    },
+    loadComponent: () =>
+      import(
+        './features/developer/pages/developer-placeholder/developer-placeholder.component'
+      ).then((m) => m.DeveloperPlaceholderComponent),
+  },
+  {
+    path: 'developer/messages',
+    canActivate: [authGuard, developerModeGuard],
+    data: {
+      title: 'Messages',
+      description: 'Chat with clients and teammates about proposals and projects.',
+    },
+    loadComponent: () =>
+      import(
+        './features/developer/pages/developer-placeholder/developer-placeholder.component'
+      ).then((m) => m.DeveloperPlaceholderComponent),
   },
   {
     path: '',

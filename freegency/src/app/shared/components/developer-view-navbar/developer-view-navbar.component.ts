@@ -49,10 +49,11 @@ export class DeveloperViewNavbarComponent implements OnInit {
   protected readonly profileImage = this.auth.profileImage;
 
   protected readonly navItems = [
-    { label: 'Home', route: '/developer/home' },
-    { label: 'Find Work', route: '/projects' },
+    { label: 'Home', route: '/developer/dashboard' },
+    { label: 'Explore', route: '/developer/explore' },
     { label: 'Manage Work', route: '/developer/manage-work' },
-    { label: 'Teams', route: '/developer/teams' },
+    { label: 'My Teams', route: '/developer/my-teams' },
+    { label: 'Jobs', route: '/developer/jobs' },
     { label: 'Messages', route: '/developer/messages' },
   ] as const;
 
@@ -149,6 +150,6 @@ export class DeveloperViewNavbarComponent implements OnInit {
 
   private getActiveLabelFromUrl(url: string): string {
     const match = this.navItems.find((item) => item.route && url.startsWith(item.route));
-    return match?.label ?? 'Find Work';
+    return match?.label ?? 'Home';
   }
 }
