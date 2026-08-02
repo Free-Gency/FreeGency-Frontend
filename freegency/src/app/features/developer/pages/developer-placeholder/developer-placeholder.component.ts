@@ -15,7 +15,7 @@ import { DeveloperViewNavbarComponent } from '../../../../shared/components/deve
       <main
         class="mx-auto flex w-full max-w-[1512px] flex-col gap-6 px-4 py-8 sm:px-6 md:px-10 lg:px-12 xl:px-20"
       >
-        <div>
+        <div class="w-full">
           <p
             class="font-display text-[11px] font-bold uppercase tracking-[0.08em] text-[#494bd6]"
           >
@@ -26,16 +26,16 @@ import { DeveloperViewNavbarComponent } from '../../../../shared/components/deve
           >
             {{ title() }}
           </h1>
-          <p class="mt-2 max-w-xl font-body text-sm leading-relaxed text-[#464556]">
+          <p class="mt-2 max-w-[36rem] font-body text-sm leading-relaxed text-[#464556]">
             {{ description() }}
           </p>
         </div>
 
         <section
-          class="flex min-h-[280px] flex-col items-center justify-center rounded-[28px] border border-dashed border-[#e7eefe] bg-white px-6 text-center shadow-[0_1px_2px_rgba(21,28,39,0.04)]"
+          class="flex min-h-[280px] w-full flex-col items-center justify-center rounded-[28px] border border-dashed border-[#e7eefe] bg-white px-6 py-10 text-center shadow-[0_1px_2px_rgba(21,28,39,0.04)]"
         >
           <p class="font-display text-base font-semibold text-[#151c27]">Coming soon</p>
-          <p class="mt-2 max-w-md font-body text-sm leading-relaxed text-[#464556]">
+          <p class="mt-2 max-w-[28rem] font-body text-sm leading-relaxed text-[#464556]">
             This section is wired into navigation and will be filled in next.
           </p>
         </section>

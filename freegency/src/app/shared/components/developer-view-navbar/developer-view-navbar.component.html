@@ -1,8 +1,8 @@
 <header
-  class="relative z-20 flex w-full items-center gap-3 border-b border-[#eceef4] bg-white px-4 py-3 sm:gap-4 sm:px-6 sm:py-4 md:px-8 lg:gap-6 lg:px-8 lg:py-4"
+  class="relative z-20 flex w-full items-center gap-4 border-b border-[#eceef4] bg-white px-4 py-3 sm:gap-5 sm:px-6 sm:py-4 md:px-8 lg:px-10 lg:py-4"
 >
   <!-- Left: logo + nav -->
-  <div class="flex min-w-0 shrink-0 items-center gap-3 lg:gap-8">
+  <div class="flex min-w-0 shrink-0 items-center gap-8 sm:gap-10 lg:gap-14">
     <a routerLink="/developer/dashboard" class="shrink-0" aria-label="FreeGency home">
       <img
         src="/assets/brand/logo.svg"
@@ -31,9 +31,12 @@
     </nav>
   </div>
 
-  <!-- Center: search fills the empty middle -->
+  <div class="min-w-[16px] flex-1" aria-hidden="true"></div>
+
+  <!-- Right: search + notification + avatar -->
+  <div class="flex shrink-0 items-center gap-3 sm:gap-4">
   <div
-    class="relative mx-auto hidden h-10 min-w-0 flex-1 items-center gap-1 rounded-[14px] bg-[#fbfbfb] px-3 py-1 md:flex md:max-w-[420px] xl:max-w-[480px]"
+    class="relative hidden h-10 w-[min(100%,360px)] items-center gap-1 rounded-[14px] bg-[#fbfbfb] px-3 py-1 md:flex lg:w-[400px] xl:w-[440px]"
     [class.z-50]="searchScopeOpen()"
     role="search"
     data-search-scope-dropdown
@@ -119,8 +122,6 @@
     </div>
   </div>
 
-  <!-- Right: notification + avatar -->
-  <div class="ml-auto flex shrink-0 items-center gap-2 sm:gap-3 xl:gap-4">
     <button
       type="button"
       class="inline-flex size-5 cursor-pointer items-center justify-center overflow-hidden text-on-surface transition-opacity hover:opacity-70"
