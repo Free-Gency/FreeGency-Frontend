@@ -1,0 +1,251 @@
+<div class="flex flex-col lg:flex-row gap-6 items-start w-full">
+  <!-- Left Sidebar: Status Filter -->
+  <aside
+    class="w-full lg:w-48 shrink-0 flex flex-row lg:flex-col gap-1 overflow-x-auto lg:overflow-visible no-scrollbar"
+  >
+    <p
+      class="hidden lg:block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant/60 px-3 mb-2"
+    >
+      STATUS
+    </p>
+
+    <button
+      type="button"
+      class="flex items-center justify-between px-3.5 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap lg:whitespace-normal"
+      [ngClass]="
+        statusFilter() === 'All'
+          ? 'bg-[#E3DFFF] text-primary font-semibold'
+          : 'text-on-surface hover:bg-surface-container-low'
+      "
+      (click)="setStatusFilter('All')"
+    >
+      <span>All projects</span>
+      <span class="text-xs px-2 py-0.5 rounded-full bg-black/5 font-semibold">{{
+        summary()?.total ?? 0
+      }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="flex items-center justify-between px-3.5 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap lg:whitespace-normal"
+      [ngClass]="
+        statusFilter() === 'Open'
+          ? 'bg-[#E3DFFF] text-primary font-semibold'
+          : 'text-on-surface hover:bg-surface-container-low'
+      "
+      (click)="setStatusFilter('Open')"
+    >
+      <span>Open</span>
+      <span class="text-xs px-2 py-0.5 rounded-full bg-black/5 font-semibold">{{
+        getCount('Open')
+      }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="flex items-center justify-between px-3.5 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap lg:whitespace-normal"
+      [ngClass]="
+        statusFilter() === 'InProgress'
+          ? 'bg-[#E3DFFF] text-primary font-semibold'
+          : 'text-on-surface hover:bg-surface-container-low'
+      "
+      (click)="setStatusFilter('InProgress')"
+    >
+      <span>In progress</span>
+      <span class="text-xs px-2 py-0.5 rounded-full bg-black/5 font-semibold">{{
+        getCount('InProgress')
+      }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="flex items-center justify-between px-3.5 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap lg:whitespace-normal"
+      [ngClass]="
+        statusFilter() === 'Completed'
+          ? 'bg-[#E3DFFF] text-primary font-semibold'
+          : 'text-on-surface hover:bg-surface-container-low'
+      "
+      (click)="setStatusFilter('Completed')"
+    >
+      <span>Completed</span>
+      <span class="text-xs px-2 py-0.5 rounded-full bg-black/5 font-semibold">{{
+        getCount('Completed')
+      }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="flex items-center justify-between px-3.5 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap lg:whitespace-normal"
+      [ngClass]="
+        statusFilter() === 'Cancelled'
+          ? 'bg-[#E3DFFF] text-primary font-semibold'
+          : 'text-on-surface hover:bg-surface-container-low'
+      "
+      (click)="setStatusFilter('Cancelled')"
+    >
+      <span>Cancelled</span>
+      <span class="text-xs px-2 py-0.5 rounded-full bg-black/5 font-semibold">{{
+        getCount('Cancelled')
+      }}</span>
+    </button>
+  </aside>
+
+  <!-- Main Column: Projects -->
+  <div class="flex-1 flex flex-col gap-4 w-full">
+    <!-- Search & Sort Controls -->
+    <div class="flex items-center justify-between gap-4 mb-3">
+      <div class="relative flex-1 max-w">
+        <input
+          type="search"
+          placeholder="Search projects..."
+          class="w-full h-11 pl-11 pr-4 bg-white border border-outline-variant/30 rounded-full text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary"
+          (input)="onSearchInput($any($event.target).value)"
+        />
+        <svg
+          class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/70 pointer-events-none"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          />
+        </svg>
+      </div>
+
+      <div class="flex items-center gap-2.5 shrink-0">
+        <span class="text-xs font-semibold text-on-surface-variant/70">Sort by:</span>
+        <div class="relative">
+          <select
+            class="h-11 border border-outline-variant/30 rounded-full pl-5 pr-10 bg-white font-bold text-on-surface text-sm appearance-none focus:outline-none cursor-pointer"
+            [value]="sortOption()"
+            (change)="onSortChange($any($event.target).value)"
+          >
+            <option value="deadline">Deadline soonest</option>
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="title-asc">Title A–Z</option>
+            <option value="title-desc">Title Z–A</option>
+            <option value="budget-high">Highest budget</option>
+            <option value="budget-low">Lowest budget</option>
+          </select>
+          <svg
+            class="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant/70 pointer-events-none"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- State Handlers -->
+    @if (loading()) {
+      <div class="flex justify-center p-12">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    } @else if (error()) {
+      <div class="card p-6 border-error text-error text-center">
+        {{ error() }}
+        <button (click)="loadProjects()" class="link ml-2">Try again</button>
+      </div>
+    } @else if (projects().length === 0) {
+      <div class="bg-white rounded-[24px] p-12 text-center border border-outline-variant/20">
+        <p class="text-base text-on-surface-variant">
+          {{
+            (summary()?.total ?? 0) === 0
+              ? "You're not assigned to any projects yet."
+              : 'No projects match this filter.'
+          }}
+        </p>
+      </div>
+    } @else {
+      @for (project of projects(); track project.id) {
+        <div class="bg-white rounded-[24px] border border-outline-variant/30 overflow-hidden">
+          <div class="p-6">
+            <div class="flex justify-between items-start gap-4">
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2.5 flex-wrap">
+                  <h2 class="text-lg font-bold text-on-surface truncate max-w-full">
+                    {{ project.title }}
+                  </h2>
+                  <span
+                    class="shrink-0 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                    [ngClass]="{
+                      'bg-[#D8F272] text-[#2B3800]': project.status === 'Open',
+                      'bg-[#C4C0FF] text-[#110068]': project.status === 'InProgress',
+                      'bg-surface-container-highest text-on-surface-variant':
+                        project.status === 'Draft',
+                      'bg-[#E5E1E4] text-[#464555]': project.status === 'Completed',
+                      'bg-tertiary-fixed text-on-tertiary-fixed': project.status === 'Cancelled',
+                    }"
+                  >
+                    {{ project.status === 'InProgress' ? 'IN PROGRESS' : project.status }}
+                  </span>
+                </div>
+
+                <p class="text-xs text-on-surface-variant/70 mt-1 font-normal">
+                  {{ project.categoryName }} · Client: {{ project.clientName }}
+                </p>
+
+                <p class="text-xs text-on-surface-variant/70 mt-0.5 font-normal">
+                  @if (project.deadline) {
+                    Due {{ project.deadline | date: 'mediumDate' }}
+                  } @else {
+                    No deadline set
+                  }
+                </p>
+              </div>
+
+              <div class="text-right shrink-0">
+                <div class="text-xl font-bold text-on-surface leading-tight">
+                  {{ getBudgetDisplay(project) }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="border-t border-outline-variant/15 px-6 py-3 flex justify-end bg-white">
+            <a
+              [routerLink]="'/projects/' + project.id"
+              class="btn btn-primary !w-auto px-5 !h-9 text-xs font-bold rounded-full flex items-center gap-1.5"
+            >
+              <span>View details</span>
+              <span>→</span>
+            </a>
+          </div>
+        </div>
+      }
+
+      @if (totalPages() > 1) {
+        <div class="flex items-center justify-center gap-4 pt-2">
+          <button
+            type="button"
+            class="cursor-pointer rounded-full border border-outline-variant/30 px-4 py-2 text-sm text-on-surface-variant transition-colors hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-40"
+            [disabled]="page() <= 1"
+            (click)="goToPage(-1)"
+          >
+            Previous
+          </button>
+          <span class="text-sm text-on-surface-variant">
+            Page {{ page() }} of {{ totalPages() }}
+          </span>
+          <button
+            type="button"
+            class="cursor-pointer rounded-full border border-outline-variant/30 px-4 py-2 text-sm text-on-surface-variant transition-colors hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-40"
+            [disabled]="page() >= totalPages()"
+            (click)="goToPage(1)"
+          >
+            Next
+          </button>
+        </div>
+      }
+    }
+  </div>
+</div>

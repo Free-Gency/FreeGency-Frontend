@@ -1,0 +1,29 @@
+.status-pending {
+  background-color: #f0edef;
+  color: #464555;
+}
+
+.status-viewed {
+  background-color: #e8f0ff;
+  color: #1a4a9c;
+}
+
+.status-discussion {
+  background-color: #e3dfff;
+  color: #110068;
+}
+
+.status-rejected {
+  background-color: var(--color-error-container);
+  color: var(--color-on-error-container);
+}
+
+.status-withdrawn {
+  background-color: #e5e1e4;
+  color: #78767f;
+}
+
+.status-expired {
+  background-color: #f5e6ff;
+  color: #6b2d8b;
+}

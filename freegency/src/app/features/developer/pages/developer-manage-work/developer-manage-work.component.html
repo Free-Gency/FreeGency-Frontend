@@ -1,0 +1,83 @@
+<app-developer-view-navbar></app-developer-view-navbar>
+
+<div class="max-w-content mx-auto px-6 py-8 md:px-16 md:py-10">
+  <header class="mb-8">
+    <h1 class="text-3xl md:text-4xl font-extrabold text-on-surface tracking-tight">
+      Manage work
+    </h1>
+    <p class="text-sm md:text-base text-on-surface-variant/70 mt-1.5 font-normal">
+      Track your projects, proposals and milestones in one place.
+    </p>
+  </header>
+
+  <div class="flex items-center gap-3 mb-8 overflow-x-auto no-scrollbar" role="tablist">
+    <button
+      type="button"
+      class="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-colors shrink-0 cursor-pointer"
+      [ngClass]="
+        activeTab() === 'assigned-projects'
+          ? 'bg-[#4130D7] text-white'
+          : 'bg-[#F0EDEF] text-on-surface hover:bg-[#E5E1E4]'
+      "
+      (click)="setTab('assigned-projects')"
+    >
+      <span>Assigned projects</span>
+      <span
+        class="text-xs px-2 py-0.5 rounded-full font-bold"
+        [ngClass]="
+          activeTab() === 'assigned-projects'
+            ? 'bg-white/20 text-white'
+            : 'bg-black/5 text-on-surface-variant'
+        "
+      >
+        {{ projectsTotal() }}
+      </span>
+    </button>
+
+    <button
+      type="button"
+      class="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-colors shrink-0 cursor-pointer"
+      [ngClass]="
+        activeTab() === 'proposals'
+          ? 'bg-[#4130D7] text-white'
+          : 'bg-[#F0EDEF] text-on-surface hover:bg-[#E5E1E4]'
+      "
+      (click)="setTab('proposals')"
+    >
+      <span>My proposals</span>
+      <span
+        class="text-xs px-2 py-0.5 rounded-full font-bold"
+        [ngClass]="
+          activeTab() === 'proposals'
+            ? 'bg-white/20 text-white'
+            : 'bg-black/5 text-on-surface-variant'
+        "
+      >
+        {{ proposalsTotal() }}
+      </span>
+    </button>
+
+    <button
+      type="button"
+      class="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-colors shrink-0 cursor-pointer"
+      [ngClass]="
+        activeTab() === 'milestones'
+          ? 'bg-[#4130D7] text-white'
+          : 'bg-[#F0EDEF] text-on-surface hover:bg-[#E5E1E4]'
+      "
+      (click)="setTab('milestones')"
+    >
+      <span>Milestones</span>
+    </button>
+  </div>
+
+  <div class="mt-4">
+    @if (activeTab() === 'assigned-projects') {
+      <app-assigned-projects></app-assigned-projects>
+    } @else if (activeTab() === 'proposals') {
+      <app-my-proposals></app-my-proposals>
+    } @else if (activeTab() === 'milestones') {
+      <app-my-milestones></app-my-milestones>
+    }
+  </div>
+</div>

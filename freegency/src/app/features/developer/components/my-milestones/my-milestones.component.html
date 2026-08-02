@@ -1,0 +1,62 @@
+<div class="flex flex-col gap-4 w-full">
+  @if (submitError()) {
+    <div class="card p-4 border-error text-error text-center">{{ submitError() }}</div>
+  }
+
+  @if (milestones.isLoading()) {
+    <div class="flex justify-center p-12">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+    </div>
+  } @else if (milestones.error()) {
+    <div class="card p-6 border-error text-error text-center">
+      Failed to load milestones.
+      <button (click)="milestones.reload()" class="link ml-2">Try again</button>
+    </div>
+  } @else if (!list().length) {
+    <div class="bg-white rounded-[24px] p-12 text-center border border-outline-variant/20">
+      <p class="text-base text-on-surface-variant">No milestones in your active projects.</p>
+    </div>
+  } @else {
+    @for (ms of list(); track ms.id) {
+      <div class="bg-white rounded-[24px] border border-outline-variant/30 p-6">
+        <div class="flex flex-col sm:flex-row justify-between gap-3">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <h2 class="text-lg font-bold text-on-surface truncate">{{ ms.title }}</h2>
+              <span
+                class="shrink-0 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#E3DFFF] text-primary"
+              >
+                {{ ms.workStatus }}
+              </span>
+            </div>
+            <p class="text-xs text-on-surface-variant/70 mt-1">
+              {{ ms.projectTitle }}
+              @if (ms.dueDate) {
+                · Due {{ ms.dueDate | date: 'mediumDate' }}
+              }
+            </p>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="text-xl font-bold text-on-surface">${{ ms.amount | number }}</div>
+            <div class="text-[11px] text-on-surface-variant/60">
+              {{ ms.isFunded ? 'Funded' : 'Not funded' }}
+            </div>
+          </div>
+        </div>
+
+        @if (ms.canSubmit) {
+          <div class="border-t border-outline-variant/15 mt-4 pt-3 flex justify-end">
+            <button
+              type="button"
+              class="btn btn-primary !w-auto px-5 !h-9 text-xs font-bold rounded-full"
+              [disabled]="submittingId() === ms.id"
+              (click)="submit(ms.id)"
+            >
+              {{ submittingId() === ms.id ? 'Submitting…' : 'Submit milestone' }}
+            </button>
+          </div>
+        }
+      </div>
+    }
+  }
+</div>

@@ -114,6 +114,14 @@ export const routes: Routes = [
       ).then((m) => m.DeveloperDashboardComponent),
   },
   {
+    path: 'developer/manage-work',
+    canActivate: [authGuard, developerModeGuard],
+    loadComponent: () =>
+      import(
+        './features/developer/pages/developer-manage-work/developer-manage-work.component'
+      ).then((m) => m.DeveloperManageWorkComponent),
+  },
+  {
     path: '',
     loadChildren: () =>
       import('./features/landing/landing.routes').then((m) => m.landingRoutes),
