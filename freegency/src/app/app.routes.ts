@@ -5,6 +5,7 @@ import {
   clientModeGuard,
   developerModeGuard,
 } from './core/auth/profile-mode.guard';
+import { ChatComponent } from './features/chat/chat.component';
 
 export const routes: Routes = [
   {
@@ -23,6 +24,7 @@ export const routes: Routes = [
         (m) => m.ManageWorkComponent,
       ),
   },
+  {path:"chat",component:ChatComponent},
   {
     path: 'client/messages',
     canActivate: [authGuard, clientModeGuard],
@@ -193,6 +195,7 @@ export const routes: Routes = [
     loadChildren: () =>
       import('./features/project/project.routes').then((m) => m.projectRoutes),
   },
+  
   { path: 'onboarding', redirectTo: 'auth/onboarding', pathMatch: 'full' },
   { path: 'sign-up', redirectTo: 'auth/sign-up', pathMatch: 'full' },
   { path: 'login', redirectTo: 'auth/login', pathMatch: 'full' },
