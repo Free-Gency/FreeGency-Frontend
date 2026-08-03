@@ -21,7 +21,7 @@ private chatSignalr = inject(ChatSignalrService);
   private apiUrl =
     `${environment.apiBaseUrl}/api/v1/Chat`;
     selectedRoom = signal<ChatRoom | null>(null);
-
+isOtherOnline = signal(false);
 messages = signal<RoomMessage[]>([]);
 
 messageText = signal<string>("");
@@ -39,6 +39,26 @@ selectedFile = signal<File | null>(null);
 
 
   ngOnInit(): void {
+    this.chatSignalr.listenProfileOnline(profileId => {
+
+  if (profileId === this.messages()[0]?.otherProfileId) {
+    this.isOtherOnline.set(true);
+  }
+
+});
+
+this.chatSignalr.listenProfileOffline(profileId => {
+
+  if (profileId === this.messages()[0]?.otherProfileId) {
+    this.isOtherOnline.set(false);
+  }
+
+});
+    this.chatSignalr.listenOnlineStatus((online) => {
+
+  this.isOtherOnline.set(online);
+
+});
      this.chatSignalr.listenReceiveMessage(
     (message)=>{
        message.isMine =
@@ -211,6 +231,16 @@ loadMessages(roomId:string)
   next:(res)=>{
 
     this.messages.set(res.items);
+    const otherProfileId = res.items[0]?.otherProfileId;
+
+if (otherProfileId) {
+
+  this.chatSignalr.invoke(
+    "IsOnline",
+    otherProfileId
+  );
+
+}
 
   }
 

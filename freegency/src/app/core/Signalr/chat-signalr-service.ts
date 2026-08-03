@@ -58,5 +58,27 @@ listenRoomUpdated(
     callback
   );
 }
+listenOnlineStatus(callback: (online: boolean) => void) {
 
+  this.hubConnection?.on(
+    "OnlineStatus",
+    callback
+  );
+
+}
+invoke(method: string, ...args: any[]) {
+
+  return this.hubConnection?.invoke(
+    method,
+    ...args
+  );
+
+}
+listenProfileOnline(callback: (profileId: string) => void) {
+  this.hubConnection?.on("ProfileOnline", callback);
+}
+
+listenProfileOffline(callback: (profileId: string) => void) {
+  this.hubConnection?.on("ProfileOffline", callback);
+}
 }
