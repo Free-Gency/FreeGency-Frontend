@@ -283,14 +283,15 @@
         <div class="flex items-center gap-2">
 
 
-          <span class="w-2 h-2 rounded-full bg-green-500"></span>
+         <span
+  class="w-2 h-2 rounded-full"
+  [class.bg-green-500]="isOtherOnline()"
+  [class.bg-gray-400]="!isOtherOnline()">
+</span>
 
-
-          <span class="text-sm text-gray-500">
-
-            Online
-
-          </span>
+<span class="text-sm text-gray-500">
+  {{ isOtherOnline() ? 'Online' : 'Offline' }}
+</span>
 
 
         </div>

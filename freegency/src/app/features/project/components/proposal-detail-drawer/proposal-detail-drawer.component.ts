@@ -41,7 +41,7 @@ export class ProposalDetailDrawerComponent {
   readonly canCloseDiscussion = input(false);
   readonly canReject = input(false);
   readonly discussionBlockedHint = input<string | null>(null);
-
+  
   readonly closed = output<void>();
   readonly startDiscussion = output<string>();
   readonly closeDiscussion = output<string>();

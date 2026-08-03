@@ -25,6 +25,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 import type { UserMode } from '../../../core/auth/auth.models';
 import { ProfileApiService } from '../../../features/auth/data-access/profile-api.service';
 import { SignalrService } from '../../../core/Signalr/signalr-service';
+import { ChatSignalrService } from '../../../core/Signalr/chat-signalr-service';
 
 export type ClientSearchScope = 'Projects' | 'Talents';
 
@@ -48,6 +49,7 @@ export class ClientViewNavbarComponent implements OnInit {
   protected readonly helpIcon = HelpCircleIcon as IconSvgObject;
   protected readonly logoutIcon = Logout01Icon as IconSvgObject;
   signalrService=inject(SignalrService);
+  chatSignalrService=inject(ChatSignalrService);
   protected readonly profileImage = this.auth.profileImage;
 
   protected readonly navItems = [
@@ -146,6 +148,7 @@ export class ClientViewNavbarComponent implements OnInit {
     this.closeAccountMenu();
     this.auth.logout();
     this.signalrService.stopHubConnection();
+    this.chatSignalrService.stopHubConnection();
     void this.router.navigateByUrl('/auth/login');
   }
 
