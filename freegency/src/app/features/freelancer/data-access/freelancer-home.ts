@@ -32,8 +32,11 @@ export class FreelancerHome {
 
     return this.http.get<any>(`${this.baseUrl}/api/v1/projects`, { params }).pipe(
       map((res) => {
-        const list = Array.isArray(res) ? res : res?.data || res?.$values || [];
-        const total = res?.totalCount || res?.total || list.length;
+        // Deep unwrap C# ApiResponse<PagedResult<T>> structure
+        const rawList = res?.data?.items || res?.items || res?.data || res?.$values || res || [];
+        const list = Array.isArray(rawList) ? rawList : [];
+        const total = res?.data?.totalCount || res?.totalCount || res?.total || list.length;
+        
         return { data: list, totalCount: total };
       }),
       catchError((error) => {
@@ -52,8 +55,9 @@ export class FreelancerHome {
 
     return this.http.get<any>(`${this.baseUrl}/api/v1/proposals`, { params }).pipe(
       map((res) => {
-        const list = Array.isArray(res) ? res : res?.data || res?.$values || [];
-        const total = res?.totalCount || res?.total || list.length;
+        const rawList = res?.data?.items || res?.items || res?.data || res?.$values || res || [];
+        const list = Array.isArray(rawList) ? rawList : [];
+        const total = res?.data?.totalCount || res?.totalCount || res?.total || list.length;
         return { data: list, totalCount: total };
       }),
       catchError((error) => {
@@ -65,7 +69,10 @@ export class FreelancerHome {
 
   getSavedProjects(): Observable<any[]> {
     return this.http.get<any>(`${this.baseUrl}/api/v1/projects/saved`).pipe(
-      map((res) => (Array.isArray(res) ? res : res?.data || res?.$values || [])),
+      map((res) => {
+        const list = res?.data?.items || res?.data || res?.$values || res || [];
+        return Array.isArray(list) ? list : [];
+      }),
       catchError((error) => {
         console.error('Error fetching saved projects:', error);
         return of([]);
@@ -132,14 +139,15 @@ export class FreelancerHome {
   getCategories(): Observable<any[]> {
     const params = new HttpParams()
       .set('pageNumber', '1')
-      .set('pageSize', '10')
+      .set('pageSize', '20')
       .set('sortBy', 'Name')
       .set('sortDirection', 'asc');
 
     return this.http.get<any>(`${this.baseUrl}/api/v1/categories`, { params }).pipe(
       map((res) => {
         const items = res?.data?.items || res?.data || res || [];
-        return [{ id: 'ALL', name: 'ALL', nameEn: 'ALL' }, ...items];
+        const categoryList = Array.isArray(items) ? items : [];
+        return [{ id: 'ALL', name: 'ALL', nameEn: 'ALL' }, ...categoryList];
       }),
       catchError(() => of([{ id: 'ALL', name: 'ALL', nameEn: 'ALL' }])),
     );
