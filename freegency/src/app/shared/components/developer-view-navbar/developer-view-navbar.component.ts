@@ -24,6 +24,7 @@ import {
 import { AuthService } from '../../../core/auth/auth.service';
 import type { UserMode } from '../../../core/auth/auth.models';
 import { SignalrService } from '../../../core/Signalr/signalr-service';
+import { ChatSignalrService } from '../../../core/Signalr/chat-signalr-service';
 
 export type DeveloperSearchScope = 'Projects' | 'Talents';
 
@@ -37,7 +38,7 @@ export class DeveloperViewNavbarComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly signalrService = inject(SignalrService);
-
+chatSignalrService=inject(ChatSignalrService);
   protected readonly arrowDownIcon = ArrowDown01Icon as IconSvgObject;
   protected readonly searchIcon = Search01Icon as IconSvgObject;
   protected readonly notificationIcon = Notification02Icon as IconSvgObject;
@@ -49,7 +50,7 @@ export class DeveloperViewNavbarComponent implements OnInit {
   protected readonly profileImage = this.auth.profileImage;
 
   protected readonly navItems = [
-    { label: 'Home', route: '/developer/dashboard' },
+    { label: 'Home', route: '/developer/home' },
     { label: 'Explore', route: '/developer/explore' },
     { label: 'Manage Work', route: '/developer/manage-work' },
     { label: 'Teams', route: '/developer/teams' },
@@ -135,6 +136,7 @@ export class DeveloperViewNavbarComponent implements OnInit {
     this.closeAccountMenu();
     this.auth.logout();
     this.signalrService.stopHubConnection();
+    this.chatSignalrService.stopHubConnection();
     void this.router.navigateByUrl('/auth/login');
   }
 

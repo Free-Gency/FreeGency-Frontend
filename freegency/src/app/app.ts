@@ -4,6 +4,7 @@ import { LoadingOverlayComponent } from './shared/components/loading-overlay/loa
 import { ToastOutletComponent } from './shared/components/toast/toast.component';
 import { AuthService } from './core/auth/auth.service';
 import { SignalrService } from './core/Signalr/signalr-service';
+import { ChatSignalrService } from './core/Signalr/chat-signalr-service';
 
 @Component({
   selector: 'app-root',
@@ -13,12 +14,17 @@ import { SignalrService } from './core/Signalr/signalr-service';
 })
 export class App implements OnInit {
   protected readonly title = signal('freegency');
-  private readonly signalr = inject(SignalrService);
-  private readonly auth = inject(AuthService);
+  private signalr = inject(SignalrService);
+  private chatSignalr=inject(ChatSignalrService);
 
   ngOnInit() {
-    if (this.auth.isLoggedIn()) {
-      this.signalr.CreateHubConnection();
-    }
+
+     const session = sessionStorage.getItem("freegency.auth.session");
+
+  if (session) {
+    this.signalr.CreateHubConnection();
+    this.chatSignalr.CreateHubConnection();
+  }
+
   }
 }

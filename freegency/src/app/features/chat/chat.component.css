@@ -1,0 +1,265 @@
+/* Main container */
+:host {
+  display: block;
+  height: 100%;
+}
+
+
+/* Smooth scrollbar */
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 20px;
+}
+
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+
+
+
+
+/* Chat room hover animation */
+
+.chat-room {
+  transition: all .25s ease;
+}
+
+
+.chat-room:hover {
+  transform: translateX(3px);
+}
+
+
+
+
+
+/* Message animation */
+
+.message-animation {
+
+  animation: messageIn .25s ease forwards;
+
+}
+
+
+@keyframes messageIn {
+
+  from {
+
+    opacity: 0;
+
+    transform: translateY(10px);
+
+  }
+
+
+  to {
+
+    opacity: 1;
+
+    transform: translateY(0);
+
+  }
+
+}
+
+
+
+
+
+/* Bubble shadow */
+
+.message-bubble {
+
+  box-shadow:
+  0 2px 8px rgba(0,0,0,.06);
+
+}
+
+
+
+
+
+/* My message bubble */
+
+.my-message {
+
+  border-bottom-right-radius: 4px;
+
+}
+
+
+
+
+
+/* Other message bubble */
+
+.other-message {
+
+  border-bottom-left-radius: 4px;
+
+}
+
+
+
+
+
+/* Header glass */
+
+.chat-header {
+
+  backdrop-filter: blur(12px);
+
+  background: rgba(255,255,255,.85);
+
+}
+
+
+
+
+
+/* Input */
+
+.chat-input {
+
+  transition: all .2s ease;
+
+}
+
+
+.chat-input:focus {
+
+  box-shadow:
+
+  0 0 0 3px rgba(59,130,246,.15);
+
+}
+
+
+
+
+
+/* Send button */
+
+.send-btn {
+
+  transition: all .2s ease;
+
+}
+
+
+
+.send-btn:hover {
+
+  transform: scale(1.05);
+
+}
+
+
+
+
+
+/* File card */
+
+.file-card {
+
+  transition: all .2s ease;
+
+}
+
+
+.file-card:hover {
+
+  transform: translateY(-2px);
+
+}
+
+
+
+
+
+/* Avatar */
+
+.avatar {
+
+  transition: .2s ease;
+
+}
+
+
+.avatar:hover {
+
+  transform: scale(1.05);
+
+}
+
+
+
+
+
+/* Empty state */
+
+.empty-chat {
+
+  animation: float 3s ease-in-out infinite;
+
+}
+
+
+@keyframes float {
+
+
+0%,
+100% {
+
+  transform: translateY(0);
+
+}
+
+
+50% {
+
+  transform: translateY(-8px);
+
+}
+
+
+}
+
+
+
+
+
+/* Mobile */
+
+@media(max-width:768px){
+
+
+.chat-sidebar {
+
+  width:100%;
+
+}
+
+
+.chat-area {
+
+  display:none;
+
+}
+
+
+}

@@ -157,6 +157,7 @@ export class AuthService {
       token: response.token,
       refreshToken: response.refreshToken,
       refreshTokenExpiration: response.refreshTokenExpiration,
+      profileId: response.profileId
     };
   }
 }

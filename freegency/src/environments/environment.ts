@@ -4,4 +4,5 @@ export const environment = {
   stripePublicKey:
     'pk_test_51TmDO3EW2kqDFv3mSLCYIICY1i9MqZ9MECS7whBhZi4jpxNPRopgMdVt5ccFQ5TjqC8PByk2HwaWnyaSphtaHPFP00RMmTmOG2',
   hubUrl: 'https://free-gency-backend-003bbc67b812.herokuapp.com/hub/notifications',
+  hubChatUrl: 'https://free-gency-backend-003bbc67b812.herokuapp.com/hub/chat',
 };

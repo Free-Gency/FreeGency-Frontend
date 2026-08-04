@@ -6,6 +6,7 @@ import { extractApiError } from '../../../../core/http/api-error';
 import { AuthApiService } from '../../data-access/auth-api.service';
 import { AuthAmbientBgComponent } from '../../components/auth-ambient-bg/auth-ambient-bg.component';
 import { SignalrService } from '../../../../core/Signalr/signalr-service';
+import { ChatSignalrService } from '../../../../core/Signalr/chat-signalr-service';
 
 @Component({
   selector: 'app-login',
@@ -18,6 +19,7 @@ export class LoginComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   signalrService=inject(SignalrService);
+  chatSignalrService=inject(ChatSignalrService);
   protected email = '';
   protected password = '';
   protected keepLoggedIn = true;
@@ -55,6 +57,7 @@ export class LoginComponent implements OnInit {
         this.auth.completeLogin(response, this.keepLoggedIn);
         this.loading.set(false);
         this.signalrService.CreateHubConnection();
+        this.chatSignalrService.CreateHubConnection();
         void this.router.navigateByUrl(this.auth.resolvePostAuthPath(response, this.returnUrl));
       },
       error: (err) => {
