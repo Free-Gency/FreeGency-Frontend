@@ -1,14 +1,84 @@
-<div class="min-h-dvh bg-[#f7f7f9]">
+@if (!isTeamMember() && team()) {
   <app-developer-view-navbar />
+}
 
-  <main class="mx-auto w-full max-w-[1400px] px-5 py-6 sm:px-8 lg:px-12 lg:py-8">
-    <a
-      routerLink="/developer/my-teams"
-      class="mb-5 inline-flex items-center gap-1.5 font-display text-sm font-semibold text-[#464556] transition-colors hover:text-[#4130d7]"
-    >
-      <hugeicons-icon [icon]="backIcon" [size]="18" color="currentColor" [strokeWidth]="1.75" />
-      Back to My Teams
-    </a>
+<div class="tw-shell" [class.tw-shell--public]="!!team() && !isTeamMember()">
+  @if (isTeamMember()) {
+  <aside class="tw-sidebar" aria-label="Team workspace">
+    <div class="tw-sidebar__top">
+      <a routerLink="/developer/teams" class="tw-sidebar__brand" aria-label="FreeGency — My Teams">
+        <span class="tw-sidebar__mark" aria-hidden="true">
+          <img src="/assets/brand/mark.svg" alt="" width="24" height="24" />
+        </span>
+        <img
+          src="/assets/brand/logo.svg"
+          alt="FreeGency"
+          class="tw-sidebar__wordmark"
+          width="160"
+          height="37"
+        />
+      </a>
+
+      <nav class="tw-sidebar__nav">
+        @for (item of sidebarItems; track item.key) {
+          <button
+            type="button"
+            class="tw-nav-btn"
+            [class.is-active]="sidebarActive(item.key)"
+            (click)="onSidebar(item)"
+          >
+            <span class="tw-nav-btn__icon">
+              <hugeicons-icon [icon]="item.icon" [size]="18" color="currentColor" [strokeWidth]="1.75" />
+            </span>
+            {{ item.label }}
+          </button>
+        }
+      </nav>
+    </div>
+
+    <div class="tw-sidebar__foot">
+      <button type="button" class="tw-back-btn" (click)="goMyTeams()">
+        <hugeicons-icon [icon]="backIcon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
+        Back to My Teams
+      </button>
+    </div>
+  </aside>
+  }
+
+  <div class="tw-main">
+    @if (isTeamMember()) {
+    <div class="tw-mobile-bar">
+      <button type="button" class="tw-back-chip" (click)="goMyTeams()">
+        <hugeicons-icon [icon]="backIcon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
+        My Teams
+      </button>
+      <button
+        type="button"
+        class="tw-menu-chip"
+        (click)="mobileNavOpen.set(!mobileNavOpen())"
+      >
+        Sections
+      </button>
+    </div>
+
+    @if (mobileNavOpen()) {
+      <div class="tw-mobile-nav">
+        @for (item of sidebarItems; track item.key) {
+          <button
+            type="button"
+            class="tw-nav-btn"
+            [class.is-active]="sidebarActive(item.key)"
+            (click)="onSidebar(item)"
+          >
+            <span class="tw-nav-btn__icon">
+              <hugeicons-icon [icon]="item.icon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
+            </span>
+            {{ item.label }}
+          </button>
+        }
+      </div>
+    }
+    }
 
     @if (loading()) {
       <div class="h-40 animate-pulse rounded-[28px] bg-white"></div>
@@ -17,298 +87,1443 @@
         {{ error() }}
       </p>
     } @else if (team(); as t) {
-      <!-- Header -->
-      <section
-        class="mb-6 flex flex-col gap-5 rounded-[28px] border border-[#eceef4] bg-white px-5 py-5 sm:flex-row sm:items-start sm:justify-between sm:px-6"
-      >
-        <div class="flex min-w-0 items-start gap-4">
-          <span
-            class="relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[#ebe9ff] font-display text-base font-bold text-[#4130d7] shadow-[0_1px_2px_rgba(21,28,39,0.06)]"
-          >
-            @if (t.logo) {
-              <img [src]="t.logo" alt="" class="absolute inset-0 size-full object-cover" />
-            } @else {
-              {{ initials(t.name) }}
-            }
-          </span>
-          <div class="min-w-0">
-            <div class="flex flex-wrap items-center gap-2">
-              <h1 class="font-display text-2xl font-bold tracking-tight text-[#27253f] sm:text-[28px]">
-                {{ t.name }}
-              </h1>
-              <span
-                class="rounded-full bg-[#f0edef] px-2.5 py-1 font-mono text-[10px] font-semibold tracking-[0.06em] text-[#464556] uppercase"
-              >
-                {{ isLeader() ? 'Team Leader' : 'Team Member' }}
-              </span>
+      <a routerLink="/developer/teams" class="tw-desktop-back">
+        <hugeicons-icon [icon]="backIcon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
+        My Teams
+      </a>
+
+      <input id="tw-quick-cover" type="file" accept="image/*" class="sr-only" (change)="onQuickCoverChange($event)" />
+      <input id="tw-quick-logo" type="file" accept="image/*" class="sr-only" (change)="onQuickLogoChange($event)" />
+
+      <!-- Hero header with cover -->
+      <section class="tw-hero">
+        <div class="tw-hero__cover">
+          @if (t.cover) {
+            <img [src]="t.cover" alt="" class="tw-hero__cover-img" />
+          } @else {
+            <div class="tw-hero__cover-fallback" aria-hidden="true"></div>
+          }
+          <div class="tw-hero__cover-fade" aria-hidden="true"></div>
+
+          @if (isLeader()) {
+            <button type="button" class="tw-hero__cover-edit" (click)="quickPickCover($event)">
+              <hugeicons-icon [icon]="cameraIcon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
+              Change cover
+            </button>
+          }
+
+          <div class="tw-hero__overlay">
+            <button
+              type="button"
+              class="tw-hero__logo"
+              [class.tw-hero__logo--editable]="isLeader()"
+              (click)="isLeader() ? quickPickLogo($event) : null"
+              [attr.aria-label]="isLeader() ? 'Change team logo' : null"
+            >
+              @if (t.logo) {
+                <img [src]="t.logo" alt="" class="absolute inset-0 size-full object-cover" />
+              } @else {
+                {{ initials(t.name) }}
+              }
+              @if (isLeader()) {
+                <span class="tw-hero__logo-edit">
+                  <hugeicons-icon [icon]="cameraIcon" [size]="14" color="currentColor" [strokeWidth]="1.75" />
+                </span>
+              }
+            </button>
+
+            <div class="tw-hero__overlay-text">
+              <div class="tw-hero__title-row">
+                <h1 class="tw-hero__name">{{ t.name }}</h1>
+                @if (isTeamMember()) {
+                  <span
+                    class="role-badge"
+                    [class.role-badge--leader]="isLeader()"
+                    [class.role-badge--member]="!isLeader()"
+                  >
+                    {{ isLeader() ? 'LEADER' : 'MEMBER' }}
+                  </span>
+                  @if (isLeader()) {
+                    <button
+                      type="button"
+                      class="tw-icon-edit tw-icon-edit--on-cover"
+                      aria-label="Edit team profile"
+                      (click)="openProfileEdit()"
+                    >
+                      <hugeicons-icon [icon]="editIcon" [size]="15" color="currentColor" [strokeWidth]="1.75" />
+                    </button>
+                  }
+                }
+              </div>
             </div>
-            <p class="mt-1 max-w-[36rem] font-body text-sm text-[#464556]">
-              {{ t.aboutUs || 'Multi-disciplinary team on FreeGency.' }}
-            </p>
           </div>
         </div>
 
-        @if (isLeader()) {
-          <button
-            type="button"
-            class="inline-flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-full border border-[#e7eefe] bg-[#fbfbfb] px-4 font-display text-xs font-semibold text-[#27253f] transition-colors hover:bg-[#ebe9ff]"
-            (click)="copyCode()"
-          >
-            <hugeicons-icon [icon]="copyIcon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
-            {{ codeCopied() ? 'Copied' : t.teamCode }}
-          </button>
-        }
+        <div class="tw-hero__body">
+          <div class="tw-hero__meta">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-body text-[13px] font-medium text-[#6b7280]">
+              <span class="inline-flex items-center gap-1">
+                <hugeicons-icon [icon]="starIcon" [size]="14" color="#F59E0B" [strokeWidth]="1.75" />
+                <span class="font-semibold text-[#111827]">
+                  {{ t.averageRating > 0 ? (t.averageRating | number: '1.1-1') : 'New' }}
+                </span>
+                @if (t.ratingCount > 0) {
+                  <span>({{ t.ratingCount }} reviews)</span>
+                }
+              </span>
+              <span class="inline-flex items-center gap-1.5">
+                <hugeicons-icon [icon]="groupIcon" [size]="14" color="currentColor" [strokeWidth]="1.75" />
+                {{ t.membersCount }} members
+              </span>
+            </div>
+
+            <div class="flex flex-wrap gap-1.5">
+              @for (cat of categoryLabels(); track cat.id) {
+                <span
+                  class="tw-cat-chip"
+                  [class.tw-cat-chip--primary]="cat.primary"
+                  [style.--cat-bg]="categoryTone(cat.label).bg"
+                  [style.--cat-fg]="categoryTone(cat.label).fg"
+                  [style.--cat-border]="categoryTone(cat.label).border"
+                >
+                  @if (cat.primary) {
+                    <span class="tw-cat-chip__dot" aria-hidden="true"></span>
+                  }
+                  {{ cat.label }}
+                </span>
+              } @empty {
+                <span class="text-xs text-[#98a2b3]">No categories yet</span>
+              }
+            </div>
+          </div>
+
+          <div class="tw-hero__actions">
+            @if (isTeamMember()) {
+              <button
+                type="button"
+                class="inline-flex size-10 cursor-pointer items-center justify-center rounded-full border border-[#e5e7eb] text-[#6b7280] transition-colors hover:bg-[#f9fafb]"
+                aria-label="Team messages"
+                (click)="setTab('messages')"
+              >
+                <hugeicons-icon [icon]="messageIcon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
+              </button>
+              @if (isLeader()) {
+                <button
+                  type="button"
+                  class="inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-full bg-[#4130d7] px-5 font-display text-sm font-semibold text-white transition-colors hover:bg-[#3527b8]"
+                  (click)="openInvite()"
+                >
+                  <hugeicons-icon [icon]="addIcon" [size]="16" color="currentColor" [strokeWidth]="2" />
+                  Invite Member
+                </button>
+              }
+            }
+          </div>
+        </div>
       </section>
 
-      <!-- Tabs -->
-      <nav class="mb-6 flex flex-wrap items-center gap-1" aria-label="Team sections">
-        @for (tab of visibleTabs(); track tab.id) {
+      <!-- KPIs -->
+      <div class="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div class="tw-card p-4">
+          <p class="tw-mono-label">Success score</p>
+          <p class="tw-kpi mt-1">{{ t.averageRating > 0 ? ((t.averageRating / 5) * 100 | number: '1.0-0') + '%' : '—' }}</p>
+        </div>
+        <div class="tw-card p-4">
+          <p class="tw-mono-label">Active projects</p>
+          <p class="tw-kpi mt-1">{{ t.projectsCount ?? teamProjects().length }}</p>
+        </div>
+        <div class="tw-card p-4">
+          <p class="tw-mono-label">Portfolio</p>
+          <p class="tw-kpi mt-1">{{ portfolio().length }}</p>
+        </div>
+        <div class="tw-card p-4">
+          <p class="tw-mono-label">Team members</p>
+          <p class="tw-kpi mt-1">{{ t.membersCount }}</p>
+        </div>
+      </div>
+
+      <!-- Tabs (shown under 960px; desktop uses sidebar) — members only -->
+      @if (isTeamMember()) {
+      <div class="tw-tabs mt-8" role="tablist">
+        @for (tab of tabs(); track tab.id) {
           <button
             type="button"
-            class="cursor-pointer rounded-full px-4 py-2 font-display text-sm font-semibold transition-colors"
-            [class.bg-[#ebe9ff]]="activeTab() === tab.id"
-            [class.text-[#4130d7]]="activeTab() === tab.id"
-            [class.text-[#464556]]="activeTab() !== tab.id"
-            [class.hover:bg-[#f0edef]]="activeTab() !== tab.id"
+            role="tab"
+            class="tw-tab"
+            [class.is-active]="activeTab() === tab.id"
             (click)="setTab(tab.id)"
           >
             {{ tab.label }}
           </button>
         }
-      </nav>
-
-      <!-- Tab panels -->
-      @if (activeTab() === 'overview') {
-        <section class="rounded-[28px] border border-[#eceef4] bg-white p-6 sm:p-8">
-          <div class="flex flex-wrap items-center gap-4 text-[#464556]">
-            <span class="inline-flex items-center gap-1.5 font-body text-sm">
-              <hugeicons-icon [icon]="starIcon" [size]="18" color="#E8A317" [strokeWidth]="1.75" />
-              {{ t.averageRating > 0 ? t.averageRating.toFixed(1) : 'New' }}
-              <span class="text-[#94a0b4]">({{ t.ratingCount }} reviews)</span>
-            </span>
-            <span class="inline-flex items-center gap-1.5 font-body text-sm">
-              <hugeicons-icon [icon]="groupIcon" [size]="18" color="currentColor" [strokeWidth]="1.75" />
-              {{ t.membersCount }} members
-            </span>
-          </div>
-
-          @if (t.skills.length) {
-            <div class="mt-5 flex flex-wrap gap-2">
-              @for (skill of t.skills; track skill.skillId) {
-                <span
-                  class="rounded-lg bg-[#f4f3ff] px-3 py-1.5 font-body text-xs font-medium text-[#4130d7]"
-                >
-                  {{ skill.name }}
-                </span>
-              }
-            </div>
-          } @else if (t.categories.length) {
-            <div class="mt-5 flex flex-wrap gap-2">
-              @for (cat of t.categories; track cat.categoryId) {
-                <span
-                  class="rounded-lg bg-[#f4f3ff] px-3 py-1.5 font-body text-xs font-medium text-[#4130d7]"
-                >
-                  {{ cat.name }}
-                </span>
-              }
-            </div>
-          }
-
-          <h2 class="mt-8 font-display text-lg font-bold text-[#151c27]">About Us</h2>
-          <p class="mt-2 max-w-[40rem] font-body text-sm leading-relaxed text-[#464556]">
-            {{ t.aboutUs || 'This team has not added an about section yet.' }}
-          </p>
-        </section>
+      </div>
       }
 
-      @if (activeTab() === 'portfolio') {
-        <section>
-          <div class="mb-4 flex items-end justify-between gap-3">
-            <div>
-              <h2 class="font-display text-lg font-bold text-[#151c27]">Portfolio</h2>
-              <p class="mt-1 font-body text-sm text-[#464556]">
-                {{ isLeader() ? 'Manage team showcase work.' : 'View-only team showcase.' }}
-              </p>
+      <!-- OVERVIEW -->
+      @if (activeTab() === 'overview') {
+        <div class="grid grid-cols-1 gap-8 pt-8 lg:grid-cols-[1fr_320px]">
+          <div>
+            <div class="flex items-center justify-between gap-3">
+              <h2 class="font-display text-[17px] font-bold text-[#111827]">About Team</h2>
+              @if (isLeader()) {
+                <button type="button" class="tw-text-edit" (click)="openProfileEdit()">
+                  <hugeicons-icon [icon]="editIcon" [size]="14" color="currentColor" [strokeWidth]="1.75" />
+                  Edit
+                </button>
+              }
             </div>
-          </div>
+            <p class="mt-3 max-w-[620px] font-body text-sm leading-[22px] text-[#4b5563]">
+              {{ t.aboutUs || 'This team has not added an about section yet.' }}
+            </p>
 
-          @if (portfolio().length) {
-            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              @for (project of portfolio(); track project.id) {
-                <article
-                  class="overflow-hidden rounded-[24px] border border-[#eceef4] bg-white shadow-[0_1px_2px_rgba(21,28,39,0.04)]"
-                >
-                  <div class="relative aspect-[16/10] bg-[#f0edef]">
-                    @if (portfolioCover(project); as cover) {
-                      <img [src]="cover" [alt]="project.title" class="size-full object-cover" />
+            @if (!isTeamMember()) {
+              <div class="mt-8">
+                <div class="mb-3 flex items-center justify-between gap-2">
+                  <h2 class="font-display text-[17px] font-bold text-[#111827]">Open team jobs</h2>
+                  @if (openJobs().length) {
+                    <span class="rounded-full bg-[#eeecfb] px-2.5 py-1 font-mono text-[10px] font-bold tracking-[0.06em] text-[#4130d7] uppercase">
+                      {{ openJobs().length }} open
+                    </span>
+                  }
+                </div>
+
+                @if (jobsLoading()) {
+                  <div class="space-y-2">
+                    @for (i of [1, 2]; track i) {
+                      <div class="h-20 animate-pulse rounded-2xl border border-[#eceef4] bg-white"></div>
                     }
                   </div>
-                  <div class="p-4">
-                    <h3 class="font-display text-sm font-semibold text-[#151c27]">{{ project.title }}</h3>
-                    <p class="mt-1 line-clamp-2 font-body text-xs text-[#464556]">
-                      {{ project.description || 'Portfolio project' }}
-                    </p>
+                } @else if (openJobs().length) {
+                  <div class="space-y-3">
+                    @for (job of openJobs(); track job.id) {
+                      <article class="rounded-2xl border border-[#eceef4] bg-white px-4 py-3.5 shadow-[0_2px_10px_rgba(16,24,40,0.04)]">
+                        <div class="flex flex-wrap items-start justify-between gap-3">
+                          <div class="min-w-0 flex-1">
+                            <p class="font-display text-[15px] font-bold text-[#111827]">{{ job.title }}</p>
+                            <p class="mt-1 line-clamp-2 font-body text-sm leading-5 text-[#667085]">
+                              {{ job.description || 'No description provided.' }}
+                            </p>
+                          </div>
+                          @if (appliedJobIds().includes(job.id)) {
+                            <span class="inline-flex h-9 items-center rounded-full bg-[#ecfdf3] px-3.5 font-display text-xs font-bold text-[#15803d]">
+                              Applied
+                            </span>
+                          } @else {
+                            <button
+                              type="button"
+                              class="inline-flex h-9 shrink-0 cursor-pointer items-center rounded-full bg-[#4130d7] px-4 font-display text-xs font-bold text-white hover:opacity-90"
+                              (click)="openApplyJob(job)"
+                            >
+                              Apply
+                            </button>
+                          }
+                        </div>
+                      </article>
+                    }
+                  </div>
+                } @else {
+                  <div class="rounded-2xl border border-dashed border-[#dbe2f0] bg-white px-4 py-8 text-center">
+                    <p class="font-display text-sm font-semibold text-[#111827]">No open roles right now</p>
+                    <p class="mt-1 font-body text-xs text-[#98a2b3]">Check back later or join with a team code.</p>
+                  </div>
+                }
+              </div>
+            }
+
+            <div class="mt-7">
+              <div class="mb-2.5 flex items-center justify-between gap-2">
+                <p class="tw-mono-label">Specializations</p>
+                @if (isLeader()) {
+                  <button type="button" class="tw-text-edit" (click)="openExpertiseEdit('specialties')" title="Edit specializations">
+                    <hugeicons-icon [icon]="editIcon" [size]="13" color="currentColor" [strokeWidth]="1.75" />
+                  </button>
+                }
+              </div>
+              <div class="flex flex-wrap gap-2">
+                @for (spec of specialtyLabels(); track spec) {
+                  <span class="rounded-full bg-[#4130D7] px-3 py-1.5 font-body text-xs font-semibold text-white">
+                    {{ spec }}
+                  </span>
+                } @empty {
+                  <span class="text-xs text-[#98a2b3]">No specialties yet</span>
+                }
+              </div>
+            </div>
+
+            <div class="mt-5 grid max-w-[520px] grid-cols-2 gap-6">
+              <div>
+                <p class="tw-mono-label">Availability</p>
+                <p class="mt-1 text-sm font-semibold text-[#16a34a]">Available Now</p>
+              </div>
+              <div>
+                <p class="tw-mono-label">Team size</p>
+                <p class="mt-1 text-sm font-semibold text-[#111827]">{{ t.membersCount }} specialists</p>
+              </div>
+            </div>
+
+            <div class="mb-4 mt-10 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 class="font-display text-[17px] font-bold text-[#111827]">Portfolio Highlights</h2>
+                @if (!isLeader()) {
+                  <p class="mt-0.5 text-xs text-[#9ca3af]">Curated by the team leader</p>
+                }
+              </div>
+              <div class="flex items-center gap-3">
+                @if (isLeader()) {
+                  <button
+                    type="button"
+                    class="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-[#e5e7eb] px-4 font-display text-[13px] font-semibold text-[#374151] hover:bg-[#f9fafb]"
+                    (click)="openAddPortfolio()"
+                  >
+                    <hugeicons-icon [icon]="addIcon" [size]="14" color="currentColor" [strokeWidth]="2" />
+                    Add project
+                  </button>
+                }
+              </div>
+            </div>
+
+            @if (portfolio().length === 0) {
+              <div class="tw-card border-dashed px-5 py-10 text-center">
+                <p class="font-display text-sm font-semibold text-[#111827]">No portfolio projects yet</p>
+                @if (isLeader()) {
+                  <button
+                    type="button"
+                    class="mt-3 inline-flex h-9 cursor-pointer items-center rounded-full bg-[#4130d7] px-4 font-display text-xs font-bold text-white"
+                    (click)="openAddPortfolio()"
+                  >
+                    Add first project
+                  </button>
+                }
+              </div>
+            } @else {
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                @for (item of portfolio(); track item.id) {
+                  <article class="pf-card" (click)="openPortfolioDetail(item)">
+                    <div class="pf-card__media">
+                      @if (item.imageCover) {
+                        <img [src]="item.imageCover" alt="" />
+                      } @else {
+                        <div class="pf-card__placeholder" aria-hidden="true"></div>
+                      }
+                      @if (isLeader()) {
+                        <div class="pf-card__actions">
+                          <button
+                            type="button"
+                            class="pf-card__action"
+                            aria-label="Edit project"
+                            (click)="openEditPortfolio(item); $event.stopPropagation()"
+                          >
+                            <hugeicons-icon [icon]="editIcon" [size]="14" color="#4b5563" [strokeWidth]="1.75" />
+                          </button>
+                          <button
+                            type="button"
+                            class="pf-card__action pf-card__action--danger"
+                            aria-label="Delete project"
+                            (click)="deletePortfolio(item, $event)"
+                          >
+                            <hugeicons-icon [icon]="deleteIcon" [size]="14" color="#ef4444" [strokeWidth]="1.75" />
+                          </button>
+                        </div>
+                      }
+                    </div>
+                    <div class="pf-card__body">
+                      <h3 class="pf-card__title">{{ item.title }}</h3>
+                      <p class="pf-card__desc">{{ item.description || 'Case study' }}</p>
+                      <button
+                        type="button"
+                        class="pf-card__link"
+                        (click)="openPortfolioDetail(item); $event.stopPropagation()"
+                      >
+                        View details
+                      </button>
+                    </div>
+                  </article>
+                }
+              </div>
+            }
+          </div>
+
+          <aside class="space-y-6">
+            <div class="tw-card p-5">
+              <div class="mb-3 flex items-center justify-between gap-2">
+                <p class="tw-mono-label">Skills</p>
+                @if (isLeader()) {
+                  <button type="button" class="tw-icon-edit" aria-label="Edit skills" (click)="openExpertiseEdit('skills')">
+                    <hugeicons-icon [icon]="editIcon" [size]="14" color="currentColor" [strokeWidth]="1.75" />
+                  </button>
+                }
+              </div>
+              <div class="flex flex-wrap gap-1.5">
+                @for (skill of skillLabels(); track skill) {
+                  <span class="rounded-full bg-[#f4f3ff] px-3 py-1.5 text-xs font-semibold text-[#4130d7]">
+                    {{ skill }}
+                  </span>
+                } @empty {
+                  <span class="text-xs text-[#9ca3af]">No skills listed yet</span>
+                }
+              </div>
+            </div>
+
+            <div class="tw-card p-5">
+              <div class="mb-3 flex items-center justify-between gap-2">
+                <p class="tw-mono-label">Categories</p>
+                @if (isLeader()) {
+                  <button type="button" class="tw-icon-edit" aria-label="Edit categories" (click)="openExpertiseEdit('categories')">
+                    <hugeicons-icon [icon]="editIcon" [size]="14" color="currentColor" [strokeWidth]="1.75" />
+                  </button>
+                }
+              </div>
+              <div class="flex flex-wrap gap-1.5">
+                @for (cat of categoryLabels(); track cat.id) {
+                  <span
+                    class="tw-cat-chip"
+                    [class.tw-cat-chip--primary]="cat.primary"
+                    [style.--cat-bg]="categoryTone(cat.label).bg"
+                    [style.--cat-fg]="categoryTone(cat.label).fg"
+                    [style.--cat-border]="categoryTone(cat.label).border"
+                  >
+                    {{ cat.label }}
+                  </span>
+                } @empty {
+                  <span class="text-xs text-[#9ca3af]">No categories yet</span>
+                }
+              </div>
+            </div>
+
+            <div class="tw-card p-5">
+              <p class="tw-mono-label mb-4">Active members</p>
+              <div class="space-y-4">
+                @for (member of t.memberAvatars ?? []; track member.userId) {
+                  <div class="flex items-center gap-3">
+                    <span
+                      class="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#e5e7eb] text-[11px] font-bold text-[#4b5563]"
+                    >
+                      @if (member.imageUrl) {
+                        <img [src]="member.imageUrl" alt="" class="absolute inset-0 size-full object-cover" />
+                      } @else {
+                        {{ initials(member.name) }}
+                      }
+                    </span>
+                    <div class="min-w-0">
+                      <p class="truncate text-[13px] font-semibold text-[#111827]">{{ member.name }}</p>
+                      <p class="text-xs text-[#6b7280]">Team member</p>
+                    </div>
+                  </div>
+                } @empty {
+                  <p class="text-xs text-[#9ca3af]">Member roster coming soon</p>
+                }
+              </div>
+              <button
+                type="button"
+                class="mt-5 flex h-10 w-full items-center justify-center rounded-full bg-[#f1f3f9] font-display text-[13px] font-semibold text-[#374151]"
+              >
+                View all members
+              </button>
+            </div>
+          </aside>
+        </div>
+      }
+
+      <!-- PROJECTS -->
+      @if (activeTab() === 'projects') {
+        <div class="pt-8">
+          <div class="mb-5 flex items-center justify-between">
+            <h2 class="font-display text-[17px] font-bold text-[#111827]">
+              Team Projects
+              <span class="font-semibold text-[#9ca3af]">{{ teamProjects().length }}</span>
+            </h2>
+          </div>
+
+          @if (projectsLoading()) {
+            <div class="grid gap-4 lg:grid-cols-2">
+              <div class="tw-card h-56 animate-pulse"></div>
+              <div class="tw-card h-56 animate-pulse"></div>
+            </div>
+          } @else if (teamProjects().length === 0) {
+            <div class="tw-card border-dashed px-6 py-12 text-center">
+              <p class="font-display text-base font-semibold text-[#111827]">No team projects yet</p>
+              <p class="mt-1 font-body text-sm text-[#6b7280]">
+                @if (isLeader()) {
+                  Assigned client projects for this team will show up here.
+                } @else {
+                  You don’t have assigned projects on this team yet.
+                }
+              </p>
+            </div>
+          } @else {
+            <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              @for (project of teamProjects(); track project.id) {
+                <article class="tw-card relative p-5">
+                  @if (!isLeader()) {
+                    <span
+                      class="absolute top-5 right-5 rounded-full border border-[#bbf7d0] bg-[#ecfdf3] px-2.5 py-1 text-[10px] font-bold text-[#16a34a]"
+                    >
+                      You're on this
+                    </span>
+                  }
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                      <h3 class="font-display text-[15px] font-bold text-[#111827]">{{ project.title }}</h3>
+                      <p class="mt-0.5 text-[13px] text-[#6b7280]">
+                        Client:
+                        <span class="font-semibold text-[#374151]">{{ project.clientName || 'Client' }}</span>
+                      </p>
+                    </div>
+                    <span class="shrink-0 rounded-full bg-[#eeecfb] px-2.5 py-1 text-[11px] font-bold text-[#4130d7]">
+                      {{ statusLabel(project.status) }}
+                    </span>
+                  </div>
+                  <div class="mt-4 grid grid-cols-2 gap-4">
+                    <div>
+                      <p class="tw-mono-label">Budget</p>
+                      <p class="mt-0.5 text-sm font-bold text-[#111827]">{{ formatBudget(project) }}</p>
+                    </div>
+                    <div>
+                      <p class="tw-mono-label">Deadline</p>
+                      <p class="mt-0.5 text-sm font-bold text-[#111827]">
+                        {{ project.deadline ? (project.deadline | date: 'MMM d, y') : '—' }}
+                      </p>
+                    </div>
+                  </div>
+                  <div class="mt-4 flex items-center justify-between">
+                    <span class="text-xs font-semibold text-[#6b7280]">{{ project.categoryName || 'Project' }}</span>
+                    <button
+                      type="button"
+                      class="inline-flex h-9 cursor-pointer items-center rounded-full bg-[#4130d7] px-5 font-display text-[13px] font-semibold text-white hover:bg-[#3527b8]"
+                      (click)="openWorkspace(project)"
+                    >
+                      Open Workspace
+                    </button>
                   </div>
                 </article>
               }
             </div>
-          } @else {
-            <div
-              class="flex min-h-[220px] flex-col items-center justify-center rounded-[28px] border border-dashed border-[#e7eefe] bg-white px-6 text-center"
-            >
-              <p class="font-display text-base font-semibold text-[#151c27]">No portfolio projects yet</p>
-              <p class="mt-2 max-w-[28rem] font-body text-sm text-[#464556]">
-                {{
-                  isLeader()
-                    ? 'Add showcase work so clients can see what this team ships.'
-                    : 'The team leader can publish portfolio work here.'
-                }}
+          }
+        </div>
+      }
+
+      <!-- TEAM JOBS -->
+      @if (activeTab() === 'jobs') {
+        <div class="pt-8">
+          <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 class="font-display text-xl font-bold tracking-tight text-[#111827]">Team Jobs</h2>
+              <p class="mt-1 font-body text-sm text-[#6b7280]">
+                Open roles and applications to join this team
+                @if (jobsLoaded()) {
+                  <span class="text-[#98a2b3]"> · {{ openJobsCount() }} open</span>
+                }
+                @if (isLeader() && joinRequestsLoaded()) {
+                  <span class="text-[#98a2b3]"> · {{ pendingRequestsCount() }} pending requests</span>
+                }
               </p>
             </div>
-          }
-        </section>
-      }
+            @if (isLeader()) {
+              <button
+                type="button"
+                class="inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-full bg-[#4130d7] px-5 font-display text-sm font-semibold text-white transition-colors hover:bg-[#3527b8]"
+                (click)="openAddJob()"
+              >
+                <hugeicons-icon [icon]="addIcon" [size]="16" color="currentColor" [strokeWidth]="2" />
+                Add job
+              </button>
+            }
+          </div>
 
-      @if (activeTab() === 'projects') {
-        <section
-          class="flex min-h-[240px] flex-col items-center justify-center rounded-[28px] border border-dashed border-[#e7eefe] bg-white px-6 text-center"
-        >
-          <p class="font-display text-base font-semibold text-[#151c27]">Assigned projects</p>
-          <p class="mt-2 max-w-[32rem] font-body text-sm text-[#464556]">
-            Active client projects assigned to this team will appear here. Leaders see all team
-            projects; members see projects they are assigned to.
-          </p>
-        </section>
-      }
-
-      @if (activeTab() === 'tasks') {
-        <section
-          class="flex min-h-[240px] flex-col items-center justify-center rounded-[28px] border border-dashed border-[#e7eefe] bg-white px-6 text-center"
-        >
-          <p class="font-display text-base font-semibold text-[#151c27]">Tasks</p>
-          <p class="mt-2 max-w-[32rem] font-body text-sm text-[#464556]">
-            Internal kanban is next. Trello connect will be available for team leaders in a later
-            phase.
-          </p>
-        </section>
-      }
-
-      @if (activeTab() === 'management' && isLeader()) {
-        <section class="space-y-4">
-          <div class="rounded-[28px] border border-[#eceef4] bg-white p-6">
-            <h2 class="font-display text-lg font-bold text-[#151c27]">Team openings</h2>
-            <p class="mt-1 font-body text-sm text-[#464556]">
-              Roles this team is hiring for. Join requests will be reviewed here.
-            </p>
-            <div class="mt-4 space-y-3">
-              @for (job of teamJobs(); track job.id) {
-                <div class="rounded-2xl bg-[#fbfbfb] px-4 py-3">
-                  <div class="flex items-center justify-between gap-3">
-                    <p class="font-display text-sm font-semibold text-[#151c27]">{{ job.title }}</p>
-                    <span
-                      class="rounded-full bg-[#ebe9ff] px-2.5 py-1 font-mono text-[10px] font-bold tracking-wide text-[#4130d7] uppercase"
+          <div class="tj-layout">
+            <div class="tj-jobs">
+              <p class="tw-mono-label mb-3">Openings</p>
+              @if (jobsLoading()) {
+                <div class="space-y-3">
+                  @for (i of [1, 2, 3]; track i) {
+                    <div class="tj-card tj-card--skel animate-pulse"></div>
+                  }
+                </div>
+              } @else if (jobsError()) {
+                <p class="rounded-2xl border border-[#ffd9d4] bg-[#fff8f7] px-4 py-3 font-body text-sm text-[#93000a]">
+                  {{ jobsError() }}
+                </p>
+              } @else if (jobs().length === 0) {
+                <div class="tw-card flex flex-col items-center border-dashed px-6 py-12 text-center">
+                  <div class="mb-4 flex size-14 items-center justify-center rounded-2xl bg-[#eeecfb] text-[#4130d7]">
+                    <hugeicons-icon [icon]="briefcaseIcon" [size]="24" color="currentColor" [strokeWidth]="1.75" />
+                  </div>
+                  <h3 class="font-display text-lg font-bold text-[#111827]">No team jobs yet</h3>
+                  <p class="mt-2 w-full max-w-[420px] font-body text-sm leading-relaxed text-[#6b7280]">
+                    Post a role when you need a designer, developer, or specialist to join the team.
+                  </p>
+                  @if (isLeader()) {
+                    <button
+                      type="button"
+                      class="mt-5 inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-full bg-[#4130d7] px-5 font-display text-sm font-semibold text-white hover:bg-[#3527b8]"
+                      (click)="openAddJob()"
                     >
-                      {{ job.status || 'open' }}
+                      <hugeicons-icon [icon]="addIcon" [size]="16" color="currentColor" [strokeWidth]="2" />
+                      Add first job
+                    </button>
+                  }
+                </div>
+              } @else {
+                <div class="space-y-3">
+                  @for (job of jobs(); track job.id) {
+                    <article
+                      class="tj-card"
+                      [class.is-selected]="selectedJobId() === job.id"
+                      [class.is-closed]="!isJobOpen(job.status)"
+                      (click)="isLeader() ? selectJob(job) : openJobDetailFromCard(job)"
+                    >
+                      <div class="tj-card__main">
+                        <div class="tj-card__top">
+                          <h3 class="tj-card__title">{{ job.title }}</h3>
+                          <span
+                            class="tj-badge"
+                            [class.is-open]="isJobOpen(job.status)"
+                            [class.is-closed]="!isJobOpen(job.status)"
+                          >
+                            {{ jobStatusLabel(job.status) }}
+                          </span>
+                        </div>
+                        <p class="tj-card__desc">{{ job.description }}</p>
+                        <div class="tj-card__meta">
+                          <span>{{ relativeTime(job.createdAt) }}</span>
+                          @if (isLeader() && requestCountForJob(job.id) > 0) {
+                            <span class="tj-card__req">
+                              {{ requestCountForJob(job.id) }}
+                              pending {{ requestCountForJob(job.id) === 1 ? 'request' : 'requests' }}
+                            </span>
+                          }
+                        </div>
+                      </div>
+                      @if (isLeader()) {
+                        <div class="tj-card__actions" (click)="$event.stopPropagation()">
+                          <button
+                            type="button"
+                            class="tj-icon-btn"
+                            aria-label="Edit job"
+                            (click)="openEditJob(job, $event)"
+                          >
+                            <hugeicons-icon [icon]="editIcon" [size]="15" color="#6b7280" [strokeWidth]="1.75" />
+                          </button>
+                          @if (isJobOpen(job.status)) {
+                            <button
+                              type="button"
+                              class="tj-icon-btn tj-icon-btn--danger"
+                              aria-label="Close job"
+                              (click)="closeJob(job, $event)"
+                            >
+                              <hugeicons-icon [icon]="deleteIcon" [size]="15" color="#ef4444" [strokeWidth]="1.75" />
+                            </button>
+                          }
+                          <button
+                            type="button"
+                            class="tj-card__view"
+                            (click)="openJobDetailFromCard(job)"
+                          >
+                            Details
+                          </button>
+                        </div>
+                      }
+                    </article>
+                  }
+                </div>
+              }
+            </div>
+
+            @if (isLeader()) {
+              <section class="tj-requests" aria-label="Join requests">
+                <div class="tj-requests__head">
+                  <div>
+                    <p class="tw-mono-label">Join requests</p>
+                    <h3 class="tj-requests__title">
+                      @if (selectedJob(); as sj) {
+                        Applications for “{{ sj.title }}”
+                      } @else {
+                        Incoming applications
+                      }
+                    </h3>
+                    <p class="mt-1 text-xs text-[#6b7280]">
+                      Click a job on the left to filter. Accept to add the developer to your team.
+                    </p>
+                  </div>
+                  @if (selectedJobId()) {
+                    <button type="button" class="tj-requests__clear" (click)="clearSelectedJob()">
+                      Show all
+                    </button>
+                  }
+                </div>
+
+                @if (joinRequestsLoading()) {
+                  <div class="space-y-3 p-1">
+                    @for (i of [1, 2, 3]; track i) {
+                      <div class="h-[88px] animate-pulse rounded-2xl bg-[#f3f4f6]"></div>
+                    }
+                  </div>
+                } @else if (joinRequestsError()) {
+                  <p class="px-1 text-sm text-[#93000a]">{{ joinRequestsError() }}</p>
+                } @else if (filteredJoinRequests().length === 0) {
+                  <div class="tj-requests__empty">
+                    <p class="font-display text-sm font-semibold text-[#111827]">No applications yet</p>
+                    <p class="mt-1 text-xs leading-relaxed text-[#6b7280]">
+                      @if (selectedJob()) {
+                        Nobody has applied to this job yet.
+                      } @else {
+                        When freelancers apply to your jobs (or join by code), their requests appear here with name, photo, and cover letter.
+                      }
+                    </p>
+                  </div>
+                } @else {
+                  <div class="tj-requests__list">
+                    @for (req of filteredJoinRequests(); track req.id) {
+                      <article class="tj-req">
+                        <div class="tj-req__user">
+                          <div class="tj-req__avatar" aria-hidden="true">
+                            @if (req.profilePicture) {
+                              <img [src]="req.profilePicture" [alt]="" />
+                            } @else {
+                              <span>{{ initials(req.fullName) }}</span>
+                            }
+                          </div>
+                          <div class="min-w-0 flex-1">
+                            <div class="flex flex-wrap items-center gap-2">
+                              <p class="tj-req__name">{{ req.fullName }}</p>
+                              <span
+                                class="tj-badge tj-badge--sm"
+                                [class.is-pending]="isRequestPending(req.status)"
+                                [class.is-accepted]="requestStatusLabel(req.status) === 'Accepted'"
+                                [class.is-rejected]="requestStatusLabel(req.status) === 'Rejected'"
+                              >
+                                {{ requestStatusLabel(req.status) }}
+                              </span>
+                            </div>
+                            @if (req.userName) {
+                              <p class="tj-req__handle">&#64;{{ req.userName }}</p>
+                            }
+                            <div class="tj-req__stats">
+                              @if (req.averageRating > 0) {
+                                <span class="inline-flex items-center gap-1">
+                                  <hugeicons-icon [icon]="starIcon" [size]="12" color="#f59e0b" [strokeWidth]="1.75" />
+                                  {{ req.averageRating | number: '1.1-1' }}
+                                </span>
+                              }
+                              <span>{{ relativeTime(req.requestedAt) }}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <p class="tj-req__job">
+                          Applied for
+                          <strong>{{ req.teamJobTitle || 'Team join (code)' }}</strong>
+                        </p>
+
+                        @if (req.coverLetter) {
+                          <p class="tj-req__letter">{{ req.coverLetter }}</p>
+                        } @else {
+                          <p class="tj-req__letter tj-req__letter--muted">No cover letter</p>
+                        }
+
+                        @if (isRequestPending(req.status)) {
+                          <div class="tj-req__actions">
+                            <button
+                              type="button"
+                              class="tj-req__reject"
+                              [disabled]="requestActionId() === req.id"
+                              (click)="rejectRequest(req)"
+                            >
+                              Reject
+                            </button>
+                            <button
+                              type="button"
+                              class="tj-req__accept"
+                              [disabled]="requestActionId() === req.id"
+                              (click)="acceptRequest(req)"
+                            >
+                              {{ requestActionId() === req.id ? 'Saving…' : 'Accept' }}
+                            </button>
+                          </div>
+                        }
+                      </article>
+                    }
+                  </div>
+                }
+              </section>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- TASKS -->
+      @if (activeTab() === 'tasks') {
+        <div class="pt-8">
+          <div class="tw-card flex flex-col items-center px-6 py-10 text-center">
+            <div class="mb-4 flex size-14 items-center justify-center rounded-2xl bg-[#eeecfb] text-[#4130d7]">
+              <hugeicons-icon [icon]="chartIcon" [size]="24" color="currentColor" [strokeWidth]="1.75" />
+            </div>
+            <h2 class="font-display text-lg font-bold text-[#111827]">Task Management is coming soon</h2>
+            <p class="mt-2 max-w-[380px] font-body text-sm text-[#6b7280]">
+              Boards, assignees, and due dates for this team will appear here once available.
+              @if (!isLeader()) {
+                You'll see only your assigned tasks.
+              }
+            </p>
+          </div>
+          <div class="ghost-board mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+            @for (col of ['To do', 'In progress', 'Done']; track col) {
+              <div class="tw-card p-4">
+                <p class="tw-mono-label mb-3">{{ col }}</p>
+                <div class="mb-2 h-16 rounded-xl bg-[#f3f4f6]"></div>
+                <div class="h-16 rounded-xl bg-[#f3f4f6]"></div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- FINANCE -->
+      @if (activeTab() === 'finance') {
+        <div class="pt-8">
+          @if (isLeader()) {
+            <div class="mb-3 inline-flex items-center rounded-full bg-[#fffbeb] px-2.5 py-1 font-mono text-[10px] font-bold tracking-wide text-[#d97706] uppercase">
+              Demo data
+            </div>
+            <div class="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_320px]">
+              <div>
+                <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+                  <div class="tw-card p-4">
+                    <p class="tw-mono-label">Wallet balance</p>
+                    <p class="tw-kpi mt-1">$18,450</p>
+                    <p class="mt-1 text-[11px] font-semibold text-[#16a34a]">↑ 12% vs last month</p>
+                  </div>
+                  <div class="tw-card p-4">
+                    <p class="tw-mono-label">Pending payments</p>
+                    <p class="tw-kpi mt-1 text-[#d97706]">$4,200</p>
+                    <p class="mt-1 text-[11px] text-[#9ca3af]">3 pending milestones</p>
+                  </div>
+                  <div class="tw-card p-4">
+                    <p class="tw-mono-label">Released payments</p>
+                    <p class="tw-kpi mt-1 text-[#4130d7]">$14,250</p>
+                    <p class="mt-1 text-[11px] text-[#9ca3af]">Last released 2h ago</p>
+                  </div>
+                  <div class="tw-card p-4">
+                    <p class="tw-mono-label">Total earnings</p>
+                    <p class="tw-kpi mt-1">$84,120</p>
+                    <p class="mt-1 text-[11px] text-[#9ca3af]">Lifetime earnings</p>
+                  </div>
+                </div>
+
+                <div class="mb-3 mt-8 flex items-center justify-between">
+                  <h2 class="font-display text-base font-bold text-[#111827]">Earnings by Project</h2>
+                  <span class="text-[13px] font-semibold text-[#4130d7]">Download report</span>
+                </div>
+
+                <div class="space-y-3">
+                  <div class="tw-card overflow-hidden">
+                    <button
+                      type="button"
+                      class="flex w-full cursor-pointer items-center justify-between p-4 text-left"
+                      (click)="toggleFinanceAccordion('lumina')"
+                    >
+                      <div>
+                        <p class="text-sm font-bold text-[#111827]">Lumina Finance App</p>
+                        <p class="text-xs text-[#9ca3af]">Total budget: $12,500.00</p>
+                      </div>
+                      <div class="text-right">
+                        <p class="tw-mono-label">Released</p>
+                        <p class="text-[13px] font-semibold text-[#16a34a]">$7,500.00</p>
+                      </div>
+                    </button>
+                    @if (expandedFinance() === 'lumina') {
+                      <div class="divide-y divide-[#f3f4f6] border-t border-[#f3f4f6]">
+                        @for (row of [
+                          { name: 'Alex Rivera', meta: 'Lead Designer · 40% share', amount: '$1,000.00', status: 'Released' },
+                          { name: 'Jordan Smith', meta: 'Fullstack Dev · 40% share', amount: '$1,000.00', status: 'Pending' },
+                          { name: 'Maya Chen', meta: 'UI Engineer · 20% share', amount: '$500.00', status: 'Pending' }
+                        ]; track row.name) {
+                          <div class="flex items-center justify-between px-4 py-3">
+                            <div>
+                              <p class="text-[13px] font-semibold text-[#111827]">{{ row.name }}</p>
+                              <p class="text-[11px] text-[#9ca3af]">{{ row.meta }}</p>
+                            </div>
+                            <div class="text-right">
+                              <p class="text-[13px] font-semibold text-[#111827]">{{ row.amount }}</p>
+                              <span
+                                class="text-[11px] font-semibold"
+                                [class.text-[#16a34a]]="row.status === 'Released'"
+                                [class.text-[#d97706]]="row.status === 'Pending'"
+                              >
+                                {{ row.status }}
+                              </span>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <div class="finance-dark">
+                <p class="font-display text-[15px] font-bold">Finance Summary</p>
+                <p class="tw-mono-label mt-5 text-[#9ca3af]">Available for withdrawal</p>
+                <p class="mt-1 font-display text-[26px] font-bold">$18,450.00</p>
+                <button
+                  type="button"
+                  class="mt-4 flex h-11 w-full cursor-pointer items-center justify-center rounded-full bg-[#4130d7] text-sm font-semibold text-white hover:bg-[#3527b8]"
+                >
+                  Withdraw Funds
+                </button>
+                <div class="mt-6 flex items-center justify-between text-[13px]">
+                  <span class="text-[#9ca3af]">Upcoming releases</span>
+                  <span class="font-semibold">$4,200.00</span>
+                </div>
+                <div class="mt-2 flex items-center justify-between text-[13px]">
+                  <span class="text-[#9ca3af]">Processing fee (2%)</span>
+                  <span class="font-semibold text-red-400">-$369.00</span>
+                </div>
+                <p class="tw-mono-label mt-6 mb-3 text-[#9ca3af]">Income distribution</p>
+                <div class="flex justify-center">
+                  <div class="donut"><div class="donut-hole"></div></div>
+                </div>
+                <div class="mt-4 space-y-1.5 text-xs text-[#d1d5db]">
+                  <div class="flex items-center gap-2"><span class="size-2 rounded-full bg-[#4130d7]"></span>Lumina (60%)</div>
+                  <div class="flex items-center gap-2"><span class="size-2 rounded-full bg-[#22c55e]"></span>Velox (25%)</div>
+                  <div class="flex items-center gap-2"><span class="size-2 rounded-full bg-[#f59e0b]"></span>Other (15%)</div>
+                </div>
+              </div>
+            </div>
+          } @else {
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+              <div class="tw-card p-4">
+                <p class="tw-mono-label">My pending</p>
+                <p class="tw-kpi mt-1 text-[#d97706]">$1,500</p>
+              </div>
+              <div class="tw-card p-4">
+                <p class="tw-mono-label">My released</p>
+                <p class="tw-kpi mt-1 text-[#4130d7]">$4,000</p>
+              </div>
+              <div class="tw-card p-4">
+                <p class="tw-mono-label">My total earnings</p>
+                <p class="tw-kpi mt-1">$5,500</p>
+              </div>
+            </div>
+
+            <div class="tw-card mt-6 flex items-start gap-3 p-5">
+              <div class="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#f3f4f6] text-[#6b7280]">
+                <hugeicons-icon [icon]="walletIcon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
+              </div>
+              <div>
+                <p class="text-[13px] font-semibold text-[#111827]">Team wallet is only visible to the team leader</p>
+                <p class="mt-0.5 text-xs text-[#6b7280]">
+                  You can see your own earnings above. Withdrawals are managed by your team leader.
+                </p>
+              </div>
+            </div>
+
+            <h2 class="mb-3 mt-8 font-display text-base font-bold text-[#111827]">My Earnings by Project</h2>
+            <div class="tw-card divide-y divide-[#f3f4f6]">
+              @for (row of financeMemberRows(); track row.project) {
+                <div class="flex items-center justify-between px-5 py-4">
+                  <div>
+                    <p class="text-sm font-bold text-[#111827]">{{ row.project }}</p>
+                    <p class="text-xs text-[#9ca3af]">{{ row.role }}</p>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-[13px] font-semibold text-[#111827]">{{ row.amount }}</p>
+                    <span
+                      class="text-[11px] font-semibold"
+                      [class.text-[#16a34a]]="row.status === 'Released'"
+                      [class.text-[#d97706]]="row.status === 'Pending'"
+                    >
+                      {{ row.status }}
                     </span>
                   </div>
-                  <p class="mt-1 line-clamp-2 font-body text-xs text-[#464556]">{{ job.description }}</p>
                 </div>
-              } @empty {
-                <p class="font-body text-sm text-[#464556]">No openings posted yet.</p>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- MESSAGES -->
+      @if (activeTab() === 'messages') {
+        <div class="grid grid-cols-1 gap-4 pt-8 lg:grid-cols-[300px_1fr]">
+          <div class="tw-card overflow-hidden">
+            @if (isLeader()) {
+              <div class="border-b border-[#f3f4f6] px-4 py-3">
+                <p class="tw-mono-label">Client negotiations</p>
+                <p class="mt-1 text-xs text-[#6b7280]">Proposal rooms · leaders only</p>
+              </div>
+              <div class="divide-y divide-[#f3f4f6]">
+                <button type="button" class="flex w-full cursor-pointer flex-col gap-0.5 px-4 py-3 text-left hover:bg-[#fafafa]">
+                  <span class="text-[13px] font-semibold text-[#111827]">Lumina Finance · Lumina Tech</span>
+                  <span class="text-[11px] text-[#9ca3af]">Active · You can send</span>
+                </button>
+                <button type="button" class="flex w-full cursor-pointer flex-col gap-0.5 px-4 py-3 text-left hover:bg-[#fafafa]">
+                  <span class="text-[13px] font-semibold text-[#111827]">Velox Marketplace · Velox</span>
+                  <span class="text-[11px] text-[#d97706]">Read only · another leader is speaker</span>
+                </button>
+              </div>
+            }
+
+            <div class="border-b border-[#f3f4f6] px-4 py-3" [class.border-t]="isLeader()" [class.border-[#f3f4f6]]="isLeader()">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="tw-mono-label">Team groups</p>
+                  <p class="mt-1 text-xs text-[#6b7280]">Internal rooms</p>
+                </div>
+                @if (isLeader()) {
+                  <button type="button" class="text-[12px] font-semibold text-[#4130d7]">Create</button>
+                }
+              </div>
+            </div>
+            <div class="divide-y divide-[#f3f4f6]">
+              <button type="button" class="flex w-full cursor-pointer flex-col gap-0.5 px-4 py-3 text-left hover:bg-[#fafafa]">
+                <span class="text-[13px] font-semibold text-[#111827]">Design sync</span>
+                <span class="text-[11px] text-[#9ca3af]">Team group</span>
+              </button>
+              @if (!isLeader()) {
+                <p class="px-4 py-4 text-xs text-[#6b7280]">
+                  Client negotiations are only visible to team leaders.
+                </p>
               }
             </div>
           </div>
 
-          <div class="rounded-[28px] border border-[#eceef4] bg-white p-6">
-            <h2 class="font-display text-lg font-bold text-[#151c27]">Members &amp; requests</h2>
-            <p class="mt-2 max-w-[36rem] font-body text-sm text-[#464556]">
-              Member roster, role changes, and accept/reject for join-by-code requests will land
-              here once the membership APIs are wired.
+          <div class="tw-card flex min-h-[360px] flex-col items-center justify-center px-6 text-center">
+            <hugeicons-icon [icon]="messageIcon" [size]="28" color="#9ca3af" [strokeWidth]="1.5" />
+            <p class="mt-3 font-display text-sm font-semibold text-[#111827]">Select a conversation</p>
+            <p class="mt-1 max-w-sm text-xs text-[#6b7280]">
+              @if (isLeader()) {
+                Open a client negotiation or team group. Only the proposal speaker can send in negotiations.
+              } @else {
+                Open a team group you belong to. Client chats stay with leaders.
+              }
             </p>
           </div>
-        </section>
+        </div>
       }
+    }
+  </div>
+</div>
 
-      @if (activeTab() === 'finance') {
-        @if (isLeader()) {
-          <section class="grid gap-4 lg:grid-cols-2">
-            <div class="rounded-[28px] border border-[#eceef4] bg-white p-6">
-              <p class="font-mono text-[10px] tracking-[0.08em] text-[#494bd6] uppercase">Team wallet</p>
-              <p class="mt-3 font-display text-3xl font-bold text-[#151c27]">—</p>
-              <p class="mt-2 font-body text-sm text-[#464556]">
-                Team balance and ledger will show here when wallet APIs are connected.
-              </p>
+@if (inviteOpen() && team(); as inviteTeam) {
+  <div class="modal-backdrop" (click)="closeInvite()">
+    <div class="modal-panel" (click)="$event.stopPropagation()">
+      <h3 class="font-display text-lg font-bold text-[#111827]">Invite Member</h3>
+      <p class="mt-1 font-body text-sm text-[#6b7280]">
+        Share this team code. Members join from Teams → Join with code.
+      </p>
+      <div class="mt-4 flex items-center gap-2 rounded-2xl border border-[#e5e7eb] bg-[#f9fafb] px-4 py-3">
+        <code class="flex-1 font-mono text-lg font-bold tracking-[0.12em] text-[#4130d7]">
+          {{ inviteTeam.teamCode }}
+        </code>
+        <button
+          type="button"
+          class="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-[#4130d7] px-3 font-display text-xs font-bold text-white"
+          (click)="copyCode()"
+        >
+          <hugeicons-icon [icon]="copyIcon" [size]="14" color="currentColor" [strokeWidth]="1.75" />
+          {{ codeCopied() ? 'Copied' : 'Copy' }}
+        </button>
+      </div>
+      <button type="button" class="modal-btn modal-btn--ghost mt-4 w-full" style="flex: none" (click)="closeInvite()">
+        Close
+      </button>
+    </div>
+  </div>
+}
+
+@if (profileModalOpen()) {
+  <div class="modal-backdrop" (click)="closeProfileEdit()">
+    <div class="modal-panel" (click)="$event.stopPropagation()">
+      <h3 class="font-display text-lg font-bold text-[#111827]">Edit team profile</h3>
+      <label class="modal-field">
+        <span class="tw-mono-label">Team name</span>
+        <input type="text" [ngModel]="editName()" (ngModelChange)="editName.set($event)" />
+      </label>
+      <label class="modal-field">
+        <span class="tw-mono-label">About</span>
+        <textarea rows="4" [ngModel]="editAbout()" (ngModelChange)="editAbout.set($event)"></textarea>
+      </label>
+      @if (profileError()) {
+        <p class="mt-2 text-sm text-[#93000a]">{{ profileError() }}</p>
+      }
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="modal-btn modal-btn--ghost"
+          [disabled]="profileSaving()"
+          (click)="closeProfileEdit()"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="modal-btn modal-btn--primary"
+          [disabled]="profileSaving()"
+          (click)="saveProfileEdit()"
+        >
+          {{ profileSaving() ? 'Saving…' : 'Save' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (expertiseModalOpen()) {
+  <div class="modal-backdrop" (click)="closeExpertiseEdit()">
+    <div class="modal-panel modal-panel--wide" (click)="$event.stopPropagation()">
+      <h3 class="font-display text-lg font-bold text-[#111827]">Edit expertise</h3>
+      <p class="mt-1 text-sm text-[#6b7280]">Categories, specializations, and skills for this team.</p>
+
+      <div class="mt-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          class="tw-focus-chip"
+          [class.is-active]="expertiseFocus() === 'categories'"
+          (click)="expertiseFocus.set('categories')"
+        >
+          Categories
+        </button>
+        <button
+          type="button"
+          class="tw-focus-chip"
+          [class.is-active]="expertiseFocus() === 'specialties'"
+          (click)="expertiseFocus.set('specialties')"
+        >
+          Specializations
+        </button>
+        <button
+          type="button"
+          class="tw-focus-chip"
+          [class.is-active]="expertiseFocus() === 'skills'"
+          (click)="expertiseFocus.set('skills')"
+        >
+          Skills
+        </button>
+      </div>
+
+      @if (expertiseLoading()) {
+        <p class="mt-6 text-sm text-[#6b7280]">Loading taxonomy…</p>
+      } @else {
+        @if (expertiseFocus() === 'categories') {
+          <div class="tw-chip-grid">
+            @for (cat of allCategories(); track cat.id) {
+              <button
+                type="button"
+                class="tw-pick-chip"
+                [class.is-on]="selectedCategoryIds().includes(cat.id)"
+                (click)="toggleEditCategory(cat.id)"
+              >
+                @if (selectedCategoryIds().includes(cat.id)) {
+                  <hugeicons-icon [icon]="tickIcon" [size]="14" color="currentColor" [strokeWidth]="2.5" />
+                }
+                {{ cat.label }}
+              </button>
+            }
+          </div>
+          @if (selectedCategoryIds().length) {
+            <p class="tw-mono-label mt-4">Primary category</p>
+            <div class="tw-chip-grid" style="margin-top: 0.5rem; max-height: none">
+              @for (id of selectedCategoryIds(); track id) {
+                <button
+                  type="button"
+                  class="tw-pick-chip tw-pick-chip--soft"
+                  [class.is-on]="primaryCategoryId() === id"
+                  (click)="setPrimaryCategory(id)"
+                >
+                  @if (primaryCategoryId() === id) {
+                    <hugeicons-icon [icon]="tickIcon" [size]="14" color="currentColor" [strokeWidth]="2.5" />
+                  }
+                  {{ categoryLabelById(id) }}
+                </button>
+              }
             </div>
-            <div class="rounded-[28px] border border-[#eceef4] bg-white p-6">
-              <p class="font-mono text-[10px] tracking-[0.08em] text-[#494bd6] uppercase">
-                Default payouts
-              </p>
-              <p class="mt-3 font-display text-lg font-semibold text-[#151c27]">Split ratios</p>
-              <p class="mt-2 font-body text-sm text-[#464556]">
-                Configure member percentages or fixed amounts applied on milestone release.
-              </p>
-            </div>
-          </section>
-        } @else {
-          <section class="rounded-[28px] border border-[#eceef4] bg-white p-6 sm:p-8">
-            <h2 class="font-display text-lg font-bold text-[#151c27]">My earnings</h2>
-            <p class="mt-2 max-w-[36rem] font-body text-sm text-[#464556]">
-              Projects you are on will list here with each milestone and your expected share. Team
-              wallet balance stays leader-only.
-            </p>
-            <div
-              class="mt-6 flex min-h-[160px] flex-col items-center justify-center rounded-2xl border border-dashed border-[#e7eefe] bg-[#fbfbfb] px-4 text-center"
-            >
-              <p class="font-display text-sm font-semibold text-[#151c27]">No assigned project payouts yet</p>
-            </div>
-          </section>
+          }
+        }
+
+        @if (expertiseFocus() === 'specialties') {
+          <div class="tw-chip-grid">
+            @for (spec of allSpecialties(); track spec.id) {
+              <button
+                type="button"
+                class="tw-pick-chip"
+                [class.is-on]="selectedSpecialtyIds().includes(spec.id)"
+                (click)="toggleEditSpecialty(spec.id)"
+              >
+                @if (selectedSpecialtyIds().includes(spec.id)) {
+                  <hugeicons-icon [icon]="tickIcon" [size]="14" color="currentColor" [strokeWidth]="2.5" />
+                }
+                {{ spec.label }}
+              </button>
+            } @empty {
+              <span class="text-sm text-[#98a2b3]">Select categories first.</span>
+            }
+          </div>
+        }
+
+        @if (expertiseFocus() === 'skills') {
+          <div class="tw-chip-grid">
+            @for (skill of allSkills(); track skill.id) {
+              <button
+                type="button"
+                class="tw-pick-chip"
+                [class.is-on]="selectedSkillIds().includes(skill.id)"
+                (click)="toggleEditSkill(skill.id)"
+              >
+                @if (selectedSkillIds().includes(skill.id)) {
+                  <hugeicons-icon [icon]="tickIcon" [size]="14" color="currentColor" [strokeWidth]="2.5" />
+                }
+                {{ skill.label }}
+              </button>
+            } @empty {
+              <span class="text-sm text-[#98a2b3]">Select specializations first.</span>
+            }
+          </div>
         }
       }
 
-      @if (activeTab() === 'messages') {
-        <section
-          class="grid min-h-[420px] overflow-hidden rounded-[28px] border border-[#eceef4] bg-white lg:grid-cols-[280px_1fr]"
+      @if (expertiseError()) {
+        <p class="mt-3 text-sm text-[#93000a]">{{ expertiseError() }}</p>
+      }
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="modal-btn modal-btn--ghost"
+          [disabled]="expertiseSaving()"
+          (click)="closeExpertiseEdit()"
         >
-          <aside class="border-b border-[#eceef4] bg-[#fbfbfb] p-4 lg:border-r lg:border-b-0">
-            <input
-              type="search"
-              placeholder="Search conversations..."
-              class="h-10 w-full rounded-[12px] border border-[#e7eefe] bg-white px-3 font-body text-sm outline-none"
-            />
-            <div class="mt-5 space-y-5">
-              @if (isLeader()) {
-                <div>
-                  <p class="font-mono text-[10px] tracking-[0.08em] text-[#94a0b4] uppercase">
-                    Client negotiations
-                  </p>
-                  <p class="mt-2 font-body text-xs text-[#464556]">Proposal rooms with clients.</p>
-                </div>
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="modal-btn modal-btn--primary"
+          [disabled]="expertiseSaving() || expertiseLoading()"
+          (click)="saveExpertiseEdit()"
+        >
+          {{ expertiseSaving() ? 'Saving…' : 'Save' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (jobFormOpen()) {
+  <div class="modal-backdrop" (click)="closeJobForm()">
+    <div class="modal-panel modal-panel--wide" (click)="$event.stopPropagation()">
+      <h3 class="font-display text-lg font-bold text-[#111827]">
+        {{ editingJobId() ? 'Edit team job' : 'Add team job' }}
+      </h3>
+      <p class="mt-1 text-sm text-[#6b7280]">
+        Publish a role so freelancers can apply to join this team.
+      </p>
+
+      <label class="modal-field">
+        <span class="tw-mono-label">Job title</span>
+        <input
+          type="text"
+          placeholder="e.g. UI Designer"
+          [ngModel]="jobFormTitle()"
+          (ngModelChange)="jobFormTitle.set($event)"
+        />
+      </label>
+      <label class="modal-field">
+        <span class="tw-mono-label">About the job</span>
+        <textarea
+          rows="5"
+          placeholder="Describe responsibilities, seniority, and what you’re looking for…"
+          [ngModel]="jobFormDescription()"
+          (ngModelChange)="jobFormDescription.set($event)"
+        ></textarea>
+      </label>
+
+      <div class="mt-4">
+        <p class="tw-mono-label">Skills</p>
+        <p class="mt-1 text-xs text-[#98a2b3]">Pick from your team skills.</p>
+        <div class="tw-chip-grid" style="margin-top: 0.65rem">
+          @for (skill of teamSkillOptions(); track skill.id) {
+            <button
+              type="button"
+              class="tw-pick-chip"
+              [class.is-on]="jobFormSkillIds().includes(skill.id)"
+              (click)="toggleJobFormSkill(skill.id)"
+            >
+              @if (jobFormSkillIds().includes(skill.id)) {
+                <hugeicons-icon [icon]="tickIcon" [size]="14" color="currentColor" [strokeWidth]="2.5" />
               }
-              <div>
-                <p class="font-mono text-[10px] tracking-[0.08em] text-[#94a0b4] uppercase">
-                  Project rooms
-                </p>
-                <p class="mt-2 font-body text-xs text-[#464556]">After hire, client + team chats.</p>
-              </div>
-              <div>
-                <p class="font-mono text-[10px] tracking-[0.08em] text-[#94a0b4] uppercase">
-                  Private groups
-                </p>
-                <p class="mt-2 font-body text-xs text-[#464556]">
-                  Leader-created groups — assigned members only.
-                </p>
-              </div>
-            </div>
-          </aside>
-          <div class="flex flex-col items-center justify-center px-6 py-10 text-center">
-            <p class="font-display text-base font-semibold text-[#151c27]">Team messages</p>
-            <p class="mt-2 max-w-[28rem] font-body text-sm text-[#464556]">
-              Official team communication record. Leaders see negotiations; members see assigned
-              groups and project rooms they were added to.
-            </p>
+              {{ skill.label }}
+            </button>
+          } @empty {
+            <span class="text-sm text-[#98a2b3]">
+              Add skills on the Overview tab first, then attach them to jobs.
+            </span>
+          }
+        </div>
+      </div>
+
+      @if (jobFormError()) {
+        <p class="mt-3 text-sm text-[#93000a]">{{ jobFormError() }}</p>
+      }
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="modal-btn modal-btn--ghost"
+          [disabled]="jobFormSaving()"
+          (click)="closeJobForm()"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="modal-btn modal-btn--primary"
+          [disabled]="jobFormSaving()"
+          (click)="saveJobForm()"
+        >
+          {{ jobFormSaving() ? 'Saving…' : editingJobId() ? 'Save changes' : 'Publish job' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (jobDetailOpen() && team(); as detailTeam) {
+  <div class="modal-backdrop" (click)="closeJobDetail()">
+    <div class="modal-panel modal-panel--wide tj-detail-panel" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex min-w-0 items-center gap-3">
+          <div class="tj-detail-logo" aria-hidden="true">
+            @if (detailTeam.logo) {
+              <img [src]="detailTeam.logo" [alt]="" />
+            } @else {
+              <span>{{ initials(detailTeam.name) }}</span>
+            }
+          </div>
+          <div class="min-w-0">
+            <p class="font-display text-sm font-bold text-[#111827]">{{ detailTeam.name }}</p>
+            @if (jobDetail()) {
+              <p class="text-xs text-[#9ca3af]">{{ relativeTime(jobDetail()!.createdAt) }}</p>
+            }
+          </div>
+        </div>
+        <button type="button" class="tj-icon-btn" aria-label="Close" (click)="closeJobDetail()">
+          <hugeicons-icon [icon]="closeIcon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
+        </button>
+      </div>
+
+      @if (jobDetailLoading()) {
+        <div class="mt-5 space-y-3">
+          <div class="h-7 w-2/3 animate-pulse rounded-lg bg-[#f3f4f6]"></div>
+          <div class="h-24 animate-pulse rounded-xl bg-[#f3f4f6]"></div>
+        </div>
+      } @else if (jobDetailError()) {
+        <p class="mt-5 text-sm text-[#93000a]">{{ jobDetailError() }}</p>
+      } @else if (jobDetail(); as detail) {
+        <h2 class="mt-4 font-display text-2xl font-bold tracking-tight text-[#111827]">{{ detail.title }}</h2>
+        <p class="mt-1 text-sm text-[#6b7280]">{{ jobStatusLabel(detail.status) }} · Team opening</p>
+
+        @if (isLeader()) {
+          <div class="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              class="inline-flex h-10 flex-1 items-center justify-center rounded-full bg-[#4130d7] px-4 font-display text-sm font-bold text-white hover:bg-[#3527b8]"
+              (click)="openEditJob(detail); closeJobDetail()"
+            >
+              Edit job
+            </button>
+            @if (isJobOpen(detail.status)) {
+              <button
+                type="button"
+                class="inline-flex h-10 items-center justify-center rounded-full border border-[#fecaca] px-4 font-display text-sm font-semibold text-[#ef4444] hover:bg-[#fff5f5]"
+                (click)="closeJob(detail)"
+              >
+                Close opening
+              </button>
+            }
+          </div>
+        }
+
+        <section class="mt-6 border-t border-[#f3f4f6] pt-5">
+          <h3 class="font-display text-sm font-bold text-[#111827]">About the job</h3>
+          <p class="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-[#6b7280]">{{ detail.description }}</p>
+        </section>
+
+        <section class="mt-5">
+          <h3 class="font-display text-sm font-bold text-[#111827]">Skills</h3>
+          <div class="mt-2 flex flex-wrap gap-1.5">
+            @for (skill of detail.skills; track skill.id) {
+              <span class="rounded-full bg-[#f4f3ff] px-3 py-1.5 text-xs font-semibold text-[#4130d7]">
+                {{ skill.name }}
+              </span>
+            } @empty {
+              <span class="text-xs text-[#98a2b3]">No skills listed</span>
+            }
           </div>
         </section>
+
+        @if (detailTeam.aboutUs) {
+          <section class="mt-5 border-t border-[#f3f4f6] pt-5">
+            <h3 class="font-display text-sm font-bold text-[#111827]">About us</h3>
+            <p class="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-[#6b7280]">{{ detailTeam.aboutUs }}</p>
+          </section>
+        }
       }
-    }
-  </main>
-</div>
+    </div>
+  </div>
+}
+
+@if (applyJobOpen()) {
+  <div class="teams-filters-backdrop" (click)="closeApplyJob()" aria-hidden="true"></div>
+  <div class="apply-job-modal" role="dialog" aria-modal="true" aria-label="Apply to team job">
+    <div class="apply-job-modal__card">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <p class="font-mono text-[10px] font-bold tracking-[0.08em] text-[#98a2b3] uppercase">Apply</p>
+          <h3 class="mt-1 font-display text-lg font-bold text-[#111827]">{{ applyJobTitle() }}</h3>
+        </div>
+        <button type="button" class="tw-icon-edit" aria-label="Close" (click)="closeApplyJob()">
+          <hugeicons-icon [icon]="closeIcon" [size]="18" color="currentColor" [strokeWidth]="1.75" />
+        </button>
+      </div>
+
+      @if (applySuccess()) {
+        <p class="mt-5 rounded-xl bg-[#ecfdf3] px-3 py-2.5 font-body text-sm font-semibold text-[#15803d]">
+          Application sent.
+        </p>
+      } @else {
+        <label class="mt-5 block">
+          <span class="tw-mono-label">Cover letter (optional)</span>
+          <textarea
+            rows="4"
+            class="mt-1.5 w-full rounded-xl border border-[#e5e7eb] px-3 py-2.5 font-body text-sm outline-none focus:border-[#4130d7]"
+            [ngModel]="applyCoverLetter()"
+            (ngModelChange)="applyCoverLetter.set($event)"
+            maxlength="500"
+            placeholder="Why are you a good fit?"
+          ></textarea>
+        </label>
+
+        @if (applyError()) {
+          <p class="mt-3 font-body text-sm text-[#93000a]">{{ applyError() }}</p>
+        }
+
+        <div class="mt-5 flex gap-2">
+          <button
+            type="button"
+            class="inline-flex h-10 flex-1 items-center justify-center rounded-full border border-[#e5e7eb] font-display text-sm font-bold text-[#374151]"
+            [disabled]="applySubmitting()"
+            (click)="closeApplyJob()"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="inline-flex h-10 flex-1 items-center justify-center rounded-full bg-[#4130d7] font-display text-sm font-bold text-white disabled:opacity-55"
+            [disabled]="applySubmitting()"
+            (click)="submitApplyJob()"
+          >
+            {{ applySubmitting() ? 'Sending…' : 'Submit application' }}
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+}

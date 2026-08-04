@@ -1,7 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { LoadingOverlayComponent } from './shared/components/loading-overlay/loading-overlay.component';
 import { ToastOutletComponent } from './shared/components/toast/toast.component';
+import { AuthService } from './core/auth/auth.service';
 import { SignalrService } from './core/Signalr/signalr-service';
 
 @Component({
@@ -10,17 +11,14 @@ import { SignalrService } from './core/Signalr/signalr-service';
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
-export class App {
+export class App implements OnInit {
   protected readonly title = signal('freegency');
-  private signalr = inject(SignalrService);
+  private readonly signalr = inject(SignalrService);
+  private readonly auth = inject(AuthService);
 
   ngOnInit() {
-
-     const session = sessionStorage.getItem("freegency.auth.session");
-
-  if (session) {
-    this.signalr.CreateHubConnection();
-  }
-
+    if (this.auth.isLoggedIn()) {
+      this.signalr.CreateHubConnection();
+    }
   }
 }

@@ -2,11 +2,13 @@ import { inject, Injectable, signal } from '@angular/core';
 import { environment } from '../../../environments/environment.development';
 import { HubConnection, HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
 import { Wallet } from '../../shared/models/Wallet';
-import { PaymentService } from '../../features/setting/Data-Access/payment-service';
+import { TokenStorageService } from '../auth/token-storage.service';
+
 @Injectable({
   providedIn: 'root',
 })
 export class SignalrService {
+  private readonly tokens = inject(TokenStorageService);
   hubUrl = environment.hubUrl;
   hubConnection?: HubConnection;
   WalletSignal = signal<Wallet | null>(null);
@@ -17,11 +19,7 @@ export class SignalrService {
     }
     this.hubConnection = new HubConnectionBuilder()
       .withUrl(environment.hubUrl, {
-        accessTokenFactory: () => {
-          const session = sessionStorage.getItem('freegency.auth.session');
-          if (!session) return '';
-          return JSON.parse(session).token;
-        },
+        accessTokenFactory: () => this.tokens.getAccessToken() ?? '',
       })
       .withAutomaticReconnect()
       .build();

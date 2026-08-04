@@ -52,7 +52,7 @@ export class DeveloperViewNavbarComponent implements OnInit {
     { label: 'Home', route: '/developer/dashboard' },
     { label: 'Explore', route: '/developer/explore' },
     { label: 'Manage Work', route: '/developer/manage-work' },
-    { label: 'My Teams', route: '/developer/my-teams' },
+    { label: 'Teams', route: '/developer/teams' },
     { label: 'Jobs', route: '/developer/jobs' },
     { label: 'Messages', route: '/developer/messages' },
   ] as const;

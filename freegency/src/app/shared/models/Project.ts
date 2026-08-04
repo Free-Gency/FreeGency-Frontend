@@ -18,4 +18,6 @@ export interface Project {
   specialties: string[];
   skills: string[];
   proposalCount: number;
+  /** Present when a team is the assignee. */
+  assignedTeamId?: string | null;
 }

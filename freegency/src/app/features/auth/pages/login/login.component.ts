@@ -20,7 +20,7 @@ export class LoginComponent implements OnInit {
   signalrService=inject(SignalrService);
   protected email = '';
   protected password = '';
-  protected keepLoggedIn = false;
+  protected keepLoggedIn = true;
   protected readonly showPassword = signal(false);
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);

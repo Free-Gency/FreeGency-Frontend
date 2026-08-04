@@ -1,7 +1,8 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
+import { SKIP_LOADING } from '../../../core/http/loading.interceptor';
 import { ApiResponse } from '../../../shared/models/ApiResponse';
 import { Project } from '../../../shared/models/Project';
 import {
@@ -34,6 +35,7 @@ export class DeveloperManageWorkService {
     search?: string | null;
     sortBy?: 'CreatedAt' | 'Title' | 'Budget' | 'Deadline';
     sortDirection?: 'asc' | 'desc';
+    skipLoading?: boolean;
   }): Observable<PagedResponse<Project>> {
     let params = new HttpParams()
       .set('role', 'as-assignee')
@@ -50,7 +52,12 @@ export class DeveloperManageWorkService {
     }
 
     return this.http
-      .get<ApiResponse<PagedResponse<Project>>>(`${this.projectsUrl}/mine`, { params })
+      .get<ApiResponse<PagedResponse<Project>>>(`${this.projectsUrl}/mine`, {
+        params,
+        context: options?.skipLoading
+          ? new HttpContext().set(SKIP_LOADING, true)
+          : undefined,
+      })
       .pipe(
         map((res) => {
           if (!res.isSuccess || !res.data) {

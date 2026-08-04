@@ -33,7 +33,15 @@ export const routes: Routes = [
   },
   {
     path: 'client/inspiration/:id',
-    canActivate: [authGuard, clientModeGuard],
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import(
+        './features/client/pages/portfolio-project-details/portfolio-project-details.component'
+      ).then((m) => m.PortfolioProjectDetailsComponent),
+  },
+  {
+    path: 'developer/portfolio/:id',
+    canActivate: [authGuard, developerModeGuard],
     loadComponent: () =>
       import(
         './features/client/pages/portfolio-project-details/portfolio-project-details.component'
@@ -134,20 +142,50 @@ export const routes: Routes = [
       ).then((m) => m.DeveloperManageWorkComponent),
   },
   {
-    path: 'developer/my-teams',
+    path: 'developer/teams/create',
     canActivate: [authGuard, developerModeGuard],
     loadComponent: () =>
-      import('./features/developer/pages/my-teams/my-teams.component').then(
-        (m) => m.MyTeamsComponent,
+      import('./features/developer/pages/create-team-wizard/create-team-wizard.component').then(
+        (m) => m.CreateTeamWizardComponent,
       ),
   },
   {
-    path: 'developer/my-teams/:teamId',
+    path: 'developer/teams',
+    canActivate: [authGuard, developerModeGuard],
+    loadComponent: () =>
+      import('./features/developer/pages/developer-teams/developer-teams.component').then(
+        (m) => m.DeveloperTeamsComponent,
+      ),
+  },
+  {
+    path: 'developer/teams/:teamId/portfolio/new',
+    canActivate: [authGuard, developerModeGuard],
+    loadComponent: () =>
+      import(
+        './features/developer/pages/portfolio-case-study-wizard/portfolio-case-study-wizard.component'
+      ).then((m) => m.PortfolioCaseStudyWizardComponent),
+  },
+  {
+    path: 'developer/teams/:teamId/portfolio/:projectId/edit',
+    canActivate: [authGuard, developerModeGuard],
+    loadComponent: () =>
+      import(
+        './features/developer/pages/portfolio-case-study-wizard/portfolio-case-study-wizard.component'
+      ).then((m) => m.PortfolioCaseStudyWizardComponent),
+  },
+  {
+    path: 'developer/teams/:teamId',
     canActivate: [authGuard, developerModeGuard],
     loadComponent: () =>
       import('./features/developer/pages/team-detail/team-detail.component').then(
         (m) => m.TeamDetailComponent,
       ),
+  },
+  { path: 'developer/my-teams', redirectTo: 'developer/teams', pathMatch: 'full' },
+  {
+    path: 'developer/my-teams/:teamId',
+    redirectTo: 'developer/teams/:teamId',
+    pathMatch: 'full',
   },
   {
     path: 'developer/jobs',

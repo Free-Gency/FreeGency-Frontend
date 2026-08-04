@@ -1,0 +1,246 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+/* —— Discover (full card) —— */
+.team-hub-card {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  overflow: visible;
+  border-radius: 22px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  padding: 8px;
+  box-shadow: 0 4px 20px rgba(16, 24, 40, 0.05);
+  transition: box-shadow 0.2s ease;
+}
+
+.team-hub-card:hover {
+  box-shadow: 0 10px 28px rgba(16, 24, 40, 0.09);
+}
+
+.team-hub-card__cover {
+  position: relative;
+  aspect-ratio: 16 / 7;
+  width: 100%;
+  overflow: visible;
+  border-radius: 14px;
+  background: #e4e1f9;
+}
+
+.team-hub-card__cover-media {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 14px;
+}
+
+.team-hub-card__cover-fallback {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #c4c0ff 0%, #eeecfb 48%, #d8f3e8 100%);
+}
+
+.team-hub-card__logo {
+  position: absolute;
+  bottom: -0.95rem;
+  left: 0.75rem;
+  z-index: 3;
+  display: flex;
+  width: 3.25rem;
+  height: 3.25rem;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 0.85rem;
+  border: 2.5px solid #fff;
+  background: #e4e1f9;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #4130d7;
+  box-shadow:
+    0 0 0 1px rgba(65, 48, 215, 0.16),
+    0 6px 16px rgba(65, 48, 215, 0.16),
+    0 2px 8px rgba(16, 24, 40, 0.1);
+}
+
+.team-hub-card__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 1.35rem 0.55rem 0.35rem;
+}
+
+/* —— My Teams (compact, distinct) —— */
+.mine-card {
+  display: flex;
+  height: 100%;
+  cursor: pointer;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 20px;
+  border: 1px solid #eceef4;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(16, 24, 40, 0.04);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.mine-card:hover {
+  border-color: color-mix(in srgb, #4130d7 22%, #eceef4);
+  box-shadow: 0 8px 22px rgba(65, 48, 215, 0.08);
+  transform: translateY(-1px);
+}
+
+.mine-card:focus-visible {
+  outline: 2px solid #4130d7;
+  outline-offset: 2px;
+}
+
+.mine-card__media {
+  padding: 8px 8px 0;
+}
+
+.mine-card__cover {
+  position: relative;
+  aspect-ratio: 16 / 7;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #eeecfb;
+}
+
+.mine-card__cover-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.mine-card__cover-fade {
+  pointer-events: none;
+  position: absolute;
+  inset: auto 0 0;
+  height: 42%;
+  background: linear-gradient(to top, rgba(17, 24, 39, 0.22), transparent);
+}
+
+.mine-card__media-fallback {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 80% at 0% 0%, rgba(196, 192, 255, 0.9), transparent 55%),
+    linear-gradient(135deg, #eeecfb 0%, #f8f7ff 50%, #e8f6ef 100%);
+}
+
+.mine-card__logo {
+  position: absolute;
+  bottom: 0.55rem;
+  left: 0.55rem;
+  z-index: 2;
+  display: flex;
+  width: 3.35rem;
+  height: 3.35rem;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 13px;
+  border: 2.5px solid #fff;
+  background: #e4e1f9;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 800;
+  color: #4130d7;
+  box-shadow: 0 4px 14px rgba(16, 24, 40, 0.2);
+}
+
+.mine-card__role {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 2;
+  border-radius: 9999px;
+  padding: 0.22rem 0.55rem;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  backdrop-filter: blur(8px);
+}
+
+.mine-card__role--leader {
+  background: rgba(255, 255, 255, 0.92);
+  color: #5b4ff0;
+  border: 1px solid rgba(91, 79, 240, 0.22);
+  box-shadow: 0 1px 4px rgba(16, 24, 40, 0.06);
+}
+
+.mine-card__role--member {
+  background: rgba(255, 255, 255, 0.88);
+  color: #667085;
+  border: 1px solid rgba(16, 24, 40, 0.08);
+}
+
+.mine-card__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 0.85rem 0.85rem 0.75rem;
+}
+
+.mine-card__category {
+  gap: 0.35rem;
+  border-radius: 9999px;
+  border: 1px solid var(--cat-border, #e2e8f0);
+  background: var(--cat-bg, #f8fafc);
+  color: var(--cat-fg, #475569);
+  padding: 0.18rem 0.55rem 0.18rem 0.4rem;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.mine-card__category-dot {
+  display: inline-block;
+  width: 0.4rem;
+  height: 0.4rem;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: var(--cat-fg, #475569);
+}
+
+@media (min-width: 640px) {
+  .team-hub-card {
+    padding: 9px;
+    border-radius: 24px;
+  }
+
+  .team-hub-card__logo {
+    width: 3.5rem;
+    height: 3.5rem;
+    bottom: -1.05rem;
+    left: 0.85rem;
+    border-radius: 0.9rem;
+    font-size: 1.1rem;
+  }
+
+  .team-hub-card__body {
+    padding: 1.45rem 0.65rem 0.4rem;
+  }
+
+  .mine-card__logo {
+    width: 3.75rem;
+    height: 3.75rem;
+    border-radius: 14px;
+    font-size: 1.1rem;
+  }
+}
