@@ -50,40 +50,38 @@ export class FreelancerHomeComponent implements OnInit {
   }
 
   loadActiveTabData(): void {
-  this.isLoading.set(true);
-  const tab = this.activeTab();
+    this.isLoading.set(true);
+    const tab = this.activeTab();
 
-  if (tab === 'feed') {
-    this.homeService
-      .getProjectsFeed({
-        page: this.currentPage(),
-        pageSize: this.pageSize,
-        category: this.selectedCategory(),
-        search: this.searchQuery(),
-      })
-      .subscribe((res) => {
-        const projectList = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
-        this.projects.set(projectList);
-        this.totalCount.set(res?.totalCount || projectList.length);
+    if (tab === 'feed') {
+      this.homeService
+        .getProjectsFeed({
+          page: this.currentPage(),
+          pageSize: this.pageSize,
+          category: this.selectedCategory(),
+          search: this.searchQuery(),
+        })
+        .subscribe((res) => {
+          this.projects.set(res?.data || []);
+          this.totalCount.set(res?.totalCount || 0);
+          this.isLoading.set(false);
+        });
+    } else if (tab === 'applications') {
+      this.homeService
+        .getMyApplications(this.currentPage(), this.pageSize)
+        .subscribe((res) => {
+          this.projects.set(res?.data || []);
+          this.totalCount.set(res?.totalCount || 0);
+          this.isLoading.set(false);
+        });
+    } else if (tab === 'saved') {
+      this.homeService.getSavedProjects().subscribe((list) => {
+        this.projects.set(list || []);
+        this.totalCount.set(list?.length || 0);
         this.isLoading.set(false);
       });
-  } else if (tab === 'applications') {
-    this.homeService
-      .getMyApplications(this.currentPage(), this.pageSize)
-      .subscribe((res) => {
-        const appList = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
-        this.projects.set(appList);
-        this.totalCount.set(res?.totalCount || appList.length);
-        this.isLoading.set(false);
-      });
-  } else if (tab === 'saved') {
-    this.homeService.getSavedProjects().subscribe((list) => {
-      this.projects.set(Array.isArray(list) ? list : []);
-      this.totalCount.set(Array.isArray(list) ? list.length : 0);
-      this.isLoading.set(false);
-    });
+    }
   }
-}
 
   onTabChange(tab: ActiveTab): void {
     if (this.activeTab() === tab) return;
@@ -93,7 +91,12 @@ export class FreelancerHomeComponent implements OnInit {
   }
 
   onCategorySelect(catId: string): void {
-    this.selectedCategory.set(catId);
+    // Toggle logic: click again to deselect back to ALL
+    if (this.selectedCategory() === catId) {
+      this.selectedCategory.set('ALL');
+    } else {
+      this.selectedCategory.set(catId);
+    }
     this.currentPage.set(1);
     this.loadActiveTabData();
   }
