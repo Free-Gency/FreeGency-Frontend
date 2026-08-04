@@ -50,7 +50,7 @@ chatSignalrService=inject(ChatSignalrService);
   protected readonly profileImage = this.auth.profileImage;
 
   protected readonly navItems = [
-    { label: 'Home', route: '/developer/dashboard' },
+    { label: 'Home', route: '/developer/home' },
     { label: 'Explore', route: '/developer/explore' },
     { label: 'Manage Work', route: '/developer/manage-work' },
     { label: 'My Teams', route: '/developer/my-teams' },

@@ -1,0 +1,272 @@
+<app-developer-view-navbar />
+
+<div class="content-container py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <!-- LEFT / MAIN CONTENT AREA (8 Cols) -->
+    <main class="lg:col-span-8 space-y-6">
+      <!-- HEADER WELCOME -->
+      <header class="space-y-1">
+        <h1 class="text-3xl font-bold tracking-tight text-on-surface">
+          Welcome back, {{ profileSummary()?.fullName || 'Developer' }}
+        </h1>
+        <p class="text-body-md text-on-surface-variant">
+          Track your applications and discover new projects that match your expertise.
+        </p>
+      </header>
+
+      <!-- NAVIGATION TABS -->
+      <nav class="flex items-center gap-2 p-1 bg-surface-container-low rounded-xl w-fit">
+        <button
+          class="chip-tab py-2 px-4 rounded-lg font-medium text-sm transition-all"
+          [class.bg-white]="activeTab() === 'feed'"
+          [class.shadow-sm]="activeTab() === 'feed'"
+          [class.text-primary]="activeTab() === 'feed'"
+          (click)="onTabChange('feed')"
+        >
+          Recommended for you
+        </button>
+        <button
+          class="chip-tab py-2 px-4 rounded-lg font-medium text-sm transition-all text-on-surface-variant"
+          [class.bg-white]="activeTab() === 'applications'"
+          [class.shadow-sm]="activeTab() === 'applications'"
+          [class.text-primary]="activeTab() === 'applications'"
+          (click)="onTabChange('applications')"
+        >
+          My Applications
+        </button>
+        <button
+          class="chip-tab py-2 px-4 rounded-lg font-medium text-sm transition-all text-on-surface-variant"
+          [class.bg-white]="activeTab() === 'saved'"
+          [class.shadow-sm]="activeTab() === 'saved'"
+          [class.text-primary]="activeTab() === 'saved'"
+          (click)="onTabChange('saved')"
+        >
+          Saved
+        </button>
+      </nav>
+
+      <!-- SEARCH & FILTER BAR -->
+      @if (activeTab() === 'feed') {
+        <section class="space-y-4">
+          <div class="flex gap-3 items-center">
+            <!-- Search Input Container (Takes up remaining width) -->
+            <div class="relative flex-1">
+              <span
+                class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-outline text-lg pointer-events-none"
+              >
+                search
+              </span>
+              <input
+                type="text"
+                class="w-full bg-white border border-outline-variant/60 rounded-xl pl-10 pr-4 py-2 text-sm text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                placeholder="Search projects by title or skill..."
+                [(ngModel)]="searchQuery"
+                (keyup.enter)="onSearch()"
+              />
+            </div>
+
+            <!-- Filters Button (Compact fixed size) -->
+            <button
+              class="bg-white border border-outline-variant/60 hover:bg-surface-container-low text-on-surface px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2 transition-colors shrink-0"
+              (click)="onSearch()"
+            >
+              <span class="material-symbols-outlined text-base">tune</span>
+              <span>Filters</span>
+            </button>
+          </div>
+
+          <!-- Category Pills -->
+          <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+            @for (cat of categories(); track cat.id) {
+              <button
+                class="px-3.5 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-colors whitespace-nowrap"
+                [class.bg-primary]="selectedCategory() === cat.id"
+                [class.text-on-primary]="selectedCategory() === cat.id"
+                [class.bg-surface-container-low]="selectedCategory() !== cat.id"
+                [class.text-on-surface-variant]="selectedCategory() !== cat.id"
+                [class.hover:bg-surface-container-high]="selectedCategory() !== cat.id"
+                (click)="onCategorySelect(cat.id)"
+              >
+                {{ cat.nameEn || cat.name }}
+              </button>
+            }
+          </div>
+        </section>
+      }
+
+      <!-- PROJECT CARDS FEED -->
+      <section class="space-y-4">
+        @if (isLoading()) {
+          <div
+            class="card p-12 text-center text-on-surface-variant bg-white rounded-2xl border border-outline-variant/40"
+          >
+            <span class="material-symbols-outlined animate-spin text-3xl text-primary"
+              >progress_activity</span
+            >
+            <p class="mt-2 text-sm font-medium">Loading projects...</p>
+          </div>
+        } @else if (projects().length === 0) {
+          <div
+            class="card p-12 text-center text-on-surface-variant bg-white rounded-2xl border border-outline-variant/40 space-y-2"
+          >
+            <span class="material-symbols-outlined text-4xl text-outline">folder_open</span>
+            <p class="text-sm font-semibold">No projects found matching your criteria.</p>
+          </div>
+        } @else {
+          <div class="space-y-4">
+            @for (project of projects(); track project.id) {
+              <article
+                class="bg-white p-6 rounded-2xl border border-outline-variant/50 hover:shadow-md transition-all space-y-4"
+              >
+                <!-- Client Info & Post Header -->
+                <div class="flex items-center justify-between text-xs text-on-surface-variant">
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="w-6 h-6 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white font-bold text-[10px]"
+                    >
+                      {{ (project.clientName || 'A')[0] }}
+                    </div>
+                    <span class="font-medium text-on-surface">{{
+                      project.clientName || 'Alex Thompson'
+                    }}</span>
+                  </div>
+                  <span>Posted {{ project.postedTime || '2h ago' }}</span>
+                </div>
+
+                <!-- Title & Description -->
+                <div>
+                  <h3
+                    class="text-lg font-bold text-on-surface hover:text-primary transition-colors cursor-pointer"
+                  >
+                    {{ project.title }}
+                  </h3>
+                  <p class="text-xs text-on-surface-variant line-clamp-2 mt-1.5 leading-relaxed">
+                    {{ project.description }}
+                  </p>
+                </div>
+
+                <!-- Skill Tags -->
+                <div class="flex flex-wrap gap-2">
+                  @for (
+                    skill of project.skills || [
+                      'Mobile Dev',
+                      'React Native',
+                      'Firebase',
+                      'TypeScript',
+                    ];
+                    track skill
+                  ) {
+                    <span
+                      class="px-2.5 py-1 rounded-md bg-surface-container-low text-on-surface-variant text-[11px] font-medium"
+                    >
+                      {{ skill }}
+                    </span>
+                  }
+                </div>
+
+                <!-- Footer: Budget, Proposals & Bookmark -->
+                <div class="flex items-center justify-between pt-2">
+                  <span class="text-base font-bold text-primary">
+                    ${{ project.budget | number: '1.0-0' }}
+                  </span>
+
+                  <div class="flex items-center gap-4 text-xs text-on-surface-variant">
+                    <span class="flex items-center gap-1">
+                      <span class="material-symbols-outlined text-sm text-outline">group</span>
+                      {{ project.proposalCount || 12 }} proposals
+                    </span>
+                    <button
+                      class="text-outline hover:text-primary transition-colors"
+                      [class.text-primary]="project.isSaved"
+                      (click)="onToggleBookmark(project)"
+                    >
+                      <span class="material-symbols-outlined text-base">
+                        {{ project.isSaved ? 'bookmark_added' : 'bookmark' }}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+
+          <!-- PAGINATION -->
+          <footer class="flex items-center justify-between pt-4 text-xs text-on-surface-variant">
+            <span>Showing 1-6 of {{ totalCount() || 24 }} projects</span>
+
+            <div class="flex items-center gap-1">
+              <button
+                class="w-7 h-7 flex items-center justify-center rounded-full hover:bg-surface-container-low text-outline"
+              >
+                <span class="material-symbols-outlined text-sm">chevron_left</span>
+              </button>
+              <button
+                class="w-7 h-7 rounded-full bg-primary text-white font-medium flex items-center justify-center"
+              >
+                1
+              </button>
+              <button
+                class="w-7 h-7 rounded-full hover:bg-surface-container-low flex items-center justify-center"
+              >
+                2
+              </button>
+              <button
+                class="w-7 h-7 rounded-full hover:bg-surface-container-low flex items-center justify-center"
+              >
+                3
+              </button>
+              <span class="px-1 text-outline">...</span>
+              <button
+                class="w-7 h-7 rounded-full hover:bg-surface-container-low flex items-center justify-center"
+              >
+                4
+              </button>
+              <button
+                class="w-7 h-7 flex items-center justify-center rounded-full hover:bg-surface-container-low text-outline"
+              >
+                <span class="material-symbols-outlined text-sm">chevron_right</span>
+              </button>
+            </div>
+          </footer>
+        }
+      </section>
+    </main>
+
+    <!-- RIGHT SIDEBAR (4 Cols) -->
+    <aside class="lg:col-span-4 space-y-4">
+      <!-- PROFILE STRENGTH CARD -->
+      @if (profileSummary(); as profile) {
+        <div class="rounded-2xl bg-primary text-on-primary p-5 space-y-4 shadow-sm">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-white">Complete your profile</h3>
+          </div>
+
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-xs text-white/80">
+              <span>Profile Strength</span>
+              <span class="font-bold text-white">{{ profile.completion.percentage }}%</span>
+            </div>
+            <div class="w-full bg-white/20 h-1.5 rounded-full overflow-hidden">
+              <div
+                class="bg-lime-400 h-full transition-all duration-300 rounded-full"
+                [style.width.%]="profile.completion.percentage"
+              ></div>
+            </div>
+          </div>
+
+          <div class="space-y-2 pt-1 text-xs text-white/90">
+            <p class="text-[11px] text-white/70 font-medium">Next steps:</p>
+            <ul class="space-y-2">
+              @for (step of profile.completion.missingSteps; track step) {
+                <li class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-sm">add_circle</span>
+                  <span>{{ step }}</span>
+                </li>
+              }
+            </ul>
+          </div>
+        </div>
+      }
+    </aside>
+  </div>
+</div>

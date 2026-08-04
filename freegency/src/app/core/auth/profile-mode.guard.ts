@@ -11,7 +11,7 @@ function modeGuard(expectedMode: UserMode): CanActivateFn {
 
     if (mode === expectedMode) return true;
     if (mode === 'Client') return router.createUrlTree(['/client/home']);
-    if (mode === 'Developer') return router.createUrlTree(['/developer/dashboard']);
+    if (mode === 'Developer') return router.createUrlTree(['/developer/home']);
     return router.createUrlTree(['/auth/login']);
   };
 }
