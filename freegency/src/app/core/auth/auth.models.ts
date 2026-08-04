@@ -2,7 +2,7 @@ export type UserMode = 'Client' | 'Developer';
 
 export const CLIENT_ONBOARDING_PATH = '/auth/client-onboarding';
 export const CLIENT_HOME_PATH = '/client/home';
-export const DEVELOPER_DASHBOARD_PATH = '/developer/dashboard';
+export const DEVELOPER_DASHBOARD_PATH = '/developer/home';
 
 export interface LoginRequest {
   email: string;

@@ -24,7 +24,7 @@ export const routes: Routes = [
         (m) => m.ManageWorkComponent,
       ),
   },
-  {path:"chat",component:ChatComponent},
+  { path: 'chat', component: ChatComponent },
   {
     path: 'client/messages',
     canActivate: [authGuard, clientModeGuard],
@@ -107,13 +107,14 @@ export const routes: Routes = [
       },
     ],
   },
+
   {
-    path: 'developer/dashboard',
+    path: 'developer/home',
     canActivate: [authGuard, developerModeGuard],
     loadComponent: () =>
       import(
-        './features/developer/pages/developer-dashboard/developer-dashboard.component'
-      ).then((m) => m.DeveloperDashboardComponent),
+        './features/freelancer/pages/freelancer-home/freelancer-home.component'
+      ).then((m) => m.FreelancerHomeComponent),
   },
   {
     path: 'developer/explore',
