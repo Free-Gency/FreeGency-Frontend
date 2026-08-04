@@ -46,10 +46,11 @@
       </nav>
 
       <!-- SEARCH & FILTER BAR -->
+      <!-- SEARCH & FILTER BAR -->
       @if (activeTab() === 'feed') {
         <section class="space-y-4">
           <div class="flex gap-3 items-center">
-            <!-- Search Input Container (Takes up remaining width) -->
+            <!-- Search Input Container -->
             <div class="relative flex-1">
               <span
                 class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-outline text-lg pointer-events-none"
@@ -65,10 +66,11 @@
               />
             </div>
 
-            <!-- Filters Button (Compact fixed size) -->
+            <!-- Filters Button (Opens Modal) -->
             <button
+              type="button"
               class="bg-white border border-outline-variant/60 hover:bg-surface-container-low text-on-surface px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2 transition-colors shrink-0"
-              (click)="onSearch()"
+              (click)="isFilterOpen.set(true)"
             >
               <span class="material-symbols-outlined text-base">tune</span>
               <span>Filters</span>
@@ -92,6 +94,95 @@
             }
           </div>
         </section>
+      }
+
+      <!-- FILTER POPUP MODAL -->
+      @if (isFilterOpen()) {
+        <!-- Backdrop -->
+        <div
+          class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-xs p-4"
+        >
+          <!-- Modal Container -->
+          <div
+            class="bg-white rounded-2xl w-full max-w-lg min-w-[320px] sm:min-w-[480px] shadow-2xl border border-gray-100 p-6 space-y-6 animate-in zoom-in-95 duration-150"
+          >
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between border-b border-gray-100 pb-4">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-xl">tune</span>
+                <h3 class="text-base font-bold text-gray-900">Filter Projects</h3>
+              </div>
+              <button
+                type="button"
+                class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 text-gray-500 transition-colors"
+                (click)="isFilterOpen.set(false)"
+              >
+                <span class="material-symbols-outlined text-lg">close</span>
+              </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="space-y-5 text-sm">
+              <!-- Budget Range -->
+              <div class="space-y-2">
+                <label class="font-semibold text-gray-800 text-xs uppercase tracking-wider"
+                  >Budget Range ($)</label
+                >
+                <div class="grid grid-cols-2 gap-3 items-center">
+                  <input
+                    type="number"
+                    placeholder="Min ($)"
+                    class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Max ($)"
+                    class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  />
+                </div>
+              </div>
+
+              <!-- Project Scope -->
+              <div class="space-y-2">
+                <label class="font-semibold text-gray-800 text-xs uppercase tracking-wider"
+                  >Project Duration</label
+                >
+                <div class="grid grid-cols-2 gap-2">
+                  <label
+                    class="flex items-center gap-2.5 border border-gray-200 p-3 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors"
+                  >
+                    <input type="checkbox" class="w-4 h-4 accent-primary rounded" />
+                    <span class="text-xs font-medium text-gray-700">&lt; 1 month</span>
+                  </label>
+                  <label
+                    class="flex items-center gap-2.5 border border-gray-200 p-3 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors"
+                  >
+                    <input type="checkbox" class="w-4 h-4 accent-primary rounded" />
+                    <span class="text-xs font-medium text-gray-700">1 to 3 months</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
+              <button
+                type="button"
+                class="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+                (click)="isFilterOpen.set(false)"
+              >
+                Clear All
+              </button>
+              <button
+                type="button"
+                class="px-5 py-2.5 text-xs font-semibold bg-primary text-white rounded-xl shadow-sm hover:opacity-90 transition-opacity"
+                (click)="onApplyFilters()"
+              >
+                Apply Filters
+              </button>
+            </div>
+          </div>
+        </div>
       }
 
       <!-- PROJECT CARDS FEED -->
