@@ -18,6 +18,7 @@ export class FreelancerHomeComponent implements OnInit {
   private readonly homeService = inject(FreelancerHome);
 
   activeTab = signal<ActiveTab>('feed');
+  isFilterOpen = signal<boolean>(false);
   isLoading = signal<boolean>(false);
 
   profileSummary = signal<DeveloperProfileSummary | null>(null);
@@ -114,5 +115,10 @@ export class FreelancerHomeComponent implements OnInit {
         this.projects.update((list) => list.filter((p) => p.id !== project.id));
       }
     });
+  }
+
+  onApplyFilters(): void {
+    this.isFilterOpen.set(false);
+    this.onSearch(); 
   }
 }
