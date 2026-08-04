@@ -46,7 +46,6 @@
       </nav>
 
       <!-- SEARCH & FILTER BAR -->
-      <!-- SEARCH & FILTER BAR -->
       @if (activeTab() === 'feed') {
         <section class="space-y-4">
           <div class="flex gap-3 items-center">
@@ -61,7 +60,8 @@
                 type="text"
                 class="w-full bg-white border border-outline-variant/60 rounded-xl pl-10 pr-4 py-2 text-sm text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                 placeholder="Search projects by title or skill..."
-                [(ngModel)]="searchQuery"
+                [ngModel]="searchQuery()"
+                (ngModelChange)="searchQuery.set($event)"
                 (keyup.enter)="onSearch()"
               />
             </div>
@@ -185,7 +185,7 @@
         </div>
       }
 
-      <!-- PROJECT CARDS FEED -->
+      <!-- CARDS FEED -->
       <section class="space-y-4">
         @if (isLoading()) {
           <div
@@ -194,96 +194,165 @@
             <span class="material-symbols-outlined animate-spin text-3xl text-primary"
               >progress_activity</span
             >
-            <p class="mt-2 text-sm font-medium">Loading projects...</p>
+            <p class="mt-2 text-sm font-medium">Loading details...</p>
           </div>
         } @else if (projects().length === 0) {
           <div
             class="card p-12 text-center text-on-surface-variant bg-white rounded-2xl border border-outline-variant/40 space-y-2"
           >
             <span class="material-symbols-outlined text-4xl text-outline">folder_open</span>
-            <p class="text-sm font-semibold">No projects found matching your criteria.</p>
+            <p class="text-sm font-semibold">No items found matching your criteria.</p>
           </div>
         } @else {
           <div class="space-y-4">
-            @for (project of projects(); track project.id) {
-              <article
-                class="bg-white p-6 rounded-2xl border border-outline-variant/50 hover:shadow-md transition-all space-y-4"
-              >
-                <!-- Client Info & Post Header -->
-                <div class="flex items-center justify-between text-xs text-on-surface-variant">
-                  <div class="flex items-center gap-2">
-                    <div
-                      class="w-6 h-6 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white font-bold text-[10px]"
-                    >
-                      {{ (project.clientName || 'A')[0] }}
-                    </div>
-                    <span class="font-medium text-on-surface">{{
-                      project.clientName || 'Alex Thompson'
-                    }}</span>
-                  </div>
-                  <span>Posted {{ project.postedTime || '2h ago' }}</span>
-                </div>
+            @for (item of projects(); track item.id) {
+              
+              <!-- ==================== TAB 1: MY APPLICATIONS CARD ==================== -->
+              @if (activeTab() === 'applications') {
+                <article
+                  class="bg-white p-6 rounded-2xl border border-outline-variant/50 hover:shadow-md transition-all space-y-4"
+                >
+                  <!-- Application Header -->
+                  <div class="flex items-center justify-between text-xs">
+                    <span class="text-on-surface-variant font-medium">
+                      Applied {{ (item.appliedAt || item.createdAt) | date:'mediumDate' }}
+                    </span>
 
-                <!-- Title & Description -->
-                <div>
-                  <h3
-                    class="text-lg font-bold text-on-surface hover:text-primary transition-colors cursor-pointer"
-                  >
-                    {{ project.title }}
-                  </h3>
-                  <p class="text-xs text-on-surface-variant line-clamp-2 mt-1.5 leading-relaxed">
-                    {{ project.description }}
-                  </p>
-                </div>
-
-                <!-- Skill Tags -->
-                <div class="flex flex-wrap gap-2">
-                  @for (
-                    skill of project.skills || [
-                      'Mobile Dev',
-                      'React Native',
-                      'Firebase',
-                      'TypeScript',
-                    ];
-                    track skill
-                  ) {
                     <span
-                      class="px-2.5 py-1 rounded-md bg-surface-container-low text-on-surface-variant text-[11px] font-medium"
+                      class="px-2.5 py-1 rounded-full text-xs font-semibold capitalize"
+                      [ngClass]="{
+                        'bg-amber-100 text-amber-800': item.status === 'Submitted' || item.status === 0 || item.status === 'Pending',
+                        'bg-blue-100 text-blue-800': item.status === 'UnderReview' || item.status === 1,
+                        'bg-emerald-100 text-emerald-800': item.status === 'Accepted' || item.status === 2,
+                        'bg-rose-100 text-rose-800': item.status === 'Rejected' || item.status === 3
+                      }"
                     >
-                      {{ skill }}
+                      {{ item.status || 'Submitted' }}
                     </span>
+                  </div>
+
+                  <!-- Project Title & Cover Excerpt -->
+                  <div>
+                    <h3 class="text-lg font-bold text-on-surface hover:text-primary transition-colors">
+                      {{ item.projectTitle || item.project?.title || item.title || 'Project Application' }}
+                    </h3>
+                    @if (item.coverLetter || item.proposedSolution) {
+                      <p class="text-xs text-on-surface-variant line-clamp-2 mt-1.5 leading-relaxed">
+                        <span class="font-semibold text-on-surface">Cover Letter: </span>
+                        {{ item.coverLetter || item.proposedSolution }}
+                      </p>
+                    }
+                  </div>
+
+                  <!-- Proposal Skills / Project Skills -->
+                  @if (item.skills?.length || item.project?.skills?.length) {
+                    <div class="flex flex-wrap gap-2">
+                      @for (skill of (item.skills || item.project?.skills); track skill) {
+                        <span
+                          class="px-2.5 py-1 rounded-md bg-surface-container-low text-on-surface-variant text-[11px] font-medium"
+                        >
+                          {{ skill }}
+                        </span>
+                      }
+                    </div>
                   }
-                </div>
 
-                <!-- Footer: Budget, Proposals & Bookmark -->
-                <div class="flex items-center justify-between pt-2">
-                  <span class="text-base font-bold text-primary">
-                    ${{ project.budget | number: '1.0-0' }}
-                  </span>
-
-                  <div class="flex items-center gap-4 text-xs text-on-surface-variant">
-                    <span class="flex items-center gap-1">
-                      <span class="material-symbols-outlined text-sm text-outline">group</span>
-                      {{ project.proposalCount || 12 }} proposals
-                    </span>
-                    <button
-                      class="text-outline hover:text-primary transition-colors"
-                      [class.text-primary]="project.isSaved"
-                      (click)="onToggleBookmark(project)"
-                    >
-                      <span class="material-symbols-outlined text-base">
-                        {{ project.isSaved ? 'bookmark_added' : 'bookmark' }}
+                  <!-- Application Footer -->
+                  <div class="flex items-center justify-between pt-3 border-t border-gray-100">
+                    <div class="flex items-center gap-1">
+                      <span class="text-xs text-on-surface-variant font-medium">Your Bid:</span>
+                      <span class="text-base font-bold text-primary ml-1">
+                        ${{ (item.bidAmount ?? item.proposedBudget ?? item.budgetAmount ?? item.budget ?? item.price ?? 0) | number:'1.0-0' }}
                       </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      class="px-4 py-1.5 rounded-lg text-xs font-medium border border-outline-variant/60 hover:bg-surface-container-low transition-colors"
+                    >
+                      View Details
                     </button>
                   </div>
-                </div>
-              </article>
+                </article>
+              }
+
+              <!-- ==================== TAB 2 & 3: RECOMMENDED FEED / SAVED CARDS ==================== -->
+              @else {
+                <article
+                  class="bg-white p-6 rounded-2xl border border-outline-variant/50 hover:shadow-md transition-all space-y-4"
+                >
+                  <!-- Client Info & Post Header -->
+                  <div class="flex items-center justify-between text-xs text-on-surface-variant">
+                    <div class="flex items-center gap-2">
+                      <div
+                        class="w-6 h-6 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white font-bold text-[10px]"
+                      >
+                        {{ (item.clientName || 'A')[0] }}
+                      </div>
+                      <span class="font-medium text-on-surface">{{
+                        item.clientName || 'Client'
+                      }}</span>
+                    </div>
+                    <span>Posted {{ item.createdAt ? (item.createdAt | date:'shortDate') : (item.postedTime || '2h ago') }}</span>
+                  </div>
+
+                  <!-- Title & Description -->
+                  <div>
+                    <h3
+                      class="text-lg font-bold text-on-surface hover:text-primary transition-colors cursor-pointer"
+                    >
+                      {{ item.title }}
+                    </h3>
+                    <p class="text-xs text-on-surface-variant line-clamp-2 mt-1.5 leading-relaxed">
+                      {{ item.description }}
+                    </p>
+                  </div>
+
+                  <!-- Skill Tags -->
+                  @if (item.skills && item.skills.length > 0) {
+                    <div class="flex flex-wrap gap-2">
+                      @for (skill of item.skills; track skill) {
+                        <span
+                          class="px-2.5 py-1 rounded-md bg-surface-container-low text-on-surface-variant text-[11px] font-medium"
+                        >
+                          {{ skill }}
+                        </span>
+                      }
+                    </div>
+                  }
+
+                  <!-- Footer: Fixed Budget, Proposals & Bookmark -->
+                  <div class="flex items-center justify-between pt-3 border-t border-gray-100">
+                    <span class="text-base font-bold text-primary">
+                      ${{ (item.budgetAmount ?? item.budget ?? item.price ?? item.maxBudget ?? 0) | number:'1.0-0' }}
+                    </span>
+
+                    <div class="flex items-center gap-4 text-xs text-on-surface-variant">
+                      <span class="flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm text-outline">group</span>
+                        {{ item.proposalCount ?? item.proposalsCount ?? 0 }} proposals
+                      </span>
+                      <button
+                        type="button"
+                        class="text-outline hover:text-primary transition-colors p-1"
+                        [class.text-primary]="item.isSaved"
+                        (click)="onToggleBookmark(item)"
+                      >
+                        <span class="material-symbols-outlined text-base">
+                          {{ item.isSaved ? 'bookmark_added' : 'bookmark' }}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              }
+
             }
           </div>
 
           <!-- PAGINATION -->
           <footer class="flex items-center justify-between pt-4 text-xs text-on-surface-variant">
-            <span>Showing 1-6 of {{ totalCount() || 24 }} projects</span>
+            <span>Showing 1-{{ projects().length }} of {{ totalCount() || projects().length }} results</span>
 
             <div class="flex items-center gap-1">
               <button
@@ -295,22 +364,6 @@
                 class="w-7 h-7 rounded-full bg-primary text-white font-medium flex items-center justify-center"
               >
                 1
-              </button>
-              <button
-                class="w-7 h-7 rounded-full hover:bg-surface-container-low flex items-center justify-center"
-              >
-                2
-              </button>
-              <button
-                class="w-7 h-7 rounded-full hover:bg-surface-container-low flex items-center justify-center"
-              >
-                3
-              </button>
-              <span class="px-1 text-outline">...</span>
-              <button
-                class="w-7 h-7 rounded-full hover:bg-surface-container-low flex items-center justify-center"
-              >
-                4
               </button>
               <button
                 class="w-7 h-7 flex items-center justify-center rounded-full hover:bg-surface-container-low text-outline"
