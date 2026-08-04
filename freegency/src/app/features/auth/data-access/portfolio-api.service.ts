@@ -54,6 +54,20 @@ export interface OwnerReviewDto {
   reviewerAvatar: string | null;
 }
 
+export interface PortfolioRoadmapStepDto {
+  id?: string | null;
+  title: string;
+  sortOrder: number;
+  isDone: boolean;
+}
+
+export interface PortfolioMetricDto {
+  id?: string | null;
+  value: string;
+  label: string;
+  sortOrder: number;
+}
+
 export interface PortfolioProjectDetailsDto {
   id: string;
   title: string;
@@ -61,17 +75,30 @@ export interface PortfolioProjectDetailsDto {
   budget: number | null;
   imageCover: string | null;
   projectUrl: string | null;
+  prototypeUrl?: string | null;
   completionDate: string | null;
+  updatedAt?: string | null;
   visibility: number | string;
   categoryName: string | null;
   ownerName: string | null;
   ownerType: string;
   ownerUserId: string | null;
   ownerTeamId: string | null;
+  challenge?: string | null;
+  solution?: string | null;
+  durationLabel?: string | null;
+  industry?: string | null;
+  teamLeads?: string | null;
+  testimonialQuote?: string | null;
+  testimonialAuthorName?: string | null;
+  testimonialAuthorTitle?: string | null;
+  testimonialAuthorAvatarUrl?: string | null;
   creator: PortfolioCreatorDto | null;
   ownerReviews: OwnerReviewDto[];
   images: PortfolioImageDto[];
   skills: PortfolioSkillDto[];
+  roadmapSteps?: PortfolioRoadmapStepDto[];
+  metrics?: PortfolioMetricDto[];
 }
 
 export interface RecentlyViewedPortfolioDto {
@@ -144,6 +171,8 @@ export class PortfolioApiService {
             images: res.data.images ?? [],
             skills: res.data.skills ?? [],
             ownerReviews: res.data.ownerReviews ?? [],
+            roadmapSteps: res.data.roadmapSteps ?? [],
+            metrics: res.data.metrics ?? [],
             creator: res.data.creator
               ? {
                   ...res.data.creator,

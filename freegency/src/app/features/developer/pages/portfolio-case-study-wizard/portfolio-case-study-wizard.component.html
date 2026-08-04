@@ -1,0 +1,347 @@
+<div class="pw-shell">
+  <header class="pw-top">
+    <a [routerLink]="['/developer/teams', teamId()]" class="pw-back">
+      <hugeicons-icon [icon]="backIcon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
+      Back to team
+    </a>
+    <h1 class="pw-title">{{ isEdit() ? 'Edit case study' : 'Add portfolio project' }}</h1>
+    <p class="pw-sub">Build a full case study for your team portfolio.</p>
+  </header>
+
+  <nav class="pw-track" aria-label="Wizard steps">
+    <div class="pw-track__meta">
+      <span class="pw-track__current">{{ stepLabels[step() - 1] }}</span>
+      <span class="pw-track__count">Step {{ step() }} of {{ stepLabels.length }}</span>
+    </div>
+    <div class="pw-track__bar" aria-hidden="true">
+      <span class="pw-track__fill" [style.width.%]="((step() - 1) / (stepLabels.length - 1)) * 100"></span>
+    </div>
+    <ol class="pw-track__list">
+      @for (label of stepLabels; track label; let i = $index; let last = $last) {
+        <li class="pw-track__item" [class.is-active]="step() === i + 1" [class.is-done]="step() > i + 1">
+          <button type="button" class="pw-track__btn" (click)="goToStep(i + 1)">
+            <span class="pw-track__dot">
+              @if (step() > i + 1) {
+                <hugeicons-icon [icon]="tickIcon" [size]="12" color="currentColor" [strokeWidth]="2.5" />
+              } @else {
+                {{ i + 1 }}
+              }
+            </span>
+            <span class="pw-track__label">{{ label }}</span>
+          </button>
+          @if (!last) {
+            <span class="pw-track__line" aria-hidden="true"></span>
+          }
+        </li>
+      }
+    </ol>
+  </nav>
+
+  @if (loading()) {
+    <p class="pw-muted">Loading…</p>
+  } @else if (error() && !title()) {
+    <p class="pw-error">{{ error() }}</p>
+  } @else {
+    <section class="pw-card">
+      @if (step() === 1) {
+        <h2 class="pw-h2">Basics</h2>
+        <label class="pw-field">
+          <span>Title</span>
+          <input [ngModel]="title()" (ngModelChange)="title.set($event)" placeholder="Project title" />
+        </label>
+        <label class="pw-field">
+          <span>Short description</span>
+          <textarea
+            rows="4"
+            [ngModel]="description()"
+            (ngModelChange)="description.set($event)"
+            placeholder="One or two sentences for the hero"
+          ></textarea>
+        </label>
+        <p class="pw-label">Category</p>
+        <div class="pw-chips">
+          @for (cat of categories(); track cat.id) {
+            <button
+              type="button"
+              class="pw-chip"
+              [class.is-on]="categoryId() === cat.id"
+              (click)="categoryId.set(cat.id)"
+            >
+              {{ cat.label }}
+            </button>
+          }
+        </div>
+        <label class="pw-field">
+          <span>{{ isEdit() ? 'Add more images' : 'Cover & gallery images' }}</span>
+          <input type="file" accept="image/*" multiple (change)="onImagesPicked($event)" />
+        </label>
+        @if (existingCover()) {
+          <img [src]="existingCover()!" alt="" class="pw-cover-preview" />
+        }
+        @if (imageFiles().length) {
+          <p class="pw-muted">{{ imageFiles().length }} file(s) selected</p>
+        }
+      }
+
+      @if (step() === 2) {
+        <h2 class="pw-h2">Story</h2>
+        <label class="pw-field">
+          <span>The Challenge</span>
+          <textarea rows="5" [ngModel]="challenge()" (ngModelChange)="challenge.set($event)"></textarea>
+        </label>
+        <label class="pw-field">
+          <span>The Solution</span>
+          <textarea rows="5" [ngModel]="solution()" (ngModelChange)="solution.set($event)"></textarea>
+        </label>
+      }
+
+      @if (step() === 3) {
+        <h2 class="pw-h2">Details</h2>
+        <div class="pw-grid">
+          <label class="pw-field">
+            <span>Live project URL</span>
+            <input [ngModel]="projectUrl()" (ngModelChange)="projectUrl.set($event)" placeholder="https://" />
+          </label>
+          <label class="pw-field">
+            <span>Prototype URL</span>
+            <input [ngModel]="prototypeUrl()" (ngModelChange)="prototypeUrl.set($event)" placeholder="https://" />
+          </label>
+          <label class="pw-field">
+            <span>Budget</span>
+            <input type="number" [ngModel]="budget()" (ngModelChange)="budget.set($event)" />
+          </label>
+          <label class="pw-field">
+            <span>Duration</span>
+            <input [ngModel]="durationLabel()" (ngModelChange)="durationLabel.set($event)" placeholder="12w" />
+          </label>
+          <label class="pw-field">
+            <span>Completion date</span>
+            <input type="date" [ngModel]="completionDate()" (ngModelChange)="completionDate.set($event)" />
+          </label>
+          <label class="pw-field">
+            <span>Industry</span>
+            <input [ngModel]="industry()" (ngModelChange)="industry.set($event)" />
+          </label>
+          <label class="pw-field">
+            <span>Visibility</span>
+            <select [ngModel]="visibility()" (ngModelChange)="visibility.set($event)">
+              <option value="Public">Public</option>
+              <option value="Private">Private</option>
+            </select>
+          </label>
+        </div>
+      }
+
+      @if (step() === 4) {
+        <h2 class="pw-h2">Team & roles</h2>
+        <p class="pw-hint">Search your team members, or type any name and role manually.</p>
+
+        <div class="pw-search">
+          <div class="pw-search__field">
+            <hugeicons-icon class="pw-search__icon" [icon]="searchIcon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
+            <input
+              type="search"
+              [ngModel]="memberSearch()"
+              (ngModelChange)="onMemberSearch($event)"
+              (focus)="memberPickerOpen.set(true)"
+              placeholder="Search team members…"
+              autocomplete="off"
+            />
+          </div>
+          @if (memberPickerOpen() && filteredMembers().length) {
+            <ul class="pw-search__list" role="listbox">
+              @for (member of filteredMembers(); track member.userId) {
+                <li>
+                  <button type="button" class="pw-search__item" (click)="pickTeamMember(member)">
+                    @if (member.imageUrl) {
+                      <img [src]="member.imageUrl" [alt]="member.name" class="pw-avatar" />
+                    } @else {
+                      <span class="pw-avatar pw-avatar--fallback">{{ initials(member.name) }}</span>
+                    }
+                    <span>{{ member.name }}</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+
+        <div class="pw-team-rows">
+          @for (person of teamPeople(); track $index; let i = $index) {
+            <div class="pw-team-row">
+              <label class="pw-field">
+                <span>Name</span>
+                <input
+                  [ngModel]="person.name"
+                  (ngModelChange)="updateTeamPerson(i, { name: $event, userId: null })"
+                  placeholder="Full name"
+                />
+              </label>
+              <label class="pw-field">
+                <span>Role</span>
+                <input
+                  [ngModel]="person.role"
+                  (ngModelChange)="updateTeamPerson(i, { role: $event })"
+                  placeholder="e.g. Lead QA, Frontend"
+                />
+              </label>
+              <button
+                type="button"
+                class="pw-icon pw-team-row__remove"
+                (click)="removeTeamPerson(i)"
+                aria-label="Remove person"
+              >
+                <hugeicons-icon [icon]="deleteIcon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
+              </button>
+            </div>
+          }
+        </div>
+        <button type="button" class="pw-link" (click)="addTeamPerson()">
+          <hugeicons-icon [icon]="addIcon" [size]="14" color="currentColor" [strokeWidth]="2" />
+          Add person
+        </button>
+      }
+
+      @if (step() === 5) {
+        <h2 class="pw-h2">Skills</h2>
+        <div class="pw-chips">
+          @for (skill of allSkills(); track skill.id) {
+            <button
+              type="button"
+              class="pw-chip"
+              [class.is-on]="selectedSkillIds().includes(skill.id)"
+              (click)="toggleSkill(skill.id)"
+            >
+              @if (selectedSkillIds().includes(skill.id)) {
+                <hugeicons-icon [icon]="tickIcon" [size]="14" color="currentColor" [strokeWidth]="2.5" />
+              }
+              {{ skill.label }}
+            </button>
+          } @empty {
+            <p class="pw-muted">No skills available for this team yet.</p>
+          }
+        </div>
+      }
+
+      @if (step() === 6) {
+        <h2 class="pw-h2">Outcomes</h2>
+        <p class="pw-label">Roadmap timeline</p>
+        <ol class="pw-timeline">
+          @for (row of roadmap(); track $index; let i = $index; let last = $last) {
+            <li class="pw-timeline__item" [class.is-done]="row.isDone" [class.is-last]="last">
+              <span class="pw-timeline__rail" aria-hidden="true">
+                <span class="pw-timeline__dot">
+                  @if (row.isDone) {
+                    <hugeicons-icon [icon]="tickIcon" [size]="12" color="currentColor" [strokeWidth]="2.5" />
+                  } @else {
+                    {{ i + 1 }}
+                  }
+                </span>
+              </span>
+              <div class="pw-timeline__card">
+                <div class="pw-timeline__head">
+                  <span class="pw-timeline__step">Step {{ i + 1 }}</span>
+                  <div class="pw-timeline__tools">
+                    <button
+                      type="button"
+                      class="pw-mini"
+                      [class.is-on]="row.isDone"
+                      (click)="toggleRoadmapDone(i)"
+                    >
+                      {{ row.isDone ? 'Done' : 'Mark done' }}
+                    </button>
+                    <button type="button" class="pw-icon" (click)="removeRoadmapRow(i)" aria-label="Remove step">
+                      <hugeicons-icon [icon]="deleteIcon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
+                    </button>
+                  </div>
+                </div>
+                <input
+                  class="pw-timeline__input"
+                  [ngModel]="row.title"
+                  (ngModelChange)="updateRoadmapTitle(i, $event)"
+                  placeholder="What happened in this phase?"
+                />
+              </div>
+            </li>
+          }
+        </ol>
+        <button type="button" class="pw-link" (click)="addRoadmapRow()">
+          <hugeicons-icon [icon]="addIcon" [size]="14" color="currentColor" [strokeWidth]="2" />
+          Add step
+        </button>
+
+        <p class="pw-label mt">Metrics</p>
+        <div class="pw-list">
+          @for (row of metrics(); track $index; let i = $index) {
+            <div class="pw-list-row pw-list-row--metrics">
+              <input
+                [ngModel]="row.value"
+                (ngModelChange)="updateMetric(i, { value: $event })"
+                placeholder="100%"
+              />
+              <input
+                [ngModel]="row.label"
+                (ngModelChange)="updateMetric(i, { label: $event })"
+                placeholder="Satisfaction"
+              />
+              <button type="button" class="pw-icon" (click)="removeMetricRow(i)">
+                <hugeicons-icon [icon]="deleteIcon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
+              </button>
+            </div>
+          }
+        </div>
+        <button type="button" class="pw-link" (click)="addMetricRow()">
+          <hugeicons-icon [icon]="addIcon" [size]="14" color="currentColor" [strokeWidth]="2" />
+          Add metric
+        </button>
+      }
+
+      @if (step() === 7) {
+        <h2 class="pw-h2">Testimonial</h2>
+        <label class="pw-field">
+          <span>Quote</span>
+          <textarea rows="4" [ngModel]="testimonialQuote()" (ngModelChange)="testimonialQuote.set($event)"></textarea>
+        </label>
+        <div class="pw-grid">
+          <label class="pw-field">
+            <span>Author name</span>
+            <input [ngModel]="testimonialAuthorName()" (ngModelChange)="testimonialAuthorName.set($event)" />
+          </label>
+          <label class="pw-field">
+            <span>Author title</span>
+            <input [ngModel]="testimonialAuthorTitle()" (ngModelChange)="testimonialAuthorTitle.set($event)" />
+          </label>
+        </div>
+      }
+
+      @if (step() === 8) {
+        <h2 class="pw-h2">Review & publish</h2>
+        <dl class="pw-summary">
+          <div><dt>Title</dt><dd>{{ title() || '—' }}</dd></div>
+          <div><dt>Category</dt><dd>{{ selectedCategoryLabel() }}</dd></div>
+          <div><dt>Team</dt><dd>{{ teamPeopleCount() }} people</dd></div>
+          <div><dt>Skills</dt><dd>{{ selectedSkillIds().length }}</dd></div>
+          <div><dt>Roadmap</dt><dd>{{ roadmapCount() }} steps</dd></div>
+          <div><dt>Metrics</dt><dd>{{ metricsCount() }}</dd></div>
+          <div><dt>Visibility</dt><dd>{{ visibility() }}</dd></div>
+        </dl>
+        @if (error()) {
+          <p class="pw-error">{{ error() }}</p>
+        }
+      }
+
+      <div class="pw-actions">
+        <button type="button" class="pw-btn pw-btn--ghost" [disabled]="step() === 1 || saving()" (click)="back()">
+          Back
+        </button>
+        @if (step() < 8) {
+          <button type="button" class="pw-btn pw-btn--primary" (click)="next()">Continue</button>
+        } @else {
+          <button type="button" class="pw-btn pw-btn--primary" [disabled]="saving()" (click)="save()">
+            {{ saving() ? 'Saving…' : isEdit() ? 'Save changes' : 'Publish case study' }}
+          </button>
+        }
+      </div>
+    </section>
+  }
+</div>

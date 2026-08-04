@@ -1,0 +1,685 @@
+<div class="ct-shell relative flex min-h-dvh flex-col">
+  <app-auth-ambient-bg />
+
+  @if (phase() === 'form') {
+    <!-- Onboarding-style header -->
+    <header
+      class="relative z-10 flex w-full flex-col items-center gap-4 px-5 pt-8 pb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6 sm:pt-10 sm:pb-8"
+    >
+      <img
+        src="/assets/brand/logo.svg"
+        alt="FreeGency"
+        class="block h-8 w-auto shrink-0 self-start sm:h-[37px] sm:self-auto"
+        width="160"
+        height="37"
+      />
+
+      <div
+        class="flex w-full min-w-0 max-w-[520px] flex-col items-stretch justify-center gap-2 sm:mx-auto sm:w-fit sm:max-w-none sm:gap-2.5"
+      >
+        <div class="relative h-1 w-full" aria-hidden="true">
+          <div class="absolute inset-0 rounded-full bg-surface-container"></div>
+          <div
+            class="ct-progress-fill absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[#c4c0ff] via-[#8781ff] to-[#6a5fff]"
+            [style.width]="progressWidth()"
+          ></div>
+          <span
+            class="ct-progress-dot absolute top-1/2 size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary-container"
+            [style.left]="progressWidth()"
+          ></span>
+        </div>
+
+        <nav
+          class="flex items-center justify-between gap-1 overflow-x-auto no-scrollbar sm:justify-center sm:gap-4"
+          aria-label="Create team progress"
+        >
+          @for (item of steps; track item.id; let last = $last) {
+            <span
+              class="font-mono text-[10px] leading-[14px] font-medium tracking-[0.28px] whitespace-nowrap sm:text-sm"
+              [class.text-primary-container]="stepState(item.id) !== 'todo'"
+              [class.text-on-surface-variant]="stepState(item.id) === 'todo'"
+              [class.opacity-50]="stepState(item.id) === 'done'"
+              [class.opacity-70]="stepState(item.id) === 'todo'"
+              [attr.aria-current]="stepState(item.id) === 'current' ? 'step' : null"
+            >
+              {{ item.label }}
+            </span>
+            @if (!last) {
+              <span
+                class="hidden h-0.5 w-3 shrink-0 sm:block sm:w-6"
+                [class.bg-primary-container]="stepState(item.id) === 'done'"
+                [class.opacity-50]="stepState(item.id) === 'done'"
+                [class.bg-outline-variant]="stepState(item.id) !== 'done'"
+                aria-hidden="true"
+              ></span>
+            }
+          }
+        </nav>
+      </div>
+
+      <button
+        type="button"
+        class="absolute end-5 top-8 inline-flex size-9 cursor-pointer items-center justify-center rounded-full text-outline transition-colors hover:bg-surface-container hover:text-on-surface sm:static sm:size-[37px]"
+        aria-label="Close"
+        (click)="skipForNow()"
+      >
+        <hugeicons-icon [icon]="closeIcon" [size]="18" color="currentColor" [strokeWidth]="1.75" />
+      </button>
+    </header>
+
+    <main class="ct-content relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 pb-4 sm:px-8">
+      <div class="grid flex-1 gap-8 lg:grid-cols-[minmax(0,1fr)_400px] lg:items-start lg:gap-12">
+        <!-- Form -->
+        <section class="ct-form-block mx-auto w-full max-w-[640px] lg:mx-0 lg:max-w-none">
+          <div class="ct-heading mb-8 flex w-full flex-col items-center gap-4 text-center sm:mb-10 lg:items-start lg:text-left">
+            <h1
+              class="font-display text-[28px] leading-9 font-bold tracking-[-0.02em] text-on-surface sm:text-[40px] sm:leading-[48px] sm:tracking-[-1.2px] lg:text-[44px] lg:leading-[52px]"
+            >
+              {{ stepTitle() }}
+            </h1>
+            <p class="max-w-[560px] font-body text-sm leading-5 text-on-surface-variant sm:text-base sm:leading-6">
+              {{ stepHelper() }}
+            </p>
+          </div>
+
+          <!-- Mobile preview -->
+          <div class="mb-8 lg:hidden">
+            <p class="mb-3 font-mono text-[11px] font-medium tracking-[0.28px] text-outline uppercase">
+              Live preview
+            </p>
+            <app-team-card-preview [model]="previewModel()" />
+          </div>
+
+          @if (errorMessage()) {
+            <p class="mb-6 text-center text-sm text-error lg:text-left" role="alert">
+              {{ errorMessage() }}
+            </p>
+          }
+
+          <!-- Step 1 -->
+          @if (step() === 1) {
+            <div class="flex w-full flex-col items-stretch gap-8">
+              <div class="flex w-full flex-col gap-2">
+                <label class="block font-mono text-base leading-4 font-bold text-on-surface">
+                  Team cover
+                </label>
+                <div
+                  class="relative overflow-hidden rounded-[24px] border-2 border-dashed border-outline-variant bg-surface-container-low transition-[border-color,background-color] duration-150"
+                  [class.border-primary-container]="coverDragging()"
+                  [class.bg-primary-fixed]="coverDragging()"
+                  (dragover)="$event.preventDefault(); coverDragging.set(true)"
+                  (dragleave)="coverDragging.set(false)"
+                  (drop)="onCoverDrop($event)"
+                >
+                  <button
+                    type="button"
+                    class="relative flex aspect-[16/9] w-full cursor-pointer items-center justify-center overflow-hidden rounded-[22px]"
+                    (click)="openCoverPicker(coverInput)"
+                    aria-label="Upload team cover"
+                  >
+                    @if (coverPreviewUrl()) {
+                      <img [src]="coverPreviewUrl()!" alt="" class="absolute inset-0 size-full object-cover" />
+                    } @else {
+                      <span class="flex flex-col items-center gap-2 px-4 text-outline">
+                        <hugeicons-icon
+                          [icon]="uploadIcon"
+                          [size]="28"
+                          color="currentColor"
+                          [strokeWidth]="1.75"
+                        />
+                        <span class="font-mono text-sm font-medium tracking-[0.28px]">UPLOAD COVER</span>
+                        <span class="font-body text-xs text-on-surface-variant">
+                          Wide image works best (16:9)
+                        </span>
+                      </span>
+                    }
+                  </button>
+
+                  <div
+                    class="absolute bottom-3 left-3 flex size-14 items-center justify-center overflow-hidden rounded-2xl border-2 border-white bg-[#E4E1F9] shadow-[0_4px_12px_rgba(16,24,40,0.18)]"
+                  >
+                    <label class="flex size-full cursor-pointer items-center justify-center">
+                      @if (logoPreviewUrl()) {
+                        <img [src]="logoPreviewUrl()!" alt="" class="size-full object-cover" />
+                      } @else {
+                        <span class="font-mono text-[10px] font-bold tracking-[0.2px] text-[#4130D7]">
+                          LOGO
+                        </span>
+                      }
+                      <input
+                        #logoInput
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        class="sr-only"
+                        (change)="onLogoSelected($event)"
+                      />
+                    </label>
+                  </div>
+
+                  <input
+                    #coverInput
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    class="sr-only"
+                    (change)="onCoverSelected($event)"
+                  />
+                </div>
+                <div class="flex flex-wrap items-center gap-3 pt-1">
+                  <p class="font-mono text-xs leading-[18px] font-medium text-outline">
+                    Cover + logo — both optional, shown on your profile card
+                  </p>
+                  @if (coverPreviewUrl()) {
+                    <button
+                      type="button"
+                      class="cursor-pointer font-mono text-xs font-medium text-outline hover:text-on-surface"
+                      (click)="clearCover()"
+                    >
+                      Remove cover
+                    </button>
+                  }
+                  @if (logoPreviewUrl()) {
+                    <button
+                      type="button"
+                      class="cursor-pointer font-mono text-xs font-medium text-outline hover:text-on-surface"
+                      (click)="clearLogo()"
+                    >
+                      Remove logo
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <div class="flex w-full flex-col gap-2">
+                <label class="block font-mono text-base leading-4 font-bold text-on-surface" for="teamName">
+                  Team name
+                </label>
+                <input
+                  id="teamName"
+                  type="text"
+                  class="ct-field w-full rounded-lg border border-[rgba(229,225,228,0.2)] bg-surface-container-low px-[17px] py-[19px] font-body text-base text-on-surface placeholder:text-outline/50"
+                  placeholder="e.g. Nexus Design"
+                  [value]="name()"
+                  (input)="onNameInput($event)"
+                />
+              </div>
+
+              <div class="flex w-full flex-col gap-2">
+                <div class="flex items-center justify-between px-1">
+                  <label class="font-mono text-base leading-4 font-bold text-on-surface" for="about">
+                    About your team
+                  </label>
+                  <span
+                    class="font-mono text-sm leading-[14px] font-medium tracking-[0.28px]"
+                    [class.text-outline]="!aboutNearLimit()"
+                    [class.text-error]="aboutNearLimit()"
+                  >
+                    {{ aboutCount() }}/{{ aboutMax }}
+                  </span>
+                </div>
+                <textarea
+                  id="about"
+                  rows="5"
+                  class="ct-field min-h-[160px] w-full resize-y rounded-lg border border-[rgba(229,225,228,0.2)] bg-surface-container-low px-[17px] py-[17px] font-body text-base leading-6 text-on-surface placeholder:text-outline/50"
+                  placeholder="Tell clients what you ship and how you work together."
+                  [value]="aboutUs()"
+                  (input)="onAboutInput($event)"
+                  [attr.maxlength]="aboutMax"
+                ></textarea>
+                <div class="h-1 w-full overflow-hidden rounded-full bg-surface-container">
+                  <div
+                    class="ct-counter-bar h-full rounded-full"
+                    [style.width.%]="aboutProgress()"
+                    [class.bg-primary-container]="!aboutNearLimit()"
+                    [class.bg-error]="aboutNearLimit()"
+                  ></div>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- Step 2 -->
+          @if (step() === 2) {
+            @if (loadingTaxonomy()) {
+              <div class="ct-cat-grid" aria-busy="true">
+                @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+                  <div class="h-[140px] animate-pulse rounded-2xl bg-surface-container-low"></div>
+                }
+              </div>
+            } @else {
+              <div class="ct-cat-grid" role="group" aria-label="Team categories">
+                @for (category of categories(); track category.id) {
+                  <button
+                    type="button"
+                    class="ct-cat-card"
+                    [class.is-selected]="isCategorySelected(category.id)"
+                    (click)="toggleCategory(category.id)"
+                    [attr.aria-pressed]="isCategorySelected(category.id)"
+                  >
+                    <span class="ct-cat-card__icon">
+                      <hugeicons-icon
+                        [icon]="category.icon"
+                        [size]="22"
+                        color="currentColor"
+                        [strokeWidth]="1.75"
+                      />
+                    </span>
+                    <span class="font-display text-sm font-semibold text-on-surface sm:text-base">
+                      {{ category.label }}
+                    </span>
+
+                    @if (isCategorySelected(category.id)) {
+                      <span class="ct-cat-card__check" aria-hidden="true">
+                        <hugeicons-icon
+                          [icon]="checkIcon"
+                          [size]="20"
+                          color="currentColor"
+                          [strokeWidth]="2"
+                        />
+                      </span>
+                      <label
+                        class="absolute end-3 bottom-3 inline-flex cursor-pointer items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 font-mono text-[10px] font-semibold text-primary-container"
+                        (click)="setPrimaryCategory(category.id, $event)"
+                      >
+                        <input
+                          type="radio"
+                          class="accent-[var(--color-primary-container)]"
+                          [checked]="isPrimaryCategory(category.id)"
+                          (change)="setPrimaryCategory(category.id, $event)"
+                        />
+                        Primary
+                      </label>
+                    }
+                  </button>
+                }
+              </div>
+            }
+          }
+
+          <!-- Step 3: Specialties (from selected categories) -->
+          @if (step() === 3) {
+            <label
+              class="mb-6 flex h-14 items-center gap-3 rounded-lg border border-[rgba(229,225,228,0.2)] bg-surface-container-low px-4"
+            >
+              <hugeicons-icon [icon]="searchIcon" [size]="20" color="currentColor" [strokeWidth]="1.5" class="text-outline" />
+              <input
+                type="search"
+                class="min-w-0 flex-1 border-0 bg-transparent font-body text-base text-on-surface outline-none placeholder:text-outline/50"
+                placeholder="Search specialties"
+                [ngModel]="specialtySearch()"
+                (ngModelChange)="specialtySearch.set($event)"
+              />
+            </label>
+            @if (!selectedCategoryIds().length) {
+              <p class="font-body text-sm text-on-surface-variant">
+                Select categories first to load matching specialties.
+              </p>
+            } @else {
+              <div class="flex flex-wrap gap-2.5">
+                @for (specialty of filteredSpecialties(); track specialty.id) {
+                  <button
+                    type="button"
+                    class="ct-chip inline-flex cursor-pointer items-center gap-1.5 rounded-full px-4 py-2.5 font-display text-sm font-semibold"
+                    [class.bg-primary-container]="isSpecialtySelected(specialty.id)"
+                    [class.text-on-primary]="isSpecialtySelected(specialty.id)"
+                    [class.bg-surface-container]="!isSpecialtySelected(specialty.id)"
+                    [class.text-on-surface]="!isSpecialtySelected(specialty.id)"
+                    (click)="toggleSpecialty(specialty.id)"
+                  >
+                    @if (isSpecialtySelected(specialty.id)) {
+                      <hugeicons-icon [icon]="tickIcon" [size]="14" color="currentColor" [strokeWidth]="2.5" />
+                    }
+                    {{ specialty.label }}
+                  </button>
+                } @empty {
+                  <p class="font-body text-sm text-on-surface-variant">
+                    No specialties found for your categories.
+                  </p>
+                }
+              </div>
+            }
+          }
+
+          <!-- Step 4: Skills (from selected specialties) -->
+          @if (step() === 4) {
+            <label
+              class="mb-6 flex h-14 items-center gap-3 rounded-lg border border-[rgba(229,225,228,0.2)] bg-surface-container-low px-4"
+            >
+              <hugeicons-icon [icon]="searchIcon" [size]="20" color="currentColor" [strokeWidth]="1.5" class="text-outline" />
+              <input
+                type="search"
+                class="min-w-0 flex-1 border-0 bg-transparent font-body text-base text-on-surface outline-none placeholder:text-outline/50"
+                placeholder="Search skills"
+                [ngModel]="skillSearch()"
+                (ngModelChange)="skillSearch.set($event)"
+              />
+            </label>
+            @if (!selectedSpecialtyIds().length) {
+              <p class="font-body text-sm text-on-surface-variant">
+                Select specialties first to load matching skills.
+              </p>
+            } @else {
+              <div class="flex flex-wrap gap-2.5">
+                @for (skill of filteredSkills(); track skill.id) {
+                  <button
+                    type="button"
+                    class="ct-chip inline-flex cursor-pointer items-center gap-1.5 rounded-full px-4 py-2.5 font-display text-sm font-semibold"
+                    [class.bg-primary-container]="isSkillSelected(skill.id)"
+                    [class.text-on-primary]="isSkillSelected(skill.id)"
+                    [class.bg-surface-container]="!isSkillSelected(skill.id)"
+                    [class.text-on-surface]="!isSkillSelected(skill.id)"
+                    (click)="toggleSkill(skill.id)"
+                  >
+                    @if (isSkillSelected(skill.id)) {
+                      <hugeicons-icon [icon]="tickIcon" [size]="14" color="currentColor" [strokeWidth]="2.5" />
+                    }
+                    {{ skill.label }}
+                  </button>
+                } @empty {
+                  <p class="font-body text-sm text-on-surface-variant">
+                    No skills found for your specialties.
+                  </p>
+                }
+              </div>
+            }
+          }
+
+          <!-- Step 5 -->
+          @if (step() === 5) {
+            <div class="mx-auto w-full max-w-[560px]">
+              <article
+                class="overflow-hidden rounded-[28px] border border-surface-container-high bg-surface-container-lowest p-2.5 shadow-[0_1px_2px_rgba(65,48,215,0.04),0_12px_32px_rgba(65,48,215,0.1)] sm:p-3"
+              >
+                <div class="relative aspect-[16/9] w-full overflow-hidden rounded-[22px] bg-primary-fixed">
+                  @if (coverPreviewUrl()) {
+                    <img [src]="coverPreviewUrl()!" alt="" class="absolute inset-0 size-full object-cover" />
+                  } @else {
+                    <div
+                      class="absolute inset-0 bg-gradient-to-br from-[#c4c0ff] via-[#eeecfb] to-[#d8f3e8]"
+                      aria-hidden="true"
+                    ></div>
+                  }
+
+                  <span
+                    class="absolute bottom-3 left-3 flex size-14 items-center justify-center overflow-hidden rounded-2xl border-2 border-white bg-[#E4E1F9] font-display text-lg font-bold text-[#4130D7] shadow-[0_4px_12px_rgba(16,24,40,0.18)]"
+                  >
+                    @if (logoPreviewUrl()) {
+                      <img [src]="logoPreviewUrl()!" alt="" class="size-full object-cover" />
+                    } @else {
+                      {{ (name() || 'T').trim().charAt(0).toUpperCase() }}
+                    }
+                  </span>
+                </div>
+
+                <div class="px-4 pt-5 pb-4 sm:px-5 sm:pt-6 sm:pb-5">
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                      <h3 class="truncate font-display text-xl font-bold text-on-surface">
+                        {{ name().trim() || 'Your team name' }}
+                      </h3>
+                      <p class="mt-1 flex items-center gap-1.5 font-body text-sm font-medium text-[#15803D]">
+                        <hugeicons-icon [icon]="tickIcon" [size]="14" color="currentColor" [strokeWidth]="2.5" />
+                        Ready to launch
+                      </p>
+                    </div>
+                    <span
+                      class="shrink-0 rounded-full bg-[#ECFDF3] px-3 py-1 font-mono text-[10px] font-bold tracking-[0.28px] text-[#15803D] uppercase"
+                    >
+                      {{ primaryCategoryLabel() }}
+                    </span>
+                  </div>
+
+                  <p class="mt-4 font-body text-sm leading-6 text-on-surface-variant">
+                    {{
+                      aboutUs().trim() ||
+                        'Your team story will appear here. Tell clients what you ship and how you work.'
+                    }}
+                  </p>
+
+                  <div class="mt-5 grid gap-5 sm:grid-cols-2">
+                    <div>
+                      <p class="mb-2 font-mono text-[11px] font-bold tracking-[0.28px] text-outline uppercase">
+                        Specialties
+                      </p>
+                      <div class="flex flex-wrap gap-1.5">
+                        @for (spec of selectedSpecialtyLabels(); track spec) {
+                          <span
+                            class="rounded-full bg-primary-container px-3 py-1.5 font-body text-xs font-semibold text-on-primary"
+                          >
+                            {{ spec }}
+                          </span>
+                        } @empty {
+                          <span class="font-body text-xs text-outline">None yet</span>
+                        }
+                      </div>
+                    </div>
+                    <div>
+                      <p class="mb-2 font-mono text-[11px] font-bold tracking-[0.28px] text-outline uppercase">
+                        Skills
+                      </p>
+                      <div class="flex flex-wrap gap-1.5">
+                        @for (skill of selectedSkillLabels(); track skill) {
+                          <span
+                            class="rounded-full bg-surface-container px-3 py-1.5 font-body text-xs font-semibold text-on-surface"
+                          >
+                            {{ skill }}
+                          </span>
+                        } @empty {
+                          <span class="font-body text-xs text-outline">None yet</span>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <div
+              class="mx-auto mt-6 flex max-w-[560px] items-start gap-3 rounded-2xl border border-[#BBF7D0] bg-[#ECFDF3] px-5 py-4"
+            >
+              <div class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-white">
+                <hugeicons-icon [icon]="checkIcon" [size]="16" color="#16A34A" [strokeWidth]="1.75" />
+              </div>
+              <div>
+                <p class="font-display text-sm font-bold text-[#15803D]">Everything looks great!</p>
+                <p class="mt-0.5 font-body text-sm text-[#15803D]/90">
+                  Your team profile is ready for Discover. You can edit details anytime from Team Settings.
+                </p>
+              </div>
+            </div>
+          }
+        </section>
+
+        <!-- Desktop live preview -->
+        <aside class="ct-preview-rail hidden lg:block">
+          <div class="ct-preview-sticky">
+            <p class="mb-3 font-mono text-[11px] font-medium tracking-[0.28px] text-outline uppercase">
+              Live preview
+            </p>
+            <app-team-card-preview [model]="previewModel()" />
+            <p class="mt-4 font-body text-sm leading-6 text-on-surface-variant">
+              This is how clients will see your agency on Discover.
+            </p>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <div class="relative z-10 mt-auto w-full">
+      <app-step-footer-actions
+        [backLabel]="backButtonLabel()"
+        [continueLabel]="continueButtonLabel()"
+        [continueDisabled]="!canContinue()"
+        [continueLoading]="submitting()"
+        continueLoadingLabel="Creating..."
+        [secondaryLabel]="secondaryButtonLabel()"
+        (back)="goBack()"
+        (continue)="goNext()"
+        (secondary)="saveDraft()"
+      />
+    </div>
+  }
+
+  @if (phase() === 'success') {
+    <div class="ct-success relative z-10 flex min-h-dvh w-full flex-col">
+      <header class="flex w-full items-center justify-between px-5 pt-8 sm:px-8 sm:pt-10">
+        <img
+          src="/assets/brand/logo.svg"
+          alt="FreeGency"
+          class="block h-8 w-auto sm:h-[37px]"
+          width="160"
+          height="37"
+        />
+        <button
+          type="button"
+          class="inline-flex size-9 cursor-pointer items-center justify-center rounded-full text-outline transition-colors hover:bg-surface-container hover:text-on-surface"
+          aria-label="Close"
+          (click)="skipForNow()"
+        >
+          <hugeicons-icon [icon]="closeIcon" [size]="18" color="currentColor" [strokeWidth]="1.75" />
+        </button>
+      </header>
+
+      <section
+        class="mx-auto flex w-full max-w-[640px] flex-1 flex-col items-center justify-center gap-8 px-5 py-10 text-center sm:gap-10 sm:px-10 sm:py-14"
+      >
+        <div class="ct-success__hero flex w-full flex-col items-center gap-5">
+          <div class="relative flex size-[72px] items-center justify-center sm:size-20">
+            <div class="ct-pulse-ring absolute inset-0 rounded-full bg-primary-container/40"></div>
+            <div
+              class="relative flex size-full items-center justify-center rounded-full bg-primary-fixed text-primary-container shadow-[0_8px_24px_rgba(65,48,215,0.12)]"
+            >
+              <hugeicons-icon [icon]="checkIcon" [size]="36" color="currentColor" [strokeWidth]="2" />
+            </div>
+          </div>
+
+          <div class="flex w-full flex-col items-center gap-3 sm:gap-4">
+            <h1
+              class="font-display text-[28px] leading-9 font-bold tracking-[-0.02em] text-on-surface sm:text-[40px] sm:leading-[48px] sm:tracking-[-1.2px] lg:text-[48px] lg:leading-[57.6px]"
+            >
+              Your team is live
+            </h1>
+            <p class="max-w-[520px] font-body text-sm leading-5 text-on-surface-variant sm:text-base sm:leading-6">
+              You're the Team Leader of
+              <span class="font-semibold text-on-surface">{{ name().trim() || 'your team' }}</span>.
+              Share the invite code so teammates can join and start collaborating.
+            </p>
+          </div>
+        </div>
+
+        <div
+          data-tour="tour-code"
+          class="ct-success__code w-full max-w-[440px] rounded-[24px] border border-primary-container/15 bg-surface-container-lowest p-6 shadow-[0_1px_2px_rgba(65,48,215,0.04),0_12px_32px_rgba(65,48,215,0.08)]"
+        >
+          <p class="mb-4 font-mono text-[11px] font-bold tracking-[0.28px] text-outline uppercase">
+            Team invite code
+          </p>
+          <div
+            class="flex items-center justify-between gap-3 rounded-2xl border border-dashed border-primary-container/25 bg-primary-fixed/60 px-4 py-4 sm:px-5"
+          >
+            <span
+              class="font-display text-[28px] leading-none font-bold tracking-[0.14em] text-on-surface sm:text-[32px]"
+            >
+              {{ inviteCode() || '--------' }}
+            </span>
+            <button
+              type="button"
+              class="inline-flex h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-primary-container px-4 font-display text-sm font-semibold text-on-primary transition-[background-color,transform] duration-150 hover:bg-primary active:scale-[0.98]"
+              (click)="copyInviteCode()"
+            >
+              <hugeicons-icon [icon]="copyIcon" [size]="15" color="currentColor" [strokeWidth]="1.75" />
+              {{ copied() ? 'Copied' : 'Copy' }}
+            </button>
+          </div>
+          <p class="mt-3 font-body text-xs leading-5 text-on-surface-variant">
+            Anyone with this code can request to join your agency.
+          </p>
+        </div>
+
+        <div class="ct-success__actions flex w-full max-w-[440px] flex-col items-center gap-3 sm:gap-4">
+          <button
+            type="button"
+            data-tour="tour-invite"
+            class="inline-flex h-[50px] w-full cursor-pointer items-center justify-center rounded-full bg-primary-container px-4 font-display text-lg leading-4 font-semibold text-on-primary shadow-[0_1px_1px_rgba(0,0,0,0.05)] transition-[background-color,transform] duration-150 hover:bg-primary active:scale-[0.98] sm:h-[55px] sm:text-xl sm:font-bold"
+            (click)="goInviteMembers()"
+          >
+            Invite members
+          </button>
+          <button
+            type="button"
+            data-tour="tour-manage"
+            class="inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-full bg-[#f6f6f6] px-4 font-display text-base font-semibold text-on-surface transition-colors hover:bg-surface-container-high"
+            (click)="goTeamManagement()"
+          >
+            Go to team management
+          </button>
+          <button
+            type="button"
+            data-tour="tour-done"
+            class="mt-1 cursor-pointer border-none bg-transparent font-display text-base leading-4 font-semibold text-outline transition-colors duration-150 hover:text-on-surface-variant"
+            (click)="skipForNow()"
+          >
+            Skip for now
+          </button>
+        </div>
+      </section>
+    </div>
+
+    @if (tourOpen()) {
+      <div class="ct-tour-backdrop fixed inset-0 z-50" aria-hidden="true" (click)="skipTour()"></div>
+      <div
+        class="ct-tour-card fixed inset-x-4 bottom-6 z-[60] mx-auto w-auto max-w-[400px] overflow-hidden rounded-[24px] bg-surface-container-lowest sm:inset-x-0 sm:bottom-10 sm:left-1/2 sm:right-auto sm:w-full sm:-translate-x-1/2"
+        role="dialog"
+        aria-label="Product tour"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="h-1 w-full bg-surface-container">
+          <div
+            class="h-full rounded-full bg-gradient-to-r from-[#c4c0ff] via-[#8781ff] to-[#6a5fff] transition-[width] duration-300"
+            [style.width.%]="((tourIndex() + 1) / tourStops.length) * 100"
+          ></div>
+        </div>
+
+        <div class="p-5 sm:p-6">
+          <div class="mb-3 flex items-center justify-between gap-3">
+            <p class="font-mono text-[11px] font-medium tracking-[0.28px] text-primary-container uppercase">
+              Tip {{ tourIndex() + 1 }} of {{ tourStops.length }}
+            </p>
+            <div class="flex items-center gap-1.5" aria-hidden="true">
+              @for (stop of tourStops; track stop.title; let i = $index) {
+                <span
+                  class="size-1.5 rounded-full transition-colors"
+                  [class.bg-primary-container]="i <= tourIndex()"
+                  [class.bg-outline-variant]="i > tourIndex()"
+                ></span>
+              }
+            </div>
+          </div>
+
+          <h2 class="font-display text-lg font-bold text-on-surface sm:text-xl">
+            {{ currentTourStop().title }}
+          </h2>
+          <p class="mt-2 font-body text-sm leading-relaxed text-on-surface-variant">
+            {{ currentTourStop().body }}
+          </p>
+
+          <div class="mt-5 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              class="cursor-pointer font-display text-sm font-semibold text-outline transition-colors hover:text-on-surface-variant"
+              (click)="skipTour()"
+            >
+              Skip
+            </button>
+            <button
+              type="button"
+              class="inline-flex h-11 min-w-[112px] cursor-pointer items-center justify-center rounded-full bg-primary-container px-5 font-display text-sm font-semibold text-on-primary transition-[background-color,transform] duration-150 hover:bg-primary active:scale-[0.98]"
+              (click)="tourNext()"
+            >
+              {{ tourIndex() >= tourStops.length - 1 ? 'Got it' : 'Next' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  }
+</div>

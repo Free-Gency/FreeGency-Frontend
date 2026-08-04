@@ -22,7 +22,7 @@ export class LoginComponent implements OnInit {
   chatSignalrService=inject(ChatSignalrService);
   protected email = '';
   protected password = '';
-  protected keepLoggedIn = false;
+  protected keepLoggedIn = true;
   protected readonly showPassword = signal(false);
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
