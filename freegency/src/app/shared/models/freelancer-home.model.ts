@@ -13,14 +13,34 @@ export interface ProjectFeedResponse {
 
 export interface ProjectFeedItem {
   id: string;
-  clientName: string;
-  postedTimeOrDeadline: string;
   title: string;
   description: string;
-  tags: string[];
-  budget: number;
-  proposalsCount: number;
+  clientName: string;
+  clientAvatarUrl?: string;
+  clientRating?: number;
+  categoryName?: string;
+  categoryId?: string;
+  
+  isFixedPrice?: boolean;
+  budgetMin?: number;
+  budgetMax?: number;
+  currency?: string;
+  
+  budget?: number;
+  budgetAmount?: number;
+  
+  skills?: string[];
+  proposalCount?: number;
+  proposalsCount?: number;
   isSaved?: boolean;
-  category: string;
-  matchPercentage?: number;
+  createdAt?: string;
+  status?: string | number;
+  
+  appliedAt?: string;
+  coverLetter?: string;
+  proposedSolution?: string;
+  bidAmount?: number;
+  proposedBudget?: number;
+  projectTitle?: string;
+  project?: Partial<ProjectFeedItem>;
 }

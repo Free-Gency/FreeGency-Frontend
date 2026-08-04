@@ -206,7 +206,6 @@
         } @else {
           <div class="space-y-4">
             @for (item of projects(); track item.id) {
-              
               <!-- ==================== TAB 1: MY APPLICATIONS CARD ==================== -->
               @if (activeTab() === 'applications') {
                 <article
@@ -215,16 +214,22 @@
                   <!-- Application Header -->
                   <div class="flex items-center justify-between text-xs">
                     <span class="text-on-surface-variant font-medium">
-                      Applied {{ (item.appliedAt || item.createdAt) | date:'mediumDate' }}
+                      Applied {{ item.appliedAt || item.createdAt | date: 'mediumDate' }}
                     </span>
 
                     <span
                       class="px-2.5 py-1 rounded-full text-xs font-semibold capitalize"
                       [ngClass]="{
-                        'bg-amber-100 text-amber-800': item.status === 'Submitted' || item.status === 0 || item.status === 'Pending',
-                        'bg-blue-100 text-blue-800': item.status === 'UnderReview' || item.status === 1,
-                        'bg-emerald-100 text-emerald-800': item.status === 'Accepted' || item.status === 2,
-                        'bg-rose-100 text-rose-800': item.status === 'Rejected' || item.status === 3
+                        'bg-amber-100 text-amber-800':
+                          item.status === 'Submitted' ||
+                          item.status === 0 ||
+                          item.status === 'Pending',
+                        'bg-blue-100 text-blue-800':
+                          item.status === 'UnderReview' || item.status === 1,
+                        'bg-emerald-100 text-emerald-800':
+                          item.status === 'Accepted' || item.status === 2,
+                        'bg-rose-100 text-rose-800':
+                          item.status === 'Rejected' || item.status === 3,
                       }"
                     >
                       {{ item.status || 'Submitted' }}
@@ -233,11 +238,20 @@
 
                   <!-- Project Title & Cover Excerpt -->
                   <div>
-                    <h3 class="text-lg font-bold text-on-surface hover:text-primary transition-colors">
-                      {{ item.projectTitle || item.project?.title || item.title || 'Project Application' }}
+                    <h3
+                      class="text-lg font-bold text-on-surface hover:text-primary transition-colors"
+                    >
+                      {{
+                        item.projectTitle ||
+                          item.project?.title ||
+                          item.title ||
+                          'Project Application'
+                      }}
                     </h3>
                     @if (item.coverLetter || item.proposedSolution) {
-                      <p class="text-xs text-on-surface-variant line-clamp-2 mt-1.5 leading-relaxed">
+                      <p
+                        class="text-xs text-on-surface-variant line-clamp-2 mt-1.5 leading-relaxed"
+                      >
                         <span class="font-semibold text-on-surface">Cover Letter: </span>
                         {{ item.coverLetter || item.proposedSolution }}
                       </p>
@@ -247,7 +261,7 @@
                   <!-- Proposal Skills / Project Skills -->
                   @if (item.skills?.length || item.project?.skills?.length) {
                     <div class="flex flex-wrap gap-2">
-                      @for (skill of (item.skills || item.project?.skills); track skill) {
+                      @for (skill of item.skills || item.project?.skills; track skill) {
                         <span
                           class="px-2.5 py-1 rounded-md bg-surface-container-low text-on-surface-variant text-[11px] font-medium"
                         >
@@ -262,7 +276,14 @@
                     <div class="flex items-center gap-1">
                       <span class="text-xs text-on-surface-variant font-medium">Your Bid:</span>
                       <span class="text-base font-bold text-primary ml-1">
-                        ${{ (item.bidAmount ?? item.proposedBudget ?? item.budgetAmount ?? item.budget ?? item.price ?? 0) | number:'1.0-0' }}
+                        ${{
+                          item.bidAmount ??
+                            item.proposedBudget ??
+                            item.budgetAmount ??
+                            item.budget ??
+                            item.price ??
+                            0 | number: '1.0-0'
+                        }}
                       </span>
                     </div>
 
@@ -293,7 +314,14 @@
                         item.clientName || 'Client'
                       }}</span>
                     </div>
-                    <span>Posted {{ item.createdAt ? (item.createdAt | date:'shortDate') : (item.postedTime || '2h ago') }}</span>
+                    <span
+                      >Posted
+                      {{
+                        item.createdAt
+                          ? (item.createdAt | date: 'shortDate')
+                          : item.postedTime || '2h ago'
+                      }}</span
+                    >
                   </div>
 
                   <!-- Title & Description -->
@@ -324,7 +352,20 @@
                   <!-- Footer: Fixed Budget, Proposals & Bookmark -->
                   <div class="flex items-center justify-between pt-3 border-t border-gray-100">
                     <span class="text-base font-bold text-primary">
-                      ${{ (item.budgetAmount ?? item.budget ?? item.price ?? item.maxBudget ?? 0) | number:'1.0-0' }}
+                      @if (
+                        item.budgetMin != null &&
+                        item.budgetMax != null &&
+                        item.budgetMin !== item.budgetMax
+                      ) {
+                        ${{ item.budgetMin | number: '1.0-2' }} - ${{
+                          item.budgetMax | number: '1.0-2'
+                        }}
+                      } @else {
+                        ${{
+                          item.budgetMax ?? item.budgetMin ?? item.budgetAmount ?? item.budget ?? 0
+                            | number: '1.0-0'
+                        }}
+                      }
                     </span>
 
                     <div class="flex items-center gap-4 text-xs text-on-surface-variant">
@@ -346,13 +387,15 @@
                   </div>
                 </article>
               }
-
             }
           </div>
 
           <!-- PAGINATION -->
           <footer class="flex items-center justify-between pt-4 text-xs text-on-surface-variant">
-            <span>Showing 1-{{ projects().length }} of {{ totalCount() || projects().length }} results</span>
+            <span
+              >Showing 1-{{ projects().length }} of
+              {{ totalCount() || projects().length }} results</span
+            >
 
             <div class="flex items-center gap-1">
               <button
