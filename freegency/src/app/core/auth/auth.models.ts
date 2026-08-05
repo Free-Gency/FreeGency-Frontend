@@ -1,8 +1,12 @@
 export type UserMode = 'Client' | 'Developer';
 
 export const CLIENT_ONBOARDING_PATH = '/auth/client-onboarding';
+export const DEVELOPER_ONBOARDING_PATH = '/auth/developer-onboarding';
 export const CLIENT_HOME_PATH = '/client/home';
 export const DEVELOPER_DASHBOARD_PATH = '/developer/home';
+
+/** Session flag: developer profile was just created and still needs setup. */
+export const DEVELOPER_SETUP_PENDING_KEY = 'freegency.developerSetupPending';
 
 export interface LoginRequest {
   email: string;

@@ -9,11 +9,10 @@ import {
   PagedTeamJoinRequests,
   PagedTeams,
   Team,
-  TeamCategory,
   TeamJob,
   TeamJobDetails,
   TeamJoinRequest,
-  TeamMemberAvatar,
+  TeamMemberRow,
   TeamPortfolioProject,
 } from '../models/team';
 
@@ -54,6 +53,16 @@ export interface TeamPortfolioWriteInput {
   images?: File[];
 }
 
+export interface TeamReview {
+  id: string;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+  reviewerUserId?: string | null;
+  reviewerName: string;
+  reviewerAvatar: string | null;
+}
+
 const skipLoadingCtx = () => new HttpContext().set(SKIP_LOADING, true);
 
 @Injectable({ providedIn: 'root' })
@@ -65,14 +74,16 @@ export class TeamsService {
   private readonly profilesUrl = `${environment.apiBaseUrl}/api/v1/profiles`;
 
   getMine(): Observable<Team[]> {
-    return this.http.get<ApiResponse<Team[]>>(`${this.teamsUrl}/mine`).pipe(
-      map((res) => {
-        if (!res.isSuccess || !res.data) {
-          throw new Error('Failed to load your teams.');
-        }
-        return res.data.map((team) => this.normalizeTeam(team));
-      }),
-    );
+    return this.http
+      .get<ApiResponse<Team[]>>(`${this.teamsUrl}/mine`, { context: skipLoadingCtx() })
+      .pipe(
+        map((res) => {
+          if (!res.isSuccess || !res.data) {
+            throw new Error('Failed to load your teams.');
+          }
+          return res.data.map((team) => this.normalizeTeam(team));
+        }),
+      );
   }
 
   browse(options?: {
@@ -94,18 +105,18 @@ export class TeamsService {
       params = params.set('categoryId', options.categoryId.trim());
     }
 
-    return this.http.get<ApiResponse<PagedTeams>>(this.teamsUrl, { params }).pipe(
+    return this.http.get<ApiResponse<PagedTeams>>(this.teamsUrl, { params, context: skipLoadingCtx() }).pipe(
       map((res) => {
         if (!res.isSuccess || !res.data) {
           throw new Error('Failed to browse teams.');
         }
-        const raw = res.data as PagedTeams & { Items?: Team[]; TotalCount?: number; PageNumber?: number; PageSize?: number };
-        const items = (raw.items ?? raw.Items ?? []).map((team) => this.normalizeTeam(team));
+        const raw = res.data;
+        const items = (raw.items ?? []).map((team) => this.normalizeTeam(team));
         return {
           items,
-          pageNumber: raw.pageNumber ?? raw.PageNumber ?? options?.pageNumber ?? 1,
-          pageSize: raw.pageSize ?? raw.PageSize ?? options?.pageSize ?? 9,
-          totalCount: raw.totalCount ?? raw.TotalCount ?? items.length,
+          pageNumber: raw.pageNumber ?? options?.pageNumber ?? 1,
+          pageSize: raw.pageSize ?? options?.pageSize ?? 9,
+          totalCount: raw.totalCount ?? items.length,
           totalPages: raw.totalPages,
           hasPreviousPage: raw.hasPreviousPage,
           hasNextPage: raw.hasNextPage,
@@ -129,6 +140,40 @@ export class TeamsService {
       );
   }
 
+  getTeamReviews(teamId: string, options?: { skipLoading?: boolean }): Observable<TeamReview[]> {
+    return this.http
+      .get<ApiResponse<TeamReview[]>>(`${this.teamsUrl}/${teamId}/reviews`, {
+        context: options?.skipLoading ? skipLoadingCtx() : undefined,
+      })
+      .pipe(
+        map((res) => {
+          if (!res.isSuccess || !res.data) {
+            throw new Error(res.message || 'Failed to load team reviews.');
+          }
+          return (res.data as TeamReview[]).map((r) => this.normalizeTeamReview(r));
+        }),
+      );
+  }
+
+  addTeamReview(
+    teamId: string,
+    body: { rating: number; comment?: string | null },
+  ): Observable<TeamReview> {
+    return this.http
+      .post<ApiResponse<TeamReview>>(`${this.teamsUrl}/${teamId}/reviews`, {
+        rating: body.rating,
+        comment: body.comment?.trim() || null,
+      })
+      .pipe(
+        map((res) => {
+          if (!res.isSuccess || !res.data) {
+            throw new Error(res.message || 'Failed to submit team review.');
+          }
+          return this.normalizeTeamReview(res.data);
+        }),
+      );
+  }
+
   getByCode(teamCode: string): Observable<Team> {
     return this.http
       .get<ApiResponse<Team>>(`${this.teamsUrl}/by-code/${encodeURIComponent(teamCode)}`)
@@ -137,7 +182,121 @@ export class TeamsService {
           if (!res.isSuccess || !res.data) {
             throw new Error('Team code not found.');
           }
-          return res.data;
+          return this.normalizeTeam(res.data);
+        }),
+      );
+  }
+
+  getMembers(teamId: string): Observable<TeamMemberRow[]> {
+    return this.http.get<ApiResponse<TeamMemberRow[]>>(`${this.teamsUrl}/${teamId}/members`).pipe(
+      map((res) => {
+        if (!res.isSuccess || !res.data) {
+          throw new Error('Failed to load team members.');
+        }
+        return (res.data ?? []).map((m) => ({
+          userId: m.userId ?? '',
+          name: (m.name ?? 'Member').trim() || 'Member',
+          imageUrl: m.imageUrl ?? null,
+          role: (m.role ?? 'TeamMember') as TeamMemberRow['role'],
+          job: m.job ?? null,
+          isOwner: !!m.isOwner,
+          joinedAt: m.joinedAt ?? null,
+        }));
+      }),
+    );
+  }
+
+  updateMemberRole(teamId: string, userId: string, role: 'TeamLeader' | 'TeamMember'): Observable<void> {
+    return this.http
+      .put<ApiResponse<unknown>>(`${this.teamsUrl}/${teamId}/members/${userId}/role`, { role })
+      .pipe(
+        map((res) => {
+          if (!res.isSuccess) {
+            throw new Error('Failed to update member role.');
+          }
+        }),
+      );
+  }
+
+  createTeamGroup(
+    teamId: string,
+    input: { title: string; memberUserIds?: string[] },
+  ): Observable<string> {
+    return this.http
+      .post<ApiResponse<string>>(`${this.teamsUrl}/${teamId}/chat-groups`, {
+        title: input.title.trim(),
+        memberUserIds: input.memberUserIds ?? [],
+      })
+      .pipe(
+        map((res) => {
+          if (!res.isSuccess || !res.data) {
+            throw new Error('Failed to create group.');
+          }
+          return String(res.data);
+        }),
+      );
+  }
+
+  updateTeamChatRoom(
+    teamId: string,
+    roomId: string,
+    input: { title?: string; logo?: File | null },
+  ): Observable<void> {
+    const form = new FormData();
+    if (input.title?.trim()) {
+      form.append('Title', input.title.trim());
+    }
+    if (input.logo) {
+      form.append('Logo', input.logo, input.logo.name);
+    }
+    return this.http
+      .put<ApiResponse<unknown>>(`${this.teamsUrl}/${teamId}/chat-groups/${roomId}`, form)
+      .pipe(
+        map((res) => {
+          if (!res.isSuccess) {
+            throw new Error('Failed to update chat room.');
+          }
+        }),
+      );
+  }
+
+  getTeamChatRoomMembers(
+    teamId: string,
+    roomId: string,
+  ): Observable<{ userId: string; name: string; roleLabel?: string | null; canSend: boolean }[]> {
+    return this.http
+      .get<ApiResponse<Record<string, unknown>[]>>(
+        `${this.teamsUrl}/${teamId}/chat-groups/${roomId}/members`,
+      )
+      .pipe(
+        map((res) => {
+          if (!res.isSuccess) {
+            throw new Error('Failed to load chat members.');
+          }
+          return (res.data ?? []).map((raw) => ({
+            userId: String(raw['userId'] ?? ''),
+            name: String(raw['name'] ?? 'Member').trim() || 'Member',
+            roleLabel: (raw['roleLabel'] as string | null | undefined) ?? null,
+            canSend: (raw['canSend'] as boolean | undefined) ?? true,
+          }));
+        }),
+      );
+  }
+
+  addTeamChatRoomMembers(
+    teamId: string,
+    roomId: string,
+    memberUserIds: string[],
+  ): Observable<void> {
+    return this.http
+      .post<ApiResponse<unknown>>(`${this.teamsUrl}/${teamId}/chat-groups/${roomId}/members`, {
+        memberUserIds,
+      })
+      .pipe(
+        map((res) => {
+          if (!res.isSuccess) {
+            throw new Error('Failed to add members.');
+          }
         }),
       );
   }
@@ -265,10 +424,16 @@ export class TeamsService {
 
   applyToTeamJob(jobId: string, coverLetter?: string): Observable<void> {
     return this.http
-      .put(`${this.joinUrl}/join-requests`, {
-        jobId,
-        coverLetter: coverLetter?.trim() || null,
-      })
+      .put(
+        `${this.joinUrl}/join-requests`,
+        {
+          jobId,
+          JobId: jobId,
+          coverLetter: coverLetter?.trim() || null,
+          CoverLetter: coverLetter?.trim() || null,
+        },
+        { context: skipLoadingCtx() },
+      )
       .pipe(map(() => undefined));
   }
 
@@ -292,29 +457,29 @@ export class TeamsService {
       })
       .pipe(
         map((raw) => {
-          const page = (raw ?? {}) as {
+          const root = (raw ?? {}) as Record<string, unknown>;
+          const page = (
+            root['data'] && typeof root['data'] === 'object'
+              ? (root['data'] as Record<string, unknown>)
+              : root
+          ) as {
             items?: unknown[];
-            Items?: unknown[];
             pageNumber?: number;
-            PageNumber?: number;
             pageSize?: number;
-            PageSize?: number;
             totalCount?: number;
-            TotalCount?: number;
             totalPages?: number;
-            TotalPages?: number;
             hasPreviousPage?: boolean;
             hasNextPage?: boolean;
           };
-          const items = (page.items ?? page.Items ?? []).map((item) =>
+          const items = (page.items ?? []).map((item) =>
             this.normalizeJoinRequest((item ?? {}) as Record<string, unknown>),
           );
           return {
             items,
-            pageNumber: page.pageNumber ?? page.PageNumber ?? 1,
-            pageSize: page.pageSize ?? page.PageSize ?? 20,
-            totalCount: page.totalCount ?? page.TotalCount ?? items.length,
-            totalPages: page.totalPages ?? page.TotalPages,
+            pageNumber: page.pageNumber ?? 1,
+            pageSize: page.pageSize ?? 20,
+            totalCount: page.totalCount ?? items.length,
+            totalPages: page.totalPages,
             hasPreviousPage: page.hasPreviousPage,
             hasNextPage: page.hasNextPage,
           };
@@ -339,36 +504,7 @@ export class TeamsService {
   }
 
   private normalizeJoinRequest(raw: Record<string, unknown>): TeamJoinRequest {
-    const r = raw as {
-      id?: string;
-      Id?: string;
-      userId?: string;
-      UserId?: string;
-      fullName?: string;
-      FullName?: string;
-      userName?: string | null;
-      UserName?: string | null;
-      profilePicture?: string | null;
-      ProfilePicture?: string | null;
-      averageRating?: number;
-      AverageRating?: number;
-      reviewCount?: number;
-      ReviewCount?: number;
-      completedProjects?: number;
-      CompletedProjects?: number;
-      coverLetter?: string | null;
-      CoverLetter?: string | null;
-      status?: string | number;
-      Status?: string | number;
-      requestedAt?: string;
-      RequestedAt?: string;
-      teamJobId?: string | null;
-      TeamJobId?: string | null;
-      teamJobTitle?: string | null;
-      TeamJobTitle?: string | null;
-    };
-
-    const statusRaw = r.status ?? r.Status;
+    const statusRaw = raw['status'];
     let status = 'pending';
     if (typeof statusRaw === 'number') {
       status = statusRaw === 1 ? 'Accepted' : statusRaw === 2 ? 'Rejected' : 'pending';
@@ -376,20 +512,31 @@ export class TeamsService {
       status = String(statusRaw);
     }
 
+    const rawScore = (raw['matchScore'] ?? raw['overallScore'] ?? null) as number | null;
+    let matchScore: number | null = null;
+    if (rawScore != null && !Number.isNaN(Number(rawScore))) {
+      const n = Number(rawScore);
+      matchScore = Math.round(n <= 1 ? n * 100 : n);
+    }
+
     return {
-      id: String(r.id ?? r.Id ?? ''),
-      userId: String(r.userId ?? r.UserId ?? ''),
-      fullName: String(r.fullName ?? r.FullName ?? 'Applicant'),
-      userName: (r.userName ?? r.UserName ?? null) as string | null,
-      profilePicture: (r.profilePicture ?? r.ProfilePicture ?? null) as string | null,
-      averageRating: Number(r.averageRating ?? r.AverageRating ?? 0),
-      reviewCount: Number(r.reviewCount ?? r.ReviewCount ?? 0),
-      completedProjects: Number(r.completedProjects ?? r.CompletedProjects ?? 0),
-      coverLetter: (r.coverLetter ?? r.CoverLetter ?? null) as string | null,
+      id: String(raw['id'] ?? ''),
+      userId: String(raw['userId'] ?? ''),
+      fullName: String(raw['fullName'] ?? 'Applicant'),
+      userName: (raw['userName'] as string | null | undefined) ?? null,
+      profilePicture: (raw['profilePicture'] as string | null | undefined) ?? null,
+      averageRating: Number(raw['averageRating'] ?? 0),
+      reviewCount: Number(raw['reviewCount'] ?? 0),
+      completedProjects: Number(raw['completedProjects'] ?? 0),
+      coverLetter: (raw['coverLetter'] as string | null | undefined) ?? null,
       status,
-      requestedAt: String(r.requestedAt ?? r.RequestedAt ?? ''),
-      teamJobId: (r.teamJobId ?? r.TeamJobId ?? null) as string | null,
-      teamJobTitle: (r.teamJobTitle ?? r.TeamJobTitle ?? null) as string | null,
+      requestedAt: String(raw['requestedAt'] ?? ''),
+      teamJobId: (raw['teamJobId'] as string | null | undefined) ?? null,
+      teamJobTitle: (raw['teamJobTitle'] as string | null | undefined) ?? null,
+      matchScore,
+      matchRank: (raw['matchRank'] ?? raw['rank'] ?? null) as number | null,
+      aiReasoning: (raw['aiReasoning'] as string | null | undefined) ?? null,
+      cvUrl: ((raw['cvUrl'] ?? raw['resumeUrl'] ?? null) as string | null),
     };
   }
 
@@ -409,15 +556,20 @@ export class TeamsService {
     }
 
     return this.http
-      .get<ApiResponse<PagedTeamJobs>>(this.jobsUrl, { params })
+      .get<ApiResponse<PagedTeamJobs>>(this.jobsUrl, { params, context: skipLoadingCtx() })
       .pipe(
         map((res) => {
           if (!res.isSuccess || !res.data) {
             throw new Error('Failed to load team openings.');
           }
+          const raw = res.data;
+          const items = (raw.items ?? []).map((job) => this.normalizeTeamJob(job));
           return {
-            ...res.data,
-            items: res.data.items ?? [],
+            ...raw,
+            items,
+            pageNumber: Number(raw.pageNumber ?? 1),
+            pageSize: Number(raw.pageSize ?? items.length),
+            totalCount: Number(raw.totalCount ?? items.length),
           };
         }),
       );
@@ -433,7 +585,7 @@ export class TeamsService {
           if (!res.isSuccess || !res.data) {
             throw new Error('Failed to load team jobs.');
           }
-          return res.data;
+          return (res.data as TeamJob[]).map((job) => this.normalizeTeamJob(job));
         }),
       );
   }
@@ -565,7 +717,7 @@ export class TeamsService {
       .pipe(
         map((res) => {
           if (!res.isSuccess || !res.data) {
-            throw new Error('Failed to add portfolio project.');
+            throw new Error(res.message || 'Failed to add portfolio project.');
           }
           return res.data;
         }),
@@ -652,7 +804,8 @@ export class TeamsService {
   private buildPortfolioForm(input: TeamPortfolioWriteInput, isUpdate: boolean): FormData {
     const form = new FormData();
     form.append('Title', input.title.trim());
-    form.append('Description', (input.description ?? '').trim());
+    form.append('Description', (input.description ?? '').trim() || input.title.trim());
+    form.append('OwnerType', 'Team');
     if (input.budget != null && input.budget !== '') {
       form.append('Budget', String(input.budget));
     }
@@ -702,19 +855,37 @@ export class TeamsService {
     return form;
   }
 
-  private normalizeTeam(team: Team): Team {
-    const raw = team as Team & {
-      MemberAvatars?: TeamMemberAvatar[];
-      Cover?: string | null;
+  private normalizeTeamReview(review: TeamReview): TeamReview {
+    return {
+      id: String(review.id ?? ''),
+      rating: Number(review.rating ?? 0),
+      comment: review.comment ?? null,
+      createdAt: String(review.createdAt ?? ''),
+      reviewerUserId: review.reviewerUserId ?? null,
+      reviewerName: String(review.reviewerName ?? '').trim() || 'Community member',
+      reviewerAvatar: review.reviewerAvatar ?? null,
     };
-    const rawAvatars = team.memberAvatars ?? raw.MemberAvatars ?? [];
+  }
 
+  private normalizeTeamJob(job: TeamJob): TeamJob {
+    return {
+      id: String(job.id ?? ''),
+      teamId: String(job.teamId ?? ''),
+      title: String(job.title ?? ''),
+      description: String(job.description ?? ''),
+      status: String(job.status ?? 'Open'),
+      createdAt: String(job.createdAt ?? ''),
+      teamName: job.teamName ?? null,
+      teamLogo: job.teamLogo ?? null,
+    };
+  }
+
+  private normalizeTeam(team: Team): Team {
     return {
       ...team,
-      cover: team.cover ?? raw.Cover ?? null,
+      cover: team.cover ?? null,
       categories: (team.categories ?? []).map((category) => {
-        const rawCategory = category as TeamCategory & { NameEn?: string };
-        const nameEn = (category.nameEn || rawCategory.NameEn || '').trim();
+        const nameEn = (category.nameEn || '').trim();
         return {
           ...category,
           // Keep English only in nameEn — never copy Arabic `name` into it.
@@ -722,7 +893,7 @@ export class TeamsService {
         };
       }),
       skills: team.skills ?? [],
-      memberAvatars: rawAvatars.map((avatar) => ({
+      memberAvatars: (team.memberAvatars ?? []).map((avatar) => ({
         userId: avatar.userId,
         name: avatar.name || 'Member',
         imageUrl: avatar.imageUrl ?? null,

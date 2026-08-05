@@ -3,7 +3,7 @@ import { computed, Injectable, inject, signal } from '@angular/core';
 import { Observable, catchError, finalize, map, shareReplay, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import type { AuthResponse, StoredSession, UserMode } from './auth.models';
-import { CLIENT_HOME_PATH, CLIENT_ONBOARDING_PATH, DEVELOPER_DASHBOARD_PATH } from './auth.models';
+import { CLIENT_HOME_PATH, CLIENT_ONBOARDING_PATH, DEVELOPER_DASHBOARD_PATH, DEVELOPER_ONBOARDING_PATH, DEVELOPER_SETUP_PENDING_KEY } from './auth.models';
 import { TokenStorageService } from './token-storage.service';
 
 const GOOGLE_AUTH_INTENT_KEY = 'freegency_google_intent';
@@ -63,6 +63,22 @@ export class AuthService {
     this.session.set(updated);
   }
 
+  /** After mode switch — update active mode + profile id in the stored session. */
+  patchActiveMode(mode: UserMode, profileId?: string | null): void {
+    const current = this.session();
+    if (!current) return;
+    const updated = {
+      ...current,
+      activeProfileMode: mode,
+      profileId: profileId ?? current.profileId,
+      // New client profiles still need onboarding interests.
+      hasCompletedOnboarding:
+        mode === 'Client' ? current.hasCompletedOnboarding : current.hasCompletedOnboarding,
+    };
+    this.tokens.update(updated);
+    this.session.set(updated);
+  }
+
   setProfileImage(profileImage: string | null): void {
     this.profileImage.set(profileImage);
   }
@@ -83,10 +99,24 @@ export class AuthService {
     returnUrl?: string | null,
   ): string {
     if (this.needsClientOnboarding(auth)) return CLIENT_ONBOARDING_PATH;
+    if (this.needsDeveloperOnboarding(auth)) return DEVELOPER_ONBOARDING_PATH;
     if (returnUrl?.startsWith('/')) return returnUrl;
     if (auth.activeProfileMode === 'Client') return CLIENT_HOME_PATH;
     if (auth.activeProfileMode === 'Developer') return DEVELOPER_DASHBOARD_PATH;
     return '/';
+  }
+
+  needsDeveloperOnboarding(
+    auth: Pick<AuthResponse, 'activeProfileMode' | 'hasCompletedOnboarding'> | null = this.session(),
+  ): boolean {
+    if (!auth) return false;
+    if (auth.activeProfileMode !== 'Developer') return false;
+    if (!auth.hasCompletedOnboarding) return true;
+    try {
+      return sessionStorage.getItem(DEVELOPER_SETUP_PENDING_KEY) === '1';
+    } catch {
+      return false;
+    }
   }
 
   refreshAccessToken(): Observable<string> {

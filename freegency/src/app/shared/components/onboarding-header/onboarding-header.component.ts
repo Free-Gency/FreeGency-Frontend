@@ -21,11 +21,17 @@ export class OnboardingHeaderComponent {
   /** When true, progress fills to 100% (complete screen). */
   readonly filled = input(false);
 
-  protected readonly steps = [
-    { id: 1 as const, label: 'Profile' },
-    { id: 2 as const, label: 'Interests' },
-    { id: 3 as const, label: 'Create a Project' },
-  ];
+  /** Optional labels for the three steps (defaults to Client onboarding). */
+  readonly stepLabels = input<[string, string, string] | null>(null);
+
+  protected readonly steps = computed(() => {
+    const labels = this.stepLabels() ?? (['Profile', 'Interests', 'Create a Project'] as const);
+    return [
+      { id: 1 as const, label: labels[0] },
+      { id: 2 as const, label: labels[1] },
+      { id: 3 as const, label: labels[2] },
+    ];
+  });
 
   protected readonly progress = computed(() =>
     this.filled() ? '100%' : PROGRESS[this.step()],

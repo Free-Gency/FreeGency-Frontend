@@ -77,16 +77,22 @@ export class ProjectMilestonesApiService {
 
   proposePlan(payload: ProposeMilestonePlanPayload): Observable<MilestonePlanVersion> {
     return this.http
-      .post<{ isSuccess: boolean; data?: MilestonePlanVersion; message?: string | null }>(
+      .post<Record<string, unknown>>(
         `${this.baseUrl}/milestone-plans`,
         payload,
       )
       .pipe(
         map((res) => {
-          if (!res.isSuccess || !res.data) {
-            throw new Error(res.message || 'Failed to propose plan.');
+          const isSuccess = !!(res['isSuccess'] ?? res['IsSuccess']);
+          const data = (res['data'] ?? res['Data']) as MilestonePlanVersion | undefined;
+          const message = String(res['message'] ?? res['Message'] ?? '').trim();
+          const nestedError = (res['error'] ?? res['Error']) as { message?: string; Message?: string } | null;
+          const errorMessage = String(nestedError?.message ?? nestedError?.Message ?? '').trim();
+
+          if (!isSuccess || !data) {
+            throw new Error(errorMessage || message || 'Failed to propose plan.');
           }
-          return res.data;
+          return data;
         }),
       );
   }

@@ -1,5 +1,5 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { environment } from '../../../environments/environment.development';
+import { environment } from '../../../environments/environment';
 import { HubConnection, HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
 import { Wallet } from '../../shared/models/Wallet';
 import { TokenStorageService } from '../auth/token-storage.service';
@@ -18,21 +18,21 @@ export class SignalrService {
       return;
     }
     this.hubConnection = new HubConnectionBuilder()
-      .withUrl(environment.hubUrl, {
+      .withUrl(this.hubUrl, {
         accessTokenFactory: () => this.tokens.getAccessToken() ?? '',
       })
       .withAutomaticReconnect()
       .build();
 
-    this.hubConnection.start().catch((erorr: any) => console.log(erorr));
+    this.hubConnection.start().catch((error: unknown) => console.log(error));
     this.hubConnection.on('WalletUpdated', (value: Wallet) => {
       this.WalletSignal.set(value);
-      console.log(this.WalletSignal());
     });
   }
+
   stopHubConnection() {
     if (this.hubConnection?.state === HubConnectionState.Connected) {
-      this.hubConnection.stop().catch((error: any) => console.log(error));
+      this.hubConnection.stop().catch((error: unknown) => console.log(error));
     }
   }
 }

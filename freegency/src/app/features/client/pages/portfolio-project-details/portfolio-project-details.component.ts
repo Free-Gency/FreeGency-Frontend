@@ -148,6 +148,7 @@ export class PortfolioProjectDetailsComponent implements OnInit {
     const teamId = this.fromTeamId() || item?.ownerTeamId;
     if (!item || !teamId || !this.auth.session()) return null;
     if (this.auth.session()?.activeProfileMode !== 'Developer') return null;
+    if (!item.canEdit) return null;
     return ['/developer/teams', teamId, 'portfolio', item.id, 'edit'] as const;
   });
 

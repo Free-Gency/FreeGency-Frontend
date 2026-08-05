@@ -1,0 +1,113 @@
+.skills-section {
+  animation: skills-fade-up 0.45s ease-out both;
+}
+
+.skills-chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.skills-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  border-radius: 999px;
+  border: 1px solid var(--color-surface-container-high);
+  background: var(--color-surface-container-lowest);
+  padding: 0.55rem 0.9rem;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  line-height: 1.25;
+  color: var(--color-on-surface);
+  transition:
+    border-color 0.15s,
+    background-color 0.15s,
+    transform 0.15s;
+}
+
+.skills-chip:hover {
+  border-color: color-mix(in srgb, var(--color-primary-container) 40%, transparent);
+  transform: translateY(-1px);
+}
+
+.skills-chip.is-selected {
+  border-color: var(--color-primary-container);
+  background: var(--color-primary-fixed);
+  color: var(--color-on-surface);
+}
+
+.skills-continue {
+  display: inline-flex;
+  height: 50px;
+  width: 100%;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: none;
+  background: var(--color-primary-container);
+  padding: 0 1rem;
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--color-on-primary);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  transition:
+    background-color 0.15s,
+    transform 0.15s,
+    opacity 0.15s;
+}
+
+.skills-continue:hover:not(:disabled) {
+  background: var(--color-primary);
+}
+
+.skills-continue:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.skills-continue:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.skills-skip,
+.skills-link {
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--color-outline);
+  transition: color 0.15s;
+}
+
+.skills-skip:hover:not(:disabled),
+.skills-link:hover {
+  color: var(--color-on-surface-variant);
+}
+
+.skills-skip:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.skills-link {
+  color: var(--color-primary-container);
+}
+
+@keyframes skills-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

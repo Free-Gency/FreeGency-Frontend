@@ -107,6 +107,48 @@ export const authRoutes: Routes = [
     ],
   },
   {
+    path: 'developer-onboarding',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/developer-onboarding/developer-onboarding-layout.component').then(
+        (m) => m.DeveloperOnboardingLayoutComponent,
+      ),
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./components/developer-onboarding-profile/developer-onboarding-profile.component').then(
+            (m) => m.DeveloperOnboardingProfileComponent,
+          ),
+        data: { step: 1 },
+      },
+      {
+        path: 'expertise',
+        loadComponent: () =>
+          import('./components/developer-onboarding-expertise/developer-onboarding-expertise.component').then(
+            (m) => m.DeveloperOnboardingExpertiseComponent,
+          ),
+        data: { step: 2 },
+      },
+      {
+        path: 'skills',
+        loadComponent: () =>
+          import('./components/developer-onboarding-skills/developer-onboarding-skills.component').then(
+            (m) => m.DeveloperOnboardingSkillsComponent,
+          ),
+        data: { step: 3 },
+      },
+      {
+        path: 'complete',
+        loadComponent: () =>
+          import('./components/developer-onboarding-complete/developer-onboarding-complete.component').then(
+            (m) => m.DeveloperOnboardingCompleteComponent,
+          ),
+        data: { step: 3, filled: true },
+      },
+    ],
+  },
+  {
     path: 'sign-up',
     loadComponent: () => import('./pages/sign-up/sign-up.component').then((m) => m.SignUpComponent),
   },

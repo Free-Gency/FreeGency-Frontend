@@ -28,7 +28,7 @@
       class="flex items-center justify-between gap-2 sm:justify-center sm:gap-6"
       aria-label="Onboarding progress"
     >
-      @for (item of steps; track item.id; let last = $last) {
+      @for (item of steps(); track item.id; let last = $last) {
         <span
           class="onboarding-header__label font-mono text-[11px] leading-[14px] font-medium tracking-[0.28px] whitespace-nowrap sm:text-sm"
           [class.text-primary-container]="isActive(item.id) || isCompleted(item.id)"

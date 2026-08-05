@@ -1,5 +1,9 @@
 <div class="min-h-dvh bg-[#f4f5f8]">
-  <app-client-view-navbar />
+  @if (isDeveloper()) {
+    <app-developer-view-navbar />
+  } @else {
+    <app-client-view-navbar />
+  }
 
   <main
     class="settings-shell-enter mx-auto w-full max-w-[1280px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10"

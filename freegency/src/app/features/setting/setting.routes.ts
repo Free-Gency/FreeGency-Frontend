@@ -8,6 +8,7 @@ import { Verification } from './verification/verification';
 import { Integrations } from './integrations/integrations';
 import { DangerZone } from '../setting/dangerzone/dangerzone';
 import { SecurityComponent } from './security/security.component';
+import { ProfileModePage } from './profile-mode/profile-mode';
 
 export const settingRoutes: Routes = [
   {
@@ -22,6 +23,10 @@ export const settingRoutes: Routes = [
       {
         path: 'account',
         component: Account,
+      },
+      {
+        path: 'profile-mode',
+        component: ProfileModePage,
       },
       { path: 'security', component: SecurityComponent },
       { path: 'notifications', component: Notifications },

@@ -1,4 +1,8 @@
-import { CLIENT_ONBOARDING_PATH, type UserMode } from '../../../core/auth/auth.models';
+import {
+  CLIENT_ONBOARDING_PATH,
+  DEVELOPER_ONBOARDING_PATH,
+  type UserMode,
+} from '../../../core/auth/auth.models';
 
 export const SIGNUP_MODE_KEY = 'freegency_signup_mode';
 
@@ -16,7 +20,9 @@ export function storeSignupMode(mode: UserMode): void {
   sessionStorage.setItem(SIGNUP_MODE_KEY, mode);
 }
 
-/** Destination after signup confirm → login (Client starts onboarding). */
+/** Destination after signup confirm → login. */
 export function postSignupPath(mode: UserMode | null): string {
-  return mode === 'Client' ? CLIENT_ONBOARDING_PATH : '/';
+  if (mode === 'Client') return CLIENT_ONBOARDING_PATH;
+  if (mode === 'Developer') return DEVELOPER_ONBOARDING_PATH;
+  return '/';
 }

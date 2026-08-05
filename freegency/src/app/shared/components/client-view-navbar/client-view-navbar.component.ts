@@ -26,6 +26,7 @@ import type { UserMode } from '../../../core/auth/auth.models';
 import { ProfileApiService } from '../../../features/auth/data-access/profile-api.service';
 import { SignalrService } from '../../../core/Signalr/signalr-service';
 import { ChatSignalrService } from '../../../core/Signalr/chat-signalr-service';
+import { ProfileModeService } from '../../services/profile-mode.service';
 
 export type ClientSearchScope = 'Projects' | 'Talents';
 
@@ -39,6 +40,7 @@ export class ClientViewNavbarComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly profileMode = inject(ProfileModeService);
 
   protected readonly arrowDownIcon = ArrowDown01Icon as IconSvgObject;
   protected readonly searchIcon = Search01Icon as IconSvgObject;
@@ -63,6 +65,7 @@ export class ClientViewNavbarComponent implements OnInit {
   protected readonly searchScope = signal<ClientSearchScope>('Projects');
   protected readonly searchScopeOpen = signal(false);
   protected readonly accountMenuOpen = signal(false);
+  protected readonly mobileNavOpen = signal(false);
 
   protected readonly searchScopes: readonly ClientSearchScope[] = ['Projects', 'Talents'];
   protected readonly profileModes: readonly UserMode[] = ['Client', 'Developer'];
@@ -88,6 +91,7 @@ export class ClientViewNavbarComponent implements OnInit {
   protected readonly activeMode = computed(
     () => this.auth.session()?.activeProfileMode ?? 'Client',
   );
+  protected readonly switchingMode = signal(false);
 
   ngOnInit(): void {
     this.router.events
@@ -117,9 +121,17 @@ export class ClientViewNavbarComponent implements OnInit {
 
   protected selectNav(item: (typeof this.navItems)[number]): void {
     this.closeMenus();
+    this.mobileNavOpen.set(false);
     if (item.route) {
       void this.router.navigate([item.route]);
     }
+  }
+
+  protected toggleMobileNav(event: MouseEvent): void {
+    event.stopPropagation();
+    this.searchScopeOpen.set(false);
+    this.accountMenuOpen.set(false);
+    this.mobileNavOpen.update((open) => !open);
   }
 
   protected toggleSearchScope(event: MouseEvent): void {
@@ -144,6 +156,20 @@ export class ClientViewNavbarComponent implements OnInit {
     this.accountMenuOpen.set(false);
   }
 
+  protected selectProfileMode(mode: UserMode, event: MouseEvent): void {
+    event.stopPropagation();
+    if (mode === this.activeMode() || this.switchingMode()) return;
+
+    this.switchingMode.set(true);
+    this.profileMode.switchToMode(mode).subscribe({
+      next: () => {
+        this.switchingMode.set(false);
+        this.closeAccountMenu();
+      },
+      error: () => this.switchingMode.set(false),
+    });
+  }
+
   protected onLogout(): void {
     this.closeAccountMenu();
     this.auth.logout();
@@ -160,6 +186,7 @@ export class ClientViewNavbarComponent implements OnInit {
   private closeMenus(): void {
     this.searchScopeOpen.set(false);
     this.accountMenuOpen.set(false);
+    this.mobileNavOpen.set(false);
   }
 
   private getActiveLabelFromUrl(url: string): string {

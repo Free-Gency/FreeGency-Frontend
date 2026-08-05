@@ -2,6 +2,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 /** Parse ASP.NET ProblemDetails / FluentValidation error bodies into a user-facing message. */
 export function extractApiError(error: unknown, fallback = 'Something went wrong. Please try again.'): string {
+  if (error instanceof Error && !(error instanceof HttpErrorResponse) && error.message.trim()) {
+    return error.message.trim();
+  }
+
   if (!(error instanceof HttpErrorResponse)) {
     return fallback;
   }

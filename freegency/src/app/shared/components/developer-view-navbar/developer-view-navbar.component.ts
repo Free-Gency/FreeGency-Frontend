@@ -25,6 +25,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 import type { UserMode } from '../../../core/auth/auth.models';
 import { SignalrService } from '../../../core/Signalr/signalr-service';
 import { ChatSignalrService } from '../../../core/Signalr/chat-signalr-service';
+import { ProfileModeService } from '../../services/profile-mode.service';
 
 export type DeveloperSearchScope = 'Projects' | 'Talents';
 
@@ -38,7 +39,8 @@ export class DeveloperViewNavbarComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly signalrService = inject(SignalrService);
-chatSignalrService=inject(ChatSignalrService);
+  private readonly chatSignalrService = inject(ChatSignalrService);
+  private readonly profileMode = inject(ProfileModeService);
   protected readonly arrowDownIcon = ArrowDown01Icon as IconSvgObject;
   protected readonly searchIcon = Search01Icon as IconSvgObject;
   protected readonly notificationIcon = Notification02Icon as IconSvgObject;
@@ -54,7 +56,6 @@ chatSignalrService=inject(ChatSignalrService);
     { label: 'Explore', route: '/developer/explore' },
     { label: 'Manage Work', route: '/developer/manage-work' },
     { label: 'Teams', route: '/developer/teams' },
-    { label: 'Jobs', route: '/developer/jobs' },
     { label: 'Messages', route: '/developer/messages' },
   ] as const;
 
@@ -62,6 +63,7 @@ chatSignalrService=inject(ChatSignalrService);
   protected readonly searchScope = signal<DeveloperSearchScope>('Projects');
   protected readonly searchScopeOpen = signal(false);
   protected readonly accountMenuOpen = signal(false);
+  protected readonly mobileNavOpen = signal(false);
 
   protected readonly searchScopes: readonly DeveloperSearchScope[] = ['Projects', 'Talents'];
   protected readonly profileModes: readonly UserMode[] = ['Developer', 'Client'];
@@ -87,6 +89,7 @@ chatSignalrService=inject(ChatSignalrService);
   protected readonly activeMode = computed(
     () => this.auth.session()?.activeProfileMode ?? 'Developer',
   );
+  protected readonly switchingMode = signal(false);
 
   ngOnInit(): void {
     this.router.events
@@ -105,9 +108,21 @@ chatSignalrService=inject(ChatSignalrService);
 
   protected selectNav(item: (typeof this.navItems)[number]): void {
     this.closeMenus();
+    this.mobileNavOpen.set(false);
     if (item.route) {
       void this.router.navigate([item.route]);
     }
+  }
+
+  protected toggleMobileNav(event: MouseEvent): void {
+    event.stopPropagation();
+    this.searchScopeOpen.set(false);
+    this.accountMenuOpen.set(false);
+    this.mobileNavOpen.update((open) => !open);
+  }
+
+  protected closeMobileNav(): void {
+    this.mobileNavOpen.set(false);
   }
 
   protected toggleSearchScope(event: MouseEvent): void {
@@ -132,6 +147,20 @@ chatSignalrService=inject(ChatSignalrService);
     this.accountMenuOpen.set(false);
   }
 
+  protected selectProfileMode(mode: UserMode, event: MouseEvent): void {
+    event.stopPropagation();
+    if (mode === this.activeMode() || this.switchingMode()) return;
+
+    this.switchingMode.set(true);
+    this.profileMode.switchToMode(mode).subscribe({
+      next: () => {
+        this.switchingMode.set(false);
+        this.closeAccountMenu();
+      },
+      error: () => this.switchingMode.set(false),
+    });
+  }
+
   protected onLogout(): void {
     this.closeAccountMenu();
     this.auth.logout();
@@ -148,6 +177,7 @@ chatSignalrService=inject(ChatSignalrService);
   private closeMenus(): void {
     this.searchScopeOpen.set(false);
     this.accountMenuOpen.set(false);
+    this.mobileNavOpen.set(false);
   }
 
   private getActiveLabelFromUrl(url: string): string {

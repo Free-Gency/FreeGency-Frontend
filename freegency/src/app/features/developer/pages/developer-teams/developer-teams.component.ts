@@ -1,5 +1,6 @@
 import { NgClass } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { HugeiconsIconComponent, type IconSvgObject } from '@hugeicons/angular';
 import {
   Briefcase01Icon,
@@ -23,7 +24,7 @@ import {
 } from '../../../auth/data-access/categories-api.service';
 import { TeamHubCardComponent } from '../../components/team-hub-card/team-hub-card.component';
 import { TeamsService } from '../../data-access/teams.service';
-import { PagedTeamJobs, Team, TeamMemberAvatar } from '../../models/team';
+import { PagedTeamJobs, Team, TeamJob, TeamMemberAvatar } from '../../models/team';
 
 type TeamsHubTab = 'active' | 'discover' | 'openings';
 
@@ -32,7 +33,13 @@ const DISCOVER_PAGE_SIZE = 9;
 @Component({
   selector: 'app-developer-teams',
   standalone: true,
-  imports: [DeveloperViewNavbarComponent, HugeiconsIconComponent, NgClass, TeamHubCardComponent],
+  imports: [
+    DeveloperViewNavbarComponent,
+    FormsModule,
+    HugeiconsIconComponent,
+    NgClass,
+    TeamHubCardComponent,
+  ],
   templateUrl: './developer-teams.component.html',
   styleUrl: './developer-teams.component.css',
 })
@@ -87,7 +94,21 @@ export class DeveloperTeamsComponent {
   protected readonly joinError = signal<string | null>(null);
   protected readonly joinSuccess = signal(false);
 
+  protected readonly applyJobOpen = signal(false);
+  protected readonly applyJobId = signal<string | null>(null);
+  protected readonly applyJobTitle = signal('');
+  protected readonly applyTeamName = signal('');
+  protected readonly applyCoverLetter = signal('');
+  protected readonly applySubmitting = signal(false);
+  protected readonly applyError = signal<string | null>(null);
+  protected readonly applySuccess = signal(false);
+  protected readonly appliedJobIds = signal<string[]>([]);
+
   protected readonly canSubmitJoin = computed(() => this.joinCode().trim().length >= 4);
+
+  private readonly myTeamIds = computed(
+    () => new Set(this.activeTeams().map((t) => t.id).filter(Boolean)),
+  );
 
   protected readonly tabs = computed(() => [
     { id: 'active' as const, label: 'My Teams', count: this.activeTeams().length },
@@ -135,6 +156,98 @@ export class DeveloperTeamsComponent {
     if (tab === 'openings' && !this.openings() && !this.loadingOpenings()) {
       this.loadOpenings();
     }
+  }
+
+  protected isOwnTeamJob(job: TeamJob): boolean {
+    return !!job.teamId && this.myTeamIds().has(job.teamId);
+  }
+
+  protected hasApplied(jobId: string): boolean {
+    return this.appliedJobIds().includes(jobId);
+  }
+
+  protected teamNameForJob(job: TeamJob): string {
+    if (job.teamName?.trim()) return job.teamName.trim();
+    const mine = this.activeTeams().find((t) => t.id === job.teamId);
+    return mine?.name?.trim() || 'Team';
+  }
+
+  protected teamLogoForJob(job: TeamJob): string | null {
+    if (job.teamLogo?.trim()) return job.teamLogo.trim();
+    const mine = this.activeTeams().find((t) => t.id === job.teamId);
+    return mine?.logo?.trim() || null;
+  }
+
+  protected jobStatusLabel(status: string | null | undefined): string {
+    const raw = (status || 'open').trim();
+    if (!raw) return 'Open';
+    return raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+  }
+
+  protected relativeTime(dateStr: string | null | undefined): string {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) return '';
+    const diffMs = Date.now() - date.getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin < 1) return 'Just now';
+    if (diffMin < 60) return `${diffMin} min ago`;
+    const diffHr = Math.floor(diffMin / 60);
+    if (diffHr < 24) return `${diffHr}h ago`;
+    const diffDay = Math.floor(diffHr / 24);
+    if (diffDay < 7) return `${diffDay}d ago`;
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  }
+
+  protected openApplyJob(job: TeamJob): void {
+    if (this.isOwnTeamJob(job) || this.hasApplied(job.id)) return;
+    this.applyJobId.set(job.id);
+    this.applyJobTitle.set(job.title);
+    this.applyTeamName.set(this.teamNameForJob(job));
+    this.applyCoverLetter.set('');
+    this.applyError.set(null);
+    this.applySuccess.set(false);
+    this.applyJobOpen.set(true);
+  }
+
+  protected closeApplyJob(): void {
+    if (this.applySubmitting()) return;
+    this.applyJobOpen.set(false);
+    this.applyJobId.set(null);
+    this.applyJobTitle.set('');
+    this.applyTeamName.set('');
+    this.applyCoverLetter.set('');
+    this.applyError.set(null);
+    this.applySuccess.set(false);
+  }
+
+  protected submitApplyJob(): void {
+    const jobId = this.applyJobId();
+    if (!jobId || this.applySubmitting()) return;
+
+    this.applySubmitting.set(true);
+    this.applyError.set(null);
+
+    this.teamsApi.applyToTeamJob(jobId, this.applyCoverLetter()).subscribe({
+      next: () => {
+        this.applySubmitting.set(false);
+        this.applySuccess.set(true);
+        this.appliedJobIds.update((ids) => [...ids, jobId]);
+        setTimeout(() => this.closeApplyJob(), 1200);
+      },
+      error: (err) => {
+        this.applySubmitting.set(false);
+        this.applyError.set(
+          extractApiError(err, 'Could not submit your application. Try again.'),
+        );
+      },
+    });
+  }
+
+  protected openJobTeam(job: TeamJob, event?: Event): void {
+    event?.stopPropagation();
+    if (!job.teamId) return;
+    void this.router.navigateByUrl(`/developer/teams/${job.teamId}`);
   }
 
   protected selectCategory(category: string): void {

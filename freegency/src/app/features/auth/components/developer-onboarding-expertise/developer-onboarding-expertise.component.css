@@ -1,0 +1,216 @@
+.interests-heading,
+.interests-card,
+.interests-actions {
+  animation: interests-fade-up 0.5s ease-out both;
+}
+
+.interests-grid__list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .interests-grid__list {
+    gap: 1.25rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .interests-grid__list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.interests-skeleton {
+  min-height: 140px;
+  border-radius: 1rem;
+  border: 1px solid var(--color-surface-container-high);
+  background: var(--color-surface-container-low);
+  animation: interests-pulse 1.2s ease-in-out infinite;
+}
+
+.interests-card {
+  position: relative;
+  display: flex;
+  min-height: 140px;
+  width: 100%;
+  cursor: pointer;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 0.75rem;
+  border-radius: 1rem;
+  border: 1px solid var(--color-surface-container-high);
+  background: var(--color-surface-container-lowest);
+  padding: 1.25rem;
+  text-align: left;
+  box-shadow: 0 1px 2px rgba(65, 48, 215, 0.04);
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    background-color 0.2s,
+    transform 0.2s;
+}
+
+.interests-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--color-primary-container) 35%, transparent);
+  box-shadow: 0 8px 24px rgba(91, 79, 240, 0.08);
+}
+
+.interests-card:active {
+  transform: scale(0.99);
+}
+
+.interests-card.is-selected {
+  border-color: var(--color-primary-container);
+  background: var(--color-primary-fixed);
+  box-shadow: 0 4px 16px rgba(65, 48, 215, 0.08);
+}
+
+.interests-card__icon {
+  display: flex;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--color-primary-container);
+  border: 1px solid rgb(65 48 215 / 0.18);
+  box-shadow: 0 1px 2px rgb(65 48 215 / 0.12);
+  color: #fff;
+  transition: transform 0.2s;
+}
+
+.interests-card:hover .interests-card__icon {
+  transform: rotate(-6deg);
+}
+
+.interests-card__label {
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+  color: var(--color-on-surface);
+}
+
+.interests-card__check {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  color: var(--color-primary-container);
+}
+
+.interests-continue {
+  display: inline-flex;
+  height: 50px;
+  width: 100%;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: var(--color-primary-container);
+  padding: 0 1rem;
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-on-primary);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  transition:
+    background-color 0.15s,
+    transform 0.15s,
+    opacity 0.15s;
+}
+
+.interests-continue:hover:not(:disabled) {
+  background: var(--color-primary);
+}
+
+.interests-continue:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.interests-continue:disabled,
+.interests-skip:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.interests-skip {
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  line-height: 1rem;
+  font-weight: 600;
+  color: var(--color-outline);
+  transition: color 0.15s;
+}
+
+.interests-skip:hover:not(:disabled) {
+  color: var(--color-on-surface-variant);
+}
+
+@media (min-width: 640px) {
+  .interests-skeleton,
+  .interests-card {
+    min-height: 148px;
+  }
+
+  .interests-card {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .interests-card__icon {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .interests-card__label {
+    font-size: 1rem;
+  }
+
+  .interests-card__check {
+    top: 1rem;
+    right: 1rem;
+  }
+
+  .interests-continue {
+    height: 55px;
+    font-size: 1.25rem;
+  }
+}
+
+@keyframes interests-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes interests-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .interests-heading,
+  .interests-card,
+  .interests-actions,
+  .interests-skeleton {
+    animation: none;
+  }
+
+  .interests-card:hover {
+    transform: none;
+  }
+}

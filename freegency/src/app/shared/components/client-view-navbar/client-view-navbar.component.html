@@ -1,8 +1,23 @@
 <header
-  class="relative z-20 flex w-full items-center gap-4 border-b border-[#eceef4] bg-white px-4 py-3 sm:gap-5 sm:px-6 sm:py-4 md:px-8 lg:px-10 lg:py-4"
+  class="relative z-20 flex w-full items-center gap-3 border-b border-[#eceef4] bg-white px-4 py-3 sm:gap-5 sm:px-6 sm:py-4 md:px-8 lg:px-10 lg:py-4"
 >
   <!-- Left: logo + nav -->
-  <div class="flex min-w-0 shrink-0 items-center gap-8 sm:gap-10 lg:gap-14">
+  <div class="flex min-w-0 shrink-0 items-center gap-3 sm:gap-6 lg:gap-10">
+    <button
+      type="button"
+      class="inline-flex size-10 items-center justify-center rounded-xl border border-[#eceef4] bg-[#fcfcfc] text-[#27253f] transition-colors hover:bg-[#f4f3ff] lg:hidden"
+      [attr.aria-expanded]="mobileNavOpen()"
+      aria-controls="client-mobile-nav"
+      aria-label="Open menu"
+      (click)="toggleMobileNav($event)"
+    >
+      <span class="flex w-4 flex-col gap-1" aria-hidden="true">
+        <span class="block h-0.5 w-full rounded-full bg-current"></span>
+        <span class="block h-0.5 w-full rounded-full bg-current"></span>
+        <span class="block h-0.5 w-full rounded-full bg-current"></span>
+      </span>
+    </button>
+
     <a routerLink="/client/home" class="shrink-0" aria-label="FreeGency home">
       <img
         src="/assets/brand/logo.svg"
@@ -14,13 +29,13 @@
     </a>
 
     <nav
-      class="hidden items-center gap-1.5 xl:flex"
+      class="hidden items-center gap-1.5 lg:flex"
       aria-label="Primary"
     >
       @for (item of navItems; track item.label) {
         <button
           type="button"
-          class="inline-flex cursor-pointer items-center justify-center gap-1 rounded-[40px] px-4 py-2 font-body text-sm leading-normal whitespace-nowrap transition-colors 2xl:px-5"
+          class="inline-flex cursor-pointer items-center justify-center gap-1 rounded-[40px] px-3 py-2 font-body text-sm leading-normal whitespace-nowrap transition-colors xl:px-4"
           [class.bg-[#27253f]]="activeNav() === item.label"
           [class.text-[#f7f7f7]]="activeNav() === item.label"
           [class.bg-[#fcfcfc]]="activeNav() !== item.label"
@@ -47,7 +62,7 @@
     </nav>
   </div>
 
-  <div class="min-w-[16px] flex-1" aria-hidden="true"></div>
+  <div class="min-w-[8px] flex-1" aria-hidden="true"></div>
 
   <!-- Right: search + notification + avatar -->
   <div class="flex shrink-0 items-center gap-3 sm:gap-4">
@@ -210,14 +225,17 @@
             </p>
             <div class="flex items-center gap-1 rounded-full bg-[#f2f1fb] p-1">
               @for (mode of profileModes; track mode) {
-                <span
-                  class="flex-1 rounded-full px-3 py-1.5 text-center font-body text-sm"
+                <button
+                  type="button"
+                  class="flex-1 cursor-pointer rounded-full px-3 py-1.5 text-center font-body text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60"
                   [class.bg-primary]="activeMode() === mode"
                   [class.text-white]="activeMode() === mode"
                   [class.text-on-surface-variant]="activeMode() !== mode"
+                  [disabled]="switchingMode()"
+                  (click)="selectProfileMode(mode, $event)"
                 >
                   {{ mode }}
-                </span>
+                </button>
               }
             </div>
           </div>
@@ -282,4 +300,28 @@
       }
     </div>
   </div>
+
+  @if (mobileNavOpen()) {
+    <div
+      id="client-mobile-nav"
+      class="absolute inset-x-0 top-full z-[80] border-b border-[#eceef4] bg-white px-4 py-3 shadow-[0_16px_40px_rgba(39,37,63,0.12)] lg:hidden"
+      (click)="$event.stopPropagation()"
+    >
+      <nav class="flex flex-col gap-1" aria-label="Mobile primary">
+        @for (item of navItems; track item.label) {
+          <button
+            type="button"
+            class="flex w-full items-center justify-between rounded-xl px-3.5 py-3 text-left font-body text-sm transition-colors"
+            [class.bg-[#27253f]]="activeNav() === item.label"
+            [class.text-[#f7f7f7]]="activeNav() === item.label"
+            [class.text-[#27253f]]="activeNav() !== item.label"
+            [class.hover:bg-[#f4f3ff]]="activeNav() !== item.label"
+            (click)="selectNav(item)"
+          >
+            <span>{{ item.label }}</span>
+          </button>
+        }
+      </nav>
+    </div>
+  }
 </header>

@@ -1,0 +1,242 @@
+.pm-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.pm-header h1 {
+  margin: 0;
+  font-family: var(--font-display, inherit);
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  line-height: 1.1;
+  color: #151c27;
+}
+
+.pm-header p {
+  margin: 0.5rem 0 0;
+  max-width: 36rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: #6b7285;
+}
+
+.pm-active {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: fit-content;
+  padding: 0.4rem 0.5rem 0.4rem 0.85rem;
+  border-radius: 999px;
+  background: #f4f5f8;
+  border: 1px solid #e8eaf0;
+}
+
+.pm-active__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7285;
+}
+
+.pm-active__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: #4130d7;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.pm-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.pm-grid--single {
+  max-width: 28rem;
+}
+
+@media (min-width: 720px) {
+  .pm-grid:not(.pm-grid--single) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.pm-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 1.35rem 1.4rem;
+  border-radius: 1.35rem;
+  border: 1px solid #e8eaf0;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(21, 28, 39, 0.04);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+.pm-card:hover {
+  border-color: #d9dce6;
+  box-shadow: 0 8px 22px rgba(21, 28, 39, 0.05);
+}
+
+.pm-card--active {
+  border-color: rgba(65, 48, 215, 0.28);
+  background: linear-gradient(180deg, #f8f7ff 0%, #fff 55%);
+  box-shadow: 0 10px 28px rgba(65, 48, 215, 0.08);
+}
+
+.pm-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.pm-card__icon {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.9rem;
+  background: #eeecfb;
+  color: #4130d7;
+}
+
+.pm-card__icon--dev {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.pm-card__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.pm-card__status--ready {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.pm-card__status--missing {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.pm-card h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 750;
+  color: #151c27;
+  letter-spacing: -0.02em;
+}
+
+.pm-card p {
+  margin: 0;
+  flex: 1;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: #6b7285;
+}
+
+.pm-card__actions {
+  margin-top: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  min-height: 2.65rem;
+  padding: 0.65rem 1rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.pm-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.pm-btn--primary {
+  background: #4130d7;
+  color: #fff;
+}
+
+.pm-btn--primary:hover:not(:disabled) {
+  background: #3526c0;
+}
+
+.pm-btn--create {
+  background: #fff;
+  border-color: #d9dce6;
+  color: #151c27;
+}
+
+.pm-btn--create:hover:not(:disabled) {
+  border-color: #4130d7;
+  color: #4130d7;
+  background: #f8f7ff;
+}
+
+.pm-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: #98a2b3;
+}
+
+.pm-hint--error {
+  color: #b42318;
+}
+
+.pm-hint--row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1rem;
+}
+
+.pm-retry {
+  display: inline-flex;
+  height: 2rem;
+  cursor: pointer;
+  align-items: center;
+  border: 1px solid #ffd9d4;
+  border-radius: 999px;
+  background: #fff;
+  padding: 0 0.85rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #b42318;
+}
+
+.pm-retry:hover {
+  background: #fff8f7;
+}

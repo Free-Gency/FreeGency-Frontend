@@ -290,28 +290,46 @@
                 @if (jobsLoading()) {
                   <div class="space-y-2">
                     @for (i of [1, 2]; track i) {
-                      <div class="h-20 animate-pulse rounded-2xl border border-[#eceef4] bg-white"></div>
+                      <div class="otj-card otj-card--skel animate-pulse"></div>
                     }
                   </div>
                 } @else if (openJobs().length) {
                   <div class="space-y-3">
                     @for (job of openJobs(); track job.id) {
-                      <article class="rounded-2xl border border-[#eceef4] bg-white px-4 py-3.5 shadow-[0_2px_10px_rgba(16,24,40,0.04)]">
-                        <div class="flex flex-wrap items-start justify-between gap-3">
-                          <div class="min-w-0 flex-1">
-                            <p class="font-display text-[15px] font-bold text-[#111827]">{{ job.title }}</p>
-                            <p class="mt-1 line-clamp-2 font-body text-sm leading-5 text-[#667085]">
-                              {{ job.description || 'No description provided.' }}
-                            </p>
-                          </div>
-                          @if (appliedJobIds().includes(job.id)) {
-                            <span class="inline-flex h-9 items-center rounded-full bg-[#ecfdf3] px-3.5 font-display text-xs font-bold text-[#15803d]">
-                              Applied
+                      <article class="otj-card">
+                        <div class="otj-card__top">
+                          <span class="otj-card__status">
+                            <hugeicons-icon [icon]="briefcaseIcon" [size]="12" color="currentColor" [strokeWidth]="1.75" />
+                            {{ jobStatusLabel(job.status) }}
+                          </span>
+                          @if (relativeTime(job.createdAt)) {
+                            <span class="otj-card__time">{{ relativeTime(job.createdAt) }}</span>
+                          }
+                        </div>
+
+                        <h3 class="otj-card__title">{{ job.title }}</h3>
+                        <p class="otj-card__desc">
+                          {{ job.description || 'No description provided.' }}
+                        </p>
+
+                        <div class="otj-card__footer">
+                          <div class="otj-card__hint">
+                            <span class="otj-card__hint-label">Application</span>
+                            <span class="otj-card__hint-copy">
+                              @if (appliedJobIds().includes(job.id)) {
+                                Application submitted — wait for a response from the team.
+                              } @else {
+                                Introduce yourself with a short cover letter.
+                              }
                             </span>
+                          </div>
+
+                          @if (appliedJobIds().includes(job.id)) {
+                            <span class="otj-card__applied">Applied</span>
                           } @else {
                             <button
                               type="button"
-                              class="inline-flex h-9 shrink-0 cursor-pointer items-center rounded-full bg-[#4130d7] px-4 font-display text-xs font-bold text-white hover:opacity-90"
+                              class="otj-card__apply"
                               (click)="openApplyJob(job)"
                             >
                               Apply
@@ -360,6 +378,140 @@
                 <p class="mt-1 text-sm font-semibold text-[#111827]">{{ t.membersCount }} specialists</p>
               </div>
             </div>
+
+            <!-- Community reviews (visible to visitors + members) -->
+            <section class="tw-reviews mt-10">
+              <header class="tw-reviews__top">
+                <div>
+                  <h2 class="font-display text-[17px] font-bold text-[#111827]">Community Feedback</h2>
+                  <p class="tw-reviews__lede">
+                    @if (teamReviews().length) {
+                      Based on {{ teamReviews().length }}
+                      {{ teamReviews().length === 1 ? 'community rating' : 'community ratings' }}
+                    } @else {
+                      Be the first to rate this team’s work and collaboration.
+                    }
+                  </p>
+                </div>
+                @if (teamReviews().length || teamAverageRating() > 0) {
+                  <div class="tw-reviews__avg">
+                    <p class="tw-reviews__avg-value">{{ teamAverageRating() | number: '1.1-1' }}</p>
+                    <div class="tw-reviews__avg-stars" aria-hidden="true">
+                      @for (value of starChoices; track value) {
+                        <span class="tw-star" [class.is-on]="value <= teamRoundedAverage()">★</span>
+                      }
+                    </div>
+                    <p class="tw-reviews__avg-label">Average score</p>
+                    <div class="tw-reviews__bars" aria-hidden="true">
+                      <span [style.width.%]="(teamAverageRating() / 5) * 100"></span>
+                    </div>
+                  </div>
+                }
+              </header>
+
+              @if (canReviewTeam()) {
+                <form class="tw-review-form" (submit)="$event.preventDefault(); submitTeamReview()">
+                  <p class="tw-review-form__title">Leave a Review</p>
+                  <div class="tw-review-form__rating">
+                    <span class="tw-review-form__label">Your rating</span>
+                    <div
+                      class="tw-stars"
+                      (mouseleave)="teamReviewHover.set(0)"
+                      role="radiogroup"
+                      aria-label="Rating"
+                    >
+                      @for (value of starChoices; track value) {
+                        <button
+                          type="button"
+                          class="tw-star-btn"
+                          [class.is-on]="value <= (teamReviewHover() || teamReviewRating())"
+                          (mouseenter)="teamReviewHover.set(value)"
+                          (click)="teamReviewRating.set(value); teamReviewError.set(null)"
+                          [attr.aria-label]="value + ' stars'"
+                        >
+                          <span class="tw-star" aria-hidden="true">★</span>
+                        </button>
+                      }
+                    </div>
+                  </div>
+
+                  <label class="tw-review-form__field">
+                    <span class="tw-review-form__label">Your comment</span>
+                    <textarea
+                      rows="3"
+                      maxlength="500"
+                      placeholder="What stood out about working with this team?"
+                      class="tw-review-textarea"
+                      [value]="teamReviewComment()"
+                      (input)="onTeamReviewCommentInput($event)"
+                    ></textarea>
+                    <span class="tw-review-form__count">{{ teamReviewComment().length }}/500</span>
+                  </label>
+
+                  @if (teamReviewError()) {
+                    <p class="tw-review-form__error">{{ teamReviewError() }}</p>
+                  }
+
+                  <button type="submit" class="tw-review-submit" [disabled]="teamReviewSubmitting()">
+                    {{ teamReviewSubmitting() ? 'Submitting…' : 'Submit Review' }}
+                  </button>
+                </form>
+              } @else if (!isTeamMember() && !auth.session()) {
+                <p class="tw-reviews__login">
+                  <a routerLink="/auth/login" class="text-[#4130d7] underline">Sign in</a>
+                  to leave a review for this team.
+                </p>
+              }
+
+              @if (teamReviewsLoading()) {
+                <div class="space-y-2">
+                  @for (i of [1, 2]; track i) {
+                    <div class="h-20 animate-pulse rounded-2xl border border-[#eceef4] bg-white"></div>
+                  }
+                </div>
+              } @else if (teamReviews().length) {
+                <ul class="tw-review-list">
+                  @for (review of teamReviews(); track review.id) {
+                    <li class="tw-review-card">
+                      @if (review.reviewerAvatar) {
+                        <img [src]="review.reviewerAvatar" alt="" class="tw-review-card__avatar" />
+                      } @else {
+                        <span class="tw-review-card__avatar tw-review-card__avatar--fallback">
+                          {{ initials(review.reviewerName) }}
+                        </span>
+                      }
+                      <div class="tw-review-card__body">
+                        <div class="tw-review-card__meta">
+                          <p class="tw-review-card__name">{{ review.reviewerName }}</p>
+                          <div
+                            class="tw-review-card__stars"
+                            [attr.aria-label]="starRating(review.rating) + ' out of 5 stars'"
+                          >
+                            @for (value of starChoices; track value) {
+                              <span
+                                class="tw-star"
+                                [class.is-on]="value <= starRating(review.rating)"
+                                aria-hidden="true"
+                              >★</span>
+                            }
+                          </div>
+                        </div>
+                        @if (review.comment) {
+                          <p class="tw-review-card__comment">{{ review.comment }}</p>
+                        }
+                        @if (review.createdAt) {
+                          <p class="tw-review-card__date">{{ review.createdAt | date: 'MMM d, y' }}</p>
+                        }
+                      </div>
+                    </li>
+                  }
+                </ul>
+              } @else if (!canReviewTeam()) {
+                <div class="tw-reviews__empty">
+                  <p>No community reviews yet.</p>
+                </div>
+              }
+            </section>
 
             <div class="mb-4 mt-10 flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -506,7 +658,7 @@
                     </span>
                     <div class="min-w-0">
                       <p class="truncate text-[13px] font-semibold text-[#111827]">{{ member.name }}</p>
-                      <p class="text-xs text-[#6b7280]">Team member</p>
+                      <p class="text-xs text-[#6b7280]">Member</p>
                     </div>
                   </div>
                 } @empty {
@@ -516,6 +668,7 @@
               <button
                 type="button"
                 class="mt-5 flex h-10 w-full items-center justify-center rounded-full bg-[#f1f3f9] font-display text-[13px] font-semibold text-[#374151]"
+                (click)="setTab('members')"
               >
                 View all members
               </button>
@@ -604,35 +757,42 @@
 
       <!-- TEAM JOBS -->
       @if (activeTab() === 'jobs') {
-        <div class="pt-8">
-          <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h2 class="font-display text-xl font-bold tracking-tight text-[#111827]">Team Jobs</h2>
-              <p class="mt-1 font-body text-sm text-[#6b7280]">
+        <div class="tj-page pt-8">
+          <header class="tj-page__head">
+            <div class="min-w-0">
+              <p class="tw-mono-label">Hiring</p>
+              <h2 class="tj-page__title">Team Jobs</h2>
+              <p class="tj-page__sub">
                 Open roles and applications to join this team
-                @if (jobsLoaded()) {
-                  <span class="text-[#98a2b3]"> · {{ openJobsCount() }} open</span>
-                }
-                @if (isLeader() && joinRequestsLoaded()) {
-                  <span class="text-[#98a2b3]"> · {{ pendingRequestsCount() }} pending requests</span>
-                }
               </p>
             </div>
             @if (isLeader()) {
-              <button
-                type="button"
-                class="inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-full bg-[#4130d7] px-5 font-display text-sm font-semibold text-white transition-colors hover:bg-[#3527b8]"
-                (click)="openAddJob()"
-              >
+              <button type="button" class="tj-page__cta" (click)="openAddJob()">
                 <hugeicons-icon [icon]="addIcon" [size]="16" color="currentColor" [strokeWidth]="2" />
                 Add job
               </button>
             }
+          </header>
+
+          <div class="tj-stats">
+            <div class="tj-stat">
+              <span class="tj-stat__value">{{ openJobsCount() }}</span>
+              <span class="tj-stat__label">Open roles</span>
+            </div>
+            <div class="tj-stat">
+              <span class="tj-stat__value">{{ jobs().length }}</span>
+              <span class="tj-stat__label">Total jobs</span>
+            </div>
+            @if (isLeader()) {
+              <div class="tj-stat">
+                <span class="tj-stat__value">{{ pendingRequestsCount() }}</span>
+                <span class="tj-stat__label">Pending apps</span>
+              </div>
+            }
           </div>
 
-          <div class="tj-layout">
+          <div class="tj-layout tj-layout--solo">
             <div class="tj-jobs">
-              <p class="tw-mono-label mb-3">Openings</p>
               @if (jobsLoading()) {
                 <div class="space-y-3">
                   @for (i of [1, 2, 3]; track i) {
@@ -653,11 +813,7 @@
                     Post a role when you need a designer, developer, or specialist to join the team.
                   </p>
                   @if (isLeader()) {
-                    <button
-                      type="button"
-                      class="mt-5 inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-full bg-[#4130d7] px-5 font-display text-sm font-semibold text-white hover:bg-[#3527b8]"
-                      (click)="openAddJob()"
-                    >
+                    <button type="button" class="tj-page__cta mt-5" (click)="openAddJob()">
                       <hugeicons-icon [icon]="addIcon" [size]="16" color="currentColor" [strokeWidth]="2" />
                       Add first job
                     </button>
@@ -665,188 +821,389 @@
                 </div>
               } @else {
                 <div class="space-y-3">
-                  @for (job of jobs(); track job.id) {
+                  @for (job of pagedJobs(); track job.id) {
                     <article
-                      class="tj-card"
-                      [class.is-selected]="selectedJobId() === job.id"
+                      class="tj-expand"
+                      [class.is-open]="expandedJobId() === job.id"
                       [class.is-closed]="!isJobOpen(job.status)"
-                      (click)="isLeader() ? selectJob(job) : openJobDetailFromCard(job)"
                     >
-                      <div class="tj-card__main">
-                        <div class="tj-card__top">
-                          <h3 class="tj-card__title">{{ job.title }}</h3>
-                          <span
-                            class="tj-badge"
-                            [class.is-open]="isJobOpen(job.status)"
-                            [class.is-closed]="!isJobOpen(job.status)"
-                          >
-                            {{ jobStatusLabel(job.status) }}
-                          </span>
-                        </div>
-                        <p class="tj-card__desc">{{ job.description }}</p>
-                        <div class="tj-card__meta">
-                          <span>{{ relativeTime(job.createdAt) }}</span>
-                          @if (isLeader() && requestCountForJob(job.id) > 0) {
-                            <span class="tj-card__req">
-                              {{ requestCountForJob(job.id) }}
-                              pending {{ requestCountForJob(job.id) === 1 ? 'request' : 'requests' }}
-                            </span>
+                      <button type="button" class="tj-expand__head" (click)="toggleJobExpand(job)">
+                        <div class="tj-expand__media" aria-hidden="true">
+                          @if (t.logo) {
+                            <img [src]="t.logo" alt="" />
+                          } @else if (t.cover) {
+                            <img [src]="t.cover" alt="" />
+                          } @else {
+                            <span>{{ initials(t.name) }}</span>
                           }
                         </div>
-                      </div>
-                      @if (isLeader()) {
-                        <div class="tj-card__actions" (click)="$event.stopPropagation()">
-                          <button
-                            type="button"
-                            class="tj-icon-btn"
-                            aria-label="Edit job"
-                            (click)="openEditJob(job, $event)"
-                          >
-                            <hugeicons-icon [icon]="editIcon" [size]="15" color="#6b7280" [strokeWidth]="1.75" />
-                          </button>
-                          @if (isJobOpen(job.status)) {
-                            <button
-                              type="button"
-                              class="tj-icon-btn tj-icon-btn--danger"
-                              aria-label="Close job"
-                              (click)="closeJob(job, $event)"
+                        <div class="tj-expand__meta">
+                          <div class="tj-expand__title-row">
+                            <h3>{{ job.title }}</h3>
+                            <span
+                              class="tj-badge"
+                              [class.is-open]="isJobOpen(job.status)"
+                              [class.is-closed]="!isJobOpen(job.status)"
                             >
-                              <hugeicons-icon [icon]="deleteIcon" [size]="15" color="#ef4444" [strokeWidth]="1.75" />
-                            </button>
+                              {{ jobStatusLabel(job.status) }}
+                            </span>
+                          </div>
+                          <p class="tj-expand__desc">{{ job.description }}</p>
+                          <div class="tj-expand__foot">
+                            <span>{{ relativeTime(job.createdAt) }}</span>
+                            @if (isLeader()) {
+                              <span class="tj-card__req">
+                                {{ requestsForJob(job.id).length }} apps
+                                @if (requestCountForJob(job.id) > 0) {
+                                  · {{ requestCountForJob(job.id) }} pending
+                                }
+                              </span>
+                            }
+                          </div>
+                        </div>
+                        <span class="tj-expand__chevron" aria-hidden="true">
+                          {{ expandedJobId() === job.id ? '▴' : '▾' }}
+                        </span>
+                      </button>
+
+                      @if (expandedJobId() === job.id) {
+                        <div class="tj-expand__body">
+                          @if (expandedJobLoading()) {
+                            <div class="h-24 animate-pulse rounded-xl bg-[#f3f4f6]"></div>
+                          } @else {
+                            <div class="tj-expand__about">
+                              <p class="tw-mono-label">About the role</p>
+                              <p class="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-[#4b5563]">
+                                {{ expandedJobDetails()?.description || job.description || 'No description.' }}
+                              </p>
+                              @if (expandedJobDetails()?.skills?.length) {
+                                <div class="mt-4 flex flex-wrap gap-1.5">
+                                  @for (skill of expandedJobDetails()!.skills; track skill.id) {
+                                    <span class="tj-skill">{{ skill.name }}</span>
+                                  }
+                                </div>
+                              }
+                            </div>
+
+                            @if (isLeader()) {
+                              <div class="tj-expand__actions">
+                                <button type="button" class="tj-req__btn tj-req__btn--reject" (click)="openEditJob(job, $event)">
+                                  Edit
+                                </button>
+                                @if (isJobOpen(job.status)) {
+                                  <button type="button" class="tj-req__btn tj-req__btn--reject" (click)="closeJob(job, $event)">
+                                    Close opening
+                                  </button>
+                                }
+                              </div>
+
+                              <section class="tj-apps">
+                                <button
+                                  type="button"
+                                  class="tj-apps__toggle"
+                                  (click)="toggleRequests(job.id, $event)"
+                                >
+                                  <div>
+                                    <strong>Applications</strong>
+                                    <em>
+                                      {{ requestsForJob(job.id).length }} total
+                                      @if (requestCountForJob(job.id) > 0) {
+                                        · {{ requestCountForJob(job.id) }} pending
+                                      }
+                                    </em>
+                                  </div>
+                                  <span>{{ isRequestsOpen(job.id) ? '▴' : '▾' }}</span>
+                                </button>
+
+                                @if (isRequestsOpen(job.id)) {
+                                  <div class="tj-apps__panel">
+                                    <div class="tj-ai">
+                                      <div class="tj-ai__copy">
+                                        <p class="tj-ai__title">AI match ranking</p>
+                                        <p class="tj-ai__sub">
+                                          Rank applicants by profile skills and CV fit for this role.
+                                        </p>
+                                        @if (aiRankHint(job.id); as hint) {
+                                          <p class="tj-ai__hint">{{ hint }}</p>
+                                        }
+                                      </div>
+                                      <button
+                                        type="button"
+                                        class="tj-ai__btn"
+                                        [class.is-on]="isAiRankEnabled(job.id)"
+                                        [disabled]="aiRankLoadingJobId() === job.id"
+                                        (click)="toggleAiRank(job.id, $event)"
+                                      >
+                                        @if (aiRankLoadingJobId() === job.id) {
+                                          Ranking…
+                                        } @else if (isAiRankEnabled(job.id)) {
+                                          AI on
+                                        } @else {
+                                          Rank with AI
+                                        }
+                                      </button>
+                                    </div>
+
+                                    <div class="tj-apps__filters" role="tablist">
+                                      @for (f of [
+                                        { id: 'pending', label: 'Pending' },
+                                        { id: 'all', label: 'All' },
+                                        { id: 'accepted', label: 'Accepted' },
+                                        { id: 'rejected', label: 'Rejected' }
+                                      ]; track f.id) {
+                                        <button
+                                          type="button"
+                                          class="tj-apps__chip"
+                                          [class.is-active]="appsFilterForJob(job.id) === f.id"
+                                          (click)="setAppsFilter(job.id, $any(f.id), $event)"
+                                        >
+                                          {{ f.label }}
+                                        </button>
+                                      }
+                                    </div>
+
+                                    @if (joinRequestsLoading() && !joinRequestsLoaded()) {
+                                      <div class="h-16 animate-pulse rounded-xl bg-[#f3f4f6]"></div>
+                                    } @else if (joinRequestsError()) {
+                                      <p class="text-sm text-[#93000a]">{{ joinRequestsError() }}</p>
+                                      <button
+                                        type="button"
+                                        class="mt-2 text-xs font-bold text-[#4130d7]"
+                                        (click)="retryJoinRequests(t.id, $event)"
+                                      >
+                                        Retry
+                                      </button>
+                                    } @else if (filteredRequestsForJob(job.id).length === 0) {
+                                      <div class="tj-apps__empty">
+                                        <p>No applications in this filter.</p>
+                                      </div>
+                                    } @else {
+                                      <div class="tj-apps__list">
+                                        @for (req of pagedRequestsForJob(job.id); track req.id) {
+                                          <article class="tj-app" [class.is-top]="req.matchRank === 1 || (matchPercent(req) ?? 0) >= 85">
+                                            <div class="tj-app__main">
+                                              @if (req.matchRank || matchPercent(req) != null) {
+                                                <div class="tj-app__rank" aria-label="AI match">
+                                                  @if (req.matchRank) {
+                                                    <span class="tj-app__rank-num">#{{ req.matchRank }}</span>
+                                                  }
+                                                  @if (matchPercent(req); as pct) {
+                                                    <span class="tj-app__score">{{ pct }}% match</span>
+                                                  }
+                                                </div>
+                                              }
+
+                                              <div class="tj-app__user">
+                                                <div class="tj-req__avatar" aria-hidden="true">
+                                                  @if (req.profilePicture) {
+                                                    <img [src]="req.profilePicture" alt="" />
+                                                  } @else {
+                                                    <span>{{ initials(req.fullName) }}</span>
+                                                  }
+                                                </div>
+                                                <div class="min-w-0 flex-1">
+                                                  <div class="flex flex-wrap items-center gap-2">
+                                                    <p class="tj-req__name">{{ req.fullName }}</p>
+                                                    <span
+                                                      class="tj-badge tj-badge--sm"
+                                                      [class.is-pending]="isRequestPending(req.status)"
+                                                      [class.is-accepted]="requestStatusLabel(req.status) === 'Accepted'"
+                                                      [class.is-rejected]="requestStatusLabel(req.status) === 'Rejected'"
+                                                    >
+                                                      {{ requestStatusLabel(req.status) }}
+                                                    </span>
+                                                  </div>
+                                                  <div class="tj-app__meta">
+                                                    @if (req.averageRating > 0) {
+                                                      <span>{{ req.averageRating | number: '1.0-1' }}★</span>
+                                                    }
+                                                    @if (req.completedProjects > 0) {
+                                                      <span>{{ req.completedProjects }} projects</span>
+                                                    }
+                                                    <span>{{ relativeTime(req.requestedAt) }}</span>
+                                                  </div>
+                                                  @if (req.coverLetter) {
+                                                    <p class="tj-req__letter">{{ req.coverLetter }}</p>
+                                                  }
+                                                  @if (req.aiReasoning) {
+                                                    <p class="tj-app__why">{{ req.aiReasoning }}</p>
+                                                  }
+                                                  @if (req.cvUrl) {
+                                                    <a
+                                                      class="tj-app__cv"
+                                                      [href]="req.cvUrl"
+                                                      target="_blank"
+                                                      rel="noopener"
+                                                      (click)="$event.stopPropagation()"
+                                                    >
+                                                      View CV / portfolio
+                                                    </a>
+                                                  }
+                                                </div>
+                                              </div>
+                                            </div>
+
+                                            @if (isRequestPending(req.status)) {
+                                              <div class="tj-req__actions">
+                                                <button
+                                                  type="button"
+                                                  class="tj-req__btn tj-req__btn--accept"
+                                                  [disabled]="requestActionId() === req.id"
+                                                  (click)="acceptRequest(req)"
+                                                >
+                                                  Accept
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  class="tj-req__btn tj-req__btn--reject"
+                                                  [disabled]="requestActionId() === req.id"
+                                                  (click)="rejectRequest(req)"
+                                                >
+                                                  Reject
+                                                </button>
+                                              </div>
+                                            }
+                                          </article>
+                                        }
+                                      </div>
+
+                                      @if (appsTotalPages(job.id) > 1) {
+                                        <div class="tj-pager">
+                                          <button
+                                            type="button"
+                                            class="tj-pager__btn"
+                                            [disabled]="appsPage(job.id) <= 1"
+                                            (click)="setAppsPage(job.id, appsPage(job.id) - 1, $event)"
+                                          >
+                                            Prev
+                                          </button>
+                                          <span class="tj-pager__label">
+                                            Page {{ appsPage(job.id) }} of {{ appsTotalPages(job.id) }}
+                                            · {{ filteredRequestsForJob(job.id).length }} apps
+                                          </span>
+                                          <button
+                                            type="button"
+                                            class="tj-pager__btn"
+                                            [disabled]="appsPage(job.id) >= appsTotalPages(job.id)"
+                                            (click)="setAppsPage(job.id, appsPage(job.id) + 1, $event)"
+                                          >
+                                            Next
+                                          </button>
+                                        </div>
+                                      }
+
+                                      @if (joinRequestsHasMore()) {
+                                        <button
+                                          type="button"
+                                          class="tj-apps__more"
+                                          [disabled]="joinRequestsLoading()"
+                                          (click)="loadMoreJoinRequests($event)"
+                                        >
+                                          {{ joinRequestsLoading() ? 'Loading…' : 'Load more applications from server' }}
+                                        </button>
+                                      }
+                                    }
+                                  </div>
+                                }
+                              </section>
+                            } @else if (!isTeamMember() && isJobOpen(job.status)) {
+                              <div class="tj-expand__actions">
+                                @if (appliedJobIds().includes(job.id)) {
+                                  <span class="inline-flex h-10 items-center rounded-full bg-[#ecfdf3] px-4 text-xs font-bold text-[#15803d]">
+                                    Applied
+                                  </span>
+                                } @else {
+                                  <button
+                                    type="button"
+                                    class="tj-req__btn tj-req__btn--accept"
+                                    style="padding: 0.65rem 1.1rem; font-size: 0.8rem"
+                                    (click)="openApplyJob(job); $event.stopPropagation()"
+                                  >
+                                    Apply to this job
+                                  </button>
+                                }
+                              </div>
+                            }
                           }
-                          <button
-                            type="button"
-                            class="tj-card__view"
-                            (click)="openJobDetailFromCard(job)"
-                          >
-                            Details
-                          </button>
                         </div>
                       }
                     </article>
                   }
+
+                  @if (jobsTotalPages() > 1) {
+                    <div class="tj-pager tj-pager--jobs">
+                      <button
+                        type="button"
+                        class="tj-pager__btn"
+                        [disabled]="jobsPage() <= 1"
+                        (click)="setJobsPage(jobsPage() - 1)"
+                      >
+                        Prev
+                      </button>
+                      <span class="tj-pager__label">
+                        Page {{ jobsPage() }} of {{ jobsTotalPages() }} · {{ jobs().length }} jobs
+                      </span>
+                      <button
+                        type="button"
+                        class="tj-pager__btn"
+                        [disabled]="jobsPage() >= jobsTotalPages()"
+                        (click)="setJobsPage(jobsPage() + 1)"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  }
+
+                  @if (isLeader() && codeJoinRequests().length > 0) {
+                    <section class="tj-job-requests mt-2">
+                      <div class="tj-job-requests__head">
+                        <p class="tw-mono-label">Join by code</p>
+                        <span class="text-xs text-[#9ca3af]">{{ codeJoinRequests().length }}</span>
+                      </div>
+                      <div class="space-y-2">
+                        @for (req of codeJoinRequests(); track req.id) {
+                          <article class="tj-req tj-req--inline">
+                            <div class="tj-req__user">
+                              <div class="tj-req__avatar" aria-hidden="true">
+                                @if (req.profilePicture) {
+                                  <img [src]="req.profilePicture" alt="" />
+                                } @else {
+                                  <span>{{ initials(req.fullName) }}</span>
+                                }
+                              </div>
+                              <div class="min-w-0 flex-1">
+                                <p class="tj-req__name">{{ req.fullName }}</p>
+                                <p class="tj-req__handle">{{ relativeTime(req.requestedAt) }}</p>
+                              </div>
+                            </div>
+                            @if (isRequestPending(req.status)) {
+                              <div class="tj-req__actions">
+                                <button
+                                  type="button"
+                                  class="tj-req__btn tj-req__btn--accept"
+                                  [disabled]="requestActionId() === req.id"
+                                  (click)="acceptRequest(req)"
+                                >
+                                  Accept
+                                </button>
+                                <button
+                                  type="button"
+                                  class="tj-req__btn tj-req__btn--reject"
+                                  [disabled]="requestActionId() === req.id"
+                                  (click)="rejectRequest(req)"
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            }
+                          </article>
+                        }
+                      </div>
+                    </section>
+                  }
                 </div>
               }
             </div>
-
-            @if (isLeader()) {
-              <section class="tj-requests" aria-label="Join requests">
-                <div class="tj-requests__head">
-                  <div>
-                    <p class="tw-mono-label">Join requests</p>
-                    <h3 class="tj-requests__title">
-                      @if (selectedJob(); as sj) {
-                        Applications for “{{ sj.title }}”
-                      } @else {
-                        Incoming applications
-                      }
-                    </h3>
-                    <p class="mt-1 text-xs text-[#6b7280]">
-                      Click a job on the left to filter. Accept to add the developer to your team.
-                    </p>
-                  </div>
-                  @if (selectedJobId()) {
-                    <button type="button" class="tj-requests__clear" (click)="clearSelectedJob()">
-                      Show all
-                    </button>
-                  }
-                </div>
-
-                @if (joinRequestsLoading()) {
-                  <div class="space-y-3 p-1">
-                    @for (i of [1, 2, 3]; track i) {
-                      <div class="h-[88px] animate-pulse rounded-2xl bg-[#f3f4f6]"></div>
-                    }
-                  </div>
-                } @else if (joinRequestsError()) {
-                  <p class="px-1 text-sm text-[#93000a]">{{ joinRequestsError() }}</p>
-                } @else if (filteredJoinRequests().length === 0) {
-                  <div class="tj-requests__empty">
-                    <p class="font-display text-sm font-semibold text-[#111827]">No applications yet</p>
-                    <p class="mt-1 text-xs leading-relaxed text-[#6b7280]">
-                      @if (selectedJob()) {
-                        Nobody has applied to this job yet.
-                      } @else {
-                        When freelancers apply to your jobs (or join by code), their requests appear here with name, photo, and cover letter.
-                      }
-                    </p>
-                  </div>
-                } @else {
-                  <div class="tj-requests__list">
-                    @for (req of filteredJoinRequests(); track req.id) {
-                      <article class="tj-req">
-                        <div class="tj-req__user">
-                          <div class="tj-req__avatar" aria-hidden="true">
-                            @if (req.profilePicture) {
-                              <img [src]="req.profilePicture" [alt]="" />
-                            } @else {
-                              <span>{{ initials(req.fullName) }}</span>
-                            }
-                          </div>
-                          <div class="min-w-0 flex-1">
-                            <div class="flex flex-wrap items-center gap-2">
-                              <p class="tj-req__name">{{ req.fullName }}</p>
-                              <span
-                                class="tj-badge tj-badge--sm"
-                                [class.is-pending]="isRequestPending(req.status)"
-                                [class.is-accepted]="requestStatusLabel(req.status) === 'Accepted'"
-                                [class.is-rejected]="requestStatusLabel(req.status) === 'Rejected'"
-                              >
-                                {{ requestStatusLabel(req.status) }}
-                              </span>
-                            </div>
-                            @if (req.userName) {
-                              <p class="tj-req__handle">&#64;{{ req.userName }}</p>
-                            }
-                            <div class="tj-req__stats">
-                              @if (req.averageRating > 0) {
-                                <span class="inline-flex items-center gap-1">
-                                  <hugeicons-icon [icon]="starIcon" [size]="12" color="#f59e0b" [strokeWidth]="1.75" />
-                                  {{ req.averageRating | number: '1.1-1' }}
-                                </span>
-                              }
-                              <span>{{ relativeTime(req.requestedAt) }}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <p class="tj-req__job">
-                          Applied for
-                          <strong>{{ req.teamJobTitle || 'Team join (code)' }}</strong>
-                        </p>
-
-                        @if (req.coverLetter) {
-                          <p class="tj-req__letter">{{ req.coverLetter }}</p>
-                        } @else {
-                          <p class="tj-req__letter tj-req__letter--muted">No cover letter</p>
-                        }
-
-                        @if (isRequestPending(req.status)) {
-                          <div class="tj-req__actions">
-                            <button
-                              type="button"
-                              class="tj-req__reject"
-                              [disabled]="requestActionId() === req.id"
-                              (click)="rejectRequest(req)"
-                            >
-                              Reject
-                            </button>
-                            <button
-                              type="button"
-                              class="tj-req__accept"
-                              [disabled]="requestActionId() === req.id"
-                              (click)="acceptRequest(req)"
-                            >
-                              {{ requestActionId() === req.id ? 'Saving…' : 'Accept' }}
-                            </button>
-                          </div>
-                        }
-                      </article>
-                    }
-                  </div>
-                }
-              </section>
-            }
           </div>
         </div>
       }
@@ -1045,60 +1402,139 @@
 
       <!-- MESSAGES -->
       @if (activeTab() === 'messages') {
-        <div class="grid grid-cols-1 gap-4 pt-8 lg:grid-cols-[300px_1fr]">
-          <div class="tw-card overflow-hidden">
-            @if (isLeader()) {
-              <div class="border-b border-[#f3f4f6] px-4 py-3">
-                <p class="tw-mono-label">Client negotiations</p>
-                <p class="mt-1 text-xs text-[#6b7280]">Proposal rooms · leaders only</p>
-              </div>
-              <div class="divide-y divide-[#f3f4f6]">
-                <button type="button" class="flex w-full cursor-pointer flex-col gap-0.5 px-4 py-3 text-left hover:bg-[#fafafa]">
-                  <span class="text-[13px] font-semibold text-[#111827]">Lumina Finance · Lumina Tech</span>
-                  <span class="text-[11px] text-[#9ca3af]">Active · You can send</span>
-                </button>
-                <button type="button" class="flex w-full cursor-pointer flex-col gap-0.5 px-4 py-3 text-left hover:bg-[#fafafa]">
-                  <span class="text-[13px] font-semibold text-[#111827]">Velox Marketplace · Velox</span>
-                  <span class="text-[11px] text-[#d97706]">Read only · another leader is speaker</span>
-                </button>
-              </div>
-            }
+        <div class="pt-8">
+          <app-messages-panel
+            mode="team"
+            [teamId]="t.id"
+            [teamName]="t.name"
+            [teamLogo]="t.logo"
+            [embedded]="true"
+            [isLeader]="isLeader()"
+          />
+        </div>
+      }
 
-            <div class="border-b border-[#f3f4f6] px-4 py-3" [class.border-t]="isLeader()" [class.border-[#f3f4f6]]="isLeader()">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="tw-mono-label">Team groups</p>
-                  <p class="mt-1 text-xs text-[#6b7280]">Internal rooms</p>
-                </div>
+      <!-- MEMBERS -->
+      @if (activeTab() === 'members') {
+        <div class="tm-page pt-8">
+          <div class="tm-hero">
+            <div class="min-w-0">
+              <p class="tw-mono-label">Roster</p>
+              <h2 class="tm-hero__title">
+                Team members
+                <span>{{ members().length || t.membersCount }}</span>
+              </h2>
+              <p class="tm-hero__sub">
                 @if (isLeader()) {
-                  <button type="button" class="text-[12px] font-semibold text-[#4130d7]">Create</button>
+                  Manage roles for your crew. The owner always stays a leader.
+                } @else {
+                  Everyone currently on this team.
                 }
-              </div>
+              </p>
             </div>
-            <div class="divide-y divide-[#f3f4f6]">
-              <button type="button" class="flex w-full cursor-pointer flex-col gap-0.5 px-4 py-3 text-left hover:bg-[#fafafa]">
-                <span class="text-[13px] font-semibold text-[#111827]">Design sync</span>
-                <span class="text-[11px] text-[#9ca3af]">Team group</span>
+            @if (isLeader()) {
+              <button type="button" class="tm-invite" (click)="openInvite()">
+                <hugeicons-icon [icon]="addIcon" [size]="16" color="currentColor" [strokeWidth]="2" />
+                Invite member
               </button>
-              @if (!isLeader()) {
-                <p class="px-4 py-4 text-xs text-[#6b7280]">
-                  Client negotiations are only visible to team leaders.
-                </p>
-              }
-            </div>
+            }
           </div>
 
-          <div class="tw-card flex min-h-[360px] flex-col items-center justify-center px-6 text-center">
-            <hugeicons-icon [icon]="messageIcon" [size]="28" color="#9ca3af" [strokeWidth]="1.5" />
-            <p class="mt-3 font-display text-sm font-semibold text-[#111827]">Select a conversation</p>
-            <p class="mt-1 max-w-sm text-xs text-[#6b7280]">
-              @if (isLeader()) {
-                Open a client negotiation or team group. Only the proposal speaker can send in negotiations.
-              } @else {
-                Open a team group you belong to. Client chats stay with leaders.
+          @if (membersLoading()) {
+            <div class="tm-list">
+              @for (i of [1, 2, 3]; track i) {
+                <div class="tm-card tm-card--skel animate-pulse"></div>
               }
-            </p>
-          </div>
+            </div>
+          } @else if (membersError()) {
+            <div class="tm-error">
+              <p>{{ membersError() }}</p>
+              <button type="button" (click)="loadMembers(t.id)">Retry</button>
+            </div>
+          } @else if (members().length === 0) {
+            <div class="tm-empty">
+              <div class="tm-empty__icon" aria-hidden="true">
+                <hugeicons-icon [icon]="groupIcon" [size]="22" color="currentColor" [strokeWidth]="1.75" />
+              </div>
+              <p class="tm-empty__title">No members found yet</p>
+              <p class="tm-empty__sub">Invite teammates with the team code to grow the roster.</p>
+              @if (isLeader()) {
+                <button type="button" class="tm-invite" (click)="openInvite()">Invite someone</button>
+              }
+            </div>
+          } @else {
+            <div class="tm-list">
+              @for (member of members(); track member.userId) {
+                <article
+                  class="tm-card"
+                  [class.is-owner]="member.isOwner"
+                  [class.is-leader]="member.role === 'TeamLeader'"
+                >
+                  <div class="tm-card__identity">
+                    <span class="tm-avatar" aria-hidden="true">
+                      @if (member.imageUrl) {
+                        <img [src]="member.imageUrl" alt="" />
+                      } @else {
+                        {{ initials(member.name) }}
+                      }
+                    </span>
+                    <div class="tm-card__copy">
+                      <div class="tm-card__name-row">
+                        <h3 class="tm-card__name">{{ member.name }}</h3>
+                        @if (member.isOwner) {
+                          <span class="tm-owner-pill">Owner</span>
+                        }
+                      </div>
+                      <p class="tm-card__meta">
+                        <span
+                          class="tm-meta-dot"
+                          [class.is-leader]="member.role === 'TeamLeader'"
+                          aria-hidden="true"
+                        ></span>
+                        {{ roleLabel(member.role) }}
+                        @if (member.job) {
+                          <span class="tm-meta-sep">·</span>
+                          <span class="tm-meta-job">{{ member.job }}</span>
+                        }
+                      </p>
+                    </div>
+                  </div>
+
+                  @if (isLeader()) {
+                    <div class="tm-card__footer">
+                      <label class="tm-role-field">
+                        <span class="tm-role-field__label">Role</span>
+                        <div class="tm-role-select-wrap">
+                          <select
+                            [disabled]="member.isOwner || memberRoleUpdating() === member.userId"
+                            [ngModel]="member.role === 'TeamLeader' ? 'TeamLeader' : 'TeamMember'"
+                            (ngModelChange)="changeMemberRole(member, $event)"
+                          >
+                            <option value="TeamLeader">Team Leader</option>
+                            <option value="TeamMember">Team Member</option>
+                          </select>
+                        </div>
+                      </label>
+                      @if (member.isOwner) {
+                        <p class="tm-owner-hint">Owner role is locked</p>
+                      } @else if (memberRoleUpdating() === member.userId) {
+                        <p class="tm-owner-hint">Updating…</p>
+                      }
+                    </div>
+                  } @else {
+                    <div class="tm-card__footer tm-card__footer--chip">
+                      <span
+                        class="tm-role-chip"
+                        [class.is-leader]="member.role === 'TeamLeader'"
+                      >
+                        {{ roleLabel(member.role) }}
+                      </span>
+                    </div>
+                  }
+                </article>
+              }
+            </div>
+          }
         </div>
       }
     }
@@ -1385,130 +1821,58 @@
   </div>
 }
 
-@if (jobDetailOpen() && team(); as detailTeam) {
-  <div class="modal-backdrop" (click)="closeJobDetail()">
-    <div class="modal-panel modal-panel--wide tj-detail-panel" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
-      <div class="flex items-start justify-between gap-3">
-        <div class="flex min-w-0 items-center gap-3">
-          <div class="tj-detail-logo" aria-hidden="true">
-            @if (detailTeam.logo) {
-              <img [src]="detailTeam.logo" [alt]="" />
-            } @else {
-              <span>{{ initials(detailTeam.name) }}</span>
-            }
-          </div>
-          <div class="min-w-0">
-            <p class="font-display text-sm font-bold text-[#111827]">{{ detailTeam.name }}</p>
-            @if (jobDetail()) {
-              <p class="text-xs text-[#9ca3af]">{{ relativeTime(jobDetail()!.createdAt) }}</p>
-            }
-          </div>
-        </div>
-        <button type="button" class="tj-icon-btn" aria-label="Close" (click)="closeJobDetail()">
-          <hugeicons-icon [icon]="closeIcon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
-        </button>
-      </div>
-
-      @if (jobDetailLoading()) {
-        <div class="mt-5 space-y-3">
-          <div class="h-7 w-2/3 animate-pulse rounded-lg bg-[#f3f4f6]"></div>
-          <div class="h-24 animate-pulse rounded-xl bg-[#f3f4f6]"></div>
-        </div>
-      } @else if (jobDetailError()) {
-        <p class="mt-5 text-sm text-[#93000a]">{{ jobDetailError() }}</p>
-      } @else if (jobDetail(); as detail) {
-        <h2 class="mt-4 font-display text-2xl font-bold tracking-tight text-[#111827]">{{ detail.title }}</h2>
-        <p class="mt-1 text-sm text-[#6b7280]">{{ jobStatusLabel(detail.status) }} · Team opening</p>
-
-        @if (isLeader()) {
-          <div class="mt-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              class="inline-flex h-10 flex-1 items-center justify-center rounded-full bg-[#4130d7] px-4 font-display text-sm font-bold text-white hover:bg-[#3527b8]"
-              (click)="openEditJob(detail); closeJobDetail()"
-            >
-              Edit job
-            </button>
-            @if (isJobOpen(detail.status)) {
-              <button
-                type="button"
-                class="inline-flex h-10 items-center justify-center rounded-full border border-[#fecaca] px-4 font-display text-sm font-semibold text-[#ef4444] hover:bg-[#fff5f5]"
-                (click)="closeJob(detail)"
-              >
-                Close opening
-              </button>
-            }
-          </div>
-        }
-
-        <section class="mt-6 border-t border-[#f3f4f6] pt-5">
-          <h3 class="font-display text-sm font-bold text-[#111827]">About the job</h3>
-          <p class="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-[#6b7280]">{{ detail.description }}</p>
-        </section>
-
-        <section class="mt-5">
-          <h3 class="font-display text-sm font-bold text-[#111827]">Skills</h3>
-          <div class="mt-2 flex flex-wrap gap-1.5">
-            @for (skill of detail.skills; track skill.id) {
-              <span class="rounded-full bg-[#f4f3ff] px-3 py-1.5 text-xs font-semibold text-[#4130d7]">
-                {{ skill.name }}
-              </span>
-            } @empty {
-              <span class="text-xs text-[#98a2b3]">No skills listed</span>
-            }
-          </div>
-        </section>
-
-        @if (detailTeam.aboutUs) {
-          <section class="mt-5 border-t border-[#f3f4f6] pt-5">
-            <h3 class="font-display text-sm font-bold text-[#111827]">About us</h3>
-            <p class="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-[#6b7280]">{{ detailTeam.aboutUs }}</p>
-          </section>
-        }
-      }
-    </div>
-  </div>
-}
-
 @if (applyJobOpen()) {
   <div class="teams-filters-backdrop" (click)="closeApplyJob()" aria-hidden="true"></div>
   <div class="apply-job-modal" role="dialog" aria-modal="true" aria-label="Apply to team job">
     <div class="apply-job-modal__card">
-      <div class="flex items-start justify-between gap-3">
-        <div>
-          <p class="font-mono text-[10px] font-bold tracking-[0.08em] text-[#98a2b3] uppercase">Apply</p>
-          <h3 class="mt-1 font-display text-lg font-bold text-[#111827]">{{ applyJobTitle() }}</h3>
+      <header class="apply-job-modal__header">
+        <div class="apply-job-modal__badge" aria-hidden="true">
+          <hugeicons-icon [icon]="briefcaseIcon" [size]="18" color="#4130d7" [strokeWidth]="1.75" />
         </div>
-        <button type="button" class="tw-icon-edit" aria-label="Close" (click)="closeApplyJob()">
+        <div class="apply-job-modal__heading">
+          <p class="apply-job-modal__eyebrow">Apply to role</p>
+          <h3 class="apply-job-modal__title">{{ applyJobTitle() }}</h3>
+          @if (team(); as t) {
+            <p class="apply-job-modal__team">{{ t.name }}</p>
+          }
+        </div>
+        <button type="button" class="apply-job-modal__close" aria-label="Close" (click)="closeApplyJob()">
           <hugeicons-icon [icon]="closeIcon" [size]="18" color="currentColor" [strokeWidth]="1.75" />
         </button>
-      </div>
+      </header>
 
       @if (applySuccess()) {
-        <p class="mt-5 rounded-xl bg-[#ecfdf3] px-3 py-2.5 font-body text-sm font-semibold text-[#15803d]">
-          Application sent.
-        </p>
+        <div class="apply-job-modal__success">
+          <p class="apply-job-modal__success-title">Application sent</p>
+          <p class="apply-job-modal__success-copy">The team will review your request and get back to you.</p>
+        </div>
       } @else {
-        <label class="mt-5 block">
-          <span class="tw-mono-label">Cover letter (optional)</span>
-          <textarea
-            rows="4"
-            class="mt-1.5 w-full rounded-xl border border-[#e5e7eb] px-3 py-2.5 font-body text-sm outline-none focus:border-[#4130d7]"
-            [ngModel]="applyCoverLetter()"
-            (ngModelChange)="applyCoverLetter.set($event)"
-            maxlength="500"
-            placeholder="Why are you a good fit?"
-          ></textarea>
-        </label>
+        <div class="apply-job-modal__body">
+          <label class="apply-job-modal__field">
+            <span class="apply-job-modal__label">Cover letter <em>(optional)</em></span>
+            <textarea
+              rows="5"
+              class="apply-job-modal__textarea"
+              [ngModel]="applyCoverLetter()"
+              (ngModelChange)="applyCoverLetter.set($event.slice(0, 500))"
+              maxlength="500"
+              placeholder="Share a short intro — skills, relevant work, and why you want this role."
+            ></textarea>
+            <span class="apply-job-modal__hint">
+              <span>A few sentences is enough.</span>
+              <span>{{ applyCoverLetter().length }}/500</span>
+            </span>
+          </label>
 
-        @if (applyError()) {
-          <p class="mt-3 font-body text-sm text-[#93000a]">{{ applyError() }}</p>
-        }
+          @if (applyError()) {
+            <p class="apply-job-modal__error">{{ applyError() }}</p>
+          }
+        </div>
 
-        <div class="mt-5 flex gap-2">
+        <footer class="apply-job-modal__footer">
           <button
             type="button"
-            class="inline-flex h-10 flex-1 items-center justify-center rounded-full border border-[#e5e7eb] font-display text-sm font-bold text-[#374151]"
+            class="apply-job-modal__btn apply-job-modal__btn--ghost"
             [disabled]="applySubmitting()"
             (click)="closeApplyJob()"
           >
@@ -1516,13 +1880,13 @@
           </button>
           <button
             type="button"
-            class="inline-flex h-10 flex-1 items-center justify-center rounded-full bg-[#4130d7] font-display text-sm font-bold text-white disabled:opacity-55"
+            class="apply-job-modal__btn apply-job-modal__btn--primary"
             [disabled]="applySubmitting()"
             (click)="submitApplyJob()"
           >
             {{ applySubmitting() ? 'Sending…' : 'Submit application' }}
           </button>
-        </div>
+        </footer>
       }
     </div>
   </div>

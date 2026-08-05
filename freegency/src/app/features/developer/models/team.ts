@@ -24,6 +24,16 @@ export interface TeamMemberAvatar {
   imageUrl: string | null;
 }
 
+export interface TeamMemberRow {
+  userId: string;
+  name: string;
+  imageUrl: string | null;
+  role: TeamRoleLabel | string;
+  job?: string | null;
+  isOwner: boolean;
+  joinedAt?: string | null;
+}
+
 export interface Team {
   id: string;
   name: string;
@@ -58,6 +68,9 @@ export interface TeamJob {
   description: string;
   status: string;
   createdAt: string;
+  /** Present on browse / details payloads when the API includes the team. */
+  teamName?: string | null;
+  teamLogo?: string | null;
 }
 
 export interface TeamJobDetails extends TeamJob {
@@ -82,6 +95,14 @@ export interface TeamJoinRequest {
   requestedAt: string;
   teamJobId: string | null;
   teamJobTitle: string | null;
+  /** Future AI ranking — overall fit 0–100 (or 0–1 from API). */
+  matchScore?: number | null;
+  /** Future AI ranking — 1-based rank among applicants for this job. */
+  matchRank?: number | null;
+  /** Future AI ranking — short rationale from profile/CV analysis. */
+  aiReasoning?: string | null;
+  /** Optional CV / portfolio link when backend exposes it. */
+  cvUrl?: string | null;
 }
 
 export interface PagedTeamJoinRequests {
@@ -126,4 +147,5 @@ export type TeamDetailTab =
   | 'jobs'
   | 'tasks'
   | 'finance'
-  | 'messages';
+  | 'messages'
+  | 'members';

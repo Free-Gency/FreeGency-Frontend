@@ -1,0 +1,816 @@
+<div
+  class="msg-shell"
+  [class.msg-shell--embedded]="embedded()"
+  [class.msg-shell--page]="!embedded()"
+>
+  <aside class="msg-sidebar">
+    <header class="msg-sidebar__head">
+      <div class="msg-sidebar__title-row">
+        <div>
+          <p class="msg-kicker">{{ mode() === 'team' ? 'Team inbox' : 'Inbox' }}</p>
+          <h2 class="msg-title">Messages</h2>
+        </div>
+        @if (mode() === 'team' && isLeader()) {
+          <button type="button" class="msg-create-btn" (click)="openCreateGroup()">
+            Create group
+          </button>
+        }
+      </div>
+
+      <div class="msg-seg" role="tablist" aria-label="Conversation filters">
+        <button
+          type="button"
+          class="msg-seg__btn"
+          [class.is-active]="listFilter() === 'active'"
+          (click)="setListFilter('active')"
+        >
+          Active
+          <span class="msg-seg__count">{{ inboxFilterCounts().active }}</span>
+        </button>
+        <button
+          type="button"
+          class="msg-seg__btn"
+          [class.is-active]="listFilter() === 'discussions'"
+          (click)="setListFilter('discussions')"
+        >
+          Discussions
+          <span class="msg-seg__count">{{ inboxFilterCounts().discussions }}</span>
+        </button>
+        <button
+          type="button"
+          class="msg-seg__btn"
+          [class.is-active]="listFilter() === 'groups'"
+          (click)="setListFilter('groups')"
+        >
+          Groups
+          <span class="msg-seg__count">{{ inboxFilterCounts().groups }}</span>
+        </button>
+        <button
+          type="button"
+          class="msg-seg__btn"
+          [class.is-active]="listFilter() === 'projects'"
+          (click)="setListFilter('projects')"
+        >
+          Projects
+          <span class="msg-seg__count">{{ inboxFilterCounts().projects }}</span>
+        </button>
+        <button
+          type="button"
+          class="msg-seg__btn"
+          [class.is-active]="listFilter() === 'archived'"
+          (click)="setListFilter('archived')"
+        >
+          Archived
+          <span class="msg-seg__count">{{ inboxFilterCounts().archived }}</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="msg-search">
+      <input
+        type="search"
+        placeholder="Search conversations..."
+        [ngModel]="search()"
+        (ngModelChange)="search.set($event)"
+      />
+    </div>
+
+    <div class="msg-room-list">
+      @if (loading()) {
+        <div class="msg-empty">Loading conversations…</div>
+      } @else if (error() && !filteredRooms().length) {
+        <div class="msg-empty msg-empty--error">{{ error() }}</div>
+      } @else {
+        @for (room of filteredRooms(); track room.id) {
+          <button
+            type="button"
+            class="msg-room"
+            [class.is-active]="selectedRoom()?.id === room.id"
+            [class.msg-room--discussion]="roomKind(room) === 'discussion'"
+            [class.msg-room--group]="roomKind(room) === 'group'"
+            [class.msg-room--project]="roomKind(room) === 'project'"
+            [class.msg-room--archived]="roomKind(room) === 'archived'"
+            (click)="openChat(room)"
+          >
+            <span class="msg-avatar" [attr.data-kind]="roomKind(room)" aria-hidden="true">
+              @if (avatarUrl(room); as logo) {
+                <img [src]="logo" alt="" />
+              } @else {
+                {{ displayTitle(room).charAt(0).toUpperCase() }}
+              }
+            </span>
+            <span class="msg-room__body">
+              <span class="msg-room__row">
+                <span class="msg-room__title">{{ displayTitle(room) }}</span>
+                @if (room.lastMessageAt) {
+                  <span class="msg-room__time">{{ room.lastMessageAt | date: 'shortTime' }}</span>
+                }
+              </span>
+              <span class="msg-room__row">
+                <span class="msg-room__preview">
+                  {{ room.lastMessage || 'No messages yet' }}
+                </span>
+                @if (room.unreadCount > 0) {
+                  <span class="msg-unread">{{ room.unreadCount }}</span>
+                }
+              </span>
+              <span class="msg-room__tags">
+                <span class="msg-room__chip" [attr.data-kind]="roomKind(room)">
+                  {{ roomKindLabel(room) }}
+                </span>
+                @if (room.canSend === false && room.status !== 'Archived') {
+                  <span class="msg-room__chip msg-room__chip--muted">View only</span>
+                }
+              </span>
+            </span>
+          </button>
+        } @empty {
+          <div class="msg-empty">
+            @if (listFilter() === 'archived') {
+              No archived conversations
+            } @else if (listFilter() === 'discussions') {
+              No active discussions
+            } @else if (listFilter() === 'groups') {
+              No group chats yet
+            } @else if (listFilter() === 'projects') {
+              No project rooms yet — they appear after a proposal is accepted
+            } @else if (mode() === 'team' && !isLeader()) {
+              No team groups yet. Client negotiations stay with leaders.
+            } @else {
+              No conversations yet
+            }
+          </div>
+        }
+      }
+    </div>
+  </aside>
+
+  <section class="msg-thread">
+    @if (selectedRoom(); as room) {
+      <header class="msg-thread__head">
+        <div class="msg-avatar msg-avatar--lg" aria-hidden="true">
+          @if (avatarUrl(room); as logo) {
+            <img [src]="logo" alt="" />
+          } @else {
+            {{ displayTitle(room).charAt(0).toUpperCase() }}
+          }
+        </div>
+        <div class="msg-thread__meta">
+          <h3>{{ displayTitle(room) }}</h3>
+          <p>
+            <span
+              class="msg-online-dot"
+              [class.is-on]="isOtherOnline()"
+            ></span>
+            {{ isOtherOnline() ? 'Online' : 'Offline' }}
+            · {{ roomMeta(room) }}
+          </p>
+        </div>
+        <div class="msg-thread__actions">
+          @if (canProposePlan()) {
+            <button type="button" class="msg-propose-btn msg-propose-btn--header" (click)="openProposePlan(!!latestPlan())">
+              <hugeicons-icon [icon]="planIcon" [size]="15" color="currentColor" [strokeWidth]="1.8" aria-hidden="true" />
+              {{ proposeButtonLabel() }}
+            </button>
+          }
+          @if (canManageSelectedRoom()) {
+            <button type="button" class="msg-manage-btn" (click)="openManageRoom()">
+              Manage
+            </button>
+          }
+        </div>
+      </header>
+
+      <div
+        #messagesScroll
+        class="msg-thread__messages"
+        (scroll)="onMessagesScroll()"
+      >
+        @if (messagesLoading()) {
+          <div class="msg-empty">Loading messages…</div>
+        }
+
+        @for (message of threadMessages(); track message.id) {
+          @if (isSystem(message)) {
+            <div class="msg-system">
+              @if (systemMessageParts(message); as parts) {
+                <p class="msg-system__kicker">{{ parts.kicker }}</p>
+                @if (parts.title) {
+                  <p class="msg-system__title">{{ parts.title }}</p>
+                }
+                @if (parts.detail) {
+                  <p class="msg-system__detail">{{ parts.detail }}</p>
+                }
+              } @else {
+                <p class="msg-system__text">{{ message.text || 'System update' }}</p>
+              }
+              <time class="msg-system__time">{{ message.createdAt | date: 'shortTime' }}</time>
+            </div>
+          } @else if (isPlan(message)) {
+            @if (planForMessage(message); as plan) {
+              <div class="msg-plan-card">
+                <div class="msg-plan-card__hd">
+                  <h3>Milestone Plan · v{{ plan.version }}</h3>
+                  <span
+                    class="msg-plan-status"
+                    [class.st-proposed]="plan.status === 'Proposed'"
+                    [class.st-changes]="plan.status === 'ChangesRequested'"
+                    [class.st-accepted]="plan.status === 'Accepted'"
+                  >
+                    {{ planStatusLabel(plan.status) }}
+                  </span>
+                </div>
+
+                @if (plan.changeComment && plan.status === 'ChangesRequested') {
+                  <p class="msg-plan-card__comment">{{ plan.changeComment }}</p>
+                }
+
+                @for (item of plan.items; track item.id; let i = $index) {
+                  <div class="msg-plan-item">
+                    @if (itemTag(item); as tag) {
+                      <span
+                        class="msg-plan-tag"
+                        [class.is-new]="tag === 'New'"
+                        [class.is-updated]="tag === 'Updated'"
+                      >
+                        {{ tag }}
+                      </span>
+                    }
+                    <h4>#{{ item.sortOrder || i + 1 }} {{ item.title }}</h4>
+                    @if (item.definitionOfDone) {
+                      <p>{{ item.definitionOfDone }}</p>
+                    }
+                    <div class="msg-plan-item__meta">
+                      <span>${{ item.amount | number: '1.0-0' }}</span>
+                      @if (item.dueDate) {
+                        <span>Due {{ item.dueDate | date: 'mediumDate' }}</span>
+                      }
+                    </div>
+                  </div>
+                } @empty {
+                  <div class="msg-plan-item">
+                    <p>No milestones in this version yet.</p>
+                  </div>
+                }
+
+                <div class="msg-plan-card__total">
+                  Total · ${{ planTotal(plan) | number: '1.0-0' }} · Version {{ plan.version }}/{{ maxPlanVersions }}
+                </div>
+
+                @if (canClientActOnPlan(plan)) {
+                  <div class="msg-plan-card__actions">
+                    <button
+                      type="button"
+                      class="msg-plan-card__btn msg-plan-card__btn--primary"
+                      [disabled]="planActionBusy()"
+                      (click)="acceptPlan(plan)"
+                    >
+                      Accept this plan
+                    </button>
+                    <button
+                      type="button"
+                      class="msg-plan-card__btn msg-plan-card__btn--ghost"
+                      [disabled]="planActionBusy()"
+                      (click)="openRequestChanges(plan)"
+                    >
+                      Request Changes
+                    </button>
+                  </div>
+                }
+
+                @if (canDeveloperReviseFromPlan(plan)) {
+                  <div class="msg-plan-card__actions">
+                    <button
+                      type="button"
+                      class="msg-plan-card__btn msg-plan-card__btn--primary"
+                      (click)="openProposePlan(true)"
+                    >
+                      Send revised full plan (v{{ plan.version + 1 }})
+                    </button>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="msg-plan-card msg-plan-card--loading">
+                <div class="msg-plan-card__hd">
+                  <h3>Milestone Plan</h3>
+                </div>
+                <p class="msg-plan-card__loading">
+                  {{ plansLoading() ? 'Loading milestones…' : (message.text || 'Plan details unavailable. Refresh the chat.') }}
+                </p>
+              </div>
+            }
+          } @else {
+            <div class="msg-bubble-row" [class.is-mine]="message.isMine">
+              @if (!message.isMine) {
+                <span class="msg-avatar msg-avatar--sm" aria-hidden="true">
+                  {{ (message.senderName || '?').charAt(0).toUpperCase() }}
+                </span>
+              }
+              <div class="msg-bubble" [class.is-mine]="message.isMine">
+                @if (!message.isMine) {
+                  <p class="msg-bubble__name">
+                    {{ message.senderName }}
+                    @if (message.senderProfileType) {
+                      <span class="msg-bubble__role">{{ message.senderProfileType }}</span>
+                    }
+                  </p>
+                }
+                @if (message.text) {
+                  <p class="msg-bubble__text">{{ message.text }}</p>
+                }
+                @if (message.fileUrl) {
+                  @if (isImageAttachment(message.fileName, message.fileUrl)) {
+                    <a
+                      class="msg-attach msg-attach--image"
+                      [href]="message.fileUrl"
+                      target="_blank"
+                      rel="noopener"
+                    >
+                      <img [src]="message.fileUrl" [alt]="message.fileName || 'Image'" loading="lazy" />
+                      <span class="msg-attach__caption">{{ message.fileName || 'Image' }}</span>
+                    </a>
+                  } @else {
+                    <a
+                      class="msg-attach msg-attach--file"
+                      [href]="message.fileUrl"
+                      target="_blank"
+                      rel="noopener"
+                    >
+                      <span class="msg-attach__icon" aria-hidden="true">{{ fileExtLabel(message.fileName) }}</span>
+                      <span class="msg-attach__meta">
+                        <strong>{{ message.fileName || 'Attachment' }}</strong>
+                        <em>Open file</em>
+                      </span>
+                    </a>
+                  }
+                }
+                <div class="msg-bubble__foot">
+                  <time>{{ message.createdAt | date: 'shortTime' }}</time>
+                </div>
+              </div>
+            </div>
+          }
+        }
+      </div>
+
+      <footer class="msg-composer">
+        @if (planActionError()) {
+          <div class="msg-composer__error" role="alert">
+            <p>{{ planActionError() }}</p>
+            <button type="button" class="msg-composer__error-dismiss" (click)="dismissPlanActionError()">
+              Dismiss
+            </button>
+          </div>
+        }
+        @if (canProposePlan()) {
+          <button type="button" class="msg-propose-btn" (click)="openProposePlan(!!latestPlan())">
+            <span class="msg-propose-btn__icon" aria-hidden="true">
+              <hugeicons-icon [icon]="planIcon" [size]="18" color="currentColor" [strokeWidth]="1.8" />
+            </span>
+            <span class="msg-propose-btn__copy">
+              <strong>{{ proposeButtonLabel() }}</strong>
+              <em>Share milestones, amounts, and due dates</em>
+            </span>
+          </button>
+        } @else if (discussionPlanHint(); as hint) {
+          <p class="msg-composer__hint msg-composer__hint--plan">{{ hint }}</p>
+        }
+        @if (canCompose() && composeHint()) {
+          <p class="msg-composer__hint">{{ composeHint() }}</p>
+        }
+        @if (canCompose()) {
+          <div class="msg-composer__row">
+            <input
+              #fileInput
+              type="file"
+              hidden
+              [attr.accept]="attachAccept()"
+              (change)="onFileSelected($event)"
+            />
+            <div class="msg-attach-wrap" (click)="$event.stopPropagation()">
+              <button
+                type="button"
+                class="msg-icon-btn"
+                [class.is-open]="attachMenuOpen()"
+                title="Attach"
+                aria-haspopup="menu"
+                [attr.aria-expanded]="attachMenuOpen()"
+                (click)="toggleAttachMenu($event)"
+              >
+                <hugeicons-icon
+                  [icon]="addIcon"
+                  [size]="20"
+                  color="currentColor"
+                  [strokeWidth]="2"
+                  aria-hidden="true"
+                />
+              </button>
+              @if (attachMenuOpen()) {
+                <div class="msg-attach-menu" role="menu" aria-label="Attachment type">
+                  <button type="button" role="menuitem" (click)="pickAttachment('image', $event)">
+                    <span class="msg-attach-menu__icon" data-kind="image" aria-hidden="true">
+                      <hugeicons-icon [icon]="imageIcon" [size]="18" color="currentColor" [strokeWidth]="1.8" />
+                    </span>
+                    <span class="msg-attach-menu__copy">
+                      <strong>Photo</strong>
+                      <em>PNG, JPG, GIF, WebP</em>
+                    </span>
+                  </button>
+                  <button type="button" role="menuitem" (click)="pickAttachment('video', $event)">
+                    <span class="msg-attach-menu__icon" data-kind="video" aria-hidden="true">
+                      <hugeicons-icon [icon]="videoIcon" [size]="18" color="currentColor" [strokeWidth]="1.8" />
+                    </span>
+                    <span class="msg-attach-menu__copy">
+                      <strong>Video</strong>
+                      <em>MP4, WebM, MOV</em>
+                    </span>
+                  </button>
+                  <button type="button" role="menuitem" (click)="pickAttachment('document', $event)">
+                    <span class="msg-attach-menu__icon" data-kind="document" aria-hidden="true">
+                      <hugeicons-icon [icon]="documentIcon" [size]="18" color="currentColor" [strokeWidth]="1.8" />
+                    </span>
+                    <span class="msg-attach-menu__copy">
+                      <strong>Document</strong>
+                      <em>PDF, Word, Excel, ZIP</em>
+                    </span>
+                  </button>
+                  <button type="button" role="menuitem" (click)="pickAttachment('any', $event)">
+                    <span class="msg-attach-menu__icon" data-kind="any" aria-hidden="true">
+                      <hugeicons-icon [icon]="fileIcon" [size]="18" color="currentColor" [strokeWidth]="1.8" />
+                    </span>
+                    <span class="msg-attach-menu__copy">
+                      <strong>Other file</strong>
+                      <em>Any file type</em>
+                    </span>
+                  </button>
+                </div>
+              }
+            </div>
+            <input
+              class="msg-composer__input"
+              type="text"
+              placeholder="Write a message…"
+              [ngModel]="messageText()"
+              (ngModelChange)="messageText.set($event)"
+              (keydown)="onComposerKeydown($event)"
+            />
+            <button
+              type="button"
+              class="msg-send"
+              [disabled]="sending() || (!messageText().trim() && !selectedFile())"
+              (click)="sendMessage()"
+              aria-label="Send"
+            >
+              <hugeicons-icon
+                [icon]="sendIcon"
+                [size]="18"
+                color="currentColor"
+                [strokeWidth]="2"
+                aria-hidden="true"
+              />
+            </button>
+          </div>
+          @if (selectedFile(); as file) {
+            <div class="msg-file-chip" [class.msg-file-chip--image]="!!selectedFilePreview()">
+              @if (selectedFilePreview(); as preview) {
+                <img [src]="preview" alt="" class="msg-file-chip__thumb" />
+              }
+              <div class="msg-file-chip__meta">
+                <strong>{{ file.name }}</strong>
+                <em>{{ formatFileSize(file.size) }}</em>
+              </div>
+              <button type="button" (click)="clearFile()">Remove</button>
+            </div>
+          }
+        } @else if (composeHint()) {
+          <div class="msg-composer__blocked" role="status">
+            {{ composeHint() }}
+          </div>
+        }
+      </footer>
+    } @else {
+      <div class="msg-thread__empty">
+        <p class="msg-title">Select a conversation</p>
+        <p class="msg-sub">
+          @if (mode() === 'team') {
+            @if (isLeader()) {
+              Open a client negotiation or team group. Only the proposal speaker can send in negotiations.
+            } @else {
+              Open a team group you belong to. Client chats stay with leaders.
+            }
+          } @else {
+            Pick a chat from the left to continue the conversation.
+          }
+        </p>
+      </div>
+    }
+  </section>
+</div>
+
+@if (createGroupOpen()) {
+  <div class="msg-modal-backdrop" (click)="closeCreateGroup()">
+    <div class="msg-modal" (click)="$event.stopPropagation()">
+      <h3>Create private group</h3>
+      <p class="msg-modal__hint">
+        Internal team chat. Pick who can see it — you are always included.
+      </p>
+      <label class="msg-modal__field">
+        <span>Group name</span>
+        <input
+          type="text"
+          placeholder="e.g. Design sync"
+          [ngModel]="createGroupTitle()"
+          (ngModelChange)="createGroupTitle.set($event)"
+        />
+      </label>
+
+      <p class="msg-modal__label">Members</p>
+      @if (createGroupLoading()) {
+        <p class="msg-modal__hint">Loading members…</p>
+      } @else {
+        <div class="msg-modal__members">
+          @for (member of createGroupMembers(); track member.userId) {
+            <label class="msg-modal__member">
+              <input
+                type="checkbox"
+                [checked]="isCreateGroupSelected(member.userId)"
+                [disabled]="member.userId === authSessionUserId()"
+                (change)="toggleCreateGroupMember(member.userId)"
+              />
+              <span>{{ member.name }}</span>
+              <em>{{ member.role === 'TeamLeader' || member.isOwner ? 'Leader' : 'Member' }}</em>
+            </label>
+          } @empty {
+            <p class="msg-modal__hint">No members found.</p>
+          }
+        </div>
+      }
+
+      @if (createGroupError()) {
+        <p class="msg-modal__error">{{ createGroupError() }}</p>
+      }
+
+      <div class="msg-modal__actions">
+        <button type="button" class="msg-modal__ghost" (click)="closeCreateGroup()">Cancel</button>
+        <button
+          type="button"
+          class="msg-modal__primary"
+          [disabled]="createGroupSaving() || !createGroupTitle().trim()"
+          (click)="submitCreateGroup()"
+        >
+          {{ createGroupSaving() ? 'Creating…' : 'Create group' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (manageOpen()) {
+  <div class="msg-modal-backdrop" (click)="closeManageRoom()">
+    <div class="msg-modal msg-modal--manage" (click)="$event.stopPropagation()">
+      <h3>Manage chat</h3>
+      <p class="msg-modal__hint">
+        Leaders can rename this room, change its photo, and add team members.
+      </p>
+
+      <div class="msg-manage-logo">
+        <div class="msg-avatar msg-avatar--lg" aria-hidden="true">
+          @if (manageLogoPreview(); as preview) {
+            <img [src]="preview" alt="" />
+          } @else {
+            {{ (manageTitle() || 'G').charAt(0).toUpperCase() }}
+          }
+        </div>
+        <div class="msg-manage-logo__actions">
+          <input #manageLogoInput type="file" accept="image/*" hidden (change)="onManageLogoSelected($event)" />
+          <button type="button" class="msg-modal__ghost" (click)="manageLogoInput.click()">
+            Change photo
+          </button>
+          @if (manageLogoFile()) {
+            <button type="button" class="msg-modal__ghost" (click)="clearManageLogoFile()">Clear</button>
+          }
+        </div>
+      </div>
+
+      <label class="msg-modal__field">
+        <span>Chat name</span>
+        <input
+          type="text"
+          placeholder="Group name"
+          [ngModel]="manageTitle()"
+          (ngModelChange)="manageTitle.set($event)"
+        />
+      </label>
+
+      <p class="msg-modal__label">Add members from team</p>
+      @if (manageLoading()) {
+        <p class="msg-modal__hint">Loading members…</p>
+      } @else {
+        <div class="msg-modal__members">
+          @for (member of manageTeamMembers(); track member.userId) {
+            <label class="msg-modal__member" [class.is-disabled]="isAlreadyInChat(member.userId)">
+              <input
+                type="checkbox"
+                [checked]="isAlreadyInChat(member.userId) || isManageSelected(member.userId)"
+                [disabled]="isAlreadyInChat(member.userId)"
+                (change)="toggleManageMember(member.userId)"
+              />
+              <span>{{ member.name }}</span>
+              <em>
+                @if (isAlreadyInChat(member.userId)) {
+                  In chat
+                } @else if (member.role === 'TeamLeader' || member.isOwner) {
+                  Leader
+                } @else {
+                  Member
+                }
+              </em>
+            </label>
+          } @empty {
+            <p class="msg-modal__hint">No team members found.</p>
+          }
+        </div>
+      }
+
+      @if (manageError()) {
+        <p class="msg-modal__error">{{ manageError() }}</p>
+      }
+
+      <div class="msg-modal__actions">
+        <button type="button" class="msg-modal__ghost" (click)="closeManageRoom()">Cancel</button>
+        <button
+          type="button"
+          class="msg-modal__primary"
+          [disabled]="manageSaving() || manageLoading()"
+          (click)="submitManageRoom()"
+        >
+          {{ manageSaving() ? 'Saving…' : 'Save changes' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (proposeOpen()) {
+  <div class="msg-modal-backdrop" (click)="closeProposePlan()">
+    <div class="msg-modal msg-modal--plan" (click)="$event.stopPropagation()">
+      <header class="msg-plan-modal__hd">
+        <div class="msg-plan-modal__brand" aria-hidden="true">
+          <hugeicons-icon [icon]="checklistIcon" [size]="22" color="currentColor" [strokeWidth]="1.8" />
+        </div>
+        <div class="msg-plan-modal__titles">
+          <p class="msg-plan-modal__kicker">Negotiation</p>
+          <h3>{{ latestPlan()?.status === 'ChangesRequested' ? 'Propose revised plan' : 'Propose Milestone Plan' }}</h3>
+          <p class="msg-modal__hint">
+            Send a full plan — new or changed milestones are tagged automatically.
+          </p>
+        </div>
+        <button type="button" class="msg-plan-modal__close" (click)="closeProposePlan()" aria-label="Close">
+          <hugeicons-icon [icon]="closeIcon" [size]="18" color="currentColor" [strokeWidth]="2" />
+        </button>
+      </header>
+
+      <div class="msg-plan-modal__body">
+        <div class="msg-plan-form">
+          @for (row of proposeRows(); track $index; let i = $index) {
+            <div class="msg-plan-form__row">
+              <div class="msg-plan-form__head">
+                <span class="msg-plan-form__badge">{{ i + 1 }}</span>
+                <strong>Milestone {{ i + 1 }}</strong>
+                <button
+                  type="button"
+                  class="msg-plan-form__remove"
+                  (click)="removeProposeRow(i)"
+                  [disabled]="proposeRows().length <= 1"
+                  aria-label="Remove milestone"
+                >
+                  <hugeicons-icon [icon]="deleteIcon" [size]="16" color="currentColor" [strokeWidth]="1.8" />
+                </button>
+              </div>
+              <label class="msg-modal__field">
+                <span>Title</span>
+                <input
+                  type="text"
+                  [ngModel]="row.title"
+                  (ngModelChange)="updateProposeRow(i, { title: $event })"
+                  placeholder="UI Design & Styleguide"
+                />
+              </label>
+              <label class="msg-modal__field">
+                <span>Definition of done</span>
+                <textarea
+                  rows="2"
+                  [ngModel]="row.definitionOfDone"
+                  (ngModelChange)="updateProposeRow(i, { definitionOfDone: $event })"
+                  placeholder="Deliverables and acceptance criteria"
+                ></textarea>
+              </label>
+              <div class="msg-plan-form__grid">
+                <label class="msg-modal__field">
+                  <span>Amount (USD)</span>
+                  <input
+                    type="number"
+                    min="1"
+                    [ngModel]="row.amount"
+                    (ngModelChange)="updateProposeRow(i, { amount: $event === '' || $event == null ? null : +$event })"
+                    placeholder="1500"
+                  />
+                </label>
+                <label class="msg-modal__field">
+                  <span>Due date</span>
+                  <input
+                    type="date"
+                    [ngModel]="row.dueDate"
+                    (ngModelChange)="updateProposeRow(i, { dueDate: $event })"
+                  />
+                </label>
+              </div>
+            </div>
+          }
+        </div>
+
+        <button type="button" class="msg-plan-modal__add" (click)="addProposeRow()">
+          <hugeicons-icon [icon]="addCircleIcon" [size]="18" color="currentColor" [strokeWidth]="1.8" aria-hidden="true" />
+          Add milestone
+        </button>
+
+        @if (proposeError()) {
+          <p class="msg-modal__error">{{ proposeError() }}</p>
+        }
+      </div>
+
+      <footer class="msg-plan-modal__ft">
+        <button type="button" class="msg-modal__ghost" (click)="closeProposePlan()">Cancel</button>
+        <button
+          type="button"
+          class="msg-modal__primary msg-plan-modal__submit"
+          [disabled]="proposeSaving()"
+          (click)="submitProposePlan()"
+        >
+          <hugeicons-icon [icon]="sendIcon" [size]="16" color="currentColor" [strokeWidth]="2" aria-hidden="true" />
+          {{ proposeSaving() ? 'Sending…' : 'Send plan' }}
+        </button>
+      </footer>
+    </div>
+  </div>
+}
+
+@if (changesOpen()) {
+  <div class="msg-modal-backdrop" (click)="closeRequestChanges()">
+    <div class="msg-modal" (click)="$event.stopPropagation()">
+      <h3>Request changes</h3>
+      <p class="msg-modal__hint">
+        One comment for the full plan — not per-milestone approvals.
+      </p>
+      <label class="msg-modal__field">
+        <span>Comment</span>
+        <textarea
+          rows="4"
+          placeholder="e.g. Merge M1+M2, lower M3 budget, add a QA milestone…"
+          [ngModel]="changesComment()"
+          (ngModelChange)="changesComment.set($event)"
+        ></textarea>
+      </label>
+      @if (changesError()) {
+        <p class="msg-modal__error">{{ changesError() }}</p>
+      }
+      <div class="msg-modal__actions">
+        <button type="button" class="msg-modal__ghost" (click)="closeRequestChanges()">Cancel</button>
+        <button
+          type="button"
+          class="msg-modal__primary"
+          [disabled]="changesSaving() || !changesComment().trim()"
+          (click)="submitRequestChanges()"
+        >
+          {{ changesSaving() ? 'Sending…' : 'Send request' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (acceptOpen()) {
+  <div class="msg-modal-backdrop" (click)="closeAcceptPlan()">
+    <div class="msg-modal" (click)="$event.stopPropagation()">
+      <h3>Accept milestone plan</h3>
+      <p class="msg-modal__hint">
+        Accepting hires this candidate. The negotiation chat will archive and a project room will open
+        for delivery.
+      </p>
+      <div class="msg-modal__actions">
+        <button type="button" class="msg-modal__ghost" (click)="closeAcceptPlan()" [disabled]="planActionBusy()">
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="msg-modal__primary"
+          [disabled]="planActionBusy()"
+          (click)="confirmAcceptPlan()"
+        >
+          {{ planActionBusy() ? 'Hiring…' : 'Accept & hire' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

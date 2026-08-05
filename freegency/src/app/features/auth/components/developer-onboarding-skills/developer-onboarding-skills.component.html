@@ -1,0 +1,127 @@
+<section
+  class="skills-section relative z-10 mx-auto flex w-full max-w-[720px] flex-col items-center px-5 pb-12 pt-2 sm:px-10 sm:pt-4"
+>
+  <div class="mb-8 flex w-full max-w-[600px] flex-col items-center gap-4 text-center sm:mb-10">
+    <h1
+      class="font-display text-[28px] leading-9 font-bold tracking-[-0.02em] text-on-surface sm:text-[40px] sm:leading-[48px] sm:tracking-[-1.2px]"
+    >
+      Add your specialties & skills
+    </h1>
+    <p class="font-body text-sm leading-5 text-on-surface-variant sm:text-base sm:leading-6">
+      Choose specialties under your expertise, then pick the skills you use most.
+    </p>
+  </div>
+
+  @if (!loadingTaxonomy() && categoryIds().length === 0) {
+    <div class="mb-10 flex w-full max-w-[560px] flex-col items-center gap-4 text-center">
+      <p class="font-body text-sm text-on-surface-variant">
+        Select at least one expertise category first so we can load matching specialties.
+      </p>
+      <button type="button" class="skills-link" (click)="goBackToExpertise()">
+        Choose expertise
+      </button>
+    </div>
+  } @else {
+    <div class="mb-8 flex w-full flex-col gap-3">
+      <h2 class="font-mono text-sm font-bold tracking-[0.04em] text-on-surface uppercase">
+        Specialties
+      </h2>
+      @if (loadingTaxonomy()) {
+        <p class="font-body text-sm text-on-surface-variant">Loading specialties…</p>
+      } @else if (specialties().length === 0) {
+        <p class="font-body text-sm text-on-surface-variant">
+          No specialties found for your selected categories.
+        </p>
+      } @else {
+        <div class="skills-chip-grid" role="group" aria-label="Specialties">
+          @for (spec of specialties(); track spec.id) {
+            <button
+              type="button"
+              class="skills-chip"
+              [class.is-selected]="isSpecialtySelected(spec.id)"
+              (click)="toggleSpecialty(spec.id)"
+              [attr.aria-pressed]="isSpecialtySelected(spec.id)"
+            >
+              {{ specialtyLabel(spec) }}
+              @if (isSpecialtySelected(spec.id)) {
+                <hugeicons-icon
+                  [icon]="checkIcon"
+                  [size]="16"
+                  color="currentColor"
+                  [strokeWidth]="2"
+                  aria-hidden="true"
+                />
+              }
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="mb-10 flex w-full flex-col gap-3">
+      <div class="flex items-center justify-between gap-3">
+        <h2 class="font-mono text-sm font-bold tracking-[0.04em] text-on-surface uppercase">
+          Skills
+        </h2>
+        <span class="font-mono text-xs text-outline">
+          {{ selectedSkillIds().length }}/{{ maxSkills }}
+        </span>
+      </div>
+
+      @if (!selectedSpecialtyIds().length) {
+        <p class="font-body text-sm text-on-surface-variant">
+          Select specialties above to see related skills.
+        </p>
+      } @else if (loadingSkills()) {
+        <p class="font-body text-sm text-on-surface-variant">Loading skills…</p>
+      } @else {
+        @if (selectedSkills().length) {
+          <div class="skills-chip-grid mb-2" aria-label="Selected skills">
+            @for (skill of selectedSkills(); track skill.id) {
+              <button
+                type="button"
+                class="skills-chip is-selected"
+                (click)="removeSkill(skill.id)"
+              >
+                {{ skill.name }}
+                <span aria-hidden="true">×</span>
+              </button>
+            }
+          </div>
+        }
+
+        <div class="skills-chip-grid" role="group" aria-label="Available skills">
+          @for (skill of popularSkills(); track skill.id) {
+            <button type="button" class="skills-chip" (click)="toggleSkill(skill.id)">
+              {{ skill.name }}
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <div class="flex w-full max-w-[560px] flex-col items-center gap-6">
+    @if (errorMessage()) {
+      <p class="w-full text-center text-sm text-error" role="alert">{{ errorMessage() }}</p>
+    }
+
+    <button
+      type="button"
+      class="skills-continue"
+      [disabled]="loading() || loadingTaxonomy()"
+      (click)="onContinue()"
+    >
+      {{ loading() ? 'Saving...' : 'Continue' }}
+    </button>
+
+    <button
+      type="button"
+      class="skills-skip"
+      [disabled]="loading()"
+      (click)="onSkip()"
+    >
+      Skip for now
+    </button>
+  </div>
+</section>

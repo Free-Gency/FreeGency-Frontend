@@ -211,8 +211,8 @@ export const routes: Routes = [
     },
     loadComponent: () =>
       import(
-        './features/developer/pages/developer-placeholder/developer-placeholder.component'
-      ).then((m) => m.DeveloperPlaceholderComponent),
+        './features/developer/pages/developer-messages/developer-messages.component'
+      ).then((m) => m.DeveloperMessagesComponent),
   },
   {
     path: '',

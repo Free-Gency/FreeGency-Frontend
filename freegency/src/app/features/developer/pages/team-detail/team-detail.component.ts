@@ -29,16 +29,18 @@ import { TaxonomyApiService } from '../../../auth/data-access/taxonomy-api.servi
 import { Project } from '../../../../shared/models/Project';
 import { DeveloperViewNavbarComponent } from '../../../../shared/components/developer-view-navbar/developer-view-navbar.component';
 import { DeveloperManageWorkService } from '../../data-access/developer-manage-work.service';
-import { TeamsService } from '../../data-access/teams.service';
+import { TeamsService, type TeamReview } from '../../data-access/teams.service';
 import {
   Team,
   TeamDetailTab,
   TeamJob,
   TeamJobDetails,
   TeamJoinRequest,
+  TeamMemberRow,
   TeamPortfolioProject,
   TeamRoleLabel,
 } from '../../models/team';
+import { MessagesPanelComponent } from '../../../chat/messages-panel/messages-panel.component';
 
 type SidebarKey = TeamDetailTab;
 type ExpertiseFocus = 'categories' | 'specialties' | 'skills';
@@ -66,6 +68,7 @@ interface FinanceDemoRow {
     DecimalPipe,
     DatePipe,
     DeveloperViewNavbarComponent,
+    MessagesPanelComponent,
   ],
   templateUrl: './team-detail.component.html',
   styleUrl: './team-detail.component.css',
@@ -77,7 +80,7 @@ export class TeamDetailComponent implements OnInit {
   private readonly projectsApi = inject(DeveloperManageWorkService);
   private readonly categoriesApi = inject(CategoriesApiService);
   private readonly taxonomyApi = inject(TaxonomyApiService);
-  private readonly auth = inject(AuthService);
+  protected readonly auth = inject(AuthService);
 
   protected readonly backIcon = ArrowLeft01Icon as IconSvgObject;
   protected readonly starIcon = StarIcon as IconSvgObject;
@@ -121,6 +124,34 @@ export class TeamDetailComponent implements OnInit {
   protected readonly joinRequestsError = signal<string | null>(null);
   protected readonly requestActionId = signal<string | null>(null);
 
+  /** Expanded job card (inline details, no popup). */
+  protected readonly expandedJobId = signal<string | null>(null);
+  protected readonly expandedJobDetails = signal<TeamJobDetails | null>(null);
+  protected readonly expandedJobLoading = signal(false);
+  /** Which job's requests accordion is open. */
+  protected readonly requestsOpenJobId = signal<string | null>(null);
+
+  /** Client-side jobs pagination (team jobs API returns full list). */
+  protected readonly jobsPage = signal(1);
+  protected readonly jobsPageSize = 5;
+
+  /** Per-job applications pagination + status filter. */
+  protected readonly appsPageByJob = signal<Record<string, number>>({});
+  protected readonly appsPageSize = 5;
+  protected readonly appsFilterByJob = signal<Record<string, 'pending' | 'all' | 'accepted' | 'rejected'>>({});
+
+  /**
+   * Future: AI ranks applicants by profile + CV for the open role.
+   * When the ranking API lands, toggle will call it and fill matchScore/matchRank.
+   */
+  protected readonly aiRankByJob = signal<Record<string, boolean>>({});
+  protected readonly aiRankLoadingJobId = signal<string | null>(null);
+  protected readonly aiRankHintByJob = signal<Record<string, string | null>>({});
+
+  protected readonly joinRequestsTotal = signal(0);
+  protected readonly joinRequestsPage = signal(1);
+  protected readonly joinRequestsHasMore = signal(false);
+
   protected readonly jobDetailOpen = signal(false);
   protected readonly jobDetailLoading = signal(false);
   protected readonly jobDetail = signal<TeamJobDetails | null>(null);
@@ -143,11 +174,26 @@ export class TeamDetailComponent implements OnInit {
   protected readonly applySuccess = signal(false);
   protected readonly appliedJobIds = signal<string[]>([]);
 
+  protected readonly teamReviews = signal<TeamReview[]>([]);
+  protected readonly teamReviewsLoading = signal(false);
+  protected readonly teamReviewRating = signal(0);
+  protected readonly teamReviewHover = signal(0);
+  protected readonly teamReviewComment = signal('');
+  protected readonly teamReviewSubmitting = signal(false);
+  protected readonly teamReviewError = signal<string | null>(null);
+  protected readonly starChoices = [1, 2, 3, 4, 5] as const;
+
   protected readonly profileModalOpen = signal(false);
   protected readonly profileSaving = signal(false);
   protected readonly profileError = signal<string | null>(null);
   protected readonly editName = signal('');
   protected readonly editAbout = signal('');
+
+  protected readonly members = signal<TeamMemberRow[]>([]);
+  protected readonly membersLoading = signal(false);
+  protected readonly membersLoaded = signal(false);
+  protected readonly membersError = signal<string | null>(null);
+  protected readonly memberRoleUpdating = signal<string | null>(null);
 
   protected readonly expertiseModalOpen = signal(false);
   protected readonly expertiseFocus = signal<ExpertiseFocus>('categories');
@@ -175,6 +221,23 @@ export class TeamDetailComponent implements OnInit {
 
   protected readonly isLeader = computed(() => this.role() === 'TeamLeader');
 
+  protected readonly teamAverageRating = computed(() => {
+    const list = this.teamReviews();
+    if (list.length) {
+      return list.reduce((sum, r) => sum + this.starRating(r.rating), 0) / list.length;
+    }
+    return this.team()?.averageRating ?? 0;
+  });
+
+  protected readonly teamRoundedAverage = computed(() => Math.round(this.teamAverageRating()));
+
+  protected readonly canReviewTeam = computed(() => {
+    if (!this.auth.session()?.id) return false;
+    if (this.isTeamMember()) return false;
+    const uid = this.auth.session()!.id;
+    return !this.teamReviews().some((r) => r.reviewerUserId === uid);
+  });
+
   protected readonly openJobs = computed(() =>
     this.jobs().filter((j) => this.isJobOpen(j.status)),
   );
@@ -183,10 +246,10 @@ export class TeamDetailComponent implements OnInit {
     const items: { id: TeamDetailTab; label: string }[] = [
       { id: 'overview', label: 'Overview' },
       { id: 'projects', label: 'Projects' },
-      { id: 'jobs', label: 'Team Jobs' },
       { id: 'tasks', label: 'Task Management' },
       { id: 'finance', label: 'Finance' },
       { id: 'messages', label: 'Messages' },
+      { id: 'members', label: 'Members' },
     ];
     return items;
   });
@@ -198,6 +261,16 @@ export class TeamDetailComponent implements OnInit {
   protected readonly pendingRequestsCount = computed(
     () => this.joinRequests().filter((r) => this.isRequestPending(r.status)).length,
   );
+
+  protected readonly jobsTotalPages = computed(() =>
+    Math.max(1, Math.ceil(this.jobs().length / this.jobsPageSize)),
+  );
+
+  protected readonly pagedJobs = computed(() => {
+    const page = this.jobsPage();
+    const start = (page - 1) * this.jobsPageSize;
+    return this.jobs().slice(start, start + this.jobsPageSize);
+  });
 
   protected readonly selectedJob = computed(() => {
     const id = this.selectedJobId();
@@ -269,10 +342,10 @@ export class TeamDetailComponent implements OnInit {
   }[] = [
     { key: 'overview', label: 'Overview', icon: this.dashIcon },
     { key: 'projects', label: 'Projects', icon: this.folderIcon },
-    { key: 'jobs', label: 'Team Jobs', icon: this.briefcaseIcon },
     { key: 'tasks', label: 'Task Management', icon: this.chartIcon },
     { key: 'finance', label: 'Finance', icon: this.walletIcon },
     { key: 'messages', label: 'Messages', icon: this.messageIcon },
+    { key: 'members', label: 'Members', icon: this.groupIcon },
   ];
 
   ngOnInit(): void {
@@ -323,6 +396,10 @@ export class TeamDetailComponent implements OnInit {
     if (tab === 'jobs' && this.isLeader() && !this.joinRequestsLoaded()) {
       const id = this.team()?.id;
       if (id) this.loadJoinRequests(id);
+    }
+    if (tab === 'members' && !this.membersLoaded()) {
+      const id = this.team()?.id;
+      if (id) this.loadMembers(id);
     }
   }
 
@@ -662,11 +739,67 @@ export class TeamDetailComponent implements OnInit {
   }
 
   protected selectJob(job: TeamJob): void {
-    this.selectedJobId.set(this.selectedJobId() === job.id ? null : job.id);
+    this.toggleJobExpand(job);
   }
 
   protected clearSelectedJob(): void {
     this.selectedJobId.set(null);
+    this.expandedJobId.set(null);
+    this.expandedJobDetails.set(null);
+    this.requestsOpenJobId.set(null);
+  }
+
+  protected toggleJobExpand(job: TeamJob): void {
+    if (this.expandedJobId() === job.id) {
+      this.expandedJobId.set(null);
+      this.expandedJobDetails.set(null);
+      this.selectedJobId.set(null);
+      this.requestsOpenJobId.set(null);
+      return;
+    }
+
+    this.expandedJobId.set(job.id);
+    this.selectedJobId.set(job.id);
+    this.expandedJobLoading.set(true);
+    this.expandedJobDetails.set(null);
+
+    if (this.isLeader() && !this.joinRequestsLoaded()) {
+      const teamId = this.team()?.id;
+      if (teamId) this.loadJoinRequests(teamId);
+    }
+
+    this.teamsApi.getJobDetails(job.id, { skipLoading: true }).subscribe({
+      next: (details) => {
+        if (this.expandedJobId() !== job.id) return;
+        this.expandedJobDetails.set(details);
+        this.expandedJobLoading.set(false);
+      },
+      error: () => {
+        if (this.expandedJobId() !== job.id) return;
+        this.expandedJobDetails.set(null);
+        this.expandedJobLoading.set(false);
+      },
+    });
+  }
+
+  protected toggleRequests(jobId: string, event?: Event): void {
+    event?.stopPropagation();
+    const opening = this.requestsOpenJobId() !== jobId;
+    this.requestsOpenJobId.set(opening ? jobId : null);
+    if (opening) {
+      this.appsPageByJob.update((m) => ({ ...m, [jobId]: 1 }));
+      if (!this.appsFilterByJob()[jobId]) {
+        this.appsFilterByJob.update((m) => ({ ...m, [jobId]: 'pending' }));
+      }
+    }
+    if (this.isLeader() && !this.joinRequestsLoaded()) {
+      const teamId = this.team()?.id;
+      if (teamId) this.loadJoinRequests(teamId);
+    }
+  }
+
+  protected isRequestsOpen(jobId: string): boolean {
+    return this.requestsOpenJobId() === jobId;
   }
 
   protected requestCountForJob(jobId: string): number {
@@ -674,6 +807,129 @@ export class TeamDetailComponent implements OnInit {
       (r) => r.teamJobId === jobId && this.isRequestPending(r.status),
     ).length;
   }
+
+  protected requestsForJob(jobId: string): TeamJoinRequest[] {
+    return this.joinRequests().filter((r) => r.teamJobId === jobId);
+  }
+
+  protected appsFilterForJob(jobId: string): 'pending' | 'all' | 'accepted' | 'rejected' {
+    return this.appsFilterByJob()[jobId] ?? 'pending';
+  }
+
+  protected setAppsFilter(
+    jobId: string,
+    filter: 'pending' | 'all' | 'accepted' | 'rejected',
+    event?: Event,
+  ): void {
+    event?.stopPropagation();
+    this.appsFilterByJob.update((m) => ({ ...m, [jobId]: filter }));
+    this.appsPageByJob.update((m) => ({ ...m, [jobId]: 1 }));
+  }
+
+  protected filteredRequestsForJob(jobId: string): TeamJoinRequest[] {
+    const filter = this.appsFilterForJob(jobId);
+    let list = this.requestsForJob(jobId);
+
+    if (filter === 'pending') {
+      list = list.filter((r) => this.isRequestPending(r.status));
+    } else if (filter === 'accepted') {
+      list = list.filter((r) => this.requestStatusLabel(r.status) === 'Accepted');
+    } else if (filter === 'rejected') {
+      list = list.filter((r) => this.requestStatusLabel(r.status) === 'Rejected');
+    }
+
+    const aiOn = !!this.aiRankByJob()[jobId];
+    const hasScores = list.some((r) => r.matchScore != null);
+
+    return [...list].sort((a, b) => {
+      if (aiOn || hasScores) {
+        const sa = a.matchScore ?? -1;
+        const sb = b.matchScore ?? -1;
+        if (sb !== sa) return sb - sa;
+        const ra = a.matchRank ?? Number.MAX_SAFE_INTEGER;
+        const rb = b.matchRank ?? Number.MAX_SAFE_INTEGER;
+        if (ra !== rb) return ra - rb;
+      }
+      return new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime();
+    });
+  }
+
+  protected appsTotalPages(jobId: string): number {
+    return Math.max(1, Math.ceil(this.filteredRequestsForJob(jobId).length / this.appsPageSize));
+  }
+
+  protected appsPage(jobId: string): number {
+    return this.appsPageByJob()[jobId] ?? 1;
+  }
+
+  protected pagedRequestsForJob(jobId: string): TeamJoinRequest[] {
+    const page = this.appsPage(jobId);
+    const start = (page - 1) * this.appsPageSize;
+    return this.filteredRequestsForJob(jobId).slice(start, start + this.appsPageSize);
+  }
+
+  protected setAppsPage(jobId: string, page: number, event?: Event): void {
+    event?.stopPropagation();
+    const clamped = Math.min(Math.max(1, page), this.appsTotalPages(jobId));
+    this.appsPageByJob.update((m) => ({ ...m, [jobId]: clamped }));
+  }
+
+  protected setJobsPage(page: number): void {
+    const clamped = Math.min(Math.max(1, page), this.jobsTotalPages());
+    this.jobsPage.set(clamped);
+  }
+
+  protected isAiRankEnabled(jobId: string): boolean {
+    return !!this.aiRankByJob()[jobId];
+  }
+
+  protected aiRankHint(jobId: string): string | null {
+    return this.aiRankHintByJob()[jobId] ?? null;
+  }
+
+  /** Placeholder until join-request ranking API (profile + CV) is wired. */
+  protected toggleAiRank(jobId: string, event?: Event): void {
+    event?.stopPropagation();
+    const enabling = !this.aiRankByJob()[jobId];
+    if (!enabling) {
+      this.aiRankByJob.update((m) => ({ ...m, [jobId]: false }));
+      this.aiRankHintByJob.update((m) => ({ ...m, [jobId]: null }));
+      return;
+    }
+
+    const hasScores = this.requestsForJob(jobId).some((r) => r.matchScore != null);
+    this.aiRankByJob.update((m) => ({ ...m, [jobId]: true }));
+    this.appsPageByJob.update((m) => ({ ...m, [jobId]: 1 }));
+
+    if (hasScores) {
+      this.aiRankHintByJob.update((m) => ({
+        ...m,
+        [jobId]: 'Sorted by AI match score from profile and CV.',
+      }));
+      return;
+    }
+
+    this.aiRankLoadingJobId.set(jobId);
+    this.aiRankHintByJob.update((m) => ({
+      ...m,
+      [jobId]: 'AI ranking for profile + CV is coming soon. Layout is ready for scores when the API ships.',
+    }));
+    // Simulate brief load so UI path is ready for a real service call.
+    setTimeout(() => {
+      if (this.aiRankLoadingJobId() === jobId) {
+        this.aiRankLoadingJobId.set(null);
+      }
+    }, 600);
+  }
+
+  protected matchPercent(req: TeamJoinRequest): number | null {
+    if (req.matchScore == null || Number.isNaN(req.matchScore)) return null;
+    return Math.round(req.matchScore);
+  }
+
+  protected readonly codeJoinRequests = computed(() =>
+    this.joinRequests().filter((r) => !r.teamJobId),
+  );
 
   protected isRequestPending(status: string | null | undefined): boolean {
     return (status || '').toLowerCase() === 'pending';
@@ -833,27 +1089,16 @@ export class TeamDetailComponent implements OnInit {
   }
 
   protected openJobDetailFromCard(job: TeamJob): void {
-    this.openJobDetail(job.id);
+    this.toggleJobExpand(job);
   }
 
   protected openJobDetail(jobId: string): void {
-    this.jobDetailOpen.set(true);
-    this.jobDetailLoading.set(true);
-    this.jobDetailError.set(null);
-    this.jobDetail.set(null);
-    this.teamsApi.getJobDetails(jobId, { skipLoading: true }).subscribe({
-      next: (details) => {
-        this.jobDetail.set(details);
-        this.jobDetailLoading.set(false);
-      },
-      error: () => {
-        this.jobDetailError.set('Could not load this job.');
-        this.jobDetailLoading.set(false);
-      },
-    });
+    const job = this.jobs().find((j) => j.id === jobId);
+    if (job) this.toggleJobExpand(job);
   }
 
   protected closeJobDetail(): void {
+    this.clearSelectedJob();
     this.jobDetailOpen.set(false);
     this.jobDetail.set(null);
     this.jobDetailError.set(null);
@@ -876,12 +1121,64 @@ export class TeamDetailComponent implements OnInit {
     });
   }
 
+  protected starRating(value: unknown): number {
+    const n = typeof value === 'number' ? value : Number(value);
+    if (!Number.isFinite(n)) return 0;
+    return Math.min(5, Math.max(0, Math.round(n)));
+  }
+
+  protected submitTeamReview(): void {
+    const team = this.team();
+    if (!team || this.teamReviewSubmitting() || !this.canReviewTeam()) return;
+
+    if (!this.auth.session()) {
+      void this.router.navigateByUrl('/auth/login');
+      return;
+    }
+
+    const rating = this.teamReviewRating();
+    if (rating < 1 || rating > 5) {
+      this.teamReviewError.set('Please choose a star rating.');
+      return;
+    }
+
+    this.teamReviewSubmitting.set(true);
+    this.teamReviewError.set(null);
+
+    this.teamsApi.addTeamReview(team.id, {
+      rating,
+      comment: this.teamReviewComment().trim() || null,
+    }).subscribe({
+      next: (review) => {
+        const next = [review, ...this.teamReviews()];
+        this.teamReviews.set(next);
+        const avg = next.reduce((sum, r) => sum + this.starRating(r.rating), 0) / next.length;
+        this.team.update((t) =>
+          t ? { ...t, averageRating: avg, ratingCount: next.length } : t,
+        );
+        this.teamReviewRating.set(0);
+        this.teamReviewComment.set('');
+        this.teamReviewSubmitting.set(false);
+      },
+      error: (err) => {
+        this.teamReviewError.set(extractApiError(err, 'Could not submit your review.'));
+        this.teamReviewSubmitting.set(false);
+      },
+    });
+  }
+
+  protected onTeamReviewCommentInput(event: Event): void {
+    this.teamReviewComment.set((event.target as HTMLTextAreaElement).value.slice(0, 500));
+  }
+
   protected isJobOpen(status: string | null | undefined): boolean {
     return (status || '').toLowerCase() === 'open';
   }
 
   protected openApplyJob(job: TeamJob): void {
-    if (!this.isJobOpen(job.status) || this.appliedJobIds().includes(job.id)) return;
+    if (this.isTeamMember() || !this.isJobOpen(job.status) || this.appliedJobIds().includes(job.id)) {
+      return;
+    }
     this.applyJobId.set(job.id);
     this.applyJobTitle.set(job.title);
     this.applyCoverLetter.set('');
@@ -995,18 +1292,32 @@ export class TeamDetailComponent implements OnInit {
   }
 
   private normalizeTab(raw: string | null): TeamDetailTab {
-    if (raw === 'portfolio' || raw === 'management') return 'overview';
+    if (raw === 'portfolio' || raw === 'management' || raw === 'jobs') return 'overview';
     if (
       raw === 'overview' ||
       raw === 'projects' ||
-      raw === 'jobs' ||
       raw === 'tasks' ||
       raw === 'finance' ||
-      raw === 'messages'
+      raw === 'messages' ||
+      raw === 'members'
     ) {
       return raw;
     }
     return 'overview';
+  }
+
+  private loadTeamReviews(teamId: string): void {
+    this.teamReviewsLoading.set(true);
+    this.teamsApi.getTeamReviews(teamId, { skipLoading: true }).subscribe({
+      next: (reviews) => {
+        this.teamReviews.set(reviews);
+        this.teamReviewsLoading.set(false);
+      },
+      error: () => {
+        this.teamReviews.set([]);
+        this.teamReviewsLoading.set(false);
+      },
+    });
   }
 
   private loadTeam(id: string): void {
@@ -1016,6 +1327,7 @@ export class TeamDetailComponent implements OnInit {
         this.team.set(team);
         this.loading.set(false);
         this.reloadPortfolio(id);
+        this.loadTeamReviews(id);
         if (!this.isTeamMember()) {
           this.activeTab.set('overview');
           this.loadJobs(id);
@@ -1028,12 +1340,75 @@ export class TeamDetailComponent implements OnInit {
           this.loadJobs(id);
           if (this.isLeader()) this.loadJoinRequests(id);
         }
+        if (this.activeTab() === 'members') {
+          this.loadMembers(id);
+        }
       },
       error: () => {
         this.error.set('Could not load this team.');
         this.loading.set(false);
       },
     });
+  }
+
+  protected loadMembers(teamId: string): void {
+    this.membersLoading.set(true);
+    this.membersError.set(null);
+    this.teamsApi.getMembers(teamId).subscribe({
+      next: (rows) => {
+        this.members.set(rows);
+        this.membersLoaded.set(true);
+        this.membersLoading.set(false);
+      },
+      error: (err) => {
+        // Fallback for older API builds / owners not yet in TeamMembers
+        const avatars = this.team()?.memberAvatars ?? [];
+        if (avatars.length) {
+          this.members.set(
+            avatars.map((a) => ({
+              userId: a.userId,
+              name: a.name,
+              imageUrl: a.imageUrl,
+              role: a.userId === this.team()?.ownerUserId ? 'TeamLeader' : 'TeamMember',
+              isOwner: a.userId === this.team()?.ownerUserId,
+              joinedAt: null,
+            })),
+          );
+          this.membersLoaded.set(true);
+          this.membersLoading.set(false);
+          this.membersError.set(null);
+          return;
+        }
+        this.membersError.set(extractApiError(err) || 'Failed to load members.');
+        this.membersLoading.set(false);
+      },
+    });
+  }
+
+  protected changeMemberRole(member: TeamMemberRow, role: string): void {
+    const teamId = this.team()?.id;
+    const next = role === 'TeamLeader' ? 'TeamLeader' : 'TeamMember';
+    if (!teamId || !this.isLeader() || member.role === next) return;
+    if (member.isOwner && next !== 'TeamLeader') return;
+
+    this.memberRoleUpdating.set(member.userId);
+    this.membersError.set(null);
+    this.teamsApi.updateMemberRole(teamId, member.userId, next).subscribe({
+      next: () => {
+        this.members.update((rows) =>
+          rows.map((r) => (r.userId === member.userId ? { ...r, role: next } : r)),
+        );
+        this.memberRoleUpdating.set(null);
+      },
+      error: (err) => {
+        this.membersError.set(extractApiError(err) || 'Failed to update role.');
+        this.memberRoleUpdating.set(null);
+      },
+    });
+  }
+
+  protected roleLabel(role: string): string {
+    return role === 'TeamLeader' ? 'Team Leader' : 'Team Member';
   }
 
   private reloadPortfolio(teamId: string): void {
@@ -1046,6 +1421,7 @@ export class TeamDetailComponent implements OnInit {
   private loadJobs(teamId: string): void {
     this.jobsLoading.set(true);
     this.jobsError.set(null);
+    this.jobsPage.set(1);
     this.teamsApi.getTeamJobs(teamId, { skipLoading: true }).subscribe({
       next: (items) => {
         this.jobs.set(items ?? []);
@@ -1069,6 +1445,8 @@ export class TeamDetailComponent implements OnInit {
       next: (items) => {
         this.jobs.set(items ?? []);
         this.jobsLoaded.set(true);
+        const max = Math.max(1, Math.ceil((items?.length ?? 0) / this.jobsPageSize));
+        if (this.jobsPage() > max) this.jobsPage.set(max);
       },
       error: () => {
         this.jobsError.set('Could not refresh team jobs.');
@@ -1076,22 +1454,56 @@ export class TeamDetailComponent implements OnInit {
     });
   }
 
-  private loadJoinRequests(teamId: string): void {
+  protected retryJoinRequests(teamId: string, event?: Event): void {
+    event?.stopPropagation();
+    this.joinRequestsLoaded.set(false);
+    this.loadJoinRequests(teamId, true);
+  }
+
+  protected loadMoreJoinRequests(event?: Event): void {
+    event?.stopPropagation();
+    const teamId = this.team()?.id;
+    if (!teamId || !this.joinRequestsHasMore() || this.joinRequestsLoading()) return;
+    this.loadJoinRequests(teamId, false, this.joinRequestsPage() + 1);
+  }
+
+  protected loadJoinRequests(teamId: string, reset = true, page = 1): void {
     this.joinRequestsLoading.set(true);
     this.joinRequestsError.set(null);
-    this.teamsApi.getTeamJoinRequests(teamId, { pageSize: 20, skipLoading: true }).subscribe({
-      next: (page) => {
-        this.joinRequests.set(page.items ?? []);
-        this.joinRequestsLoaded.set(true);
-        this.joinRequestsLoading.set(false);
-      },
-      error: () => {
-        this.joinRequests.set([]);
-        this.joinRequestsLoaded.set(true);
-        this.joinRequestsLoading.set(false);
-        this.joinRequestsError.set('Could not load join requests.');
-      },
-    });
+    this.teamsApi
+      .getTeamJoinRequests(teamId, { pageNumber: page, pageSize: 40, skipLoading: true })
+      .subscribe({
+        next: (paged) => {
+          const items = paged.items ?? [];
+          if (reset || page <= 1) {
+            this.joinRequests.set(items);
+          } else {
+            const existing = new Set(this.joinRequests().map((r) => r.id));
+            this.joinRequests.update((list) => [
+              ...list,
+              ...items.filter((r) => !existing.has(r.id)),
+            ]);
+          }
+          this.joinRequestsPage.set(paged.pageNumber ?? page);
+          this.joinRequestsTotal.set(paged.totalCount ?? items.length);
+          const totalPages =
+            paged.totalPages ??
+            Math.max(1, Math.ceil((paged.totalCount ?? items.length) / (paged.pageSize || 40)));
+          this.joinRequestsHasMore.set(
+            paged.hasNextPage ?? (paged.pageNumber ?? page) < totalPages,
+          );
+          this.joinRequestsLoaded.set(true);
+          this.joinRequestsLoading.set(false);
+        },
+        error: (err) => {
+          if (reset || page <= 1) this.joinRequests.set([]);
+          this.joinRequestsLoaded.set(true);
+          this.joinRequestsLoading.set(false);
+          this.joinRequestsError.set(
+            extractApiError(err, 'Could not load join requests. Restart the API if this persists.'),
+          );
+        },
+      });
   }
 
   private loadProjects(teamId: string): void {

@@ -10,6 +10,7 @@ import {
   Tick02Icon,
 } from '@hugeicons/core-free-icons';
 import { catchError, of } from 'rxjs';
+import { extractApiError } from '../../../../core/http/api-error';
 import { CategoriesApiService } from '../../../auth/data-access/categories-api.service';
 import {
   PortfolioApiService,
@@ -427,9 +428,9 @@ export class PortfolioCaseStudyWizardComponent implements OnInit {
             afterImages();
           }
         },
-        error: () => {
+        error: (err) => {
           this.saving.set(false);
-          this.error.set('Could not save portfolio project.');
+          this.error.set(extractApiError(err, 'Could not save portfolio project.'));
         },
       });
       return;
@@ -437,9 +438,9 @@ export class PortfolioCaseStudyWizardComponent implements OnInit {
 
     this.teamsApi.createTeamPortfolio(teamId, payload).subscribe({
       next: (id) => this.finish(teamId, id),
-      error: () => {
+      error: (err) => {
         this.saving.set(false);
-        this.error.set('Could not create portfolio project.');
+        this.error.set(extractApiError(err, 'Could not create portfolio project.'));
       },
     });
   }

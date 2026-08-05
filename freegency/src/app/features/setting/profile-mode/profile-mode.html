@@ -1,0 +1,104 @@
+<section class="pm-page">
+  <header class="pm-header">
+    <h1>Profile mode</h1>
+    <p>
+      @if (activeMode() === 'Client') {
+        You’re hiring as a Client. Switch to Developer to browse work and join teams.
+      } @else {
+        You’re working as a Developer. Switch to Client to post projects and hire.
+      }
+    </p>
+  </header>
+
+  <div class="pm-active">
+    <span class="pm-active__label">Currently using</span>
+    <span class="pm-active__badge">{{ activeMode() }}</span>
+  </div>
+
+  <div class="pm-grid pm-grid--single">
+    @if (activeMode() === 'Client') {
+      <article
+        class="pm-card"
+        [class.pm-card--ready]="hasDeveloperProfile()"
+      >
+        <div class="pm-card__top">
+          <div class="pm-card__icon pm-card__icon--dev" aria-hidden="true">
+            <hugeicons-icon [icon]="developerIcon" [size]="22" color="currentColor" [strokeWidth]="1.8" />
+          </div>
+          @if (hasDeveloperProfile()) {
+            <span class="pm-card__status pm-card__status--ready">
+              <hugeicons-icon [icon]="checkIcon" [size]="14" color="currentColor" [strokeWidth]="2" />
+              Ready
+            </span>
+          } @else {
+            <span class="pm-card__status pm-card__status--missing">Not created yet</span>
+          }
+        </div>
+
+        <h2>Developer</h2>
+        <p>Browse projects, join teams, send proposals, and deliver milestone work.</p>
+
+        <div class="pm-card__actions">
+          <button
+            type="button"
+            class="pm-btn pm-btn--primary"
+            [disabled]="busy()"
+            (click)="switchOrCreate('Developer')"
+          >
+            {{ busy() ? 'Working…' : 'Switch' }}
+          </button>
+        </div>
+      </article>
+    } @else {
+      <article
+        class="pm-card"
+        [class.pm-card--ready]="hasClientProfile()"
+      >
+        <div class="pm-card__top">
+          <div class="pm-card__icon" aria-hidden="true">
+            <hugeicons-icon [icon]="clientIcon" [size]="22" color="currentColor" [strokeWidth]="1.8" />
+          </div>
+          @if (hasClientProfile()) {
+            <span class="pm-card__status pm-card__status--ready">
+              <hugeicons-icon [icon]="checkIcon" [size]="14" color="currentColor" [strokeWidth]="2" />
+              Ready
+            </span>
+          } @else {
+            <span class="pm-card__status pm-card__status--missing">Not created yet</span>
+          }
+        </div>
+
+        <h2>Client</h2>
+        <p>Post projects, review proposals, and hire freelancers or teams.</p>
+
+        <div class="pm-card__actions">
+          <button
+            type="button"
+            class="pm-btn pm-btn--primary"
+            [disabled]="busy()"
+            (click)="switchOrCreate('Client')"
+          >
+            {{ busy() ? 'Working…' : 'Switch' }}
+          </button>
+        </div>
+      </article>
+    }
+  </div>
+
+  @if (loadingModes()) {
+    <p class="pm-hint">Loading profile status…</p>
+  } @else if (modesError()) {
+    <div class="pm-hint pm-hint--error pm-hint--row">
+      <span>{{ modesError() }}</span>
+      <button type="button" class="pm-retry" (click)="reloadModes()">Retry</button>
+    </div>
+  } @else if (!hasOtherProfile()) {
+    <p class="pm-hint">
+      First time switching creates that profile and opens a short setup.
+    </p>
+  } @else {
+    <p class="pm-hint">
+      Switch anytime from here or from your account menu.
+    </p>
+  }
+</section>

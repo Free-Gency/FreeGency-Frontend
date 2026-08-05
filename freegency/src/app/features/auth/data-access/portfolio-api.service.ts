@@ -93,6 +93,7 @@ export interface PortfolioProjectDetailsDto {
   testimonialAuthorName?: string | null;
   testimonialAuthorTitle?: string | null;
   testimonialAuthorAvatarUrl?: string | null;
+  canEdit?: boolean;
   creator: PortfolioCreatorDto | null;
   ownerReviews: OwnerReviewDto[];
   images: PortfolioImageDto[];
@@ -170,7 +171,8 @@ export class PortfolioApiService {
             ...res.data,
             images: res.data.images ?? [],
             skills: res.data.skills ?? [],
-            ownerReviews: res.data.ownerReviews ?? [],
+            ownerReviews: this.normalizeReviews(res.data.ownerReviews ?? (res.data as { OwnerReviews?: OwnerReviewDto[] }).OwnerReviews ?? []),
+            canEdit: !!(res.data.canEdit ?? (res.data as { CanEdit?: boolean }).CanEdit),
             roadmapSteps: res.data.roadmapSteps ?? [],
             metrics: res.data.metrics ?? [],
             creator: res.data.creator
@@ -183,6 +185,29 @@ export class PortfolioApiService {
           };
         }),
       );
+  }
+
+  private normalizeReviews(list: OwnerReviewDto[]): OwnerReviewDto[] {
+    return (list ?? []).map((r) => {
+      const raw = r as OwnerReviewDto & {
+        Id?: string;
+        Rating?: number;
+        Comment?: string | null;
+        CreatedAt?: string;
+        ReviewerUserId?: string | null;
+        ReviewerName?: string;
+        ReviewerAvatar?: string | null;
+      };
+      return {
+        id: String(raw.id ?? raw.Id ?? ''),
+        rating: Number(raw.rating ?? raw.Rating ?? 0),
+        comment: (raw.comment ?? raw.Comment ?? null) as string | null,
+        createdAt: String(raw.createdAt ?? raw.CreatedAt ?? ''),
+        reviewerUserId: (raw.reviewerUserId ?? raw.ReviewerUserId ?? null) as string | null,
+        reviewerName: String(raw.reviewerName ?? raw.ReviewerName ?? '').trim() || 'Community member',
+        reviewerAvatar: (raw.reviewerAvatar ?? raw.ReviewerAvatar ?? null) as string | null,
+      };
+    });
   }
 
   getRecentlyViewed(take = 5): Observable<RecentlyViewedPortfolioDto[]> {
@@ -236,7 +261,7 @@ export class PortfolioApiService {
           if (!res.isSuccess || !res.data) {
             throw new Error(res.message || 'Failed to submit review.');
           }
-          return res.data;
+          return this.normalizeReviews([res.data])[0];
         }),
       );
   }
