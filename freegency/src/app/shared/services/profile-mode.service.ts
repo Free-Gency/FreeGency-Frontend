@@ -28,6 +28,8 @@ export interface SwitchProfileResult {
   hasDeveloperProfile: boolean;
 }
 
+export const PROFILE_MISSING_ERROR = 'PROFILE_MISSING';
+
 @Injectable({ providedIn: 'root' })
 export class ProfileModeService {
   private readonly http = inject(HttpClient);
@@ -62,14 +64,20 @@ export class ProfileModeService {
     return this.http.post(`${this.baseUrl}/developer`, {}).pipe(map(() => undefined));
   }
 
-  /** Create developer shell + open setup wizard (profile / expertise / skills). */
+  /** Create developer shell + open setup wizard (profile / expertise / portfolio). */
   startDeveloperSetup(): Observable<void> {
     return this.createDeveloperProfile().pipe(
-      map(() => {
+      switchMap(() => this.switchProfile('Developer')),
+      map((result) => {
         this.markDeveloperSetupPending();
-        void this.router.navigateByUrl(DEVELOPER_ONBOARDING_PATH);
+        this.applySwitch(result, { forceOnboarding: true });
       }),
     );
+  }
+
+  /** Create the missing profile, switch to it, and open onboarding when needed. */
+  createAndSwitchToMode(targetMode: UserMode): Observable<SwitchProfileResult> {
+    return this.switchToMode(targetMode, { createIfMissing: true });
   }
 
   switchProfile(targetMode?: UserMode): Observable<SwitchProfileResult> {
@@ -82,12 +90,18 @@ export class ProfileModeService {
   }
 
   /**
-   * Switch active mode. If the target profile is missing, create it first
-   * (after user confirmation when `confirmCreate` is provided).
+   * Switch active mode.
+   * By default, refuses if the target profile does not exist (caller should create via Settings).
+   * Pass `createIfMissing: true` to create then switch (Settings “Create” CTA).
    */
   switchToMode(
     targetMode: UserMode,
-    options?: { confirmCreate?: () => boolean; skipNavigate?: boolean },
+    options?: {
+      createIfMissing?: boolean;
+      skipNavigate?: boolean;
+      /** @deprecated use createIfMissing */
+      confirmCreate?: () => boolean;
+    },
   ): Observable<SwitchProfileResult> {
     const current = this.auth.session()?.activeProfileMode;
     if (current === targetMode) {
@@ -98,6 +112,10 @@ export class ProfileModeService {
         hasDeveloperProfile: targetMode === 'Developer',
       });
     }
+
+    const allowCreate =
+      options?.createIfMissing === true ||
+      (typeof options?.confirmCreate === 'function' && options.confirmCreate());
 
     return this.getModes().pipe(
       switchMap((modes) => {
@@ -110,16 +128,13 @@ export class ProfileModeService {
           );
         }
 
-        const allowed =
-          options?.confirmCreate?.() ??
-          confirm(
+        if (!allowCreate) {
+          const message =
             targetMode === 'Developer'
-              ? 'You don’t have a Developer profile yet. Create one and switch now?'
-              : 'You don’t have a Client profile yet. Create one and switch now?',
-          );
-
-        if (!allowed) {
-          return throwError(() => new Error('cancelled'));
+              ? 'You don’t have a Developer profile yet. Create one from Settings → Profile mode.'
+              : 'You don’t have a Client profile yet. Create one from Settings → Profile mode.';
+          this.toast.error(message);
+          return throwError(() => new Error(PROFILE_MISSING_ERROR));
         }
 
         const create$ =
@@ -136,10 +151,16 @@ export class ProfileModeService {
         if (justCreated && targetMode === 'Developer') {
           this.markDeveloperSetupPending();
         }
-        this.applySwitch(result, { skipNavigate: options?.skipNavigate });
+        this.applySwitch(result, {
+          skipNavigate: options?.skipNavigate,
+          forceOnboarding: justCreated,
+        });
         return result;
       }),
       catchError((err) => {
+        if (err instanceof Error && err.message === PROFILE_MISSING_ERROR) {
+          return throwError(() => err);
+        }
         if (err instanceof Error && err.message === 'cancelled') {
           return throwError(() => err);
         }
@@ -152,7 +173,7 @@ export class ProfileModeService {
 
   applySwitch(
     result: SwitchProfileResult,
-    options?: { skipNavigate?: boolean },
+    options?: { skipNavigate?: boolean; forceOnboarding?: boolean },
   ): void {
     const mode =
       result.activeProfileMode === 'Client' || result.activeProfileMode === 'Developer'
@@ -165,12 +186,13 @@ export class ProfileModeService {
 
     if (options?.skipNavigate) return;
 
+    const force = !!options?.forceOnboarding;
     const path =
       mode === 'Client'
-        ? this.auth.needsClientOnboarding()
+        ? force || this.auth.needsClientOnboarding()
           ? CLIENT_ONBOARDING_PATH
           : CLIENT_HOME_PATH
-        : this.isDeveloperSetupPending()
+        : force || this.auth.needsDeveloperOnboarding() || this.isDeveloperSetupPending()
           ? DEVELOPER_ONBOARDING_PATH
           : DEVELOPER_DASHBOARD_PATH;
 
@@ -185,12 +207,26 @@ export class ProfileModeService {
     }
   }
 
+  clearDeveloperSetupPending(): void {
+    try {
+      sessionStorage.removeItem(DEVELOPER_SETUP_PENDING_KEY);
+    } catch {
+      /* ignore */
+    }
+  }
+
   isDeveloperSetupPending(): boolean {
     try {
       return sessionStorage.getItem(DEVELOPER_SETUP_PENDING_KEY) === '1';
     } catch {
       return false;
     }
+  }
+
+  missingProfileMessage(targetMode: UserMode): string {
+    return targetMode === 'Developer'
+      ? 'Create a Developer profile first from Settings → Profile mode.'
+      : 'Create a Client profile first from Settings → Profile mode.';
   }
 
   private normalizeModes(raw: unknown): ProfileModes {

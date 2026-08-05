@@ -136,6 +136,14 @@ export const authRoutes: Routes = [
           import('./components/developer-onboarding-skills/developer-onboarding-skills.component').then(
             (m) => m.DeveloperOnboardingSkillsComponent,
           ),
+        data: { step: 2 },
+      },
+      {
+        path: 'portfolio',
+        loadComponent: () =>
+          import('./components/developer-onboarding-portfolio/developer-onboarding-portfolio.component').then(
+            (m) => m.DeveloperOnboardingPortfolioComponent,
+          ),
         data: { step: 3 },
       },
       {

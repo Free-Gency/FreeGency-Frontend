@@ -2,10 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, of } from 'rxjs';
 import { AuthService } from '../../../../core/auth/auth.service';
-import {
-  DEVELOPER_DASHBOARD_PATH,
-  DEVELOPER_SETUP_PENDING_KEY,
-} from '../../../../core/auth/auth.models';
+import { DEVELOPER_DASHBOARD_PATH } from '../../../../core/auth/auth.models';
 import { ProfileApiService } from '../../data-access/profile-api.service';
 import { ProfileModeService } from '../../../../shared/services/profile-mode.service';
 
@@ -40,7 +37,7 @@ export class DeveloperOnboardingCompleteComponent implements OnInit {
     this.finishing.set(true);
 
     try {
-      sessionStorage.removeItem(DEVELOPER_SETUP_PENDING_KEY);
+      this.profileMode.clearDeveloperSetupPending();
     } catch {
       /* ignore */
     }
@@ -51,7 +48,6 @@ export class DeveloperOnboardingCompleteComponent implements OnInit {
     }
 
     this.profileMode.switchToMode('Developer', {
-      confirmCreate: () => false,
       skipNavigate: true,
     }).subscribe({
       next: () => {

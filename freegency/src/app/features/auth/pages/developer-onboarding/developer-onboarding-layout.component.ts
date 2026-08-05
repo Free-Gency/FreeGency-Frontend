@@ -34,7 +34,7 @@ export class DeveloperOnboardingLayoutComponent {
   protected readonly step = computed(() => this.routeData().step);
   protected readonly filled = computed(() => !!this.routeData().filled);
   protected readonly center = computed(() => this.routeData().center !== false);
-  protected readonly stepLabels: [string, string, string] = ['Profile', 'Expertise', 'Skills'];
+  protected readonly stepLabels: [string, string, string] = ['Profile', 'Expertise', 'Portfolio'];
 
   private readChildData(): DeveloperOnboardingRouteData {
     let snapshot = this.router.routerState.snapshot.root;

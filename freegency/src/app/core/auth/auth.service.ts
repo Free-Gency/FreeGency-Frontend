@@ -40,6 +40,18 @@ export class AuthService {
     const session = this.toSession(response);
     this.tokens.save(session, keepLoggedIn);
     this.session.set(session);
+
+    // First-time developer signup should land on onboarding (same as client).
+    if (
+      session.activeProfileMode === 'Developer' &&
+      !session.hasCompletedOnboarding
+    ) {
+      try {
+        sessionStorage.setItem(DEVELOPER_SETUP_PENDING_KEY, '1');
+      } catch {
+        /* ignore */
+      }
+    }
   }
 
   markOnboardingComplete(): void {

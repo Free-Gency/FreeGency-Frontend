@@ -175,66 +175,94 @@
       @if (accountMenuOpen()) {
         <div
           role="menu"
-          class="absolute top-[calc(100%+10px)] right-0 z-[70] w-[280px] overflow-hidden rounded-2xl border border-outline-variant/40 bg-white shadow-[0_18px_50px_rgba(39,37,63,0.18)]"
+          class="absolute top-[calc(100%+8px)] right-0 z-[70] w-[300px] overflow-hidden rounded-lg border border-[#d5e0d5] bg-white shadow-[0_4px_16px_rgba(0,0,0,0.12)]"
         >
-          <div class="flex items-center gap-3 px-4 py-4">
+          <!-- Identity header (Upwork-style) -->
+          <div class="flex flex-col items-center px-4 pb-4 pt-5 text-center">
             <span
-              class="relative flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-outline-variant/30 bg-primary-container font-display text-sm font-bold text-on-primary-container"
+              class="relative mb-3 flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-container font-display text-lg font-bold text-on-primary"
             >
               @if (profileImage()) {
                 <img
                   [src]="profileImage()!"
                   alt=""
                   class="absolute inset-0 size-full object-cover"
-                  width="44"
-                  height="44"
+                  width="64"
+                  height="64"
                 />
               } @else {
                 <span>{{ initials() }}</span>
               }
             </span>
-            <span class="flex min-w-0 flex-col">
-              <span class="truncate font-body text-sm font-semibold text-on-surface">
-                {{ displayName() }}
-              </span>
-              <span class="truncate font-body text-xs text-on-surface-variant">
-                {{ email() }}
-              </span>
-            </span>
+            <p class="max-w-full truncate font-body text-base font-semibold text-[#001e00]">
+              {{ displayName() }}
+            </p>
+            <p class="mt-0.5 font-body text-sm text-[#5e6d55]">
+              {{ activeMode() }}
+            </p>
           </div>
 
-          <div class="px-4 pb-3">
-            <p class="mb-2 font-body text-xs font-medium text-on-surface-variant">
-              Active profile
-            </p>
-            <div class="flex items-center gap-1 rounded-full bg-[#f2f1fb] p-1">
+          <div class="h-px bg-[#d5e0d5]"></div>
+
+          <!-- Account switcher: only when both profiles exist -->
+          @if (canSwitchProfiles()) {
+            <div class="py-2" role="group" aria-label="Your accounts">
+              <p class="px-4 pb-1 pt-1 font-body text-xs font-semibold text-[#5e6d55]">
+                Online for
+              </p>
               @for (mode of profileModes; track mode) {
                 <button
                   type="button"
-                  class="flex-1 cursor-pointer rounded-full px-3 py-1.5 text-center font-body text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60"
-                  [class.bg-primary]="activeMode() === mode"
-                  [class.text-white]="activeMode() === mode"
-                  [class.text-on-surface-variant]="activeMode() !== mode"
+                  role="menuitemradio"
+                  class="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-[#f2f7f2] disabled:cursor-not-allowed disabled:opacity-60"
+                  [attr.aria-checked]="activeMode() === mode"
                   [disabled]="switchingMode()"
                   (click)="selectProfileMode(mode, $event)"
                 >
-                  {{ mode }}
+                  <span
+                    class="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-[#e4ebe4] text-[#001e00]"
+                    aria-hidden="true"
+                  >
+                    <hugeicons-icon
+                      [icon]="mode === 'Developer' ? developerIcon : clientIcon"
+                      [size]="18"
+                      color="currentColor"
+                      [strokeWidth]="1.6"
+                    />
+                  </span>
+                  <span class="min-w-0 flex-1">
+                    <span class="block font-body text-sm font-semibold text-[#001e00]">
+                      {{ mode }}
+                    </span>
+                    <span class="block font-body text-xs text-[#5e6d55]">
+                      {{ mode === 'Developer' ? 'Find work & join teams' : 'Hire & post projects' }}
+                    </span>
+                  </span>
+                  @if (activeMode() === mode) {
+                    <span class="inline-flex text-[#108a00]" aria-hidden="true">
+                      <hugeicons-icon
+                        [icon]="checkIcon"
+                        [size]="20"
+                        color="currentColor"
+                        [strokeWidth]="2.2"
+                      />
+                    </span>
+                  }
                 </button>
               }
             </div>
-          </div>
-
-          <div class="h-px bg-outline-variant/40"></div>
+            <div class="h-px bg-[#d5e0d5]"></div>
+          }
 
           <div class="py-1.5">
             <button
               type="button"
               role="menuitem"
               routerLink="/settings"
-              class="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 font-body text-sm text-on-surface transition-colors hover:bg-[#f4f3ff]"
+              class="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 font-body text-sm text-[#001e00] transition-colors hover:bg-[#f2f7f2]"
               (click)="closeAccountMenu()"
             >
-              <span class="inline-flex size-5 items-center justify-center text-on-surface-variant" aria-hidden="true">
+              <span class="inline-flex size-5 items-center justify-center text-[#5e6d55]" aria-hidden="true">
                 <hugeicons-icon [icon]="settingsIcon" [size]="18" color="currentColor" [strokeWidth]="1.5" />
               </span>
               <span>Settings</span>
@@ -243,10 +271,10 @@
             <button
               type="button"
               role="menuitem"
-              class="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 font-body text-sm text-on-surface transition-colors hover:bg-[#f4f3ff]"
+              class="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 font-body text-sm text-[#001e00] transition-colors hover:bg-[#f2f7f2]"
               (click)="closeAccountMenu()"
             >
-              <span class="inline-flex size-5 items-center justify-center text-on-surface-variant" aria-hidden="true">
+              <span class="inline-flex size-5 items-center justify-center text-[#5e6d55]" aria-hidden="true">
                 <hugeicons-icon [icon]="walletIcon" [size]="18" color="currentColor" [strokeWidth]="1.5" />
               </span>
               <span>Wallet</span>
@@ -255,26 +283,26 @@
             <button
               type="button"
               role="menuitem"
-              class="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 font-body text-sm text-on-surface transition-colors hover:bg-[#f4f3ff]"
+              class="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 font-body text-sm text-[#001e00] transition-colors hover:bg-[#f2f7f2]"
               (click)="closeAccountMenu()"
             >
-              <span class="inline-flex size-5 items-center justify-center text-on-surface-variant" aria-hidden="true">
+              <span class="inline-flex size-5 items-center justify-center text-[#5e6d55]" aria-hidden="true">
                 <hugeicons-icon [icon]="helpIcon" [size]="18" color="currentColor" [strokeWidth]="1.5" />
               </span>
-              <span>Help &amp; Support</span>
+              <span>Help &amp; support</span>
             </button>
           </div>
 
-          <div class="h-px bg-outline-variant/40"></div>
+          <div class="h-px bg-[#d5e0d5]"></div>
 
           <div class="py-1.5">
             <button
               type="button"
               role="menuitem"
-              class="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 font-body text-sm text-[#d3302f] transition-colors hover:bg-[#fdecec]"
+              class="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 font-body text-sm text-[#001e00] transition-colors hover:bg-[#f2f7f2]"
               (click)="onLogout()"
             >
-              <span class="inline-flex size-5 items-center justify-center" aria-hidden="true">
+              <span class="inline-flex size-5 items-center justify-center text-[#5e6d55]" aria-hidden="true">
                 <hugeicons-icon [icon]="logoutIcon" [size]="18" color="currentColor" [strokeWidth]="1.5" />
               </span>
               <span>Log out</span>
