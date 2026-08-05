@@ -265,4 +265,42 @@ export class PortfolioApiService {
         }),
       );
   }
+
+  /** Lightweight create used by developer onboarding (optional step). */
+  createDeveloperPortfolio(input: {
+    title: string;
+    description?: string | null;
+    projectUrl?: string | null;
+    categoryId?: string | null;
+    images?: File[];
+  }): Observable<string> {
+    const form = new FormData();
+    form.append('Title', input.title.trim());
+    form.append(
+      'Description',
+      (input.description ?? '').trim() || input.title.trim(),
+    );
+    form.append('OwnerType', 'User');
+    form.append('Visibility', 'Public');
+    if (input.projectUrl?.trim()) {
+      form.append('ProjectUrl', input.projectUrl.trim());
+    }
+    if (input.categoryId) {
+      form.append('CategoryId', input.categoryId);
+    }
+    for (const file of input.images ?? []) {
+      form.append('Images', file, file.name);
+    }
+
+    return this.http
+      .post<ApiResponse<string>>(`${this.baseUrl}/developer/me/portfolio-projects`, form)
+      .pipe(
+        map((res) => {
+          if (!res.isSuccess || !res.data) {
+            throw new Error(res.message || 'Failed to create portfolio project.');
+          }
+          return res.data;
+        }),
+      );
+  }
 }

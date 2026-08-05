@@ -1,89 +1,22 @@
 <section class="pm-page">
   <header class="pm-header">
-    <h1>Profile mode</h1>
-    <p>
-      @if (activeMode() === 'Client') {
-        You’re hiring as a Client. Switch to Developer to browse work and join teams.
-      } @else {
-        You’re working as a Developer. Switch to Client to post projects and hire.
-      }
-    </p>
+    <div class="pm-header__copy">
+      <p class="pm-eyebrow">Identities</p>
+      <h1>Profile mode</h1>
+      <p>
+        You can work as a Client or a Developer on the same account. Create the
+        second profile when you’re ready, then switch anytime.
+      </p>
+    </div>
+
+    <div class="pm-current" aria-live="polite">
+      <span class="pm-current__dot" aria-hidden="true"></span>
+      <div>
+        <p class="pm-current__label">You’re using</p>
+        <p class="pm-current__value">{{ activeMode() }} mode</p>
+      </div>
+    </div>
   </header>
-
-  <div class="pm-active">
-    <span class="pm-active__label">Currently using</span>
-    <span class="pm-active__badge">{{ activeMode() }}</span>
-  </div>
-
-  <div class="pm-grid pm-grid--single">
-    @if (activeMode() === 'Client') {
-      <article
-        class="pm-card"
-        [class.pm-card--ready]="hasDeveloperProfile()"
-      >
-        <div class="pm-card__top">
-          <div class="pm-card__icon pm-card__icon--dev" aria-hidden="true">
-            <hugeicons-icon [icon]="developerIcon" [size]="22" color="currentColor" [strokeWidth]="1.8" />
-          </div>
-          @if (hasDeveloperProfile()) {
-            <span class="pm-card__status pm-card__status--ready">
-              <hugeicons-icon [icon]="checkIcon" [size]="14" color="currentColor" [strokeWidth]="2" />
-              Ready
-            </span>
-          } @else {
-            <span class="pm-card__status pm-card__status--missing">Not created yet</span>
-          }
-        </div>
-
-        <h2>Developer</h2>
-        <p>Browse projects, join teams, send proposals, and deliver milestone work.</p>
-
-        <div class="pm-card__actions">
-          <button
-            type="button"
-            class="pm-btn pm-btn--primary"
-            [disabled]="busy()"
-            (click)="switchOrCreate('Developer')"
-          >
-            {{ busy() ? 'Working…' : 'Switch' }}
-          </button>
-        </div>
-      </article>
-    } @else {
-      <article
-        class="pm-card"
-        [class.pm-card--ready]="hasClientProfile()"
-      >
-        <div class="pm-card__top">
-          <div class="pm-card__icon" aria-hidden="true">
-            <hugeicons-icon [icon]="clientIcon" [size]="22" color="currentColor" [strokeWidth]="1.8" />
-          </div>
-          @if (hasClientProfile()) {
-            <span class="pm-card__status pm-card__status--ready">
-              <hugeicons-icon [icon]="checkIcon" [size]="14" color="currentColor" [strokeWidth]="2" />
-              Ready
-            </span>
-          } @else {
-            <span class="pm-card__status pm-card__status--missing">Not created yet</span>
-          }
-        </div>
-
-        <h2>Client</h2>
-        <p>Post projects, review proposals, and hire freelancers or teams.</p>
-
-        <div class="pm-card__actions">
-          <button
-            type="button"
-            class="pm-btn pm-btn--primary"
-            [disabled]="busy()"
-            (click)="switchOrCreate('Client')"
-          >
-            {{ busy() ? 'Working…' : 'Switch' }}
-          </button>
-        </div>
-      </article>
-    }
-  </div>
 
   @if (loadingModes()) {
     <p class="pm-hint">Loading profile status…</p>
@@ -92,13 +25,153 @@
       <span>{{ modesError() }}</span>
       <button type="button" class="pm-retry" (click)="reloadModes()">Retry</button>
     </div>
-  } @else if (!hasOtherProfile()) {
+  }
+
+  <div class="pm-list">
+    <!-- Active -->
+    <article class="pm-row pm-row--active">
+      <div class="pm-row__main">
+        <div
+          class="pm-row__icon"
+          [class.pm-row__icon--dev]="activeMode() === 'Developer'"
+          aria-hidden="true"
+        >
+          <hugeicons-icon
+            [icon]="activeMode() === 'Developer' ? developerIcon : clientIcon"
+            [size]="20"
+            color="currentColor"
+            [strokeWidth]="1.8"
+          />
+        </div>
+
+        <div class="pm-row__body">
+          <div class="pm-row__title-line">
+            <h2>{{ activeMode() }}</h2>
+            <span class="pm-pill pm-pill--active">
+              <hugeicons-icon [icon]="checkIcon" [size]="13" color="currentColor" [strokeWidth]="2" />
+              Active
+            </span>
+          </div>
+          <p class="pm-row__name">{{ activeDisplayName() }}</p>
+          @if (activeEmail()) {
+            <p class="pm-row__meta">{{ activeEmail() }}</p>
+          }
+          <p class="pm-row__desc">
+            @if (activeMode() === 'Client') {
+              Post projects, review proposals, and hire freelancers or teams.
+            } @else {
+              Browse projects, join teams, send proposals, and deliver work.
+            }
+          </p>
+        </div>
+      </div>
+    </article>
+
+    <!-- Other -->
+    <article
+      class="pm-row"
+      [class.pm-row--ready]="hasOtherProfile()"
+      [class.pm-row--empty]="!hasOtherProfile() && !loadingModes()"
+    >
+      <div class="pm-row__main">
+        <div
+          class="pm-row__icon"
+          [class.pm-row__icon--dev]="otherMode() === 'Developer'"
+          [class.pm-row__icon--muted]="!hasOtherProfile()"
+          aria-hidden="true"
+        >
+          <hugeicons-icon
+            [icon]="otherMode() === 'Developer' ? developerIcon : clientIcon"
+            [size]="20"
+            color="currentColor"
+            [strokeWidth]="1.8"
+          />
+        </div>
+
+        <div class="pm-row__body">
+          <div class="pm-row__title-line">
+            <h2>{{ otherMode() }}</h2>
+            @if (hasOtherProfile()) {
+              <span class="pm-pill pm-pill--ready">Ready</span>
+            } @else if (!loadingModes()) {
+              <span class="pm-pill pm-pill--missing">Not created</span>
+            }
+          </div>
+
+          @if (hasOtherProfile()) {
+            @if (loadingOtherProfile()) {
+              <p class="pm-row__meta">Loading details…</p>
+            } @else if (otherProfile(); as other) {
+              <div class="pm-row__identity">
+                @if (other.image) {
+                  <img
+                    class="pm-row__avatar"
+                    [src]="other.image"
+                    [alt]="other.displayName"
+                    width="36"
+                    height="36"
+                  />
+                }
+                <div>
+                  <p class="pm-row__name">{{ other.displayName }}</p>
+                  @if (other.country) {
+                    <p class="pm-row__meta">{{ other.country }}</p>
+                  }
+                  @if (other.bio) {
+                    <p class="pm-row__bio">{{ other.bio }}</p>
+                  }
+                </div>
+              </div>
+            }
+          } @else if (!loadingModes()) {
+            <p class="pm-row__desc">
+              @if (otherMode() === 'Developer') {
+                Set up a Developer profile to find work, join teams, and send proposals.
+              } @else {
+                Set up a Client profile to post projects and hire freelancers or teams.
+              }
+            </p>
+          }
+        </div>
+      </div>
+
+      <div class="pm-row__action">
+        @if (hasOtherProfile()) {
+          <button
+            type="button"
+            class="pm-btn pm-btn--primary"
+            [disabled]="busy()"
+            (click)="switchToOther()"
+          >
+            {{ busy() ? 'Switching…' : 'Switch' }}
+          </button>
+        } @else if (!loadingModes()) {
+          <button
+            type="button"
+            class="pm-btn pm-btn--create"
+            [disabled]="busy()"
+            (click)="createOtherProfile()"
+          >
+            {{
+              busy()
+                ? 'Creating…'
+                : otherMode() === 'Developer'
+                  ? 'Create developer profile'
+                  : 'Create client profile'
+            }}
+          </button>
+        }
+      </div>
+    </article>
+  </div>
+
+  @if (!loadingModes() && !modesError()) {
     <p class="pm-hint">
-      First time switching creates that profile and opens a short setup.
-    </p>
-  } @else {
-    <p class="pm-hint">
-      Switch anytime from here or from your account menu.
+      @if (hasOtherProfile()) {
+        After both profiles exist, you can also switch from your account menu.
+      } @else {
+        Creating the other profile opens a short setup. You can skip optional steps.
+      }
     </p>
   }
 </section>

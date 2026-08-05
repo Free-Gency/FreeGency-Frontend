@@ -179,7 +179,7 @@ export class DeveloperOnboardingSkillsComponent implements OnInit {
         );
         await firstValueFrom(this.profileApi.replaceDeveloperSkills(this.selectedSkillIds()));
       }
-      await this.router.navigate([`${DEVELOPER_ONBOARDING_PATH}/complete`]);
+      await this.router.navigate([`${DEVELOPER_ONBOARDING_PATH}/portfolio`]);
     } catch (err) {
       this.loading.set(false);
       this.errorMessage.set(extractApiError(err));

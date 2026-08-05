@@ -11,6 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HugeiconsIconComponent, type IconSvgObject } from '@hugeicons/angular';
 import { Camera01Icon, PencilEdit01Icon } from '@hugeicons/core-free-icons';
+import allCountries from 'intl-tel-input/data';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { DEVELOPER_ONBOARDING_PATH } from '../../../../core/auth/auth.models';
@@ -23,6 +24,7 @@ import {
 const MAX_BIO = 500;
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const countryDisplayNames = new Intl.DisplayNames(['en'], { type: 'region' });
 
 @Component({
   selector: 'app-developer-onboarding-profile',
@@ -37,6 +39,7 @@ export class DeveloperOnboardingProfileComponent implements OnInit, OnDestroy {
 
   protected displayName = '';
   protected bio = '';
+  protected country = '';
   protected readonly previewUrl = signal<string | null>(null);
   protected readonly uploadError = signal<string | null>(null);
   protected readonly loading = signal(false);
@@ -47,12 +50,21 @@ export class DeveloperOnboardingProfileComponent implements OnInit, OnDestroy {
   protected readonly editIcon = PencilEdit01Icon as IconSvgObject;
   protected readonly bioLimit = MAX_BIO;
 
+  protected readonly countries = allCountries
+    .map((c) => {
+      const code = c.iso2.toUpperCase();
+      return {
+        code,
+        name: countryDisplayNames.of(code) ?? code,
+      };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+
   protected get bioCount(): number {
     return this.bio.length;
   }
 
   private selectedFile: File | null = null;
-  private existingCountry: string | null = null;
   private objectUrl: string | null = null;
 
   ngOnInit(): void {
@@ -123,7 +135,7 @@ export class DeveloperOnboardingProfileComponent implements OnInit, OnDestroy {
         this.profileApi.updateDeveloperProfile({
           firstName,
           lastName,
-          country: this.existingCountry,
+          country: this.country.trim() || null,
           bio: this.bio.trim() || null,
           profileImage: this.selectedFile,
         }),
@@ -156,6 +168,7 @@ export class DeveloperOnboardingProfileComponent implements OnInit, OnDestroy {
       // Non-blocking
     }
   }
+
   private hydrateFromSession(): void {
     const session = this.auth.session();
     if (session?.firstName || session?.lastName) {
@@ -185,7 +198,7 @@ export class DeveloperOnboardingProfileComponent implements OnInit, OnDestroy {
     if (name) this.displayName = name;
 
     this.bio = (profile.bio ?? '').slice(0, MAX_BIO);
-    this.existingCountry = profile.country ?? null;
+    this.country = profile.country?.trim() || '';
 
     if (profile.profileImage && !this.selectedFile) {
       this.previewUrl.set(profile.profileImage);

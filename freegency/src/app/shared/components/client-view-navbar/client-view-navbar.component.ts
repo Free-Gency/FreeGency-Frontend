@@ -13,12 +13,14 @@ import { filter } from 'rxjs';
 import { HugeiconsIconComponent, type IconSvgObject } from '@hugeicons/angular';
 import {
   ArrowDown01Icon,
+  Briefcase01Icon,
   HelpCircleIcon,
   Logout01Icon,
   Notification02Icon,
   Search01Icon,
   Settings01Icon,
   Tick02Icon,
+  UserAccountIcon,
   Wallet01Icon,
 } from '@hugeicons/core-free-icons';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -26,7 +28,10 @@ import type { UserMode } from '../../../core/auth/auth.models';
 import { ProfileApiService } from '../../../features/auth/data-access/profile-api.service';
 import { SignalrService } from '../../../core/Signalr/signalr-service';
 import { ChatSignalrService } from '../../../core/Signalr/chat-signalr-service';
-import { ProfileModeService } from '../../services/profile-mode.service';
+import {
+  PROFILE_MISSING_ERROR,
+  ProfileModeService,
+} from '../../services/profile-mode.service';
 
 export type ClientSearchScope = 'Projects' | 'Talents';
 
@@ -50,6 +55,8 @@ export class ClientViewNavbarComponent implements OnInit {
   protected readonly walletIcon = Wallet01Icon as IconSvgObject;
   protected readonly helpIcon = HelpCircleIcon as IconSvgObject;
   protected readonly logoutIcon = Logout01Icon as IconSvgObject;
+  protected readonly clientIcon = UserAccountIcon as IconSvgObject;
+  protected readonly developerIcon = Briefcase01Icon as IconSvgObject;
   signalrService=inject(SignalrService);
   chatSignalrService=inject(ChatSignalrService);
   protected readonly profileImage = this.auth.profileImage;
@@ -92,8 +99,15 @@ export class ClientViewNavbarComponent implements OnInit {
     () => this.auth.session()?.activeProfileMode ?? 'Client',
   );
   protected readonly switchingMode = signal(false);
+  protected readonly hasClientProfile = signal(true);
+  protected readonly hasDeveloperProfile = signal(false);
+
+  protected readonly canSwitchProfiles = computed(
+    () => this.hasClientProfile() && this.hasDeveloperProfile(),
+  );
 
   ngOnInit(): void {
+    this.reloadProfileModes();
     this.router.events
       .pipe(
         filter((event): event is NavigationEnd => event instanceof NavigationEnd),
@@ -158,6 +172,7 @@ export class ClientViewNavbarComponent implements OnInit {
 
   protected selectProfileMode(mode: UserMode, event: MouseEvent): void {
     event.stopPropagation();
+    if (!this.canSwitchProfiles()) return;
     if (mode === this.activeMode() || this.switchingMode()) return;
 
     this.switchingMode.set(true);
@@ -166,7 +181,30 @@ export class ClientViewNavbarComponent implements OnInit {
         this.switchingMode.set(false);
         this.closeAccountMenu();
       },
-      error: () => this.switchingMode.set(false),
+      error: (err) => {
+        this.switchingMode.set(false);
+        if (err instanceof Error && err.message === PROFILE_MISSING_ERROR) {
+          this.closeAccountMenu();
+          void this.router.navigateByUrl('/settings/profile-mode');
+        }
+      },
+    });
+  }
+
+  private reloadProfileModes(): void {
+    this.profileMode.getModes().subscribe({
+      next: (modes) => {
+        const sessionMode = this.auth.session()?.activeProfileMode;
+        this.hasClientProfile.set(modes.hasClientProfile || sessionMode === 'Client');
+        this.hasDeveloperProfile.set(
+          modes.hasDeveloperProfile || sessionMode === 'Developer',
+        );
+      },
+      error: () => {
+        const sessionMode = this.auth.session()?.activeProfileMode;
+        this.hasClientProfile.set(sessionMode === 'Client');
+        this.hasDeveloperProfile.set(sessionMode === 'Developer');
+      },
     });
   }
 
