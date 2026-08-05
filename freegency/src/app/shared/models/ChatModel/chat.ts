@@ -19,6 +19,8 @@ export interface ChatRoom {
   archivedAt?: string | null;
   canSend: boolean;
   roleLabel?: string | null;
+  /** Other 1:1 peer profile id (for online presence). */
+  otherProfileId?: string | null;
 }
 
 export interface ChatRoomFilter {

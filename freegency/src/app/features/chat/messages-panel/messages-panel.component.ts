@@ -108,6 +108,18 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
   private readonly onOnlineStatus = (online: boolean) => {
     if (!this.destroyListeners) this.isOtherOnline.set(online);
   };
+  private readonly onProfileOnline = (profileId: string) => {
+    if (this.destroyListeners) return;
+    if (this.sameProfileId(profileId, this.watchedPeerId())) {
+      this.isOtherOnline.set(true);
+    }
+  };
+  private readonly onProfileOffline = (profileId: string) => {
+    if (this.destroyListeners) return;
+    if (this.sameProfileId(profileId, this.watchedPeerId())) {
+      this.isOtherOnline.set(false);
+    }
+  };
 
   protected readonly chatRooms = signal<ChatRoom[]>([]);
   protected readonly selectedRoom = signal<ChatRoom | null>(null);
@@ -123,6 +135,8 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
   protected readonly error = signal<string | null>(null);
   protected readonly search = signal('');
   protected readonly isOtherOnline = signal(false);
+  /** 1:1 peer profile currently watched for presence. */
+  private readonly watchedPeerId = signal<string | null>(null);
   protected readonly listFilter = signal<InboxListFilter>('active');
 
   protected readonly createGroupOpen = signal(false);
@@ -342,6 +356,8 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     this.chatSignalr.unlistenReceiveMessage(this.onReceiveMessage);
     this.chatSignalr.unlistenRoomUpdated(this.onRoomUpdated);
     this.chatSignalr.unlistenOnlineStatus(this.onOnlineStatus);
+    this.chatSignalr.unlistenProfileOnline(this.onProfileOnline);
+    this.chatSignalr.unlistenProfileOffline(this.onProfileOffline);
   }
 
   protected displayTitle(room: ChatRoom): string {
@@ -680,7 +696,10 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     this.messageText.set('');
     this.setSelectedFile(null);
     this.planActionError.set(null);
+    this.isOtherOnline.set(false);
+    this.watchedPeerId.set(null);
     this.loadMessages(room.id);
+    this.refreshPeerPresence(room.otherProfileId ?? null);
     this.loadPlansForRoom(room);
     this.chatApi.markAsRead(room.id).subscribe({
       next: () => {
@@ -1276,6 +1295,8 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     this.chatSignalr.listenReceiveMessage(this.onReceiveMessage);
     this.chatSignalr.listenRoomUpdated(this.onRoomUpdated);
     this.chatSignalr.listenOnlineStatus(this.onOnlineStatus);
+    this.chatSignalr.listenProfileOnline(this.onProfileOnline);
+    this.chatSignalr.listenProfileOffline(this.onProfileOffline);
   }
 
   private handleReceiveMessage(message: RoomMessage): void {
@@ -1443,10 +1464,12 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
         this.shouldStickToBottom = true;
         this.queueScrollToBottom('auto');
 
-        const otherProfileId = items.find((m) => m.otherProfileId)?.otherProfileId;
-        if (otherProfileId) {
-          void this.chatSignalr.invoke('IsOnline', otherProfileId);
-        }
+        const otherProfileId =
+          items.find((m) => m.otherProfileId)?.otherProfileId ||
+          items.find((m) => !m.isMine && m.senderId)?.senderId ||
+          this.selectedRoom()?.otherProfileId ||
+          null;
+        this.refreshPeerPresence(otherProfileId);
 
         // If inbox preview says a plan was sent but the thread has no plan row yet,
         // force-load plans so the synthetic card can appear.
@@ -1464,6 +1487,24 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
         this.error.set('Failed to load messages');
       },
     });
+  }
+
+  private refreshPeerPresence(profileId: string | null | undefined): void {
+    const id = (profileId || '').trim();
+    if (!id) {
+      this.watchedPeerId.set(null);
+      this.isOtherOnline.set(false);
+      return;
+    }
+
+    this.watchedPeerId.set(id);
+    void this.chatSignalr.invoke('IsOnline', id);
+  }
+
+  private sameProfileId(a: string | null | undefined, b: string | null | undefined): boolean {
+    const left = (a || '').trim().toLowerCase();
+    const right = (b || '').trim().toLowerCase();
+    return !!left && !!right && left === right;
   }
 
   private looksLikePlanPreview(text?: string | null, type?: string | null): boolean {

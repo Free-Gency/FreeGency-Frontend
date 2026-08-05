@@ -99,8 +99,13 @@ export class ChatSignalrService {
     this.onlineStatusHandlers.delete(callback);
   }
 
-  invoke(method: string, ...args: unknown[]) {
-    return this.hubConnection?.invoke(method, ...args);
+  invoke(method: string, ...args: unknown[]): Promise<void> {
+    return this.ensureConnected().then(() => {
+      if (!this.hubConnection || this.hubConnection.state !== HubConnectionState.Connected) {
+        return;
+      }
+      return this.hubConnection.invoke(method, ...args);
+    });
   }
 
   listenProfileOnline(callback: (profileId: string) => void): void {
@@ -109,10 +114,18 @@ export class ChatSignalrService {
     this.bindHubHandlers();
   }
 
+  unlistenProfileOnline(callback: (profileId: string) => void): void {
+    this.profileOnlineHandlers.delete(callback);
+  }
+
   listenProfileOffline(callback: (profileId: string) => void): void {
     this.profileOfflineHandlers.add(callback);
     this.CreateHubConnection();
     this.bindHubHandlers();
+  }
+
+  unlistenProfileOffline(callback: (profileId: string) => void): void {
+    this.profileOfflineHandlers.delete(callback);
   }
 
   private startConnection(): Promise<void> {
@@ -156,13 +169,17 @@ export class ChatSignalrService {
     });
 
     this.hubConnection.off('ProfileOnline');
-    this.hubConnection.on('ProfileOnline', (profileId: string) => {
-      this.profileOnlineHandlers.forEach((cb) => cb(profileId));
+    this.hubConnection.on('ProfileOnline', (profileId: string | { toString(): string }) => {
+      const id = String(profileId ?? '');
+      if (!id) return;
+      this.profileOnlineHandlers.forEach((cb) => cb(id));
     });
 
     this.hubConnection.off('ProfileOffline');
-    this.hubConnection.on('ProfileOffline', (profileId: string) => {
-      this.profileOfflineHandlers.forEach((cb) => cb(profileId));
+    this.hubConnection.on('ProfileOffline', (profileId: string | { toString(): string }) => {
+      const id = String(profileId ?? '');
+      if (!id) return;
+      this.profileOfflineHandlers.forEach((cb) => cb(id));
     });
   }
 

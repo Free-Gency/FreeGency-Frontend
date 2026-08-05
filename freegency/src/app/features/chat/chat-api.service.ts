@@ -98,6 +98,10 @@ export class ChatApiService {
       ...raw,
       projectId: pick(raw.projectId),
       proposalId: pick(raw.proposalId),
+      otherProfileId: pick(
+        raw.otherProfileId,
+        (raw as unknown as { OtherProfileId?: string | null }).OtherProfileId,
+      ),
     };
   }
 }

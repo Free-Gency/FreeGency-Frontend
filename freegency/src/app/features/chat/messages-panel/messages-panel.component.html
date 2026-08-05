@@ -158,12 +158,15 @@
         <div class="msg-thread__meta">
           <h3>{{ displayTitle(room) }}</h3>
           <p>
-            <span
-              class="msg-online-dot"
-              [class.is-on]="isOtherOnline()"
-            ></span>
-            {{ isOtherOnline() ? 'Online' : 'Offline' }}
-            · {{ roomMeta(room) }}
+            @if (room.roomType === 'Proposal' || room.roomType === 'Project') {
+              <span
+                class="msg-online-dot"
+                [class.is-on]="isOtherOnline()"
+              ></span>
+              {{ isOtherOnline() ? 'Online' : 'Offline' }}
+              ·
+            }
+            {{ roomMeta(room) }}
           </p>
         </div>
         <div class="msg-thread__actions">
