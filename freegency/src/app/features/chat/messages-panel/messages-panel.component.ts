@@ -349,7 +349,11 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     this.loadChatRooms();
   }
 
-  ngOnDestroy(): void {
+ async ngOnDestroy(): Promise<void> {
+   if (this.joinedRoomId) {
+    await this.chatSignalr.leaveRoom(this.joinedRoomId);
+    this.joinedRoomId = null;
+  }
     this.destroyListeners = true;
     if (this.scrollRaf) cancelAnimationFrame(this.scrollRaf);
     this.setSelectedFile(null);
@@ -687,8 +691,15 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     const url = this.manageLogoPreview();
     if (url?.startsWith('blob:')) URL.revokeObjectURL(url);
   }
+  private joinedRoomId: string | null = null;
 
-  protected openChat(room: ChatRoom): void {
+  protected async openChat(room: ChatRoom):Promise< void> {
+    if (this.joinedRoomId && this.joinedRoomId !== room.id) {
+     await this.chatSignalr.leaveRoom(this.joinedRoomId);
+  }
+
+   this.chatSignalr.joinRoom(room.id);
+  this.joinedRoomId = room.id;
     this.shouldStickToBottom = true;
     this.closeAttachMenu();
     this.selectedRoom.set(room);

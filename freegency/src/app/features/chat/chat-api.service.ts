@@ -14,7 +14,7 @@ import {
 export class ChatApiService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiBaseUrl}/api/v1/Chat`;
-
+  
   getChatRooms(filter?: ChatRoomFilter): Observable<PagedResponse<ChatRoom>> {
     let params = new HttpParams();
     if (filter) {
