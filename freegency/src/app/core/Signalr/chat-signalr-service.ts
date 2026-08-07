@@ -107,7 +107,13 @@ export class ChatSignalrService {
       return this.hubConnection.invoke(method, ...args);
     });
   }
+joinRoom(roomId: string): Promise<void> {
+  return this.invoke("JoinRoom", roomId);
+}
 
+leaveRoom(roomId: string): Promise<void> {
+  return this.invoke("LeaveRoom", roomId);
+}
   listenProfileOnline(callback: (profileId: string) => void): void {
     this.profileOnlineHandlers.add(callback);
     this.CreateHubConnection();
@@ -181,6 +187,7 @@ export class ChatSignalrService {
       if (!id) return;
       this.profileOfflineHandlers.forEach((cb) => cb(id));
     });
+    
   }
 
   private normalizeMessage(raw: RoomMessage): RoomMessage {

@@ -19,9 +19,11 @@ export class App implements OnInit {
 
   ngOnInit() {
 
-     const session = sessionStorage.getItem("freegency.auth.session");
+     const session = localStorage.getItem("freegency.auth.session");
+      const sessions = sessionStorage.getItem("freegency.auth.session");
 
-  if (session) {
+
+  if (session||sessions) {
     this.signalr.CreateHubConnection();
     this.chatSignalr.CreateHubConnection();
   }
