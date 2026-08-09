@@ -262,6 +262,7 @@ export class TeamDetailComponent implements OnInit {
     const items: { id: TeamDetailTab; label: string }[] = [
       { id: 'overview', label: 'Overview' },
       { id: 'projects', label: 'Projects' },
+      { id: 'jobs', label: 'Jobs' },
       { id: 'tasks', label: 'Task Management' },
       { id: 'finance', label: 'Finance' },
       { id: 'messages', label: 'Messages' },
@@ -366,6 +367,7 @@ export class TeamDetailComponent implements OnInit {
   }[] = [
     { key: 'overview', label: 'Overview', icon: this.dashIcon },
     { key: 'projects', label: 'Projects', icon: this.folderIcon },
+    { key: 'jobs', label: 'Jobs', icon: this.briefcaseIcon },
     { key: 'tasks', label: 'Task Management', icon: this.chartIcon },
     { key: 'finance', label: 'Finance', icon: this.walletIcon },
     { key: 'messages', label: 'Messages', icon: this.messageIcon },
@@ -1325,10 +1327,11 @@ export class TeamDetailComponent implements OnInit {
   }
 
   private normalizeTab(raw: string | null): TeamDetailTab {
-    if (raw === 'portfolio' || raw === 'management' || raw === 'jobs') return 'overview';
+    if (raw === 'portfolio' || raw === 'management') return 'overview';
     if (
       raw === 'overview' ||
       raw === 'projects' ||
+      raw === 'jobs' ||
       raw === 'tasks' ||
       raw === 'finance' ||
       raw === 'messages' ||
