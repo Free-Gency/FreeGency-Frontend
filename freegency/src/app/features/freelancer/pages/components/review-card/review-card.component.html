@@ -1,0 +1,37 @@
+<div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+      <div class="flex justify-between items-start mb-4">
+        
+        <!-- Reviewer Info -->
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-gray-200 overflow-hidden shrink-0 flex items-center justify-center font-bold text-gray-600">
+            @if (review().avatar) {
+              <img [src]="review().avatar" class="w-full h-full object-cover">
+            } @else {
+              {{ review().reviewerName.charAt(0) }}
+            }
+          </div>
+          <div>
+            <h4 class="text-sm font-bold text-gray-900">{{ review().reviewerName }}</h4>
+            <p class="text-xs text-gray-500">{{ review().reviewerTitle }}</p>
+          </div>
+        </div>
+
+        <!-- Stars -->
+        <div class="flex text-yellow-400">
+          @for (star of [1,2,3,4,5]; track star) {
+            <span class="material-symbols-outlined text-[16px]" 
+                  [style.font-variation-settings]="getStarFontVariation(star)">
+              star
+            </span>
+          }
+        </div>
+      </div>
+
+      <!-- Review Text -->
+      <p class="text-[14px] text-gray-600 leading-relaxed mb-3">
+        "{{ review().comment }}"
+      </p>
+
+      <!-- Date -->
+      <span class="text-xs text-gray-400 font-medium">{{ review().date }}</span>
+    </div>

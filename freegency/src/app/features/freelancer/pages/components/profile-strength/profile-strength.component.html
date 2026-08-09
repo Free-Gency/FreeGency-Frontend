@@ -1,0 +1,41 @@
+<div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+      <h2 class="text-lg font-bold text-gray-900 tracking-tight mb-4">Profile Strength</h2>
+      
+      <!-- Progress Bar Area -->
+      <div class="mb-6">
+        <div class="flex justify-between items-end mb-2">
+          <span class="text-[15px] font-bold text-gray-900">{{ completionScore() }}% Complete</span>
+          @if(completionScore() === 100) {
+            <span class="text-xs font-semibold text-green-600">Excellent</span>
+          } @else if(completionScore() >= 66) {
+            <span class="text-xs font-semibold text-yellow-600">Good</span>
+          } @else if(completionScore() >= 33) {
+            <span class="text-xs font-semibold text-orange-600">Needs Improvement</span>
+          } @else {
+            <
+          <span class="text-xs font-semibold text-indigo-600">Almost there</span>
+          }
+        </div>
+        <div class="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+          <div class="h-full bg-[#4f46e5] rounded-full transition-all duration-500" 
+               [style.width.%]="completionScore()"></div>
+        </div>
+      </div>
+
+      <!-- Checklist -->
+      <div class="space-y-3">
+        @for (step of steps(); track step.label) {
+          <div class="flex items-center gap-3">
+            @if (step.isComplete) {
+              <div class="w-5 h-5 rounded-full bg-[#4f46e5] flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-white text-[14px] font-bold">check</span>
+              </div>
+              <span class="text-sm font-medium text-gray-900">{{ step.label }}</span>
+            } @else {
+              <div class="w-5 h-5 rounded-full border-2 border-gray-200 shrink-0"></div>
+              <span class="text-sm text-gray-500">{{ step.label }}</span>
+            }
+          </div>
+        }
+      </div>
+    </div>

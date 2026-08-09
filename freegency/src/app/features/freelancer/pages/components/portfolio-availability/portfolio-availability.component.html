@@ -1,0 +1,43 @@
+<div class="bg-[#2a2a2a] rounded-2xl p-6 shadow-sm text-white">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-lg font-bold tracking-tight text-gray-300">Availability</h2>
+        <button class="w-8 h-8 flex items-center justify-center rounded-lg bg-[#3a3a3a] text-gray-300 hover:bg-[#4a4a4a] transition-colors">
+          <span class="material-symbols-outlined text-[18px]">edit</span>
+        </button>
+      </div>
+
+      <!-- Toggle Box -->
+      <div class="bg-[#363636] rounded-xl p-4 flex justify-between items-center mb-6">
+        <div class="flex items-center gap-2">
+          <!-- Dynamic Neon Indicator Dot -->
+          <span class="w-2.5 h-2.5 rounded-full transition-colors"
+                [ngClass]="isAvailable() ? 'bg-[#a3e635] shadow-[0_0_8px_rgba(163,230,53,0.5)]' : 'bg-gray-500'"></span>
+          <span class="text-sm font-medium text-gray-100">
+            {{ isAvailable() ? 'Available now' : 'Not available' }}
+          </span>
+        </div>
+        
+        <!-- Functional Toggle Switch -->
+        <div (click)="toggleAvailability()" 
+             class="w-10 h-6 rounded-full p-1 flex cursor-pointer transition-colors"
+             [ngClass]="isAvailable() ? 'bg-[#a3e635] justify-end' : 'bg-gray-600 justify-start'">
+          <div class="w-4 h-4 bg-white rounded-full shadow-sm"></div>
+        </div>
+      </div>
+
+      <!-- Stats List -->
+      <div class="space-y-4 text-[14px]">
+        <div class="flex justify-between items-center">
+          <span class="text-gray-400">Capacity</span>
+          <span class="font-medium text-gray-100">30 hrs/week</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-gray-400">Commitment</span>
+          <span class="font-medium text-gray-100">Long-term</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-gray-400">Timezone</span>
+          <span class="font-medium text-gray-100">PST (UTC-8)</span>
+        </div>
+      </div>
+    </div>
