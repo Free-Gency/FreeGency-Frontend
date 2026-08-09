@@ -40,7 +40,12 @@ import {
   TeamPortfolioProject,
   TeamRoleLabel,
 } from '../../models/team';
+import { TaskAssigneeOption } from '../../models/task';
+import { ProjectMilestone } from '../../../project/models/project-milestone';
+import { ProjectMilestonesApiService } from '../../../project/data-access/project-milestones-api.service';
 import { MessagesPanelComponent } from '../../../chat/messages-panel/messages-panel.component';
+import { TeamTaskBoardComponent } from '../team-task-board/team-task-board.component';
+import { MyTasksComponent } from '../../components/my-tasks/my-tasks.component';
 
 type SidebarKey = TeamDetailTab;
 type ExpertiseFocus = 'categories' | 'specialties' | 'skills';
@@ -69,6 +74,8 @@ interface FinanceDemoRow {
     DatePipe,
     DeveloperViewNavbarComponent,
     MessagesPanelComponent,
+    TeamTaskBoardComponent,
+    MyTasksComponent,
   ],
   templateUrl: './team-detail.component.html',
   styleUrl: './team-detail.component.css',
@@ -78,6 +85,7 @@ export class TeamDetailComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly teamsApi = inject(TeamsService);
   private readonly projectsApi = inject(DeveloperManageWorkService);
+  private readonly milestonesApi = inject(ProjectMilestonesApiService);
   private readonly categoriesApi = inject(CategoriesApiService);
   private readonly taxonomyApi = inject(TaxonomyApiService);
   protected readonly auth = inject(AuthService);
@@ -194,6 +202,14 @@ export class TeamDetailComponent implements OnInit {
   protected readonly membersLoaded = signal(false);
   protected readonly membersError = signal<string | null>(null);
   protected readonly memberRoleUpdating = signal<string | null>(null);
+
+  /** Task Management tab — selected project/milestone driving the task board. */
+  protected readonly taskProjectId = signal<string | null>(null);
+  protected readonly taskMilestoneId = signal<string | null>(null);
+  protected readonly taskMilestones = signal<ProjectMilestone[]>([]);
+  protected readonly taskMilestonesLoading = signal(false);
+  protected readonly taskMilestonesLoaded = signal(false);
+  protected readonly taskMilestonesError = signal<string | null>(null);
 
   protected readonly expertiseModalOpen = signal(false);
   protected readonly expertiseFocus = signal<ExpertiseFocus>('categories');
@@ -330,6 +346,14 @@ export class TeamDetailComponent implements OnInit {
     return this.projects().filter((p) => (p.assignedTeamId ?? null) === id);
   });
 
+  protected readonly assigneeOptions = computed<TaskAssigneeOption[]>(() =>
+    this.members().map((m) => ({
+      userId: m.userId,
+      name: m.name,
+      imageUrl: m.imageUrl,
+    })),
+  );
+
   protected readonly financeMemberRows = computed<FinanceDemoRow[]>(() => [
     { project: 'Lumina Finance App', role: 'Contributor · 25% share', share: '25%', amount: '$1,000.00', status: 'Released' },
     { project: 'Aether AI Engine', role: 'Contributor · 25% share', share: '25%', amount: '$1,500.00', status: 'Pending' },
@@ -388,6 +412,15 @@ export class TeamDetailComponent implements OnInit {
     if (tab === 'projects' && !this.projectsLoaded()) {
       const id = this.team()?.id;
       if (id) this.loadProjects(id);
+    }
+    if (tab === 'tasks') {
+      const id = this.team()?.id;
+      if (id && !this.projectsLoaded()) this.loadProjects(id);
+      if (id && !this.membersLoaded()) this.loadMembers(id);
+      if (!this.taskProjectId()) {
+        const first = this.teamProjects()[0];
+        if (first) this.selectTaskProject(first.id);
+      }
     }
     if (tab === 'jobs' && !this.jobsLoaded()) {
       const id = this.team()?.id;
@@ -1336,6 +1369,10 @@ export class TeamDetailComponent implements OnInit {
         if (this.activeTab() === 'projects') {
           this.loadProjects(id);
         }
+        if (this.activeTab() === 'tasks') {
+          this.loadProjects(id);
+          this.loadMembers(id);
+        }
         if (this.activeTab() === 'jobs') {
           this.loadJobs(id);
           if (this.isLeader()) this.loadJoinRequests(id);
@@ -1522,6 +1559,10 @@ export class TeamDetailComponent implements OnInit {
           this.projects.set(items.filter((p) => p.assignedTeamId === teamId));
           this.projectsLoaded.set(true);
           this.projectsLoading.set(false);
+          if (this.activeTab() === 'tasks' && !this.taskProjectId()) {
+            const first = this.teamProjects()[0];
+            if (first) this.selectTaskProject(first.id);
+          }
         },
         error: () => {
           this.projects.set([]);
@@ -1529,5 +1570,35 @@ export class TeamDetailComponent implements OnInit {
           this.projectsLoading.set(false);
         },
       });
+  }
+
+  protected selectTaskProject(projectId: string): void {
+    this.taskProjectId.set(projectId);
+    this.taskMilestoneId.set(null);
+    this.taskMilestones.set([]);
+    this.taskMilestonesLoaded.set(false);
+    this.taskMilestonesError.set(null);
+    this.loadTaskMilestones(projectId);
+  }
+
+  private loadTaskMilestones(projectId: string): void {
+    this.taskMilestonesLoading.set(true);
+    this.taskMilestonesError.set(null);
+    this.milestonesApi.getMilestones(projectId).subscribe({
+      next: (milestones) => {
+        this.taskMilestones.set(milestones);
+        this.taskMilestonesLoaded.set(true);
+        this.taskMilestonesLoading.set(false);
+        if (!this.taskMilestoneId() && milestones.length) {
+          this.taskMilestoneId.set(milestones[0].id);
+        }
+      },
+      error: (err) => {
+        this.taskMilestones.set([]);
+        this.taskMilestonesLoaded.set(true);
+        this.taskMilestonesLoading.set(false);
+        this.taskMilestonesError.set(extractApiError(err, 'Could not load milestones.'));
+      },
+    });
   }
 }

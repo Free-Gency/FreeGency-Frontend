@@ -1,0 +1,74 @@
+<div>
+  <h3 class="font-display text-lg font-bold text-on-surface">
+    {{ isEdit() ? 'Edit task' : 'New task' }}
+  </h3>
+
+  <label class="modal-field">
+    <span class="tw-mono-label">Title</span>
+    <input type="text" placeholder="e.g. Implement WebSocket connection" [ngModel]="title()" (ngModelChange)="title.set($event)" />
+  </label>
+
+  <label class="modal-field">
+    <span class="tw-mono-label">Description</span>
+    <textarea rows="3" placeholder="What needs to be done…" [ngModel]="description()" (ngModelChange)="description.set($event)"></textarea>
+  </label>
+
+  <label class="modal-field">
+    <span class="tw-mono-label">Requirements</span>
+    <textarea rows="3" placeholder="Technical requirements, constraints…" [ngModel]="requirements()" (ngModelChange)="requirements.set($event)"></textarea>
+  </label>
+
+  <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <label class="modal-field mt-0">
+      <span class="tw-mono-label">Priority</span>
+      <select [ngModel]="priority()" (ngModelChange)="priority.set($event)">
+        @for (p of priorities; track p) {
+          <option [value]="p">{{ p }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="modal-field mt-0">
+      <span class="tw-mono-label">Assignee</span>
+      <select
+        [ngModel]="assigneeUserId()"
+        (ngModelChange)="assigneeUserId.set($event || null)"
+      >
+        <option [ngValue]="null">Unassigned</option>
+        @for (m of assigneeOptions(); track m.userId) {
+          <option [ngValue]="m.userId">{{ m.name }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="modal-field mt-0">
+      <span class="tw-mono-label">Due date</span>
+      <input type="date" [min]="minDueDate()" [ngModel]="dueDate()" (ngModelChange)="dueDate.set($event || null)" />
+    </label>
+
+    <label class="modal-field mt-0">
+      <span class="tw-mono-label">Estimated hours</span>
+      <input
+        type="number"
+        min="0.5"
+        step="0.5"
+        placeholder="e.g. 8"
+        [ngModel]="estimatedHours()"
+        (ngModelChange)="estimatedHours.set($event === '' ? null : +$event)"
+      />
+    </label>
+  </div>
+
+  @if (error()) {
+    <p class="mt-3 text-sm text-on-error-container">{{ error() }}</p>
+  }
+
+  <div class="modal-actions">
+    <button type="button" class="modal-btn modal-btn--ghost" [disabled]="saving()" (click)="cancel()">
+      Cancel
+    </button>
+    <button type="button" class="modal-btn modal-btn--primary" [disabled]="saving()" (click)="submit()">
+      {{ saving() ? 'Saving…' : isEdit() ? 'Save changes' : 'Create task' }}
+    </button>
+  </div>
+</div>

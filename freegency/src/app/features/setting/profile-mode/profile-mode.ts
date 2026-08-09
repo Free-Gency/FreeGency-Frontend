@@ -14,7 +14,7 @@ import {
 import { AuthService } from '../../../core/auth/auth.service';
 import type { UserMode } from '../../../core/auth/auth.models';
 import { ProfileApiService } from '../../auth/data-access/profile-api.service';
-import { ToastService } from '../../../shared/components/toast/toast.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import {
   PROFILE_MISSING_ERROR,
   ProfileModeService,

@@ -69,6 +69,19 @@
     >
       <span>Milestones</span>
     </button>
+
+    <button
+      type="button"
+      class="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-colors shrink-0 cursor-pointer"
+      [ngClass]="
+        activeTab() === 'tasks'
+          ? 'bg-[#4130D7] text-white'
+          : 'bg-[#F0EDEF] text-on-surface hover:bg-[#E5E1E4]'
+      "
+      (click)="setTab('tasks')"
+    >
+      <span>My tasks</span>
+    </button>
   </div>
 
   <div class="mt-4">
@@ -78,6 +91,8 @@
       <app-my-proposals></app-my-proposals>
     } @else if (activeTab() === 'milestones') {
       <app-my-milestones></app-my-milestones>
+    } @else if (activeTab() === 'tasks') {
+      <app-my-tasks [currentUserId]="auth.session()?.id ?? ''"></app-my-tasks>
     }
   </div>
 </div>

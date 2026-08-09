@@ -6,6 +6,8 @@ export interface TaskDto {
   id: string;
   milestoneId: string;
   projectId: string;
+  milestoneTitle?: string;
+  projectTitle?: string;
   title: string;
   description: string | null;
   requirements: string | null;
@@ -64,12 +66,12 @@ export interface TaskAttachmentDto {
 
 export interface TaskTimeLogDto {
   id: string;
-  loggedHours: number;
-  date: string;
+  taskId: string;
+  hours: number;
   note: string | null;
   userId: string;
   userName: string;
-  createdAt: string;
+  workDate: string;
 }
 
 export interface TaskAssigneeOption {
@@ -123,9 +125,9 @@ export interface ChangeSubtaskStatusPayload {
   status: TaskStatus;
 }
 export interface AddTimeLogPayload {
-  loggedHours: number;
-  date?: string | null;
+  hours: number;
   note?: string | null;
+  workDate?: string | null;
 }
 
 // ---- Board / status helpers ----
@@ -161,13 +163,13 @@ export function isOverdue(dueDate: string | null | undefined, status?: TaskStatu
 export function priorityChipClass(p: TaskPriority): string {
   switch (p) {
     case 'Critical':
-      return 'bg-[#ffdad6] text-[#93000a]';
+      return 'bg-error-container text-on-error-container';
     case 'High':
-      return 'bg-[#fff7ed] text-[#c2410c]';
+      return 'bg-tertiary-container text-on-tertiary-container';
     case 'Medium':
-      return 'bg-[#eeecfb] text-[#4130d7]';
+      return 'bg-primary-fixed text-primary';
     case 'Low':
-      return 'bg-[#f3f4f6] text-[#6b7280]';
+      return 'bg-surface-container-low text-on-surface-variant';
   }
 }
 

@@ -1,0 +1,178 @@
+<section>
+  <header class="mb-5 flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <h3 class="font-display text-lg font-bold text-on-surface">My Tasks</h3>
+      <p class="mt-1 font-body text-sm text-on-surface-variant">Everything assigned to you across your teams.</p>
+    </div>
+    @if ((tasks.value() ?? []).length) {
+      <span class="rounded-full bg-primary-fixed px-3 py-1 font-body text-[11px] font-bold text-on-primary-fixed">
+        {{ totalHours() }}h total
+      </span>
+    }
+  </header>
+
+  @if (tasks.isLoading()) {
+    <div class="space-y-3">
+      @for (i of [1, 2, 3]; track i) {
+        <div class="tw-card h-20 animate-pulse"></div>
+      }
+    </div>
+  } @else if (tasks.error()) {
+    <p class="rounded-2xl border border-error-container bg-error-container/50 px-4 py-3 font-body text-sm text-on-error-container">
+      Could not load your tasks.
+      <button type="button" class="font-bold underline" (click)="tasks.reload()">Retry</button>
+    </p>
+  } @else if ((tasks.value() ?? []).length === 0) {
+    <div class="tw-card flex flex-col items-center border-dashed px-6 py-12 text-center">
+      <p class="font-display text-sm font-semibold text-on-surface">No tasks assigned yet</p>
+      <p class="mt-1 max-w-[320px] text-xs text-outline">
+        You'll see only your assigned tasks here once a team leader assigns you one.
+      </p>
+    </div>
+  } @else {
+    <div class="mb-5 space-y-3">
+      <label class="tw-input flex items-center gap-2">
+        <svg class="h-4 w-4 shrink-0 text-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="m20 20-3.5-3.5"></path>
+        </svg>
+        <input
+          type="search"
+          class="w-full bg-transparent outline-none"
+          placeholder="Search by task, project or milestone…"
+          [value]="query()"
+          (input)="setQuery($event)"
+        />
+      </label>
+
+      <div class="flex flex-wrap gap-1.5">
+        @for (f of filters(); track f.id) {
+          <button
+            type="button"
+            class="chip"
+            [class.chip-active]="filter() === f.id"
+            (click)="setFilter(f.id)"
+          >
+            {{ f.label }}
+            <span class="chip-count">{{ f.count }}</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    @if (filtered().length === 0) {
+      <div class="tw-card flex flex-col items-center border-dashed px-6 py-10 text-center">
+        <p class="font-display text-sm font-semibold text-on-surface">No matching tasks</p>
+        <button
+          type="button"
+          class="mt-2 rounded-full border border-outline-variant px-3 py-1 text-[11px] font-semibold text-primary hover:bg-primary-fixed"
+          (click)="query.set(''); filter.set('all')"
+        >
+          Clear search & filters
+        </button>
+      </div>
+    } @else {
+      <div class="space-y-6">
+        @for (group of grouped(); track group.status) {
+          @if (group.tasks.length) {
+            <div>
+              <p class="tw-mono-label mb-2 flex items-center gap-2">
+                <span class="h-1.5 w-1.5 rounded-full" [class]="dotClassOf(group.status)"></span>
+                {{ labels[group.status] }}
+                <span class="rounded-full bg-surface-container-low px-2 py-0.5 text-[10px] font-bold">
+                  {{ group.tasks.length }}
+                </span>
+              </p>
+              <div class="space-y-2">
+                @for (task of group.tasks; track task.id) {
+                  <article
+                    class="tw-card cursor-pointer p-4 transition-shadow hover:shadow-level-2"
+                    (click)="viewing.set(task)"
+                  >
+                    <div class="flex items-start justify-between gap-3">
+                      <div class="min-w-0">
+                        <div class="flex flex-wrap items-center gap-1.5">
+                          <span
+                            class="inline-flex items-center gap-1.5 rounded-full bg-surface-container-low px-2.5 py-1 text-[11px] font-semibold text-on-surface-variant"
+                          >
+                            <span class="h-1.5 w-1.5 rounded-full" [class]="dotClassOf(task.status)"></span>
+                            {{ labels[task.status] }}
+                          </span>
+                          <span
+                            class="rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wide"
+                            [ngClass]="priorityChip(task.priority)"
+                          >
+                            {{ task.priority }}
+                          </span>
+                        </div>
+
+                        <h4 class="mt-2 text-sm font-bold text-on-surface">{{ task.title }}</h4>
+                        <p class="mt-0.5 truncate text-xs text-on-surface-variant">
+                          {{ task.projectTitle ?? 'No project' }}
+                          @if (task.milestoneTitle) {
+                            · {{ task.milestoneTitle }}
+                          }
+                        </p>
+                      </div>
+
+                      <div class="shrink-0 text-right">
+                        <span
+                          class="text-xs"
+                          [class.text-error]="overdueOf(task.dueDate)"
+                          [class.font-semibold]="overdueOf(task.dueDate)"
+                          [class.text-outline]="!overdueOf(task.dueDate)"
+                        >
+                          {{ task.dueDate ? (task.dueDate | date: 'MMM d') : 'No due date' }}
+                        </span>
+                        <p class="mt-1 text-[10px] font-semibold text-outline">
+                          {{ task.spentHours ?? 0 }}h logged
+                        </p>
+                      </div>
+                    </div>
+
+                    @if (task.subtasks.length) {
+                      <div class="mt-3 flex items-center gap-2">
+                        <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-container-low">
+                          <div class="h-full rounded-full bg-primary" [style.width.%]="progressOf(task)"></div>
+                        </div>
+                        <span class="text-[10px] font-semibold text-outline">{{ progressOf(task) }}%</span>
+                      </div>
+                    }
+
+                    @if (transitionsOf(task).length) {
+                      <div class="mt-3 flex flex-wrap gap-1.5 border-t border-surface-container-low pt-2.5">
+                        @for (t of transitionsOf(task); track t.to) {
+                          <button
+                            type="button"
+                            class="inline-flex items-center gap-1.5 rounded-full border border-outline-variant px-3 py-1 text-[11px] font-semibold text-primary hover:bg-primary-fixed"
+                            [disabled]="busyId() === task.id"
+                            (click)="changeStatus(task, t.to, $event)"
+                          >
+                            @if (busyId() === task.id) {
+                              <span class="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
+                            }
+                            {{ t.label }}
+                          </button>
+                        }
+                      </div>
+                    }
+                  </article>
+                }
+              </div>
+            </div>
+          }
+        }
+      </div>
+    }
+  }
+
+  @if (viewingFresh(); as task) {
+    <app-task-detail-panel
+      [task]="task"
+      [currentUserId]="currentUserId()"
+      [canManage]="task.canManage"
+      (changed)="onDetailChanged()"
+      (closed)="viewing.set(null)"
+    ></app-task-detail-panel>
+  }
+</section>

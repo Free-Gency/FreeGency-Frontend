@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { HugeiconsIconComponent, type IconSvgObject } from '@hugeicons/angular';
 import { Alert02Icon, Cancel01Icon, CheckmarkCircle02Icon } from '@hugeicons/core-free-icons';
-import { ToastService, type ToastVariant } from './toast.service';
+import { ToastService, type ToastVariant } from '../../services/toast.service';
 
 @Component({
   selector: 'app-toast-outlet',
