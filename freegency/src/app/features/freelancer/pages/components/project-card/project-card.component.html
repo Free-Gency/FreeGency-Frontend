@@ -1,0 +1,29 @@
+<div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm flex flex-col h-full hover:shadow-md transition-shadow cursor-pointer">
+  <!-- Thumbnail / Image Cover -->
+  <div class="aspect-4/3 bg-gray-100 overflow-hidden relative">
+    @if (project().imageCover) {
+      <img [src]="project().imageCover" alt="Project Thumbnail" class="w-full h-full object-cover">
+    } @else {
+      <div class="w-full h-full flex items-center justify-center text-gray-400 bg-gray-50">
+        <span class="material-symbols-outlined text-4xl">image</span>
+      </div>
+    }
+  </div>
+  
+  <!-- Content -->
+  <div class="p-5 flex flex-col flex-1">
+    <h3 class="text-[17px] font-bold text-gray-900 mb-1.5">{{ project().title }}</h3>
+    <p class="text-[13px] text-gray-500 leading-relaxed mb-4 line-clamp-2 flex-1">
+      {{ project().description }}
+    </p>
+    
+    <!-- Category Tag -->
+    @if (project().categoryName) {
+      <div class="flex flex-wrap gap-2 mt-auto">
+         <span class="bg-gray-100 text-gray-600 text-xs font-medium px-2.5 py-1 rounded-md">
+           {{ project().categoryName }}
+         </span>
+      </div>
+    }
+  </div>
+</div>
