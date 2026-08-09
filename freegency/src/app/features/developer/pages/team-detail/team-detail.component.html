@@ -95,6 +95,7 @@
       <input id="tw-quick-cover" type="file" accept="image/*" class="sr-only" (change)="onQuickCoverChange($event)" />
       <input id="tw-quick-logo" type="file" accept="image/*" class="sr-only" (change)="onQuickLogoChange($event)" />
 
+      @if (activeTab() === 'overview') {
       <!-- Hero header with cover -->
       <section class="tw-hero">
         <div class="tw-hero__cover">
@@ -241,6 +242,7 @@
           <p class="tw-kpi mt-1">{{ t.membersCount }}</p>
         </div>
       </div>
+      }
 
       <!-- Tabs (shown under 960px; desktop uses sidebar) — members only -->
       @if (isTeamMember()) {
@@ -1211,27 +1213,77 @@
       <!-- TASKS -->
       @if (activeTab() === 'tasks') {
         <div class="pt-8">
-          <div class="tw-card flex flex-col items-center px-6 py-10 text-center">
-            <div class="mb-4 flex size-14 items-center justify-center rounded-2xl bg-[#eeecfb] text-[#4130d7]">
-              <hugeicons-icon [icon]="chartIcon" [size]="24" color="currentColor" [strokeWidth]="1.75" />
-            </div>
-            <h2 class="font-display text-lg font-bold text-[#111827]">Task Management is coming soon</h2>
-            <p class="mt-2 max-w-[380px] font-body text-sm text-[#6b7280]">
-              Boards, assignees, and due dates for this team will appear here once available.
-              @if (!isLeader()) {
-                You'll see only your assigned tasks.
-              }
-            </p>
-          </div>
-          <div class="ghost-board mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-            @for (col of ['To do', 'In progress', 'Done']; track col) {
-              <div class="tw-card p-4">
-                <p class="tw-mono-label mb-3">{{ col }}</p>
-                <div class="mb-2 h-16 rounded-xl bg-[#f3f4f6]"></div>
-                <div class="h-16 rounded-xl bg-[#f3f4f6]"></div>
+          @if (!isLeader()) {
+            <app-my-tasks [currentUserId]="auth.session()?.id ?? ''"></app-my-tasks>
+          } @else if (projectsLoading()) {
+            <div class="tw-card h-32 animate-pulse"></div>
+          } @else if (!teamProjects().length) {
+            <div class="tw-card flex flex-col items-center px-6 py-10 text-center">
+              <div class="mb-4 flex size-14 items-center justify-center rounded-2xl bg-[#eeecfb] text-[#4130d7]">
+                <hugeicons-icon [icon]="chartIcon" [size]="24" color="currentColor" [strokeWidth]="1.75" />
               </div>
+              <h2 class="font-display text-lg font-bold text-[#111827]">No assigned projects yet</h2>
+              <p class="mt-2 max-w-[380px] font-body text-sm text-[#6b7280]">
+                This team isn't assigned to any client project yet. Task boards become available once the team is hired.
+              </p>
+            </div>
+          } @else {
+            <div class="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label class="tw-mono-label mb-1.5 block" for="task-project">Project</label>
+                <select
+                  id="task-project"
+                  [ngModel]="taskProjectId()"
+                  (ngModelChange)="selectTaskProject($event)"
+                  class="h-10 w-full rounded-xl border border-[#e5e7eb] bg-white px-3 font-body text-sm text-[#111827] focus:border-[#4130d7] focus:outline-none"
+                >
+                  @for (p of teamProjects(); track p.id) {
+                    <option [ngValue]="p.id">{{ p.title }}</option>
+                  }
+                </select>
+              </div>
+              <div>
+                <label class="tw-mono-label mb-1.5 block" for="task-milestone">Milestone</label>
+                <select
+                  id="task-milestone"
+                  [ngModel]="taskMilestoneId()"
+                  (ngModelChange)="taskMilestoneId.set($event)"
+                  [disabled]="taskMilestonesLoading() || !taskMilestones().length"
+                  class="h-10 w-full rounded-xl border border-[#e5e7eb] bg-white px-3 font-body text-sm text-[#111827] focus:border-[#4130d7] focus:outline-none disabled:cursor-not-allowed disabled:bg-[#f9fafb] disabled:text-[#9ca3af]"
+                >
+                  @if (taskMilestonesLoading()) {
+                    <option>Loading milestones…</option>
+                  } @else {
+                    @for (m of taskMilestones(); track m.id) {
+                      <option [ngValue]="m.id">{{ m.title }}</option>
+                    }
+                  }
+                </select>
+              </div>
+            </div>
+
+            @if (taskMilestonesError(); as err) {
+              <div class="rounded-2xl border border-[#ffdad6] bg-[#fff8f7] px-4 py-3 font-body text-sm text-[#93000a]">
+                {{ err }}
+                <button type="button" class="font-bold underline" (click)="selectTaskProject(taskProjectId()!)">Retry</button>
+              </div>
+            } @else if (taskMilestonesLoaded() && !taskMilestones().length) {
+              <div class="tw-card flex flex-col items-center px-6 py-10 text-center">
+                <p class="font-display text-base font-bold text-[#111827]">No milestones yet</p>
+                <p class="mt-1 max-w-[360px] font-body text-sm text-[#6b7280]">
+                  This project has no milestone plan yet. Tasks are organized under milestones.
+                </p>
+              </div>
+            } @else if (taskMilestoneId(); as milestoneId) {
+              <app-team-task-board
+                [milestoneId]="milestoneId"
+                [projectId]="taskProjectId()!"
+                [currentUserId]="auth.session()?.id ?? ''"
+                [isManager]="true"
+                [members]="assigneeOptions()"
+              />
             }
-          </div>
+          }
         </div>
       }
 

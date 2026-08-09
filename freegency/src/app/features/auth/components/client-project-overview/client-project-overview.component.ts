@@ -19,7 +19,7 @@ import {
 import { CLIENT_HOME_PATH, CLIENT_ONBOARDING_PATH } from '../../../../core/auth/auth.models';
 import { extractApiError } from '../../../../core/http/api-error';
 import { StepFooterActionsComponent } from '../../../../shared/components/step-footer-actions/step-footer-actions.component';
-import { ToastService } from '../../../../shared/components/toast/toast.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { CategoriesApiService, type CategoryDto } from '../../data-access/categories-api.service';
 import { ProjectFilesApiService } from '../../data-access/project-files-api.service';
 import {

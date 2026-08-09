@@ -7,7 +7,7 @@ import { ProjectProposalsApiService } from '../../data-access/project-proposals-
 import { ProjectStatus } from '../../models/project-detail';
 import { ProjectProposal, ProposalStatus } from '../../models/project-proposal';
 import { ProposalDetailDrawerComponent } from '../proposal-detail-drawer/proposal-detail-drawer.component';
-import { ToastService } from '../../../../shared/components/toast/toast.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { extractApiError } from '../../../../core/http/api-error';
 
 type SortOption = 'newest' | 'budget-high' | 'budget-low';

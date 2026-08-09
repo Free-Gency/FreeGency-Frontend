@@ -27,7 +27,7 @@ import { finalize } from 'rxjs';
 
 import { SettingService } from '../Data-Access/setting-service';
 import { AuthService } from '../../../core/auth/auth.service';
-import { ToastService } from '../../../shared/components/toast/toast.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { ClientAccount } from '../../../shared/models/client-account.model';
 import { ProfileInterest } from '../../../shared/models/profile-interest';
 import { Category } from '../../../shared/models/Category';

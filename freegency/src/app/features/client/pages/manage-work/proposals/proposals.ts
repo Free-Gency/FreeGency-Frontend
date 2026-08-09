@@ -12,7 +12,7 @@ import { Proposal, PagedResponse } from '../../../../../shared/models/Proposal';
 import { Project } from '../../../../../shared/models/Project';
 import { ProposalAssistantComponent } from '../../../components/proposal-assistant/proposal-assistant.component';
 import { ProposalDetailDrawerComponent } from '../../../../project/components/proposal-detail-drawer/proposal-detail-drawer.component';
-import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import { ToastService } from '../../../../../shared/services/toast.service';
 import { extractApiError } from '../../../../../core/http/api-error';
 
 @Component({

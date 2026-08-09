@@ -1,0 +1,276 @@
+<div class="fixed inset-0 z-50 flex justify-end bg-black/30" (click)="close()">
+  <div
+    class="flex h-full w-full max-w-3xl flex-col bg-surface-container-lowest shadow-2xl"
+    (click)="$event.stopPropagation()"
+  >
+    <!-- Header -->
+    <header class="flex items-start justify-between gap-3 border-b border-surface-container px-6 py-5">
+      <div class="min-w-0">
+        <span class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide" [ngClass]="priorityClassOf(task().priority)">
+          {{ task().priority }}
+        </span>
+        <h2 class="mt-2 font-display text-lg font-bold text-on-surface">{{ task().title }}</h2>
+      </div>
+      <button type="button" class="flex size-9 shrink-0 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low" (click)="close()">
+        <span class="material-symbols-outlined text-[20px]">close</span>
+      </button>
+    </header>
+
+    <div class="grid flex-1 grid-cols-1 overflow-y-auto lg:grid-cols-[1fr_280px]">
+      <!-- Main column -->
+      <div class="space-y-8 px-6 py-6">
+        <!-- Description -->
+        <section>
+          <p class="tw-mono-label mb-2">Description</p>
+          <p class="whitespace-pre-wrap font-body text-sm leading-relaxed text-on-surface-variant">
+            {{ task().description || 'No description provided.' }}
+          </p>
+          @if (task().requirements) {
+            <p class="tw-mono-label mb-2 mt-4">Requirements</p>
+            <p class="whitespace-pre-wrap font-body text-sm leading-relaxed text-on-surface-variant">{{ task().requirements }}</p>
+          }
+        </section>
+
+        <!-- Subtasks -->
+        <section>
+          <div class="mb-2 flex items-center justify-between">
+            <p class="tw-mono-label">Subtasks ({{ (subtasks.value() ?? []).length }})</p>
+          </div>
+          <div class="space-y-1.5">
+            @for (s of subtasks.value() ?? []; track s.id) {
+              <div class="group flex items-center gap-2 rounded-lg px-1 py-1 hover:bg-surface-container-low">
+                <input
+                  type="checkbox"
+                  class="size-4 rounded border-outline-variant text-primary"
+                  [checked]="s.status === 'Done'"
+                  (change)="toggleSubtaskDone(s.id, s.status === 'Done')"
+                />
+                <span class="flex-1 text-sm text-on-surface" [class.line-through]="s.status === 'Done'" [class.text-outline]="s.status === 'Done'">
+                  {{ s.title }}
+                </span>
+                @if (canManage()) {
+                  <button type="button" class="invisible text-outline-variant hover:text-error group-hover:visible" (click)="deleteSubtask(s.id)">
+                    <span class="material-symbols-outlined text-[16px]">close</span>
+                  </button>
+                }
+              </div>
+            } @empty {
+              <p class="text-xs text-outline">No subtasks yet.</p>
+            }
+          </div>
+          <div class="mt-2 flex items-center gap-2">
+            <input
+              type="text"
+              class="h-9 flex-1 rounded-sm border border-surface-container-high bg-surface-container-lowest px-3 text-sm placeholder:text-outline focus:border-primary focus:outline-none"
+              placeholder="+ Add subtask"
+              [ngModel]="newSubtaskTitle()"
+              (ngModelChange)="newSubtaskTitle.set($event)"
+              (keydown.enter)="addSubtask()"
+            />
+            <button type="button" class="h-9 shrink-0 rounded-sm bg-surface-container-low px-3 text-xs font-semibold text-on-surface hover:bg-surface-container-high" (click)="addSubtask()">
+              Add
+            </button>
+          </div>
+        </section>
+
+        <!-- Checklist -->
+        <section>
+          <p class="tw-mono-label mb-2">Checklist</p>
+          <div class="space-y-1.5">
+            @for (item of checklist.value() ?? []; track item.id) {
+              <div class="group flex items-center gap-2 rounded-lg px-1 py-1 hover:bg-surface-container-low">
+                <input
+                  type="checkbox"
+                  class="size-4 rounded border-outline-variant text-primary"
+                  [checked]="item.isCompleted"
+                  (change)="toggleChecklistItem(item.id, !item.isCompleted)"
+                />
+                <span class="flex-1 text-sm text-on-surface" [class.line-through]="item.isCompleted" [class.text-outline]="item.isCompleted">
+                  {{ item.title }}
+                </span>
+                <button type="button" class="invisible text-outline-variant hover:text-error group-hover:visible" (click)="deleteChecklistItem(item.id)">
+                  <span class="material-symbols-outlined text-[16px]">close</span>
+                </button>
+              </div>
+            } @empty {
+              <p class="text-xs text-outline">No checklist items yet.</p>
+            }
+          </div>
+          <div class="mt-2 flex items-center gap-2">
+            <input
+              type="text"
+              class="h-9 flex-1 rounded-sm border border-surface-container-high bg-surface-container-lowest px-3 text-sm placeholder:text-outline focus:border-primary focus:outline-none"
+              placeholder="+ Add checklist item"
+              [ngModel]="newChecklistTitle()"
+              (ngModelChange)="newChecklistTitle.set($event)"
+              (keydown.enter)="addChecklistItem()"
+            />
+            <button type="button" class="h-9 shrink-0 rounded-sm bg-surface-container-low px-3 text-xs font-semibold text-on-surface hover:bg-surface-container-high" (click)="addChecklistItem()">
+              Add
+            </button>
+          </div>
+        </section>
+
+        <!-- Attachments -->
+        <section>
+          <div class="mb-2 flex items-center justify-between">
+            <p class="tw-mono-label">Attachments</p>
+            <label class="cursor-pointer text-xs font-bold text-primary">
+              {{ uploading() ? 'Uploading…' : 'Upload files' }}
+              <input type="file" multiple class="sr-only" [disabled]="uploading()" (change)="onFilesSelected($event)" />
+            </label>
+          </div>
+          <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            @for (a of attachments.value() ?? []; track a.id) {
+              <a
+                [href]="a.fileUrl"
+                target="_blank"
+                rel="noopener"
+                class="group relative flex h-20 flex-col items-center justify-center rounded border border-surface-container-high bg-surface-container-low px-2 text-center"
+              >
+                <span class="material-symbols-outlined text-[22px] text-outline">description</span>
+                <span class="mt-1 line-clamp-1 w-full text-[10px] font-medium text-on-surface-variant">{{ a.fileName }}</span>
+                @if (canManage()) {
+                  <button
+                    type="button"
+                    class="absolute right-1 top-1 hidden size-5 items-center justify-center rounded-full bg-surface-container-lowest text-error shadow group-hover:flex"
+                    (click)="$event.preventDefault(); deleteAttachment(a.id)"
+                  >
+                    <span class="material-symbols-outlined text-[13px]">close</span>
+                  </button>
+                }
+              </a>
+            } @empty {
+              <p class="col-span-full text-xs text-outline">No attachments yet.</p>
+            }
+          </div>
+        </section>
+
+        <!-- Activity / comments -->
+        <section>
+          <p class="tw-mono-label mb-2">Activity ({{ (comments.value() ?? []).length }})</p>
+          <div class="space-y-3">
+            @for (c of comments.value() ?? []; track c.id) {
+              <div class="group flex gap-2.5">
+                <span class="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-fixed text-[11px] font-bold text-primary">
+                  @if (c.userImageUrl) {
+                    <img [src]="c.userImageUrl" alt="" class="size-full object-cover" />
+                  } @else {
+                    {{ c.userName.slice(0, 2).toUpperCase() }}
+                  }
+                </span>
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-2">
+                    <p class="text-[13px] font-bold text-on-surface">{{ c.userName }}</p>
+                    <p class="text-[11px] text-outline">{{ c.createdAt | date: 'MMM d, h:mm a' }}</p>
+                    @if (c.userId === currentUserId()) {
+                      <button type="button" class="invisible text-[11px] text-outline-variant hover:text-error group-hover:visible" (click)="deleteComment(c.id)">
+                        Delete
+                      </button>
+                    }
+                  </div>
+                  <p class="mt-0.5 whitespace-pre-wrap text-sm text-on-surface-variant">{{ c.content }}</p>
+                </div>
+              </div>
+            } @empty {
+              <p class="text-xs text-outline">No comments yet — be the first to say something.</p>
+            }
+          </div>
+
+          <div class="mt-3 flex items-start gap-2">
+            <textarea
+              rows="2"
+              class="h-[52px] flex-1 resize-none rounded border border-surface-container-high bg-surface-container-lowest px-3 py-2 text-sm placeholder:text-outline focus:border-primary focus:outline-none"
+              placeholder="Write a comment…"
+              [ngModel]="newComment()"
+              (ngModelChange)="newComment.set($event)"
+            ></textarea>
+            <button
+              type="button"
+              class="h-9 shrink-0 self-end rounded-full bg-primary px-4 text-xs font-bold text-on-primary hover:bg-primary-container"
+              (click)="addComment()"
+            >
+              Send
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <!-- Side column -->
+      <aside class="space-y-5 border-t border-surface-container bg-surface-container-low px-5 py-6 lg:border-l lg:border-t-0">
+        <div>
+          <p class="tw-mono-label mb-1.5">Status</p>
+          <p class="mb-2 text-sm font-bold text-on-surface">{{ labels[task().status] }}</p>
+          @if (transitions().length) {
+            <div class="flex flex-wrap gap-1.5">
+              @for (t of transitions(); track t.to) {
+                <button
+                  type="button"
+                  class="rounded-full border border-outline-variant bg-surface-container-lowest px-2.5 py-1 text-[11px] font-semibold text-primary hover:bg-primary-fixed"
+                  (click)="changeStatus(t.to)"
+                >
+                  {{ t.label }}
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        <div>
+          <p class="tw-mono-label mb-1.5">Assignee</p>
+          @if (task().assigneeName) {
+            <div class="flex items-center gap-2">
+              <span class="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-fixed text-[11px] font-bold text-primary">
+                @if (task().assigneeImageUrl) {
+                  <img [src]="task().assigneeImageUrl!" alt="" class="size-full object-cover" />
+                } @else {
+                  {{ task().assigneeName!.slice(0, 2).toUpperCase() }}
+                }
+              </span>
+              <span class="text-sm font-semibold text-on-surface">{{ task().assigneeName }}</span>
+            </div>
+          } @else {
+            <p class="text-sm text-outline">Unassigned</p>
+          }
+        </div>
+
+        <div>
+          <p class="tw-mono-label mb-1.5">Due date</p>
+          <p class="text-sm font-semibold text-on-surface">
+            {{ task().dueDate ? (task().dueDate! | date: 'MMM d, y') : '—' }}
+          </p>
+        </div>
+
+        <div>
+          <p class="tw-mono-label mb-1.5">Hours</p>
+          <p class="text-sm font-semibold text-on-surface">
+            {{ loggedHours() }}h logged @if (task().estimatedHours) { <span class="text-outline">/ {{ task().estimatedHours }}h est.</span> }
+          </p>
+          @if (canManage() || isAssignee()) {
+            <div class="mt-2 flex items-center gap-1.5">
+              <input
+                type="number"
+                min="0"
+                step="0.25"
+                placeholder="Hours"
+                class="h-8 w-16 rounded-sm border border-surface-container-high bg-surface-container-lowest px-2 text-xs focus:border-primary focus:outline-none"
+                [ngModel]="logHours()"
+                (ngModelChange)="logHours.set($event === '' ? null : +$event)"
+              />
+              <input
+                type="text"
+                placeholder="Note (optional)"
+                class="h-8 flex-1 rounded-sm border border-surface-container-high bg-surface-container-lowest px-2 text-xs focus:border-primary focus:outline-none"
+                [ngModel]="logNote()"
+                (ngModelChange)="logNote.set($event)"
+              />
+              <button type="button" class="h-8 shrink-0 rounded-sm bg-surface-container-low px-2 text-[11px] font-semibold text-on-surface hover:bg-surface-container-high" (click)="submitTimeLog()">
+                Log
+              </button>
+            </div>
+          }
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>

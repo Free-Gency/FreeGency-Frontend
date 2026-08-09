@@ -12,7 +12,7 @@ import {
   DEVELOPER_ONBOARDING_PATH,
   DEVELOPER_SETUP_PENDING_KEY,
 } from '../../core/auth/auth.models';
-import { ToastService } from '../components/toast/toast.service';
+import { ToastService } from './toast.service';
 
 export interface ProfileModes {
   activeProfileMode: UserMode | string;

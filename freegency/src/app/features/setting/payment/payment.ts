@@ -13,7 +13,7 @@ import {
 import { loadStripe, Stripe, StripeElements, StripePaymentElement } from '@stripe/stripe-js';
 import { environment } from '../../../../environments/environment.development';
 import { Wallet } from '../../../shared/models/Wallet';
-import { ToastService } from '../../../shared/components/toast/toast.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { PaymentService } from '../Data-Access/payment-service';
 import { SignalrService } from '../../../core/Signalr/signalr-service';
 
