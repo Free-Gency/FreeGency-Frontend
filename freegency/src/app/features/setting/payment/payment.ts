@@ -16,6 +16,7 @@ import { Wallet } from '../../../shared/models/Wallet';
 import { ToastService } from '../../../shared/services/toast.service';
 import { PaymentService } from '../Data-Access/payment-service';
 import { SignalrService } from '../../../core/Signalr/signalr-service';
+import { ActivityItem, LedgerEntry } from '../../../shared/models/LedgerEntry';
 
 @Component({
   selector: 'app-payment',
@@ -53,36 +54,104 @@ export class Payment implements OnInit {
   protected readonly paying = signal(false);
 
   /** Static UI placeholders — replace when transactions API is ready. */
-  protected readonly mockActivity = [
-    {
-      title: "Payment for 'UI/UX Design System'",
-      meta: '26 Jul 2026 • Top Up',
-      amount: '+EGP 1,000',
-      tone: 'credit' as const,
-      status: 'Completed',
-      statusTone: 'done' as const,
-      icon: 'wallet' as const,
-    },
-    {
-      title: 'Escrow reserve',
-      meta: '25 Jul 2026 • Project escrow',
-      amount: '-EGP 500',
-      tone: 'debit' as const,
-      status: 'Reserved',
-      statusTone: 'warn' as const,
-      icon: 'transfer' as const,
-    },
-    {
-      title: 'Withdrawal request',
-      meta: '24 Jul 2026 • Bank transfer',
-      amount: '-EGP 250',
-      tone: 'debit' as const,
-      status: 'Pending',
-      statusTone: 'pending' as const,
-      icon: 'up' as const,
-    },
-  ];
+protected readonly activity = signal<ActivityItem[]>([]);
+protected readonly ledgerLoading = signal(false);
+ async ngOnInit(): Promise<void> {
+    this.stripe = await loadStripe(environment.stripePublicKey);
+    this.loadWallet();
+    this.loadLedger();
+  }
+loadLedger(): void {
+  this.ledgerLoading.set(true);
 
+  this.paymentService.getLedger(1, 3).subscribe({
+    next: (result) => {
+      this.activity.set(
+        result.items.map((entry) => this.mapLedgerToActivity(entry))
+      );
+
+      this.ledgerLoading.set(false);
+    },
+    error: (err) => {
+      console.error(err);
+      this.ledgerLoading.set(false);
+    },
+  });
+}
+private mapLedgerToActivity(entry: LedgerEntry): ActivityItem {
+  const isCredit = entry.amount > 0;
+
+  return {
+    title: this.getActivityTitle(entry),
+    meta: this.getActivityMeta(entry),
+    amount: `${isCredit ? '+' : ''}${entry.currency} ${Math.abs(entry.amount).toLocaleString()}`,
+    tone: isCredit ? 'credit' : 'debit',
+    status: this.getActivityStatus(entry),
+    statusTone: this.getActivityStatusTone(entry),
+    icon: this.getActivityIcon(entry),
+  };
+}
+private getActivityMeta(entry: LedgerEntry): string {
+  return `${this.formatDate(entry.createdAt)} • ${this.getActivityType(entry)}`;
+}
+private formatDate(date: string): string {
+  return new Date(date).toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+private getActivityTitle(entry: LedgerEntry): string {
+  switch (entry.entryType) {
+    // حط الـ enum values بتاعتك هنا
+    default:
+      return 'Wallet transaction';
+  }
+}
+private getActivityType(entry: LedgerEntry): string {
+  switch (entry.entryType) {
+    default:
+      return 'Wallet transaction';
+  }
+}
+
+private getActivityStatus(entry: LedgerEntry): string {
+  switch (entry.entryType) {
+    default:
+      return 'Completed';
+  }
+}
+
+private getActivityStatusTone(
+  entry: LedgerEntry,
+): 'done' | 'warn' | 'pending' {
+  switch (entry.entryType) {
+    default:
+      return 'done';
+  }
+}
+
+private getActivityIcon(
+  entry: LedgerEntry,
+): 'wallet' | 'transfer' | 'up' {
+  switch (entry.entryType) {
+    default:
+      return 'wallet';
+  }
+}
+
+private isCredit(entry: LedgerEntry): boolean {
+  switch (entry.entryType) {
+    // TopUp / Refund / ...
+    // return true;
+
+    // Escrow / Withdrawal / ...
+    // return false;
+
+    default:
+      return entry.amount > 0;
+  }
+}
   protected get canTopUp(): boolean {
     return Number(this.topUpAmount) > 0;
   }
@@ -98,10 +167,7 @@ export class Payment implements OnInit {
     );
   }
 
-  async ngOnInit(): Promise<void> {
-    this.stripe = await loadStripe(environment.stripePublicKey);
-    this.loadWallet();
-  }
+ 
 
   loadWallet(): void {
     this.paymentService.getWallet().subscribe({
