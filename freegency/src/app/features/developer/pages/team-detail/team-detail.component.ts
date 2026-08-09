@@ -46,6 +46,7 @@ import { ProjectMilestonesApiService } from '../../../project/data-access/projec
 import { MessagesPanelComponent } from '../../../chat/messages-panel/messages-panel.component';
 import { TeamTaskBoardComponent } from '../team-task-board/team-task-board.component';
 import { MyTasksComponent } from '../../components/my-tasks/my-tasks.component';
+import { FinanceComponent } from './finance/finance.component';
 
 type SidebarKey = TeamDetailTab;
 type ExpertiseFocus = 'categories' | 'specialties' | 'skills';
@@ -76,6 +77,7 @@ interface FinanceDemoRow {
     MessagesPanelComponent,
     TeamTaskBoardComponent,
     MyTasksComponent,
+    FinanceComponent
   ],
   templateUrl: './team-detail.component.html',
   styleUrl: './team-detail.component.css',

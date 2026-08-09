@@ -15,6 +15,9 @@ import {
   TeamMemberRow,
   TeamPortfolioProject,
 } from '../models/team';
+import { PagedResponse } from '../../../shared/models/PagedResponse';
+import { TeamProjectEarningsDto } from '../../../shared/models/TeamProjectEarningsDto';
+import { WalletTeam } from '../../../shared/models/WalletTeam';
 
 
 export interface TeamPortfolioRoadmapStepInput {
@@ -902,4 +905,38 @@ export class TeamsService {
       projectsCount: team.projectsCount ?? 0,
     };
   }
+ getTeamProjectEarnings(
+  teamId: string,
+  options?: {
+    pageNumber?: number;
+    pageSize?: number;
+    skipLoading?: boolean;
+  }
+): Observable<PagedResponse<TeamProjectEarningsDto>> {
+
+  return this.http.get<PagedResponse<TeamProjectEarningsDto>>(
+    `${this.teamsUrl}/Project-Team`,
+    {
+      params: {
+        TeamId: teamId,
+        PageNumber: options?.pageNumber ?? 1,
+        PageSize: options?.pageSize ?? 10,
+      },
+    }
+  );
+}
+getTeamWallet(
+  teamId: string,
+  options?: { skipLoading?: boolean },
+): Observable<WalletTeam> {
+  return this.http.get<WalletTeam>(
+    `${this.teamsUrl}/wallet/${teamId}`,
+    {
+      context: options?.skipLoading
+        ? skipLoadingCtx()
+        : undefined,
+    },
+  );
+}
+
 }

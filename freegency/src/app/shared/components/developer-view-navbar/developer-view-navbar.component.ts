@@ -31,12 +31,13 @@ import {
   PROFILE_MISSING_ERROR,
   ProfileModeService,
 } from '../../services/profile-mode.service';
+import { NotificationComponent } from "../../../features/notification/notification.component";
 
 export type DeveloperSearchScope = 'Projects' | 'Talents';
 
 @Component({
   selector: 'app-developer-view-navbar',
-  imports: [HugeiconsIconComponent, RouterLink],
+  imports: [HugeiconsIconComponent, RouterLink, NotificationComponent],
   templateUrl: './developer-view-navbar.component.html',
 })
 export class DeveloperViewNavbarComponent implements OnInit {
