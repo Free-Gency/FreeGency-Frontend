@@ -1,0 +1,284 @@
+<div class="relative shrink-0">
+
+  <!-- Notification Button -->
+  <button
+    type="button"
+    class="relative inline-flex size-8 cursor-pointer items-center justify-center rounded-full text-on-surface transition-colors hover:bg-[#f4f3ff]"
+    [class.bg-[#f4f3ff]]="notificationOpen()"
+    [attr.aria-expanded]="notificationOpen()"
+    aria-haspopup="dialog"
+    aria-label="Notifications"
+    (click)="toggleNotifications($event)"
+  >
+    <hugeicons-icon
+      [icon]="notificationIcon"
+      [size]="24"
+      color="currentColor"
+      [strokeWidth]="1.5"
+    />
+
+    @if (unreadCount() > 0) {
+      <span
+        class="absolute -right-0.5 -top-0.5 flex min-w-4 h-4 items-center justify-center rounded-full bg-[#e5484d] px-1 font-body text-[9px] font-bold leading-none text-white"
+      >
+        {{ unreadCount() > 99 ? '99+' : unreadCount() }}
+      </span>
+    }
+  </button>
+
+
+  <!-- Notification Dropdown -->
+  @if (notificationOpen()) {
+
+    <div
+      class="absolute right-0 top-[calc(100%+10px)] z-[80] w-[380px] overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-[0_12px_40px_rgba(39,37,63,0.16)]"
+      (click)="$event.stopPropagation()"
+    >
+
+      <!-- Header -->
+      <div
+        class="flex items-center justify-between border-b border-[#eceef4] px-4 py-3"
+      >
+
+        <div>
+          <h3
+            class="font-body text-base font-semibold text-[#27253f]"
+          >
+            Notifications
+          </h3>
+
+          @if (notificationPagination()?.totalCount) {
+            <p
+              class="mt-0.5 font-body text-xs text-[#737083]"
+            >
+              {{ notificationPagination()!.totalCount }}
+              notifications
+            </p>
+          }
+        </div>
+
+        @if (unreadCount() > 0) {
+          <span
+            class="rounded-full bg-[#f4f3ff] px-2.5 py-1 font-body text-xs font-medium text-[#5b4fd8]"
+          >
+            {{ unreadCount() }} unread
+          </span>
+        }
+
+      </div>
+
+
+      <!-- Loading -->
+      @if (notificationLoading()) {
+
+        <div
+          class="flex h-[280px] items-center justify-center"
+        >
+          <div
+            class="size-6 animate-spin rounded-full border-2 border-[#e5e2ff] border-t-[#5b4fd8]"
+          ></div>
+        </div>
+
+      }
+
+
+      <!-- Empty -->
+      @else if (notifications().length === 0) {
+
+        <div
+          class="flex h-[280px] flex-col items-center justify-center px-6 text-center"
+        >
+
+          <div
+            class="mb-3 flex size-12 items-center justify-center rounded-full bg-[#f4f3ff] text-[#5b4fd8]"
+          >
+            <hugeicons-icon
+              [icon]="notificationIcon"
+              [size]="20"
+              color="currentColor"
+              [strokeWidth]="1.5"
+            />
+          </div>
+
+          <p
+            class="font-body text-sm font-semibold text-[#27253f]"
+          >
+            No notifications
+          </p>
+
+          <p
+            class="mt-1 max-w-[240px] font-body text-xs leading-5 text-[#737083]"
+          >
+            You're all caught up.
+          </p>
+
+        </div>
+
+      }
+
+
+      <!-- Notifications List -->
+      @else {
+
+        <div class="max-h-[400px] overflow-y-auto">
+
+          @for (
+            notification of notifications();
+            track notification.id
+          ) {
+
+            <button
+              type="button"
+              class="flex w-full cursor-pointer gap-3 border-b border-[#f0f1f5] px-4 py-3 text-left transition-colors hover:bg-[#f8f7ff]"
+              [class.bg-[#faf9ff]]="!notification.isRead"
+              (click)="openNotification(notification)"
+            >
+
+              <!-- Image -->
+              <div class="relative shrink-0">
+
+                @if (notification.imageUrl) {
+
+                  <img
+                    [src]="notification.imageUrl"
+                    alt=""
+                    class="size-10 rounded-full object-cover"
+                    width="40"
+                    height="40"
+                  />
+
+                } @else {
+
+                  <div
+                    class="flex size-10 items-center justify-center rounded-full bg-[#f0efff] text-[#5b4fd8]"
+                  >
+                    <hugeicons-icon
+                      [icon]="notificationIcon"
+                      [size]="19"
+                      color="currentColor"
+                      [strokeWidth]="1.5"
+                    />
+                  </div>
+
+                }
+
+                @if (!notification.isRead) {
+
+                  <span
+                    class="absolute -right-0.5 -top-0.5 size-2.5 rounded-full border-2 border-white bg-[#5b4fd8]"
+                  ></span>
+
+                }
+
+              </div>
+
+
+              <!-- Content -->
+              <div class="min-w-0 flex-1">
+
+                <div
+                  class="flex items-start justify-between gap-2"
+                >
+
+                  <p
+                    class="truncate font-body text-sm"
+                    [class.font-semibold]="!notification.isRead"
+                    [class.text-[#27253f]]="!notification.isRead"
+                    [class.text-[#5e5b6e]]="notification.isRead"
+                  >
+                    {{ notification.title }}
+                  </p>
+
+                  <span
+                    class="shrink-0 font-body text-[10px] text-[#8b8898]"
+                  >
+                    {{ notification.createdAt | date:'short' }}
+                  </span>
+
+                </div>
+
+                <p
+                  class="mt-1 line-clamp-2 font-body text-xs leading-5 text-[#737083]"
+                >
+                  {{ notification.body }}
+                </p>
+
+              </div>
+
+            </button>
+
+          }
+
+        </div>
+
+
+        <!-- Pagination -->
+        @if (
+          notificationPagination() &&
+          notificationPagination()!.totalPages > 1
+        ) {
+
+          <div
+            class="flex items-center justify-between border-t border-[#eceef4] px-3 py-2.5"
+          >
+
+            <!-- Previous -->
+            <button
+              type="button"
+              class="rounded-lg px-2.5 py-1.5 font-body text-xs font-medium text-[#5b4fd8] transition-colors hover:bg-[#f4f3ff] disabled:cursor-not-allowed disabled:opacity-40"
+              [disabled]="
+                !notificationPagination()!.hasPreviousPage ||
+                notificationLoading()
+              "
+              (click)="previousPage()"
+            >
+              Previous
+            </button>
+
+
+            <!-- Page -->
+            <span
+              class="font-body text-xs text-[#737083]"
+            >
+              Page
+
+              <span
+                class="font-semibold text-[#27253f]"
+              >
+                {{ notificationPagination()!.pageNumber }}
+              </span>
+
+              of
+
+              <span
+                class="font-semibold text-[#27253f]"
+              >
+                {{ notificationPagination()!.totalPages }}
+              </span>
+            </span>
+
+
+            <!-- Next -->
+            <button
+              type="button"
+              class="rounded-lg px-2.5 py-1.5 font-body text-xs font-medium text-[#5b4fd8] transition-colors hover:bg-[#f4f3ff] disabled:cursor-not-allowed disabled:opacity-40"
+              [disabled]="
+                !notificationPagination()!.hasNextPage ||
+                notificationLoading()
+              "
+              (click)="nextPage()"
+            >
+              Next
+            </button>
+
+          </div>
+
+        }
+
+      }
+
+    </div>
+
+  }
+
+</div>

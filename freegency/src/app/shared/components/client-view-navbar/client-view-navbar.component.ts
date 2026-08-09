@@ -6,6 +6,7 @@ import {
   inject,
   OnInit,
   signal,
+  
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink, NavigationEnd } from '@angular/router';
@@ -22,6 +23,7 @@ import {
   Tick02Icon,
   UserAccountIcon,
   Wallet01Icon,
+  
 } from '@hugeicons/core-free-icons';
 import { AuthService } from '../../../core/auth/auth.service';
 import type { UserMode } from '../../../core/auth/auth.models';
@@ -32,12 +34,17 @@ import {
   PROFILE_MISSING_ERROR,
   ProfileModeService,
 } from '../../services/profile-mode.service';
+import { NotificationDto } from '../../models/notification';
+import { NotificationService } from '../../../features/notification/notification.service';
+import { PagedResponse } from '../../models/PagedResponse';
+import { DatePipe } from '@angular/common';
+import { NotificationComponent } from '../../../features/notification/notification.component';
 
 export type ClientSearchScope = 'Projects' | 'Talents';
 
 @Component({
   selector: 'app-client-view-navbar',
-  imports: [HugeiconsIconComponent, RouterLink],
+  imports: [HugeiconsIconComponent, RouterLink,DatePipe,NotificationComponent],
   templateUrl: './client-view-navbar.component.html',
 })
 export class ClientViewNavbarComponent implements OnInit {

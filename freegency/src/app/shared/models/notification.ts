@@ -26,13 +26,16 @@ export type NotificationType =
 
 /** Mirrors FreeGency.Application.Features.NotificationFeature.Dtos.NotificationDto (SignalR push payload). */
 export interface NotificationDto {
+  id: string;
   title: string;
   body: string;
-  type: NotificationType;
-  imageUrl: string | null;
-  actionUrl: string | null;
-  data: string | null;
+  type: string;
+
+  imageUrl?: string | null;
+  actionUrl?: string | null;
+  data?: string | null;
+
   isRead: boolean;
-  readAt: string | null;
+  readAt?: string | null;
   createdAt: string;
 }

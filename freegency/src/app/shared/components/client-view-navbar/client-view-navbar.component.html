@@ -153,18 +153,9 @@
     </div>
   </div>
 
-    <button
-      type="button"
-      class="inline-flex size-5 cursor-pointer items-center justify-center overflow-hidden text-on-surface transition-opacity hover:opacity-70"
-      aria-label="Notifications"
-    >
-      <hugeicons-icon
-        [icon]="notificationIcon"
-        [size]="20"
-        color="currentColor"
-        [strokeWidth]="1.5"
-      />
-    </button>
+   <div class="relative shrink-0">
+  <app-notification />
+</div>
 
     <div class="relative shrink-0" (click)="$event.stopPropagation()">
       <button
