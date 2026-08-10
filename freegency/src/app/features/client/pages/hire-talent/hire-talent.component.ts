@@ -1,8 +1,15 @@
 import { DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { catchError, forkJoin, of, switchMap } from 'rxjs';
+import { HugeiconsIconComponent, type IconSvgObject } from '@hugeicons/angular';
+import {
+  Cancel01Icon,
+  FilterVerticalIcon,
+  Search01Icon,
+} from '@hugeicons/core-free-icons';
+import { catchError, of } from 'rxjs';
 import { extractApiError } from '../../../../core/http/api-error';
 import {
   CategoriesApiService,
@@ -12,6 +19,11 @@ import {
   ProjectsApiService,
   type ProjectDto,
 } from '../../../auth/data-access/projects-api.service';
+import {
+  TaxonomyApiService,
+  type TaxonomySkill,
+  type TaxonomySpecialty,
+} from '../../../auth/data-access/taxonomy-api.service';
 import { ProjectCandidatesApiService } from '../../../project/data-access/project-candidates-api.service';
 import type { SuggestedCandidate } from '../../../project/models/project-candidates';
 import { TeamsService } from '../../../developer/data-access/teams.service';
@@ -26,16 +38,16 @@ import { ProjectInvitationsApiService } from '../../data-access/project-invitati
 import type { InviteTarget, ProjectInvitation } from '../../models/project-invitation';
 
 type HireTab = 'discover' | 'matched' | 'invitations';
-
-interface CategoryCarousel<T> {
-  category: CategoryDto;
-  items: T[];
-}
+type DiscoverKind = 'teams' | 'developers';
+type DiscoverSort = 'rating' | 'reviews' | 'name';
+type MinRating = 0 | 3 | 4 | 4.5;
 
 interface MatchedCard extends SuggestedCandidate {
   projectId: string;
   projectTitle: string;
 }
+
+const PAGE_SIZE = 12;
 
 @Component({
   selector: 'app-hire-talent',
@@ -45,6 +57,8 @@ interface MatchedCard extends SuggestedCandidate {
     DecimalPipe,
     RouterLink,
     InviteToProjectModalComponent,
+    FormsModule,
+    HugeiconsIconComponent,
   ],
   templateUrl: './hire-talent.component.html',
   styleUrl: './hire-talent.component.css',
@@ -55,21 +69,45 @@ export class HireTalentComponent implements OnInit {
   private readonly teamsApi = inject(TeamsService);
   private readonly developersApi = inject(DevelopersBrowseApiService);
   private readonly categoriesApi = inject(CategoriesApiService);
+  private readonly taxonomyApi = inject(TaxonomyApiService);
   private readonly invitationsApi = inject(ProjectInvitationsApiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
+  protected readonly searchIcon = Search01Icon as IconSvgObject;
+  protected readonly filterIcon = FilterVerticalIcon as IconSvgObject;
+  protected readonly closeIcon = Cancel01Icon as IconSvgObject;
+
   protected readonly tab = signal<HireTab>('discover');
+  protected readonly discoverKind = signal<DiscoverKind>('teams');
   protected readonly loadingDiscover = signal(true);
   protected readonly loadingMatched = signal(false);
   protected readonly error = signal<string | null>(null);
 
+  protected readonly categories = signal<CategoryDto[]>([]);
+  protected readonly specialties = signal<TaxonomySpecialty[]>([]);
+  protected readonly skills = signal<TaxonomySkill[]>([]);
+
+  protected readonly discoverSearch = signal('');
+  protected readonly categoryId = signal<string | null>(null);
+  protected readonly specialtyId = signal<string | null>(null);
+  protected readonly skillId = signal<string | null>(null);
+  protected readonly minRating = signal<MinRating>(0);
+  protected readonly sortBy = signal<DiscoverSort>('rating');
+  protected readonly filtersOpen = signal(false);
+
+  protected readonly discoverTeams = signal<Team[]>([]);
+  protected readonly discoverDevelopers = signal<DeveloperBrowseItem[]>([]);
+  protected readonly discoverPage = signal(1);
+  protected readonly discoverTotalCount = signal(0);
+  protected readonly discoverTotalPages = computed(() =>
+    Math.max(1, Math.ceil(this.discoverTotalCount() / PAGE_SIZE)),
+  );
+
   protected readonly openProjects = signal<ProjectDto[]>([]);
   protected readonly selectedMatchProjectId = signal<string | null>(null);
   protected readonly matched = signal<MatchedCard[]>([]);
-  protected readonly teamCarousels = signal<CategoryCarousel<Team>[]>([]);
-  protected readonly developerCarousels = signal<CategoryCarousel<DeveloperBrowseItem>[]>([]);
 
   protected readonly invitations = signal<ProjectInvitation[]>([]);
   protected readonly invitationsLoading = signal(false);
@@ -89,30 +127,148 @@ export class HireTalentComponent implements OnInit {
     () => this.invitations().filter((i) => i.status === 'Pending').length,
   );
 
-  protected readonly hasDiscoverContent = computed(
-    () => this.teamCarousels().length > 0 || this.developerCarousels().length > 0,
-  );
+  protected readonly activeFiltersCount = computed(() => {
+    let n = 0;
+    if (this.categoryId()) n++;
+    if (this.specialtyId()) n++;
+    if (this.skillId()) n++;
+    if (this.minRating() > 0) n++;
+    if (this.sortBy() !== 'rating') n++;
+    return n;
+  });
+
+  protected readonly selectedCategoryLabel = computed(() => {
+    const id = this.categoryId();
+    if (!id) return 'All';
+    const cat = this.categories().find((c) => c.id === id);
+    return cat?.nameEn || cat?.name || 'All';
+  });
+
+  protected readonly discoverPageNumbers = computed(() => {
+    const total = this.discoverTotalPages();
+    const current = this.discoverPage();
+    const window = 5;
+    let start = Math.max(1, current - Math.floor(window / 2));
+    let end = Math.min(total, start + window - 1);
+    start = Math.max(1, end - window + 1);
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  });
+
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit(): void {
     const tabParam = this.route.snapshot.queryParamMap.get('tab');
     if (tabParam === 'invitations' || tabParam === 'matched' || tabParam === 'discover') {
       this.tab.set(tabParam);
     }
+    const kind = this.route.snapshot.queryParamMap.get('kind');
+    if (kind === 'developers' || kind === 'teams') this.discoverKind.set(kind);
 
-    this.loadDiscover();
+    this.categoriesApi
+      .getCategories()
+      .pipe(catchError(() => of([] as CategoryDto[])), takeUntilDestroyed(this.destroyRef))
+      .subscribe((cats) => this.categories.set(cats));
+
+    this.projectsApi
+      .getMine({ pageNumber: 1, pageSize: 20, status: 'Open' })
+      .pipe(catchError(() => of({ items: [] as ProjectDto[] })), takeUntilDestroyed(this.destroyRef))
+      .subscribe((page) => {
+        const open = (page.items ?? []).filter(
+          (p) => (p.status || '').toLowerCase() === 'open',
+        );
+        this.openProjects.set(open);
+        if (!this.selectedMatchProjectId() && open[0]) {
+          this.selectedMatchProjectId.set(open[0].id);
+        }
+      });
+
+    this.loadDiscover(1);
     this.loadInvitations();
     if (this.tab() === 'matched') this.ensureMatchedLoaded();
   }
 
   protected setTab(tab: HireTab): void {
     this.tab.set(tab);
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: tab === 'discover' ? {} : { tab },
-      replaceUrl: true,
-    });
+    this.syncQuery();
     if (tab === 'invitations') this.loadInvitations();
     if (tab === 'matched') this.ensureMatchedLoaded();
+    if (tab === 'discover' && !this.discoverTeams().length && !this.discoverDevelopers().length) {
+      this.loadDiscover(1);
+    }
+  }
+
+  protected setDiscoverKind(kind: DiscoverKind): void {
+    if (this.discoverKind() === kind) return;
+    this.discoverKind.set(kind);
+    this.syncQuery();
+    this.loadDiscover(1);
+  }
+
+  protected onDiscoverSearch(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    this.discoverSearch.set(value);
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => this.loadDiscover(1), 320);
+  }
+
+  protected selectCategoryChip(categoryId: string | null): void {
+    this.categoryId.set(categoryId);
+    this.specialtyId.set(null);
+    this.skillId.set(null);
+    this.specialties.set([]);
+    this.skills.set([]);
+    if (categoryId) this.loadSpecialties(categoryId);
+    this.loadDiscover(1);
+  }
+
+  protected openFilters(): void {
+    this.filtersOpen.set(true);
+  }
+
+  protected closeFilters(): void {
+    this.filtersOpen.set(false);
+  }
+
+  protected onFilterCategoryChange(categoryId: string): void {
+    const id = categoryId || null;
+    this.categoryId.set(id);
+    this.specialtyId.set(null);
+    this.skillId.set(null);
+    this.skills.set([]);
+    if (id) this.loadSpecialties(id);
+    else {
+      this.specialties.set([]);
+    }
+  }
+
+  protected onFilterSpecialtyChange(specialtyId: string): void {
+    const id = specialtyId || null;
+    this.specialtyId.set(id);
+    this.skillId.set(null);
+    if (id) this.loadSkills(id);
+    else this.skills.set([]);
+  }
+
+  protected applyFilters(): void {
+    this.filtersOpen.set(false);
+    this.loadDiscover(1);
+  }
+
+  protected clearFilters(): void {
+    this.categoryId.set(null);
+    this.specialtyId.set(null);
+    this.skillId.set(null);
+    this.minRating.set(0);
+    this.sortBy.set('rating');
+    this.specialties.set([]);
+    this.skills.set([]);
+    this.filtersOpen.set(false);
+    this.loadDiscover(1);
+  }
+
+  protected goDiscoverPage(page: number): void {
+    if (page < 1 || page > this.discoverTotalPages() || page === this.discoverPage()) return;
+    this.loadDiscover(page);
   }
 
   protected selectMatchProject(projectId: string): void {
@@ -229,8 +385,119 @@ export class HireTalentComponent implements OnInit {
     void this.router.navigate(['/client/messages'], { queryParams: { room: roomId } });
   }
 
-  protected scrollRail(el: HTMLElement, dir: 1 | -1): void {
-    el.scrollBy({ left: dir * Math.min(460, el.clientWidth * 0.85), behavior: 'smooth' });
+  private syncQuery(): void {
+    const tab = this.tab();
+    const kind = this.discoverKind();
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        tab: tab === 'discover' ? null : tab,
+        kind: tab === 'discover' && kind !== 'teams' ? kind : null,
+      },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  private loadSpecialties(categoryId: string): void {
+    this.taxonomyApi
+      .getSpecialtiesByCategory(categoryId)
+      .pipe(catchError(() => of([] as TaxonomySpecialty[])))
+      .subscribe((items) => this.specialties.set(items));
+  }
+
+  private loadSkills(specialtyId: string): void {
+    this.taxonomyApi
+      .getSkillsBySpecialty(specialtyId)
+      .pipe(catchError(() => of([] as TaxonomySkill[])))
+      .subscribe((items) => this.skills.set(items));
+  }
+
+  private loadDiscover(page: number): void {
+    this.loadingDiscover.set(true);
+    this.error.set(null);
+    this.discoverPage.set(page);
+
+    const search = this.discoverSearch().trim();
+    const categoryId = this.categoryId();
+    const minRating = this.minRating();
+    const sortBy = this.sortBy();
+
+    if (this.discoverKind() === 'teams') {
+      this.teamsApi
+        .browse({
+          search: search || undefined,
+          categoryId,
+          pageNumber: page,
+          pageSize: PAGE_SIZE,
+          excludeMine: false,
+        })
+        .pipe(catchError(() => of({ items: [] as Team[], totalCount: 0 })))
+        .subscribe({
+          next: (pageRes) => {
+            let items = [...(pageRes.items ?? [])];
+            if (minRating > 0) {
+              items = items.filter((t) => (t.averageRating ?? 0) >= minRating);
+            }
+            items = this.sortTeams(items, sortBy);
+            this.discoverTeams.set(items);
+            this.discoverDevelopers.set([]);
+            this.discoverTotalCount.set(pageRes.totalCount ?? items.length);
+            this.loadingDiscover.set(false);
+          },
+          error: (err) => {
+            this.loadingDiscover.set(false);
+            this.error.set(extractApiError(err) || 'Could not load teams.');
+          },
+        });
+      return;
+    }
+
+    this.developersApi
+      .browse({
+        search: search || undefined,
+        categoryId,
+        specialtyId: this.specialtyId(),
+        skillId: this.skillId(),
+        pageNumber: page,
+        pageSize: PAGE_SIZE,
+      })
+      .pipe(catchError(() => of({ items: [] as DeveloperBrowseItem[], totalCount: 0 })))
+      .subscribe({
+        next: (pageRes) => {
+          let items = [...(pageRes.items ?? [])];
+          if (minRating > 0) {
+            items = items.filter((d) => (d.averageRating ?? 0) >= minRating);
+          }
+          items = this.sortDevelopers(items, sortBy);
+          this.discoverDevelopers.set(items);
+          this.discoverTeams.set([]);
+          this.discoverTotalCount.set(pageRes.totalCount ?? items.length);
+          this.loadingDiscover.set(false);
+        },
+        error: (err) => {
+          this.loadingDiscover.set(false);
+          this.error.set(extractApiError(err) || 'Could not load developers.');
+        },
+      });
+  }
+
+  private sortTeams(items: Team[], sortBy: DiscoverSort): Team[] {
+    return items.sort((a, b) => {
+      if (sortBy === 'name') return a.name.localeCompare(b.name);
+      if (sortBy === 'reviews') return (b.ratingCount ?? 0) - (a.ratingCount ?? 0);
+      return (b.averageRating ?? 0) - (a.averageRating ?? 0);
+    });
+  }
+
+  private sortDevelopers(items: DeveloperBrowseItem[], sortBy: DiscoverSort): DeveloperBrowseItem[] {
+    return items.sort((a, b) => {
+      if (sortBy === 'name') {
+        return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
+      }
+      if (sortBy === 'reviews') return (b.ratingCount ?? 0) - (a.ratingCount ?? 0);
+      return (b.averageRating ?? 0) - (a.averageRating ?? 0);
+    });
   }
 
   private ensureMatchedLoaded(): void {
@@ -283,80 +550,6 @@ export class HireTalentComponent implements OnInit {
         error: (err) => {
           this.loadingMatched.set(false);
           this.error.set(extractApiError(err) || 'Could not load matches.');
-        },
-      });
-  }
-
-  private loadDiscover(): void {
-    this.loadingDiscover.set(true);
-    this.error.set(null);
-
-    forkJoin({
-      projects: this.projectsApi
-        .getMine({ pageNumber: 1, pageSize: 20, status: 'Open' })
-        .pipe(catchError(() => of({ items: [] as ProjectDto[] }))),
-      categories: this.categoriesApi.getCategories().pipe(catchError(() => of([] as CategoryDto[]))),
-    })
-      .pipe(
-        switchMap(({ projects, categories }) => {
-          const open = (projects.items ?? []).filter(
-            (p) => (p.status || '').toLowerCase() === 'open',
-          );
-          this.openProjects.set(open);
-          if (!this.selectedMatchProjectId() && open[0]) {
-            this.selectedMatchProjectId.set(open[0].id);
-          }
-
-          const teamCalls = categories.slice(0, 6).map((category) =>
-            this.teamsApi
-              .browse({
-                categoryId: category.id,
-                pageNumber: 1,
-                pageSize: 10,
-                excludeMine: false,
-              })
-              .pipe(
-                catchError(() => of({ items: [] as Team[] })),
-                switchMap((page) =>
-                  of({ category, items: page.items ?? [] } as CategoryCarousel<Team>),
-                ),
-              ),
-          );
-
-          const developerCalls = categories.slice(0, 6).map((category) =>
-            this.developersApi
-              .browse({ categoryId: category.id, pageNumber: 1, pageSize: 10 })
-              .pipe(
-                catchError(() => of({ items: [] as DeveloperBrowseItem[] })),
-                switchMap((page) =>
-                  of({
-                    category,
-                    items: page.items ?? [],
-                  } as CategoryCarousel<DeveloperBrowseItem>),
-                ),
-              ),
-          );
-
-          return forkJoin({
-            teams: teamCalls.length
-              ? forkJoin(teamCalls)
-              : of([] as CategoryCarousel<Team>[]),
-            developers: developerCalls.length
-              ? forkJoin(developerCalls)
-              : of([] as CategoryCarousel<DeveloperBrowseItem>[]),
-          });
-        }),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe({
-        next: ({ teams, developers }) => {
-          this.teamCarousels.set(teams.filter((c) => c.items.length > 0));
-          this.developerCarousels.set(developers.filter((c) => c.items.length > 0));
-          this.loadingDiscover.set(false);
-        },
-        error: (err) => {
-          this.loadingDiscover.set(false);
-          this.error.set(extractApiError(err) || 'Could not load talent.');
         },
       });
   }

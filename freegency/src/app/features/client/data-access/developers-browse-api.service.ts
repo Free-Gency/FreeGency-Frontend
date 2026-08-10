@@ -28,6 +28,8 @@ export class DevelopersBrowseApiService {
   browse(options?: {
     search?: string;
     categoryId?: string | null;
+    specialtyId?: string | null;
+    skillId?: string | null;
     pageNumber?: number;
     pageSize?: number;
   }): Observable<PagedResponse<DeveloperBrowseItem>> {
@@ -37,6 +39,8 @@ export class DevelopersBrowseApiService {
 
     if (options?.search?.trim()) params = params.set('search', options.search.trim());
     if (options?.categoryId?.trim()) params = params.set('categoryId', options.categoryId.trim());
+    if (options?.specialtyId?.trim()) params = params.set('specialtyId', options.specialtyId.trim());
+    if (options?.skillId?.trim()) params = params.set('skillId', options.skillId.trim());
 
     return this.http
       .get<PagedResponse<DeveloperBrowseItem>>(this.baseUrl, {

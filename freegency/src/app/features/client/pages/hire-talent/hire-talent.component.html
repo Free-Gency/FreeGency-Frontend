@@ -61,9 +61,93 @@
 
     <!-- DISCOVER -->
     @if (tab() === 'discover') {
+      <section class="hire-discover-panel">
+        <div class="hire-discover-panel__head">
+          <div>
+            <h2>Browse the marketplace</h2>
+            <p>Switch between teams and developers, then refine with search and filters.</p>
+          </div>
+
+          <div class="hire-kind-tabs" role="tablist" aria-label="Talent type">
+            <button
+              type="button"
+              class="hire-kind-tab"
+              [class.is-active]="discoverKind() === 'teams'"
+              (click)="setDiscoverKind('teams')"
+            >
+              Teams
+            </button>
+            <button
+              type="button"
+              class="hire-kind-tab"
+              [class.is-active]="discoverKind() === 'developers'"
+              (click)="setDiscoverKind('developers')"
+            >
+              Developers
+            </button>
+          </div>
+        </div>
+
+        <div class="hire-toolbar">
+          <label class="hire-search">
+            <span class="sr-only">Search</span>
+            <hugeicons-icon [icon]="searchIcon" [size]="20" color="currentColor" [strokeWidth]="1.5" />
+            <input
+              type="search"
+              [placeholder]="
+                discoverKind() === 'teams'
+                  ? 'Search by team, skill, or specialty'
+                  : 'Search by name, bio, or skill'
+              "
+              [value]="discoverSearch()"
+              (input)="onDiscoverSearch($event)"
+            />
+          </label>
+
+          <button type="button" class="hire-filter-btn" (click)="openFilters()">
+            <hugeicons-icon [icon]="filterIcon" [size]="18" color="currentColor" [strokeWidth]="1.5" />
+            Filters
+            @if (activeFiltersCount() > 0) {
+              <span class="hire-filter-btn__count">{{ activeFiltersCount() }}</span>
+            }
+          </button>
+        </div>
+
+        <div class="hire-pills" role="list" aria-label="Categories">
+          <button
+            type="button"
+            class="hire-pill"
+            [class.is-active]="!categoryId()"
+            (click)="selectCategoryChip(null)"
+          >
+            All
+          </button>
+          @for (cat of categories(); track cat.id) {
+            <button
+              type="button"
+              class="hire-pill"
+              [class.is-active]="categoryId() === cat.id"
+              (click)="selectCategoryChip(cat.id)"
+            >
+              {{ cat.nameEn || cat.name }}
+            </button>
+          }
+        </div>
+
+        @if (activeFiltersCount() > 0) {
+          <div class="hire-active-filters">
+            <span>Showing {{ selectedCategoryLabel() }}</span>
+            @if (minRating() > 0) {
+              <span>· {{ minRating() }}+ rating</span>
+            }
+            <button type="button" class="hire-clear-link" (click)="clearFilters()">Clear all</button>
+          </div>
+        }
+      </section>
+
       @if (loadingDiscover()) {
         <div class="hire-grid" aria-hidden="true">
-          @for (i of [1, 2, 3, 4]; track i) {
+          @for (i of [1, 2, 3, 4, 5, 6]; track i) {
             <div class="hire-card hire-card--skeleton"></div>
           }
         </div>
@@ -72,203 +156,222 @@
           <h2>Couldn’t load talent</h2>
           <p>{{ error() }}</p>
         </div>
-      } @else if (!hasDiscoverContent()) {
-        <div class="hire-empty">
-          <h2>No talent to show yet</h2>
-          <p>Check back once more teams and developers are available in the marketplace.</p>
-          <a routerLink="/client/create-project" class="hire-btn hire-btn--primary">Create a project</a>
-        </div>
+      } @else if (discoverKind() === 'teams') {
+        @if (!discoverTeams().length) {
+          <div class="hire-empty">
+            <h2>No teams found</h2>
+            <p>Try another category, clear filters, or search with different keywords.</p>
+            <button type="button" class="hire-btn hire-btn--primary" (click)="clearFilters()">
+              Reset filters
+            </button>
+          </div>
+        } @else {
+          <div class="hire-grid">
+            @for (team of discoverTeams(); track team.id) {
+              <article class="hire-card hire-card--rich hire-card--grid">
+                <div
+                  class="hire-card__cover"
+                  [style.backgroundImage]="team.cover ? 'url(' + team.cover + ')' : null"
+                ></div>
+                <div class="hire-card__body">
+                  <div class="hire-card__header">
+                    <div class="hire-card__identity">
+                      <div class="hire-card__avatar" aria-hidden="true">
+                        @if (team.logo) {
+                          <img [src]="team.logo" alt="" />
+                        } @else {
+                          {{ initials(team.name) }}
+                        }
+                      </div>
+                      <div class="min-w-0">
+                        <h3 class="hire-card__name">{{ team.name }}</h3>
+                        <div class="hire-card__badges">
+                          <span class="hire-badge hire-badge--team">Team</span>
+                          @if (teamPrimaryCategory(team); as cat) {
+                            <span class="hire-badge hire-badge--soft">{{ cat }}</span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                    <div class="hire-card__score">
+                      <span class="hire-card__score-value">★ {{ team.averageRating | number: '1.1-1' }}</span>
+                      <span class="hire-card__score-label">{{ team.ratingCount }} reviews</span>
+                    </div>
+                  </div>
+
+                  <p class="hire-card__about">
+                    {{ team.aboutUs || 'Collaborative team ready to ship client work end-to-end.' }}
+                  </p>
+
+                  <div class="hire-card__stats">
+                    <div class="hire-stat">
+                      <strong>{{ team.membersCount || team.memberAvatars?.length || 0 }}</strong>
+                      <span>Members</span>
+                    </div>
+                    <div class="hire-stat">
+                      <strong>{{ team.projectsCount ?? 0 }}</strong>
+                      <span>Projects</span>
+                    </div>
+                    <div class="hire-stat">
+                      <strong>{{ team.specialties?.length || 0 }}</strong>
+                      <span>Specialties</span>
+                    </div>
+                  </div>
+
+                  @if (teamSpecialtyLabels(team).length || team.skills?.length) {
+                    <div class="hire-card__tags">
+                      @for (s of teamSpecialtyLabels(team); track s) {
+                        <span class="hire-tag hire-tag--specialty">{{ s }}</span>
+                      }
+                      @for (skill of (team.skills || []).slice(0, 4); track skill.skillId || skill.name) {
+                        <span class="hire-tag">{{ skill.name }}</span>
+                      }
+                    </div>
+                  }
+
+                  @if (team.memberAvatars?.length) {
+                    <div class="hire-card__members">
+                      @for (m of team.memberAvatars!.slice(0, 5); track m.userId) {
+                        <span class="hire-member" [title]="m.name">
+                          @if (m.imageUrl) {
+                            <img [src]="m.imageUrl" [alt]="m.name" />
+                          } @else {
+                            {{ initials(m.name) }}
+                          }
+                        </span>
+                      }
+                      @if ((team.membersCount || 0) > 5) {
+                        <span class="hire-member hire-member--more">+{{ (team.membersCount || 0) - 5 }}</span>
+                      }
+                    </div>
+                  }
+
+                  <div class="hire-card__actions">
+                    <a class="hire-btn hire-btn--ghost" [routerLink]="['/client/teams', team.id]">View profile</a>
+                    <button type="button" class="hire-btn hire-btn--primary" (click)="inviteTeam(team)">
+                      Invite to project
+                    </button>
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+        }
       } @else {
-        @for (rail of teamCarousels(); track rail.category.id) {
-          <section class="hire-section">
-            <div class="hire-section__head">
-              <div>
-                <p class="hire-section__eyebrow">Teams</p>
-                <h2>{{ rail.category.nameEn || rail.category.name }}</h2>
-                <p>Agencies and squads with shared delivery history.</p>
-              </div>
-              <div class="hire-rail-controls">
-                <button type="button" class="hire-rail-nav" (click)="scrollRail(teamRail, -1)" aria-label="Scroll left">‹</button>
-                <button type="button" class="hire-rail-nav" (click)="scrollRail(teamRail, 1)" aria-label="Scroll right">›</button>
-              </div>
-            </div>
-            <div class="hire-rail" #teamRail>
-              @for (team of rail.items; track team.id) {
-                <article class="hire-card hire-card--rich">
-                  <div
-                    class="hire-card__cover"
-                    [style.backgroundImage]="team.cover ? 'url(' + team.cover + ')' : null"
-                  ></div>
-                  <div class="hire-card__body">
-                    <div class="hire-card__header">
-                      <div class="hire-card__identity">
-                        <div class="hire-card__avatar" aria-hidden="true">
-                          @if (team.logo) {
-                            <img [src]="team.logo" alt="" />
-                          } @else {
-                            {{ initials(team.name) }}
+        @if (!discoverDevelopers().length) {
+          <div class="hire-empty">
+            <h2>No developers found</h2>
+            <p>Try another category, specialty, or clear your filters.</p>
+            <button type="button" class="hire-btn hire-btn--primary" (click)="clearFilters()">
+              Reset filters
+            </button>
+          </div>
+        } @else {
+          <div class="hire-grid">
+            @for (dev of discoverDevelopers(); track dev.userId) {
+              <article class="hire-card hire-card--rich hire-card--grid">
+                <div class="hire-card__body">
+                  <div class="hire-card__header">
+                    <div class="hire-card__identity">
+                      <div class="hire-card__avatar hire-card__avatar--lg" aria-hidden="true">
+                        @if (dev.profileImage) {
+                          <img [src]="dev.profileImage" alt="" />
+                        } @else {
+                          {{ initials(dev.firstName + ' ' + dev.lastName) }}
+                        }
+                      </div>
+                      <div class="min-w-0">
+                        <h3 class="hire-card__name">{{ dev.firstName }} {{ dev.lastName }}</h3>
+                        <div class="hire-card__badges">
+                          <span class="hire-badge hire-badge--dev">Developer</span>
+                          @if (dev.title) {
+                            <span class="hire-badge hire-badge--soft">{{ dev.title }}</span>
                           }
                         </div>
-                        <div class="min-w-0">
-                          <h3 class="hire-card__name">{{ team.name }}</h3>
-                          <div class="hire-card__badges">
-                            <span class="hire-badge hire-badge--team">Team</span>
-                            @if (teamPrimaryCategory(team); as cat) {
-                              <span class="hire-badge hire-badge--soft">{{ cat }}</span>
-                            }
-                          </div>
-                        </div>
-                      </div>
-                      <div class="hire-card__score" aria-label="Rating">
-                        <span class="hire-card__score-value">★ {{ team.averageRating | number: '1.1-1' }}</span>
-                        <span class="hire-card__score-label">{{ team.ratingCount }} reviews</span>
                       </div>
                     </div>
-
-                    <p class="hire-card__about">
-                      {{ team.aboutUs || 'Collaborative team ready to ship client work end-to-end.' }}
-                    </p>
-
-                    <div class="hire-card__stats">
-                      <div class="hire-stat">
-                        <strong>{{ team.membersCount || team.memberAvatars?.length || 0 }}</strong>
-                        <span>Members</span>
-                      </div>
-                      <div class="hire-stat">
-                        <strong>{{ team.projectsCount ?? 0 }}</strong>
-                        <span>Projects</span>
-                      </div>
-                      <div class="hire-stat">
-                        <strong>{{ team.specialties?.length || 0 }}</strong>
-                        <span>Specialties</span>
-                      </div>
-                    </div>
-
-                    @if (teamSpecialtyLabels(team).length || team.skills?.length) {
-                      <div class="hire-card__tags">
-                        @for (s of teamSpecialtyLabels(team); track s) {
-                          <span class="hire-tag hire-tag--specialty">{{ s }}</span>
-                        }
-                        @for (skill of (team.skills || []).slice(0, 4); track skill.skillId || skill.name) {
-                          <span class="hire-tag">{{ skill.name }}</span>
-                        }
-                      </div>
-                    }
-
-                    @if (team.memberAvatars?.length) {
-                      <div class="hire-card__members" aria-label="Team members">
-                        @for (m of team.memberAvatars!.slice(0, 5); track m.userId) {
-                          <span class="hire-member" [title]="m.name">
-                            @if (m.imageUrl) {
-                              <img [src]="m.imageUrl" [alt]="m.name" />
-                            } @else {
-                              {{ initials(m.name) }}
-                            }
-                          </span>
-                        }
-                        @if ((team.membersCount || 0) > 5) {
-                          <span class="hire-member hire-member--more">+{{ (team.membersCount || 0) - 5 }}</span>
-                        }
-                      </div>
-                    }
-
-                    <div class="hire-card__actions">
-                      <a class="hire-btn hire-btn--ghost" [routerLink]="['/client/teams', team.id]">View profile</a>
-                      <button type="button" class="hire-btn hire-btn--primary" (click)="inviteTeam(team)">
-                        Invite to project
-                      </button>
+                    <div class="hire-card__score">
+                      <span class="hire-card__score-value">★ {{ dev.averageRating | number: '1.1-1' }}</span>
+                      <span class="hire-card__score-label">{{ dev.ratingCount }} reviews</span>
                     </div>
                   </div>
-                </article>
-              }
-            </div>
-          </section>
-        }
 
-        @for (rail of developerCarousels(); track rail.category.id) {
-          <section class="hire-section">
-            <div class="hire-section__head">
-              <div>
-                <p class="hire-section__eyebrow">Developers</p>
-                <h2>{{ rail.category.nameEn || rail.category.name }}</h2>
-                <p>Independent talent available for client projects.</p>
-              </div>
-              <div class="hire-rail-controls">
-                <button type="button" class="hire-rail-nav" (click)="scrollRail(devRail, -1)" aria-label="Scroll left">‹</button>
-                <button type="button" class="hire-rail-nav" (click)="scrollRail(devRail, 1)" aria-label="Scroll right">›</button>
-              </div>
-            </div>
-            <div class="hire-rail" #devRail>
-              @for (dev of rail.items; track dev.userId) {
-                <article class="hire-card hire-card--rich">
-                  <div class="hire-card__body">
-                    <div class="hire-card__header">
-                      <div class="hire-card__identity">
-                        <div class="hire-card__avatar hire-card__avatar--lg" aria-hidden="true">
-                          @if (dev.profileImage) {
-                            <img [src]="dev.profileImage" alt="" />
-                          } @else {
-                            {{ initials(dev.firstName + ' ' + dev.lastName) }}
-                          }
-                        </div>
-                        <div class="min-w-0">
-                          <h3 class="hire-card__name">{{ dev.firstName }} {{ dev.lastName }}</h3>
-                          <div class="hire-card__badges">
-                            <span class="hire-badge hire-badge--dev">Developer</span>
-                            @if (dev.title) {
-                              <span class="hire-badge hire-badge--soft">{{ dev.title }}</span>
-                            }
-                          </div>
-                        </div>
-                      </div>
-                      <div class="hire-card__score" aria-label="Rating">
-                        <span class="hire-card__score-value">★ {{ dev.averageRating | number: '1.1-1' }}</span>
-                        <span class="hire-card__score-label">{{ dev.ratingCount }} reviews</span>
-                      </div>
+                  <p class="hire-card__about">
+                    {{ dev.bio || 'Available for new client projects and long-term collaboration.' }}
+                  </p>
+
+                  <div class="hire-card__stats">
+                    <div class="hire-stat">
+                      <strong>{{ dev.skills.length }}</strong>
+                      <span>Skills</span>
                     </div>
-
-                    <p class="hire-card__about">
-                      {{ dev.bio || 'Available for new client projects and long-term collaboration.' }}
-                    </p>
-
-                    <div class="hire-card__stats">
-                      <div class="hire-stat">
-                        <strong>{{ dev.skills.length }}</strong>
-                        <span>Skills</span>
-                      </div>
-                      <div class="hire-stat">
-                        <strong>{{ dev.categories.length }}</strong>
-                        <span>Focus</span>
-                      </div>
-                      <div class="hire-stat">
-                        <strong>{{ dev.country || '—' }}</strong>
-                        <span>Location</span>
-                      </div>
+                    <div class="hire-stat">
+                      <strong>{{ dev.categories.length }}</strong>
+                      <span>Focus</span>
                     </div>
-
-                    @if (dev.skills.length || dev.categories.length) {
-                      <div class="hire-card__tags">
-                        @for (c of dev.categories.slice(0, 2); track c) {
-                          <span class="hire-tag hire-tag--specialty">{{ c }}</span>
-                        }
-                        @for (skill of dev.skills.slice(0, 4); track skill) {
-                          <span class="hire-tag">{{ skill }}</span>
-                        }
-                      </div>
-                    }
-
-                    <div class="hire-card__actions">
-                      <a class="hire-btn hire-btn--ghost" [routerLink]="['/client/developers', dev.userId]">View profile</a>
-                      <button type="button" class="hire-btn hire-btn--primary" (click)="inviteDeveloper(dev)">
-                        Invite to project
-                      </button>
+                    <div class="hire-stat">
+                      <strong>{{ dev.country || '—' }}</strong>
+                      <span>Location</span>
                     </div>
                   </div>
-                </article>
-              }
-            </div>
-          </section>
+
+                  @if (dev.skills.length || dev.categories.length) {
+                    <div class="hire-card__tags">
+                      @for (c of dev.categories.slice(0, 2); track c) {
+                        <span class="hire-tag hire-tag--specialty">{{ c }}</span>
+                      }
+                      @for (skill of dev.skills.slice(0, 4); track skill) {
+                        <span class="hire-tag">{{ skill }}</span>
+                      }
+                    </div>
+                  }
+
+                  <div class="hire-card__actions">
+                    <a class="hire-btn hire-btn--ghost" [routerLink]="['/client/developers', dev.userId]">
+                      View profile
+                    </a>
+                    <button type="button" class="hire-btn hire-btn--primary" (click)="inviteDeveloper(dev)">
+                      Invite to project
+                    </button>
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
         }
+      }
+
+      @if (discoverTotalPages() > 1 && !loadingDiscover()) {
+        <nav class="hire-pager" aria-label="Discover pagination">
+          <button
+            type="button"
+            class="hire-pager__btn"
+            [disabled]="discoverPage() <= 1"
+            (click)="goDiscoverPage(discoverPage() - 1)"
+          >
+            Previous
+          </button>
+          <div class="hire-pager__pages">
+            @for (p of discoverPageNumbers(); track p) {
+              <button
+                type="button"
+                class="hire-pager__page"
+                [class.is-active]="discoverPage() === p"
+                (click)="goDiscoverPage(p)"
+              >
+                {{ p }}
+              </button>
+            }
+          </div>
+          <button
+            type="button"
+            class="hire-pager__btn"
+            [disabled]="discoverPage() >= discoverTotalPages()"
+            (click)="goDiscoverPage(discoverPage() + 1)"
+          >
+            Next
+          </button>
+        </nav>
       }
     }
 
@@ -342,7 +445,7 @@
         } @else {
           <div class="hire-grid">
             @for (card of matched(); track card.id + card.projectId; let i = $index) {
-              <article class="hire-card hire-card--rich" [class.hire-card--top]="i === 0">
+              <article class="hire-card hire-card--rich hire-card--grid" [class.hire-card--top]="i === 0">
                 <div class="hire-card__body">
                   <div class="hire-card__header">
                     <div class="hire-card__identity">
@@ -372,7 +475,7 @@
                         </div>
                       </div>
                     </div>
-                    <div class="hire-card__score hire-card__score--match" aria-label="Match score">
+                    <div class="hire-card__score hire-card__score--match">
                       <span class="hire-card__score-value">{{ matchPercent(card.finalScore) }}%</span>
                       <span class="hire-card__score-label">match</span>
                     </div>
@@ -515,6 +618,117 @@
     }
   </main>
 </div>
+
+@if (filtersOpen()) {
+  <div class="hire-filters-backdrop" (click)="closeFilters()" aria-hidden="true"></div>
+  <aside class="hire-filters-panel" role="dialog" aria-modal="true" aria-label="Talent filters">
+    <div class="hire-filters-panel__head">
+      <div>
+        <h2>Filters</h2>
+        <p>Refine {{ discoverKind() === 'teams' ? 'teams' : 'developers' }}</p>
+      </div>
+      <button type="button" class="hire-filters-panel__close" (click)="closeFilters()" aria-label="Close filters">
+        <hugeicons-icon [icon]="closeIcon" [size]="20" color="currentColor" [strokeWidth]="2" />
+      </button>
+    </div>
+
+    <div class="hire-filters-panel__body">
+      <label class="hire-field">
+        <span>Category</span>
+        <select
+          [ngModel]="categoryId() ?? ''"
+          (ngModelChange)="onFilterCategoryChange($event)"
+        >
+          <option value="">All categories</option>
+          @for (cat of categories(); track cat.id) {
+            <option [value]="cat.id">{{ cat.nameEn || cat.name }}</option>
+          }
+        </select>
+      </label>
+
+      @if (discoverKind() === 'developers') {
+        <label class="hire-field">
+          <span>Specialty</span>
+          <select
+            [ngModel]="specialtyId() ?? ''"
+            (ngModelChange)="onFilterSpecialtyChange($event)"
+            [disabled]="!categoryId()"
+          >
+            <option value="">All specialties</option>
+            @for (s of specialties(); track s.id) {
+              <option [value]="s.id">{{ s.nameEn }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="hire-field">
+          <span>Skill</span>
+          <select
+            [ngModel]="skillId() ?? ''"
+            (ngModelChange)="skillId.set($event || null)"
+            [disabled]="!specialtyId()"
+          >
+            <option value="">All skills</option>
+            @for (s of skills(); track s.id) {
+              <option [value]="s.id">{{ s.name }}</option>
+            }
+          </select>
+        </label>
+      }
+
+      <fieldset class="hire-fieldset">
+        <legend>Minimum rating</legend>
+        <div class="hire-chip-row">
+          @for (r of [0, 3, 4, 4.5]; track r) {
+            <button
+              type="button"
+              class="hire-chip"
+              [class.is-active]="minRating() === r"
+              (click)="minRating.set($any(r))"
+            >
+              {{ r === 0 ? 'Any' : r + '+' }}
+            </button>
+          }
+        </div>
+      </fieldset>
+
+      <fieldset class="hire-fieldset">
+        <legend>Sort by</legend>
+        <div class="hire-chip-row">
+          <button
+            type="button"
+            class="hire-chip"
+            [class.is-active]="sortBy() === 'rating'"
+            (click)="sortBy.set('rating')"
+          >
+            Highest rating
+          </button>
+          <button
+            type="button"
+            class="hire-chip"
+            [class.is-active]="sortBy() === 'reviews'"
+            (click)="sortBy.set('reviews')"
+          >
+            Most reviews
+          </button>
+          <button
+            type="button"
+            class="hire-chip"
+            [class.is-active]="sortBy() === 'name'"
+            (click)="sortBy.set('name')"
+          >
+            Name A–Z
+          </button>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="hire-filters-panel__foot">
+      <button type="button" class="hire-btn hire-btn--ghost" (click)="clearFilters()">Clear</button>
+      <button type="button" class="hire-btn hire-btn--primary" (click)="applyFilters()">Apply filters</button>
+    </div>
+  </aside>
+}
 
 @if (inviteTarget(); as target) {
   <app-invite-to-project-modal
