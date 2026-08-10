@@ -23,16 +23,15 @@ import {
   Settings01Icon,
   Tick02Icon,
   Wallet01Icon,
+  Briefcase08Icon,
+  UserIcon,
 } from '@hugeicons/core-free-icons';
 import { AuthService } from '../../../core/auth/auth.service';
 import type { UserMode } from '../../../core/auth/auth.models';
 import { SignalrService } from '../../../core/Signalr/signalr-service';
 import { ChatSignalrService } from '../../../core/Signalr/chat-signalr-service';
-import {
-  PROFILE_MISSING_ERROR,
-  ProfileModeService,
-} from '../../services/profile-mode.service';
-import { NotificationComponent } from "../../../features/notification/notification.component";
+import { PROFILE_MISSING_ERROR, ProfileModeService } from '../../services/profile-mode.service';
+import { NotificationComponent } from '../../../features/notification/notification.component';
 
 export type DeveloperSearchScope = 'Projects' | 'Talents';
 
@@ -196,9 +195,7 @@ export class DeveloperViewNavbarComponent implements OnInit {
       next: (modes) => {
         const sessionMode = this.auth.session()?.activeProfileMode;
         this.hasClientProfile.set(modes.hasClientProfile || sessionMode === 'Client');
-        this.hasDeveloperProfile.set(
-          modes.hasDeveloperProfile || sessionMode === 'Developer',
-        );
+        this.hasDeveloperProfile.set(modes.hasDeveloperProfile || sessionMode === 'Developer');
       },
       error: () => {
         const sessionMode = this.auth.session()?.activeProfileMode;

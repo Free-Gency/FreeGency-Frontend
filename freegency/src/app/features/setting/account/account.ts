@@ -1,18 +1,7 @@
-import {
-  Component,
-  computed,
-  DestroyRef,
-  inject,
-  OnInit,
-  signal,
-} from '@angular/core';
+import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import {
-  FormBuilder,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { HugeiconsIconComponent, type IconSvgObject } from '@hugeicons/angular';
 import {
@@ -23,16 +12,27 @@ import {
   Location01Icon,
   SecurityCheckIcon,
 } from '@hugeicons/core-free-icons';
-import { finalize } from 'rxjs';
+import { finalize, Observable } from 'rxjs';
 
 import { SettingService } from '../Data-Access/setting-service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { ClientAccount } from '../../../shared/models/client-account.model';
+import { DeveloperProfile } from '../../freelancer/model/portfolio.model'; // adjust path
 import { ProfileInterest } from '../../../shared/models/profile-interest';
 import { Category } from '../../../shared/models/Category';
 
 const BIO_MAX = 500;
+
+/** Unified shape the form/template works with, regardless of mode. */
+interface AccountFormProfile {
+  firstName: string;
+  lastName: string;
+  email: string;
+  country: string | null;
+  bio: string | null;
+  profileImage: string | null;
+}
 
 @Component({
   selector: 'app-account',
@@ -56,7 +56,12 @@ export class Account implements OnInit {
   protected readonly arrowDownIcon = ArrowDown01Icon as IconSvgObject;
   protected readonly bioMax = BIO_MAX;
 
-  profile = signal<ClientAccount | null>(null);
+  /** Which mode we're editing for — drives which endpoints get called. */
+  protected readonly isDeveloper = computed(
+    () => this.auth.session()?.activeProfileMode === 'Developer',
+  );
+
+  profile = signal<ClientAccount | DeveloperProfile | null>(null);
   readonly savingProfile = signal(false);
   readonly savingInterests = signal(false);
   interests = signal<ProfileInterest[]>([]);
@@ -66,7 +71,6 @@ export class Account implements OnInit {
   interestsChanged = signal(false);
   readonly avatarUrl = signal<string | null>(null);
   readonly pendingCategoryId = signal('');
-  /** Form dirty/valid are not signals — keep mirrors so canSave recomputes. */
   readonly formDirty = signal(false);
   readonly formValid = signal(true);
 
@@ -85,13 +89,10 @@ export class Account implements OnInit {
     return this.categories().filter((c) => !selected.has(c.id));
   });
 
-  readonly saving = computed(
-    () => this.savingProfile() || this.savingInterests(),
-  );
+  readonly saving = computed(() => this.savingProfile() || this.savingInterests());
 
   readonly canSave = computed(() => {
-    const profileDirty =
-      this.formValid() && (this.formDirty() || this.imageChanged());
+    const profileDirty = this.formValid() && (this.formDirty() || this.imageChanged());
     return profileDirty || this.interestsChanged();
   });
 
@@ -118,10 +119,40 @@ export class Account implements OnInit {
     this.formValid.set(this.form.valid);
   }
 
+  /** Normalizes either profile shape into what the form needs. */
+  private toFormProfile(raw: ClientAccount | DeveloperProfile): AccountFormProfile {
+    if (this.isDeveloper()) {
+      const dev = raw as DeveloperProfile;
+      return {
+        firstName: dev.firstName,
+        lastName: dev.lastName,
+        email: this.auth.session()?.email ?? '',
+        country: dev.country ?? '',
+        bio: dev.bio ?? '',
+        profileImage: dev.profileImage,
+      };
+    }
+    const client = raw as ClientAccount;
+    return {
+      firstName: client.firstName,
+      lastName: client.lastName,
+      email: client.email,
+      country: client.country ?? '',
+      bio: client.bio ?? '',
+      profileImage: client.profileImage,
+    };
+  }
+
   loadProfile(refreshImage = false): void {
-    this.settingService.getClientProfile().subscribe({
-      next: (profile) => {
-        this.profile.set(profile);
+    const request$: Observable<ClientAccount | DeveloperProfile> = this.isDeveloper()
+      ? this.settingService.getDeveloperProfile()
+      : this.settingService.getClientProfile();
+
+    request$.subscribe({
+      next: (raw: ClientAccount | DeveloperProfile) => {
+        this.profile.set(raw);
+        const profile = this.toFormProfile(raw);
+
         this.form.patchValue({
           firstName: profile.firstName,
           lastName: profile.lastName,
@@ -150,10 +181,20 @@ export class Account implements OnInit {
         this.auth.patchSessionNames(profile.firstName, profile.lastName);
         this.imageChanged.set(false);
       },
+      error: (err: unknown) => {
+        console.error(err);
+        this.toast.error('Could not load your profile.');
+      },
     });
   }
 
   loadInterest(): void {
+    if (this.isDeveloper()) {
+      this.interests.set([]);
+      this.interestsChanged.set(false);
+      return;
+    }
+
     this.settingService.getClientInterests().subscribe({
       next: (res) => {
         this.interests.set(res);
@@ -209,8 +250,7 @@ export class Account implements OnInit {
     if (this.saving()) return;
 
     this.syncFormState();
-    const shouldSaveProfile =
-      this.formValid() && (this.formDirty() || this.imageChanged());
+    const shouldSaveProfile = this.formValid() && (this.formDirty() || this.imageChanged());
     const shouldSaveInterests = this.interestsChanged();
 
     if (!shouldSaveProfile && !shouldSaveInterests) return;
@@ -230,21 +270,22 @@ export class Account implements OnInit {
       categoryIds: this.interests().map((x) => x.id),
     };
 
+    const request$ = this.isDeveloper()
+      ? this.settingService.replaceDeveloperInterests(dto)
+      : this.settingService.replaceClientInterests(dto);
+
     this.savingInterests.set(true);
-    this.settingService
-      .replaceClientInterests(dto)
-      .pipe(finalize(() => this.savingInterests.set(false)))
-      .subscribe({
-        next: () => {
-          this.interestsChanged.set(false);
-          this.loadInterest();
-          this.toast.success('Interests updated successfully.');
-        },
-        error: (err) => {
-          console.error(err);
-          this.toast.error('Could not update interests. Please try again.');
-        },
-      });
+    request$.pipe(finalize(() => this.savingInterests.set(false))).subscribe({
+      next: () => {
+        this.interestsChanged.set(false);
+        this.loadInterest();
+        this.toast.success('Interests updated successfully.');
+      },
+      error: (err) => {
+        console.error(err);
+        this.toast.error('Could not update interests. Please try again.');
+      },
+    });
   }
 
   resetAll(): void {
@@ -266,29 +307,30 @@ export class Account implements OnInit {
       formData.append('profileImage', this.selectedImage);
     }
 
-    this.savingProfile.set(true);
-    this.settingService
-      .updateClientProfile(formData)
-      .pipe(finalize(() => this.savingProfile.set(false)))
-      .subscribe({
-        next: () => {
-          const firstName = this.form.controls.firstName.value;
-          const lastName = this.form.controls.lastName.value;
-          this.auth.patchSessionNames(firstName, lastName);
-          this.selectedImage = null;
-          this.imageChanged.set(false);
-          this.loadProfile(true);
-          this.toast.success('Profile updated successfully.');
+    const request$ = this.isDeveloper()
+      ? this.settingService.updateDeveloperProfile(formData)
+      : this.settingService.updateClientProfile(formData);
 
-          if (alsoSaveInterests) {
-            this.saveInterests();
-          }
-        },
-        error: (err) => {
-          console.error(err);
-          this.toast.error('Could not save your changes. Please try again.');
-        },
-      });
+    this.savingProfile.set(true);
+    request$.pipe(finalize(() => this.savingProfile.set(false))).subscribe({
+      next: () => {
+        const firstName = this.form.controls.firstName.value;
+        const lastName = this.form.controls.lastName.value;
+        this.auth.patchSessionNames(firstName, lastName);
+        this.selectedImage = null;
+        this.imageChanged.set(false);
+        this.loadProfile(true);
+        this.toast.success('Profile updated successfully.');
+
+        if (alsoSaveInterests) {
+          this.saveInterests();
+        }
+      },
+      error: (err) => {
+        console.error(err);
+        this.toast.error('Could not save your changes. Please try again.');
+      },
+    });
   }
 
   onPhotoSelected(event: Event): void {
@@ -312,8 +354,9 @@ export class Account implements OnInit {
   }
 
   resetForm(): void {
-    const profile = this.profile();
-    if (!profile) return;
+    const raw = this.profile();
+    if (!raw) return;
+    const profile = this.toFormProfile(raw);
 
     this.form.reset({
       firstName: profile.firstName,
@@ -334,4 +377,28 @@ export class Account implements OnInit {
     const separator = url.includes('?') ? '&' : '?';
     return `${url}${separator}v=${Date.now()}`;
   }
+
+  protected readonly profileEmail = computed(() => {
+    const raw = this.profile();
+    if (!raw) return '';
+    return this.isDeveloper() ? (this.auth.session()?.email ?? '') : (raw as ClientAccount).email;
+  });
+
+  protected readonly profileVerified = computed(() => {
+    const raw = this.profile();
+    if (!raw || this.isDeveloper()) return false;
+    return (raw as ClientAccount).isVerified;
+  });
+
+  protected readonly profileStatValue = computed(() => {
+    const raw = this.profile();
+    if (!raw) return 0;
+    return this.isDeveloper()
+      ? ((raw as DeveloperProfile).ratingCount ?? 0)
+      : ((raw as ClientAccount).projectsPostedCount ?? 0);
+  });
+
+  protected readonly profileStatLabel = computed(() =>
+    this.isDeveloper() ? 'reviews' : 'projects',
+  );
 }

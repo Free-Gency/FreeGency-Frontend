@@ -244,6 +244,18 @@ export const routes: Routes = [
         './features/developer/pages/developer-messages/developer-messages.component'
       ).then((m) => m.DeveloperMessagesComponent),
   },
+    {
+    path: 'freelancer/portfolio',
+    canActivate: [authGuard, developerModeGuard],
+    data: {
+      title: 'Portfolio',
+      description: 'View and manage your portfolio.',
+    },
+    loadComponent: () =>
+      import(
+        './features/freelancer/pages/freelancer-portfolio/freelancer-portfolio.component'
+      ).then((m) => m.FreelancerPortfolioComponent),
+  },
   {
     path: '',
     loadChildren: () =>
