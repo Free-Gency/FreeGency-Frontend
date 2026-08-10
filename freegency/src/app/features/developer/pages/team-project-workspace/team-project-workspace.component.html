@@ -1,0 +1,785 @@
+<app-developer-view-navbar />
+
+<div class="tpw">
+  @if (loading()) {
+    <div class="tpw-skel">
+      <div class="tpw-skel__bar"></div>
+      <div class="tpw-skel__grid">
+        <div class="tpw-skel__card"></div>
+        <div class="tpw-skel__side"></div>
+      </div>
+    </div>
+  } @else if (error(); as err) {
+    <div class="tpw-error">
+      <p class="tpw-error__title">Couldn’t open workspace</p>
+      <p class="tpw-error__body">{{ err }}</p>
+      <a routerLink="/developer/teams" class="tpw-btn tpw-btn--soft">Back to teams</a>
+    </div>
+  } @else if (team(); as t) {
+    @if (project(); as p) {
+      <div class="tpw-crumb">
+        <a
+          class="tpw-crumb__back"
+          [routerLink]="['/developer/teams', t.id]"
+          [queryParams]="{ tab: 'projects' }"
+        >
+          <hugeicons-icon [icon]="backIcon" [size]="14" color="currentColor" [strokeWidth]="2" />
+          Back to team
+        </a>
+        <span class="tpw-crumb__sep">/</span>
+        <span class="tpw-crumb__code">Project {{ projectCode() }}</span>
+      </div>
+
+      <header class="tpw-hero">
+        <div class="tpw-hero__main">
+          <div class="tpw-badges">
+            <span class="tpw-badge" [class.tpw-badge--member]="!isLeader()">
+              {{ isLeader() ? 'Team leader' : 'Team member' }}
+            </span>
+            <span class="tpw-badge tpw-badge--status">{{ statusLabel(p.status) }}</span>
+          </div>
+
+          <h1 class="tpw-title">{{ p.title }}</h1>
+
+          @if (tags().length) {
+            <div class="tpw-tags">
+              @for (tag of tags(); track tag) {
+                <span class="tpw-tag">{{ tag }}</span>
+              }
+            </div>
+          }
+
+          <div class="tpw-meta">
+            <div class="tpw-meta__item">
+              <span class="tpw-meta__label">Budget range</span>
+              <span class="tpw-meta__value">{{ formatBudgetRange(p) }}</span>
+            </div>
+            <div class="tpw-meta__item">
+              <span class="tpw-meta__label">Deadline</span>
+              <span class="tpw-meta__value">
+                {{ p.deadline ? (p.deadline | date: 'MMM d, y') : '—' }}
+              </span>
+            </div>
+            <div class="tpw-meta__item">
+              <span class="tpw-meta__label">Duration</span>
+              <span class="tpw-meta__value">
+                {{ p.estimatedDurationDays ? p.estimatedDurationDays + ' days' : '—' }}
+              </span>
+            </div>
+            <div class="tpw-meta__item">
+              <span class="tpw-meta__label">Category</span>
+              <span class="tpw-meta__value">{{ p.categoryName || '—' }}</span>
+            </div>
+          </div>
+        </div>
+
+        @if (isLeader()) {
+          <aside class="tpw-client">
+            <div class="tpw-client__top">
+              @if (clientAvatarSrc(p.clientAvatarUrl) && !clientAvatarBroken()) {
+                <img
+                  class="tpw-client__avatar"
+                  [src]="clientAvatarSrc(p.clientAvatarUrl)!"
+                  alt=""
+                  (error)="onClientAvatarError()"
+                />
+              } @else {
+                <div class="tpw-client__avatar tpw-client__avatar--fallback" aria-hidden="true">
+                  {{ initials(p.clientName || 'C') }}
+                </div>
+              }
+              <div class="min-w-0">
+                <p class="tpw-client__label">Client owner</p>
+                <p class="tpw-client__name">{{ p.clientName || 'Client' }}</p>
+                <p class="tpw-client__rating">
+                  <hugeicons-icon [icon]="starIcon" [size]="12" color="#f59e0b" [strokeWidth]="2" />
+                  {{ p.clientRating ? (p.clientRating | number: '1.1-1') : '—' }}
+                </p>
+              </div>
+            </div>
+            <button type="button" class="tpw-btn tpw-btn--primary tpw-btn--block" (click)="openTeamChat()">
+              <hugeicons-icon [icon]="chatIcon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
+              Open team chat
+            </button>
+          </aside>
+        }
+      </header>
+
+      <nav class="tpw-tabs" aria-label="Project sections">
+        @for (tab of tabs(); track tab.id) {
+          <button
+            type="button"
+            class="tpw-tab"
+            [class.is-active]="activeTab() === tab.id"
+            (click)="setTab(tab.id)"
+          >
+            {{ tab.label }}
+          </button>
+        }
+      </nav>
+
+      <main class="tpw-main">
+        @if (activeTab() === 'overview') {
+          @if (isLeader()) {
+            <section class="tpw-banner">
+              <div class="min-w-0">
+                <h2 class="tpw-banner__title">What's next, Team Leader?</h2>
+                <p class="tpw-banner__body">
+                  @if (primaryMilestone(); as m) {
+                    Milestone #{{ m.sortOrder }} · {{ m.title }} is active. Keep the board assigned and submit when delivery is ready.
+                  } @else {
+                    Review the brief, then open Milestones to track funding and delivery for this hire.
+                  }
+                </p>
+              </div>
+              <div class="tpw-banner__actions">
+                <button type="button" class="tpw-btn tpw-btn--on-dark" (click)="setTab('milestones')">
+                  <hugeicons-icon [icon]="checkIcon" [size]="16" color="currentColor" [strokeWidth]="2" />
+                  @if (primaryMilestone(); as m) {
+                    Submit milestone #{{ m.sortOrder }}
+                  } @else {
+                    Open milestones
+                  }
+                </button>
+                <button type="button" class="tpw-btn tpw-btn--ghost-light" (click)="setTab('tasks')">
+                  <hugeicons-icon [icon]="addIcon" [size]="16" color="currentColor" [strokeWidth]="2" />
+                  Assign tasks
+                </button>
+              </div>
+            </section>
+          } @else {
+            <section class="tpw-banner">
+              <div class="min-w-0">
+                <h2 class="tpw-banner__title">Continue your work, {{ firstName() }}.</h2>
+                <p class="tpw-banner__body">
+                  @if (myTaskStats().pending > 0) {
+                    You have {{ myTaskStats().pending }} pending
+                    task{{ myTaskStats().pending === 1 ? '' : 's' }}
+                    @if (primaryMilestone(); as m) {
+                      for Milestone #{{ m.sortOrder }}
+                    }
+                    . Complete them to stay on track
+                    @if (p.deadline) {
+                      for the {{ p.deadline | date: 'MMM d' }} deadline
+                    }
+                    .
+                  } @else {
+                    No pending tasks right now — check Delivery for milestone status, or wait for new assignments.
+                  }
+                </p>
+              </div>
+              <div class="tpw-banner__actions">
+                <button type="button" class="tpw-btn tpw-btn--on-dark" (click)="setTab('my-tasks')">
+                  <hugeicons-icon [icon]="taskIcon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
+                  Go to my tasks
+                </button>
+              </div>
+            </section>
+          }
+
+          <div class="tpw-grid">
+            <div class="tpw-col">
+              <section class="tpw-card">
+                <h3 class="tpw-card__title">Project brief &amp; scope</h3>
+                <p class="tpw-brief">
+                  {{ p.description || 'No project description provided yet.' }}
+                </p>
+                @if (scopeItems().length) {
+                  <p class="tpw-section-label">Core requirements</p>
+                  <ul class="tpw-checks">
+                    @for (item of scopeItems(); track item) {
+                      <li>
+                        <span class="tpw-checks__icon">
+                          <hugeicons-icon [icon]="tickIcon" [size]="14" color="currentColor" [strokeWidth]="2.25" />
+                        </span>
+                        {{ item }}
+                      </li>
+                    }
+                  </ul>
+                }
+              </section>
+
+              @if (isLeader()) {
+                <section class="tpw-card">
+                  <div class="tpw-card__head">
+                    <h3 class="tpw-card__title">Active project members</h3>
+                    <button type="button" class="tpw-text-link" (click)="openAddMemberPanel()">
+                      Manage staff
+                    </button>
+                  </div>
+                  @if (memberActionError(); as err) {
+                    <p class="tpw-inline-error tpw-inline-error--compact">{{ err }}</p>
+                  }
+                  <div class="tpw-members">
+                    @for (stat of memberStats(); track stat.member.userId) {
+                      <article class="tpw-member">
+                        @if (stat.member.imageUrl) {
+                          <img class="tpw-member__avatar" [src]="stat.member.imageUrl" [alt]="stat.member.name" />
+                        } @else {
+                          <div class="tpw-member__avatar tpw-member__avatar--fallback">
+                            {{ initials(stat.member.name) }}
+                          </div>
+                        }
+                        <div class="min-w-0 flex-1">
+                          <p class="tpw-member__name">{{ stat.member.name }}</p>
+                          <p class="tpw-member__role">
+                            {{ stat.member.job || (stat.member.role === 'TeamLeader' ? 'Team leader' : 'Contributor') }}
+                          </p>
+                        </div>
+                        <span class="tpw-member__tasks">
+                          {{ stat.total }} task{{ stat.total === 1 ? '' : 's' }}
+                        </span>
+                        @if (projectMembers().length) {
+                          <button
+                            type="button"
+                            class="tpw-member__remove"
+                            title="Remove from project"
+                            [disabled]="memberActionBusy()"
+                            (click)="removeProjectMember(stat.member.userId)"
+                          >
+                            Remove
+                          </button>
+                        }
+                      </article>
+                    }
+                    <button type="button" class="tpw-member tpw-member--add" (click)="openAddMemberPanel()">
+                      <span class="tpw-member__add-icon">
+                        <hugeicons-icon [icon]="addIcon" [size]="18" color="currentColor" [strokeWidth]="2" />
+                      </span>
+                      <span>Add project member</span>
+                    </button>
+                  </div>
+
+                  @if (showAddMember()) {
+                    <div class="tpw-add-panel">
+                      <div class="tpw-add-panel__head">
+                        <p class="tpw-add-panel__title">Staff from team</p>
+                        <button type="button" class="tpw-text-link" (click)="closeAddMemberPanel()">Close</button>
+                      </div>
+                      @if (!addableMembers().length) {
+                        <p class="tpw-add-panel__empty">Everyone on the team is already staffed on this project.</p>
+                      } @else {
+                        <ul class="tpw-add-panel__list">
+                          @for (m of addableMembers(); track m.userId) {
+                            <li>
+                              <div class="tpw-add-panel__person">
+                                @if (m.imageUrl) {
+                                  <img class="tpw-member__avatar tpw-member__avatar--sm" [src]="m.imageUrl" [alt]="m.name" />
+                                } @else {
+                                  <div class="tpw-member__avatar tpw-member__avatar--sm tpw-member__avatar--fallback">
+                                    {{ initials(m.name) }}
+                                  </div>
+                                }
+                                <span>{{ m.name }}</span>
+                              </div>
+                              <button
+                                type="button"
+                                class="tpw-btn tpw-btn--soft-outline tpw-btn--xs"
+                                [disabled]="memberActionBusy()"
+                                (click)="addProjectMember(m.userId)"
+                              >
+                                Add
+                              </button>
+                            </li>
+                          }
+                        </ul>
+                      }
+                    </div>
+                  }
+                </section>
+              } @else {
+                <section class="tpw-card">
+                  <h3 class="tpw-card__title">Your assignment</h3>
+                  <div class="tpw-assign">
+                    <div class="tpw-assign__card">
+                      <p class="tpw-assign__label">Role</p>
+                      <p class="tpw-assign__value">
+                        {{ myMember()?.job || 'Team member' }}
+                      </p>
+                    </div>
+                    <div class="tpw-assign__card">
+                      <p class="tpw-assign__label">Active tasks</p>
+                      <p class="tpw-assign__value">
+                        {{ myTaskStats().pending }} task{{ myTaskStats().pending === 1 ? '' : 's' }} pending
+                      </p>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="tpw-card">
+                  <div class="tpw-card__head">
+                    <h3 class="tpw-card__title">Team progress</h3>
+                    @if (memberStats().length) {
+                      <span class="tpw-progress-pill">{{ teamOverallPercent() }}% overall</span>
+                    }
+                  </div>
+                  <ul class="tpw-team-progress">
+                    @for (stat of memberStats(); track stat.member.userId) {
+                      <li class="tpw-team-progress__row">
+                        @if (stat.member.imageUrl) {
+                          <img class="tpw-member__avatar tpw-member__avatar--sm" [src]="stat.member.imageUrl" [alt]="stat.member.name" />
+                        } @else {
+                          <div class="tpw-member__avatar tpw-member__avatar--sm tpw-member__avatar--fallback">
+                            {{ initials(stat.member.name) }}
+                          </div>
+                        }
+                        <div class="tpw-team-progress__body">
+                          <div class="tpw-team-progress__top">
+                            <span class="tpw-member__name">{{ stat.member.name }}</span>
+                            <span class="tpw-team-progress__count">{{ stat.done }}/{{ stat.total }} tasks</span>
+                          </div>
+                          <div class="tpw-bar">
+                            <span class="tpw-bar__fill" [style.width.%]="stat.percent"></span>
+                          </div>
+                        </div>
+                      </li>
+                    }
+                  </ul>
+                </section>
+              }
+            </div>
+
+            <aside class="tpw-side">
+              @if (isLeader()) {
+                <section class="tpw-card">
+                  <p class="tpw-section-label">Delivery progress</p>
+                  <div class="tpw-delivery-head">
+                    <span>
+                      @if (progress().total) {
+                        Milestone {{ progress().currentIndex }} of {{ progress().total }}
+                      } @else {
+                        No milestones yet
+                      }
+                    </span>
+                    <strong>{{ progress().percent }}%</strong>
+                  </div>
+                  <div class="tpw-bar tpw-bar--lg">
+                    <span class="tpw-bar__fill" [style.width.%]="progress().percent"></span>
+                  </div>
+                  <ul class="tpw-steps">
+                    @for (m of sortedMilestones(); track m.id) {
+                      <li class="tpw-step" [attr.data-state]="milestoneStepState(m)">
+                        <span class="tpw-step__dot" aria-hidden="true"></span>
+                        <span class="tpw-step__label">{{ m.title }}</span>
+                      </li>
+                    }
+                  </ul>
+                </section>
+
+                <section class="tpw-escrow">
+                  <div class="tpw-escrow__icon">
+                    <hugeicons-icon [icon]="walletIcon" [size]="18" color="currentColor" [strokeWidth]="1.75" />
+                  </div>
+                  <div class="tpw-escrow__row">
+                    <span>Released to date</span>
+                    <strong>{{ formatMoney(progress().escrowReleased, p.currency) }}</strong>
+                  </div>
+                  <div class="tpw-escrow__row">
+                    <span>Funded in escrow</span>
+                    <strong>{{ formatMoney(progress().escrowRemaining, p.currency) }}</strong>
+                  </div>
+                  <div class="tpw-escrow__total">
+                    <span>Total budget</span>
+                    <strong>{{ formatMoney(progress().escrowTotal || (p.budgetMax || p.budgetMin || 0), p.currency) }}</strong>
+                  </div>
+                  <button type="button" class="tpw-btn tpw-btn--primary tpw-btn--block" (click)="openTeamFinance()">
+                    View billing details
+                  </button>
+                </section>
+              } @else {
+                <section class="tpw-card tpw-card--client-compact">
+                  <div class="tpw-client__top">
+                    @if (clientAvatarSrc(p.clientAvatarUrl) && !clientAvatarBroken()) {
+                      <img
+                        class="tpw-client__avatar"
+                        [src]="clientAvatarSrc(p.clientAvatarUrl)!"
+                        alt=""
+                        (error)="onClientAvatarError()"
+                      />
+                    } @else {
+                      <div class="tpw-client__avatar tpw-client__avatar--fallback" aria-hidden="true">
+                        {{ initials(p.clientName || 'C') }}
+                      </div>
+                    }
+                    <div class="min-w-0">
+                      <p class="tpw-client__label">Client owner</p>
+                      <p class="tpw-client__name">{{ p.clientName || 'Client' }}</p>
+                      <p class="tpw-client__rating">
+                        <hugeicons-icon [icon]="starIcon" [size]="12" color="#f59e0b" [strokeWidth]="2" />
+                        {{ p.clientRating ? (p.clientRating | number: '1.1-1') : '—' }}
+                      </p>
+                    </div>
+                  </div>
+                  <button type="button" class="tpw-btn tpw-btn--primary tpw-btn--block" (click)="openTeamChat()">
+                    Open team chat
+                  </button>
+                </section>
+
+                <section class="tpw-card">
+                  <p class="tpw-section-label">Current delivery</p>
+                  @if (primaryMilestone(); as m) {
+                    <p class="tpw-delivery-active">
+                      {{ m.sortOrder }}. {{ m.title }}
+                    </p>
+                    <p class="tpw-delivery-note">Waiting for team leader submission</p>
+                  } @else {
+                    <p class="tpw-delivery-note">No active milestone yet</p>
+                  }
+                  <ul class="tpw-steps">
+                    @for (m of sortedMilestones(); track m.id) {
+                      <li class="tpw-step" [attr.data-state]="milestoneStepState(m)">
+                        <span class="tpw-step__dot" aria-hidden="true"></span>
+                        <span class="tpw-step__label">{{ m.title }}</span>
+                      </li>
+                    }
+                  </ul>
+                </section>
+
+                <section class="tpw-readonly">
+                  <p class="tpw-readonly__eyebrow">Read-only mode</p>
+                  <p class="tpw-readonly__body">
+                    Milestone submissions and budget management are restricted to the team leader
+                    @if (teamLeader(); as lead) {
+                      ({{ lead.name }}).
+                    } @else {
+                      .
+                    }
+                  </p>
+                </section>
+              }
+            </aside>
+          </div>
+        }
+
+        @if (activeTab() === 'milestones' && isLeader()) {
+          <section class="tpw-section">
+            <div class="tpw-section__head">
+              <div class="min-w-0">
+                <p class="tpw-section__eyebrow">Delivery</p>
+                <h2 class="tpw-section__title">Milestones</h2>
+                <p class="tpw-section__lead">
+                  Track funding, submit work, and follow the plan for this hire.
+                </p>
+              </div>
+              <div class="tpw-section__actions">
+                <button type="button" class="tpw-btn tpw-btn--soft-outline" (click)="openTeamChat()">
+                  <hugeicons-icon [icon]="chatIcon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
+                  Discuss in chat
+                </button>
+              </div>
+            </div>
+
+            @if (overviewReady() && sortedMilestones().length) {
+              <div class="tpw-ms-strip">
+                <div class="tpw-ms-strip__progress">
+                  <div class="tpw-ms-strip__top">
+                    <span>
+                      Milestone {{ progress().currentIndex || 0 }} of {{ progress().total }}
+                    </span>
+                    <strong>{{ progress().percent }}% released</strong>
+                  </div>
+                  <div class="tpw-bar tpw-bar--lg">
+                    <span class="tpw-bar__fill" [style.width.%]="progress().percent"></span>
+                  </div>
+                </div>
+                <div class="tpw-ms-chips" role="list">
+                  @for (m of sortedMilestones(); track m.id) {
+                    <div class="tpw-ms-chip" [attr.data-state]="milestoneStepState(m)" role="listitem">
+                      <span class="tpw-ms-chip__n">
+                        {{ m.releaseStatus === 'Released' ? '✓' : m.sortOrder }}
+                      </span>
+                      <span class="tpw-ms-chip__t">{{ m.title }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <div class="tpw-milestones-host">
+              <app-project-milestones [projectId]="p.id" [isOwner]="false" [embedded]="true" />
+            </div>
+          </section>
+        }
+
+        @if (activeTab() === 'tasks' && isLeader()) {
+          <section class="tpw-section">
+            <div class="tpw-section__head">
+              <div class="min-w-0">
+                <p class="tpw-section__eyebrow">Execution</p>
+                <h2 class="tpw-section__title">Project tasks</h2>
+                <p class="tpw-section__lead">
+                  Assign work by milestone and keep the board moving.
+                </p>
+              </div>
+            </div>
+
+            @if (taskMilestonesError(); as err) {
+              <div class="tpw-inline-error">
+                {{ err }}
+                <button type="button" class="tpw-text-link" (click)="setTab('tasks')">Retry</button>
+              </div>
+            } @else if (taskMilestonesLoading() && !taskMilestones().length) {
+              <div class="tpw-skel__card tpw-skel__card--sm"></div>
+            } @else if (!taskMilestones().length) {
+              <div class="tpw-empty tpw-empty--card">
+                <p class="tpw-empty__title">No milestones to hang tasks on</p>
+                <p class="tpw-empty__body">
+                  Propose or accept a milestone plan first, then come back to build the board.
+                </p>
+                <button type="button" class="tpw-btn tpw-btn--primary" (click)="setTab('milestones')">
+                  Go to milestones
+                </button>
+              </div>
+            } @else {
+              <div class="tpw-tasks-toolbar">
+                <div class="tpw-ms-chips tpw-ms-chips--pick" role="tablist" aria-label="Milestone">
+                  @for (m of taskMilestones(); track m.id) {
+                    <button
+                      type="button"
+                      class="tpw-ms-chip tpw-ms-chip--btn"
+                      role="tab"
+                      [attr.aria-selected]="taskMilestoneId() === m.id"
+                      [class.is-active]="taskMilestoneId() === m.id"
+                      (click)="selectTaskMilestone(m.id)"
+                    >
+                      <span class="tpw-ms-chip__n">{{ m.sortOrder }}</span>
+                      <span class="tpw-ms-chip__t">{{ m.title }}</span>
+                    </button>
+                  }
+                </div>
+              </div>
+
+              @if (taskMilestoneId(); as milestoneId) {
+                <section class="tpw-split-card">
+                  <div class="tpw-split-card__head">
+                    <div>
+                      <p class="tpw-section__eyebrow">Milestone payout</p>
+                      <h3 class="tpw-split-card__title">Pay share</h3>
+                      <p class="tpw-split-card__lead">
+                        1) Add team members to this project · 2) Set their % for this milestone
+                        (must total <strong>100%</strong>). Same % pays out on release and drives task assignees.
+                      </p>
+                    </div>
+                    <div
+                      class="tpw-split-card__meta"
+                      [class.is-over]="assignmentTotal() > 100"
+                      [class.is-ready]="assignmentTotal() === 100"
+                    >
+                      {{ assignmentTotal() }}%
+                    </div>
+                  </div>
+
+                  @if (memberActionError(); as err) {
+                    <p class="tpw-inline-error tpw-inline-error--compact">{{ err }}</p>
+                  }
+                  @if (assignmentError(); as err) {
+                    <p class="tpw-inline-error tpw-inline-error--compact">{{ err }}</p>
+                  }
+                  @if (assignmentSavedFlash()) {
+                    <p class="tpw-split-card__ok">Pay share saved — used on release and in Finance.</p>
+                  }
+
+                  <!-- Step 1: staff onto project -->
+                  <div class="tpw-split-step">
+                    <div class="tpw-split-step__label">
+                      <span class="tpw-split-step__n">1</span>
+                      <span>Project members</span>
+                    </div>
+
+                    @if (!projectMembers().length) {
+                      <p class="tpw-add-panel__empty">
+                        No one is on this project yet. Add teammates from the team roster below.
+                      </p>
+                    } @else {
+                      <ul class="tpw-staff-list">
+                        @for (m of projectMembers(); track m.userId) {
+                          <li class="tpw-staff-row">
+                            <div class="tpw-split-row__who">
+                              @if (m.imageUrl) {
+                                <img class="tpw-member__avatar tpw-member__avatar--sm" [src]="m.imageUrl" [alt]="m.name" />
+                              } @else {
+                                <div class="tpw-member__avatar tpw-member__avatar--sm tpw-member__avatar--fallback">
+                                  {{ initials(m.name) }}
+                                </div>
+                              }
+                              <div class="min-w-0">
+                                <span class="tpw-staff-row__name">{{ m.name }}</span>
+                                <span class="tpw-staff-row__role">{{ m.roleInProject || 'Contributor' }}</span>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              class="tpw-member__remove"
+                              [disabled]="memberActionBusy()"
+                              (click)="removeProjectMember(m.userId)"
+                            >
+                              Remove
+                            </button>
+                          </li>
+                        }
+                      </ul>
+                    }
+
+                    <button
+                      type="button"
+                      class="tpw-member tpw-member--add tpw-member--add-inline"
+                      (click)="showAddMember() ? closeAddMemberPanel() : openAddMemberPanel()"
+                    >
+                      <span class="tpw-member__add-icon">
+                        <hugeicons-icon [icon]="addIcon" [size]="16" color="currentColor" [strokeWidth]="2" />
+                      </span>
+                      <span>{{ showAddMember() ? 'Hide team roster' : 'Add team member to project' }}</span>
+                    </button>
+
+                    @if (showAddMember()) {
+                      <div class="tpw-add-panel">
+                        @if (!addableMembers().length) {
+                          <p class="tpw-add-panel__empty">Everyone on the team is already on this project.</p>
+                        } @else {
+                          <ul class="tpw-add-panel__list">
+                            @for (m of addableMembers(); track m.userId) {
+                              <li>
+                                <div class="tpw-add-panel__person">
+                                  @if (m.imageUrl) {
+                                    <img class="tpw-member__avatar tpw-member__avatar--sm" [src]="m.imageUrl" [alt]="m.name" />
+                                  } @else {
+                                    <div class="tpw-member__avatar tpw-member__avatar--sm tpw-member__avatar--fallback">
+                                      {{ initials(m.name) }}
+                                    </div>
+                                  }
+                                  <span>{{ m.name }}</span>
+                                </div>
+                                <button
+                                  type="button"
+                                  class="tpw-btn tpw-btn--soft-outline tpw-btn--xs"
+                                  [disabled]="memberActionBusy()"
+                                  (click)="addProjectMember(m.userId)"
+                                >
+                                  Add
+                                </button>
+                              </li>
+                            }
+                          </ul>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Step 2: % split (only after staffing) -->
+                  <div class="tpw-split-step" [class.is-disabled]="!projectMembers().length">
+                    <div class="tpw-split-step__label">
+                      <span class="tpw-split-step__n">2</span>
+                      <span>Milestone pay share</span>
+                    </div>
+
+                    @if (!projectMembers().length) {
+                      <p class="tpw-add-panel__empty">Add at least one project member first.</p>
+                    } @else {
+                      <ul class="tpw-split-list">
+                        @for (row of assignmentDraft(); track row.userId) {
+                          <li class="tpw-split-row">
+                            <div class="tpw-split-row__who">
+                              @if (row.imageUrl) {
+                                <img class="tpw-member__avatar tpw-member__avatar--sm" [src]="row.imageUrl" [alt]="row.name" />
+                              } @else {
+                                <div class="tpw-member__avatar tpw-member__avatar--sm tpw-member__avatar--fallback">
+                                  {{ initials(row.name) }}
+                                </div>
+                              }
+                              <span>{{ row.name }}</span>
+                            </div>
+                            <label class="tpw-split-row__pct">
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                [ngModel]="row.percentage"
+                                (ngModelChange)="setAssignmentPercent(row.userId, $event)"
+                              />
+                              <span>%</span>
+                            </label>
+                          </li>
+                        }
+                      </ul>
+                      <div class="tpw-split-card__actions">
+                        <button
+                          type="button"
+                          class="tpw-btn tpw-btn--primary"
+                          [disabled]="assignmentSaving() || assignmentTotal() !== 100 || !assignmentDraft().length"
+                          (click)="saveMilestoneAssignments()"
+                        >
+                          {{ assignmentSaving() ? 'Saving…' : 'Save pay share' }}
+                        </button>
+                      </div>
+                    }
+                  </div>
+                </section>
+
+                <div class="tpw-tasks-board">
+                  <app-team-task-board
+                    [milestoneId]="milestoneId"
+                    [projectId]="p.id"
+                    [currentUserId]="auth.session()?.id ?? ''"
+                    [isManager]="true"
+                    [members]="assigneeOptions()"
+                  />
+                </div>
+              }
+            }
+          </section>
+        }
+
+        @if (activeTab() === 'my-tasks' && !isLeader()) {
+          <section class="tpw-panel">
+            <h2 class="tpw-panel__title">My tasks</h2>
+            <p class="tpw-panel__lead">Only tasks assigned to you on this project.</p>
+            <app-my-tasks
+              [currentUserId]="auth.session()?.id ?? ''"
+              [teamId]="t.id"
+              [projectId]="p.id"
+            />
+          </section>
+        }
+
+        @if (activeTab() === 'my-work' && !isLeader()) {
+          <section class="tpw-panel">
+            <h2 class="tpw-panel__title">Delivery</h2>
+            <p class="tpw-panel__lead">
+              Active milestone status on this project. Milestone submit is done by the team leader.
+            </p>
+
+            @if (myWorkLoading()) {
+              <div class="tpw-skel__card tpw-skel__card--sm"></div>
+            } @else if (myWorkError(); as err) {
+              <div class="tpw-inline-error">{{ err }}</div>
+            } @else if (!deliveryMilestones().length) {
+              <div class="tpw-empty">
+                <p class="tpw-empty__title">No active delivery</p>
+                <p class="tpw-empty__body">
+                  When a milestone is funded and in progress, its status will show here.
+                </p>
+              </div>
+            } @else {
+              <ul class="tpw-work-list">
+                @for (m of deliveryMilestones(); track m.id) {
+                  <li class="tpw-work-card">
+                    <div class="min-w-0">
+                      <p class="tpw-work-card__phase">Phase {{ m.sortOrder }}</p>
+                      <h3 class="tpw-work-card__title">{{ m.title }}</h3>
+                      <p class="tpw-work-card__meta">
+                        {{ workStatusLabel(m.workStatus) }}
+                        ·
+                        {{ m.amount | number: '1.0-0' }} {{ p.currency || 'USD' }}
+                      </p>
+                    </div>
+                    <span class="tpw-badge tpw-badge--status">{{ workStatusLabel(m.workStatus) }}</span>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+        }
+      </main>
+    }
+  }
+</div>

@@ -6,6 +6,7 @@ import { ManageWorkService, MyProjectsSummary } from '../../../data-access/manag
 import { Project } from '../../../../../shared/models/Project';
 import type { IconSvgObject } from '@hugeicons/angular';
 import { Calendar03Icon, Money01Icon, UserGroupIcon, Clock01Icon } from '@hugeicons/core-free-icons';
+import type { MilestoneProgressSummary } from '../milestones/milestone-progress.util';
 
 type StatusFilter = 'All' | 'Draft' | 'Open' | 'InProgress' | 'Completed' | 'Cancelled';
 type SortOption = 'newest' | 'oldest' | 'title-asc' | 'title-desc' | 'budget-high' | 'budget-low';
@@ -24,6 +25,7 @@ export class MyProjectsComponent implements OnInit {
   readonly projects = signal<Project[]>([]);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
+  readonly progressByProjectId = signal<Record<string, MilestoneProgressSummary>>({});
 
   readonly page = signal(1);
   readonly pageSize = 10;
@@ -72,12 +74,33 @@ export class MyProjectsComponent implements OnInit {
           this.totalPages.set(Math.max(1, page.totalPages));
           this.totalCount.set(page.totalCount);
           this.loading.set(false);
+          this.loadProgressForProjects(page.items);
         },
         error: (err: HttpErrorResponse) => {
           this.error.set(err.message || 'Failed to load projects');
           this.loading.set(false);
         },
       });
+  }
+
+  private loadProgressForProjects(projects: Project[]): void {
+    const inProgressIds = projects
+      .filter((p) => p.status === 'InProgress')
+      .map((p) => p.id);
+
+    if (inProgressIds.length === 0) {
+      this.progressByProjectId.set({});
+      return;
+    }
+
+    this.manageWorkService.getMilestoneProgressByProjectIds(inProgressIds).subscribe({
+      next: (map) => this.progressByProjectId.set(map),
+      error: () => this.progressByProjectId.set({}),
+    });
+  }
+
+  progressFor(projectId: string): MilestoneProgressSummary | null {
+    return this.progressByProjectId()[projectId] ?? null;
   }
 
   loadSummary(): void {
@@ -156,6 +179,12 @@ export class MyProjectsComponent implements OnInit {
     return `${project.budgetMin}–${project.budgetMax} ${project.currency}`;
   }
 
+  formatEscrowAmount(amount: number): string {
+    return new Intl.NumberFormat('en-US', {
+      maximumFractionDigits: 0,
+    }).format(amount);
+  }
+
   getDaysLeft(deadline: string): number {
     const today = new Date();
     const target = new Date(deadline);
@@ -163,38 +192,63 @@ export class MyProjectsComponent implements OnInit {
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
   }
 
-  getTotalEscrow(): number { return 5100; }
+  getTotalEscrow(): number {
+    return 5100;
+  }
   getActiveProjectCount(): number {
     return this.summary()?.inProgress ?? 0;
   }
-  getReleasedToDate(): number { return 2450; }
-  getAvailableBalance(): number { return 850; }
+  getReleasedToDate(): number {
+    return 2450;
+  }
+  getAvailableBalance(): number {
+    return 850;
+  }
 
-  getProposalsAwaitingReview(): number { return 4; }
-  getMilestonesAwaitingApproval(): number { return 2; }
-  goToProposals(): void { /* wire to parent tab switch later */ }
-  goToMilestones(): void { /* wire to parent tab switch later */ }
+  getProposalsAwaitingReview(): number {
+    return 4;
+  }
+  getMilestonesAwaitingApproval(): number {
+    return 2;
+  }
+  goToProposals(): void {
+    /* wire to parent tab switch later */
+  }
+  goToMilestones(): void {
+    /* wire to parent tab switch later */
+  }
 
   getCount(status: string): number {
     const s = this.summary();
     if (!s) return 0;
     switch (status) {
-      case 'Draft': return s.draft;
-      case 'Open': return s.open;
-      case 'InProgress': return s.inProgress;
-      case 'Completed': return s.completed;
-      case 'Cancelled': return s.cancelled;
-      default: return s.total;
+      case 'Draft':
+        return s.draft;
+      case 'Open':
+        return s.open;
+      case 'InProgress':
+        return s.inProgress;
+      case 'Completed':
+        return s.completed;
+      case 'Cancelled':
+        return s.cancelled;
+      default:
+        return s.total;
     }
   }
 
   private toApiStatus(status: Exclude<StatusFilter, 'All'>): string {
     switch (status) {
-      case 'Draft': return 'draft';
-      case 'Open': return 'open';
-      case 'InProgress': return 'in-progress';
-      case 'Completed': return 'completed';
-      case 'Cancelled': return 'cancelled';
+      case 'Draft':
+        return 'draft';
+      case 'Open':
+        return 'open';
+      case 'InProgress':
+        return 'in-progress';
+      case 'Completed':
+        return 'completed';
+      case 'Cancelled':
+        return 'cancelled';
     }
   }
 }

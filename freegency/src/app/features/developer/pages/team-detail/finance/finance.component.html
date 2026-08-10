@@ -1,597 +1,331 @@
-<div class="space-y-6">
-
-  @if (loading()) {
-
-    <div class="tw-card p-6 text-center">
-      <p class="text-sm text-[#6b7280]">
-        Loading finance...
+<section class="tf">
+  <header class="tf-head">
+    <div class="min-w-0">
+      <p class="tf-eyebrow">Money</p>
+      <h2 class="tf-title">{{ isTeamLeader() ? 'Team finance' : 'My earnings' }}</h2>
+      <p class="tf-lead">
+        @if (isTeamLeader()) {
+          Team wallet balances and payout shares on accepted project plans.
+          When payout splits are set, released milestone money goes to member wallets.
+        } @else {
+          Your payout share across team projects with an accepted milestone plan.
+        }
       </p>
     </div>
-
-  } @else if (error()) {
-
-    <div class="tw-card p-6 text-center">
-      <p class="text-sm text-red-500">
-        {{ error() }}
-      </p>
-    </div>
-
-  } @else {
-
-    @if (isTeamLeader) {
-
-      <!-- ===================================== -->
-      <!-- TEAM LEADER FINANCE -->
-      <!-- ===================================== -->
-
-      <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-
-        <!-- Wallet Balance -->
-        <div class="tw-card p-4">
-          <p class="tw-mono-label">
-            Wallet balance
-          </p>
-
-          <p class="tw-kpi mt-1">
-            {{
-              wallet()?.available
-                | currency: wallet()?.currency
-            }}
-          </p>
-
-          <p class="mt-1 text-xs text-[#9ca3af]">
-            Available for withdrawal
-          </p>
-        </div>
-
-
-        <!-- Pending Payments -->
-        <div class="tw-card p-4">
-          <p class="tw-mono-label">
-            Pending payments
-          </p>
-
-          <p class="tw-kpi mt-1 text-[#d97706]">
-            {{
-              wallet()?.pending
-                | currency: wallet()?.currency
-            }}
-          </p>
-
-          <p class="mt-1 text-xs text-[#9ca3af]">
-            Pending team payments
-          </p>
-        </div>
-
-
-        <!-- Reserved -->
-        <div class="tw-card p-4">
-          <p class="tw-mono-label">
-            Reserved
-          </p>
-
-          <p class="tw-kpi mt-1 text-[#4130d7]">
-            {{
-              wallet()?.reserved
-                | currency: wallet()?.currency
-            }}
-          </p>
-
-          <p class="mt-1 text-xs text-[#9ca3af]">
-            Currently reserved
-          </p>
-        </div>
-
-
-        <!-- Total Earnings -->
-        <div class="tw-card p-4">
-          <p class="tw-mono-label">
-            Total earnings
-          </p>
-
-          <p class="tw-kpi mt-1">
-            {{
-              wallet()?.totalEarnings
-                | currency: wallet()?.currency
-            }}
-          </p>
-
-          <p class="mt-1 text-xs text-[#9ca3af]">
-            Lifetime earnings
-          </p>
-        </div>
-
-      </div>
-
-
-      <!-- ===================================== -->
-      <!-- EARNINGS BY PROJECT -->
-      <!-- ===================================== -->
-
-      <div class="mb-3 mt-8 flex items-center justify-between">
-
-        <h2 class="font-display text-base font-bold text-[#111827]">
-          Earnings by Project
-        </h2>
-
-        <button
-          type="button"
-          class="text-[13px] font-semibold text-[#4130d7] hover:text-[#3527b8]"
-        >
-          Download report
-        </button>
-
-      </div>
-
-
-      <div class="space-y-3">
-
-        @for (
-          project of projects();
-          track project.projectId
-        ) {
-
-          <div class="tw-card overflow-hidden">
-
-            <!-- Project Header -->
-            <button
-              type="button"
-              class="flex w-full cursor-pointer items-center justify-between p-4 text-left"
-              (click)="toggleProject(project.projectId)"
-            >
-
-              <div class="min-w-0">
-
-                <p class="truncate text-sm font-bold text-[#111827]">
-                  {{ project.projectTitle }}
-                </p>
-
-                <p class="text-xs text-[#9ca3af]">
-                  Total budget:
-                  {{
-                    project.totalBudget
-                      | currency: project.currency
-                  }}
-                </p>
-
-              </div>
-
-
-              <div class="ml-4 shrink-0 text-right">
-
-                <p class="tw-mono-label">
-                  Released
-                </p>
-
-                <p class="text-[13px] font-semibold text-[#16a34a]">
-                  {{
-                    project.releasedAmount
-                      | currency: project.currency
-                  }}
-                </p>
-
-              </div>
-
-            </button>
-
-
-            <!-- Project Members -->
-            @if (expandedProject() === project.projectId) {
-
-              <div
-                class="divide-y divide-[#f3f4f6] border-t border-[#f3f4f6]"
-              >
-
-                @for (
-                  member of project.members;
-                  track member.userId
-                ) {
-
-                  <div
-                    class="flex items-center justify-between px-4 py-3"
-                  >
-
-                    <div class="min-w-0">
-
-                      <p
-                        class="truncate text-[13px] font-semibold text-[#111827]"
-                      >
-                        {{ member.name }}
-                      </p>
-
-                      <p class="text-[11px] text-[#9ca3af]">
-
-                        {{ member.role || 'Team Member' }}
-
-                        ·
-
-                        {{ member.percentage }}% share
-
-                      </p>
-
-                    </div>
-
-
-                    <div class="ml-4 shrink-0 text-right">
-
-                      <p class="text-[13px] font-semibold text-[#111827]">
-                        {{
-                          member.amount
-                            | currency: project.currency
-                        }}
-                      </p>
-
-                      <span
-                        class="text-[11px] font-semibold"
-                        [class.text-[#16a34a]]="
-                          member.status === 'Released'
-                        "
-                        [class.text-[#d97706]]="
-                          member.status === 'Pending'
-                        "
-                      >
-                        {{ member.status }}
-                      </span>
-
-                    </div>
-
-                  </div>
-
-                }
-
-
-                @if (project.members.length === 0) {
-
-                  <div class="px-4 py-5 text-center">
-
-                    <p class="text-xs text-[#9ca3af]">
-                      No member earnings found.
-                    </p>
-
-                  </div>
-
-                }
-
-              </div>
-
-            }
-
-          </div>
-
+  </header>
+
+  @if (isTeamLeader()) {
+    <!-- Leader KPIs -->
+    <div class="tf-kpis">
+      @if (walletLoading() && !wallet()) {
+        @for (_ of [1, 2, 3, 4]; track $index) {
+          <div class="tf-kpi tf-kpi--skel"></div>
         }
-
-
-        @if (projects().length === 0) {
-
-          <div class="tw-card p-6 text-center">
-
-            <p class="text-sm text-[#6b7280]">
-              No project earnings found.
-            </p>
-
-          </div>
-
-        }
-
-      </div>
-
-
-      <!-- ===================================== -->
-      <!-- PROJECT PAGINATION -->
-      <!-- ===================================== -->
-
-      @if (
-        pagination() &&
-        pagination()!.totalPages > 1
-      ) {
-
-        <div
-          class="mt-5 flex items-center justify-between"
-        >
-
-          <button
-            type="button"
-            class="rounded-full border border-[#e5e7eb] px-4 py-2 text-xs font-semibold text-[#374151] transition hover:bg-[#f9fafb] disabled:cursor-not-allowed disabled:opacity-40"
-            [disabled]="!pagination()!.hasPreviousPage"
-            (click)="previousPage()"
-          >
-            Previous
-          </button>
-
-
-          <span class="text-xs text-[#6b7280]">
-            Page
-            {{ pagination()!.pageNumber }}
-            of
-            {{ pagination()!.totalPages }}
-          </span>
-
-
-          <button
-            type="button"
-            class="rounded-full border border-[#e5e7eb] px-4 py-2 text-xs font-semibold text-[#374151] transition hover:bg-[#f9fafb] disabled:cursor-not-allowed disabled:opacity-40"
-            [disabled]="!pagination()!.hasNextPage"
-            (click)="nextPage()"
-          >
-            Next
-          </button>
-
-        </div>
-
+      } @else if (walletError(); as err) {
+        <div class="tf-banner tf-banner--error">{{ err }}</div>
+      } @else {
+        <article class="tf-kpi">
+          <p class="tf-kpi__label">Available</p>
+          <p class="tf-kpi__value">
+            {{ wallet()?.available ?? 0 | currency: currency() : 'symbol' : '1.0-0' }}
+          </p>
+          <p class="tf-kpi__hint">Team wallet · withdrawable</p>
+        </article>
+        <article class="tf-kpi">
+          <p class="tf-kpi__label">Pending</p>
+          <p class="tf-kpi__value tf-kpi__value--amber">
+            {{ wallet()?.pending ?? 0 | currency: currency() : 'symbol' : '1.0-0' }}
+          </p>
+          <p class="tf-kpi__hint">Awaiting clearance</p>
+        </article>
+        <article class="tf-kpi">
+          <p class="tf-kpi__label">Reserved</p>
+          <p class="tf-kpi__value tf-kpi__value--accent">
+            {{ wallet()?.reserved ?? 0 | currency: currency() : 'symbol' : '1.0-0' }}
+          </p>
+          <p class="tf-kpi__hint">Held on the team wallet</p>
+        </article>
+        <article class="tf-kpi">
+          <p class="tf-kpi__label">Lifetime earned</p>
+          <p class="tf-kpi__value">
+            {{ wallet()?.totalEarnings ?? 0 | currency: currency() : 'symbol' : '1.0-0' }}
+          </p>
+          <p class="tf-kpi__hint">Team wallet ledger</p>
+        </article>
       }
+    </div>
 
-
-      <!-- ===================================== -->
-      <!-- FINANCE SUMMARY -->
-      <!-- ===================================== -->
-
-      <div class="finance-dark">
-
-        <p class="font-display text-[15px] font-bold">
-          Finance Summary
-        </p>
-
-
-        <p class="tw-mono-label mt-5 text-[#9ca3af]">
-          Available for withdrawal
-        </p>
-
-
-        <p class="mt-1 font-display text-[26px] font-bold">
-          {{
-            wallet()?.available
-              | currency: wallet()?.currency
-          }}
-        </p>
-
-
-        <button
-          type="button"
-          class="mt-4 flex h-11 w-full cursor-pointer items-center justify-center rounded-full bg-[#4130d7] text-sm font-semibold text-white transition hover:bg-[#3527b8]"
-        >
-          Withdraw Funds
-        </button>
-
-
-        <!-- Pending -->
-        <div
-          class="mt-6 flex items-center justify-between text-[13px]"
-        >
-
-          <span class="text-[#9ca3af]">
-            Pending payments
-          </span>
-
-          <span class="font-semibold">
-            {{
-              wallet()?.pending
-                | currency: wallet()?.currency
-            }}
-          </span>
-
-        </div>
-
-
-        <!-- Reserved -->
-        <div
-          class="mt-2 flex items-center justify-between text-[13px]"
-        >
-
-          <span class="text-[#9ca3af]">
-            Reserved
-          </span>
-
-          <span class="font-semibold">
-            {{
-              wallet()?.reserved
-                | currency: wallet()?.currency
-            }}
-          </span>
-
-        </div>
-
-
-        <!-- Total Earnings -->
-        <div
-          class="mt-2 flex items-center justify-between text-[13px]"
-        >
-
-          <span class="text-[#9ca3af]">
-            Total earnings
-          </span>
-
-          <span class="font-semibold">
-            {{
-              wallet()?.totalEarnings
-                | currency: wallet()?.currency
-            }}
-          </span>
-
-        </div>
-
-      </div>
-
-
-    } @else {
-
-      <!-- ===================================== -->
-      <!-- TEAM MEMBER -->
-      <!-- ===================================== -->
-
-      <div class="tw-card p-5">
-
-        <div class="flex items-start gap-3">
-
-          <div
-            class="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#f3f4f6] text-[#6b7280]"
-          >
-
-            <hugeicons-icon
-              [icon]="walletIcon"
-              [size]="16"
-              color="currentColor"
-              [strokeWidth]="1.75"
-            />
-
+    @if (wallet(); as w) {
+      <aside class="tf-summary">
+        <div class="tf-summary__main">
+          <div class="tf-summary__icon">
+            <hugeicons-icon [icon]="walletIcon" [size]="18" color="currentColor" [strokeWidth]="1.75" />
           </div>
-
-
           <div>
-
-            <p class="text-[13px] font-semibold text-[#111827]">
-              My earnings
+            <p class="tf-summary__label">Team wallet snapshot</p>
+            <p class="tf-summary__amount">
+              {{ w.available | currency: currency() : 'symbol' : '1.0-0' }}
+              <span>available</span>
             </p>
-
-            <p class="mt-0.5 text-xs text-[#6b7280]">
-              Your personal earnings will be displayed here.
-            </p>
-
           </div>
-
         </div>
-
-      </div>
-
-
-      <!-- ===================================== -->
-      <!-- MEMBER PROJECTS -->
-      <!-- ===================================== -->
-
-      <h2
-        class="mb-3 mt-8 font-display text-base font-bold text-[#111827]"
-      >
-        My Earnings by Project
-      </h2>
-
-
-      <div class="space-y-3">
-
-        @for (
-          project of projects();
-          track project.projectId
-        ) {
-
-          @for (
-            member of project.members;
-            track member.userId
-          ) {
-
-            <div
-              class="tw-card flex items-center justify-between px-5 py-4"
-            >
-
-              <div class="min-w-0">
-
-                <p
-                  class="truncate text-sm font-bold text-[#111827]"
-                >
-                  {{ project.projectTitle }}
-                </p>
-
-                <p class="text-xs text-[#9ca3af]">
-
-                  {{ member.role || 'Team Member' }}
-
-                  ·
-
-                  {{ member.percentage }}% share
-
-                </p>
-
-              </div>
-
-
-              <div class="ml-4 shrink-0 text-right">
-
-                <p class="text-[13px] font-semibold text-[#111827]">
-                  {{
-                    member.amount
-                      | currency: project.currency
-                  }}
-                </p>
-
-                <span
-                  class="text-[11px] font-semibold"
-                  [class.text-[#16a34a]]="
-                    member.status === 'Released'
-                  "
-                  [class.text-[#d97706]]="
-                    member.status === 'Pending'
-                  "
-                >
-                  {{ member.status }}
-                </span>
-
-              </div>
-
-            </div>
-
-          }
-
-        }
-
-
-        @if (projects().length === 0) {
-
-          <div class="tw-card p-6 text-center">
-
-            <p class="text-sm text-[#6b7280]">
-              No earnings found.
-            </p>
-
-          </div>
-
-        }
-
-      </div>
-
-
-      <!-- ===================================== -->
-      <!-- MEMBER PAGINATION -->
-      <!-- ===================================== -->
-
-      @if (
-        pagination() &&
-        pagination()!.totalPages > 1
-      ) {
-
-        <div
-          class="mt-5 flex items-center justify-between"
-        >
-
-          <button
-            type="button"
-            class="rounded-full border border-[#e5e7eb] px-4 py-2 text-xs font-semibold text-[#374151] transition hover:bg-[#f9fafb] disabled:cursor-not-allowed disabled:opacity-40"
-            [disabled]="!pagination()!.hasPreviousPage"
-            (click)="previousPage()"
-          >
-            Previous
-          </button>
-
-
-          <span class="text-xs text-[#6b7280]">
-            Page
-            {{ pagination()!.pageNumber }}
-            of
-            {{ pagination()!.totalPages }}
-          </span>
-
-
-          <button
-            type="button"
-            class="rounded-full border border-[#e5e7eb] px-4 py-2 text-xs font-semibold text-[#374151] transition hover:bg-[#f9fafb] disabled:cursor-not-allowed disabled:opacity-40"
-            [disabled]="!pagination()!.hasNextPage"
-            (click)="nextPage()"
-          >
-            Next
-          </button>
-
-        </div>
-
-      }
-
+        <ul class="tf-summary__rows">
+          <li>
+            <span>Pending</span>
+            <strong>{{ w.pending | currency: currency() : 'symbol' : '1.0-0' }}</strong>
+          </li>
+          <li>
+            <span>Reserved</span>
+            <strong>{{ w.reserved | currency: currency() : 'symbol' : '1.0-0' }}</strong>
+          </li>
+          <li>
+            <span>Page released</span>
+            <strong>{{ pageProjectsReleased() | currency: currency() : 'symbol' : '1.0-0' }}</strong>
+          </li>
+        </ul>
+        <p class="tf-summary__note">
+          Withdrawals are managed from each member’s personal wallet after a split release.
+          Unallocated releases stay on the team wallet.
+        </p>
+      </aside>
     }
 
+    <div class="tf-section-head">
+      <div>
+        <h3 class="tf-section-title">Earnings by project</h3>
+        <p class="tf-section-sub">Accepted plans only · expand a row for payout shares</p>
+      </div>
+      @if (pageProjectsBudget() > 0) {
+        <p class="tf-section-meta">
+          {{ pageProjectsReleased() | currency: currency() : 'symbol' : '1.0-0' }}
+          /
+          {{ pageProjectsBudget() | currency: currency() : 'symbol' : '1.0-0' }}
+          released
+        </p>
+      }
+    </div>
+
+    @if (projectsLoading() && !projects().length) {
+      <div class="tf-skel-list">
+        @for (_ of [1, 2, 3]; track $index) {
+          <div class="tf-skel-card"></div>
+        }
+      </div>
+    } @else if (projectsError(); as err) {
+      <div class="tf-banner tf-banner--error">{{ err }}</div>
+    } @else if (!projects().length) {
+      <div class="tf-empty">
+        <p class="tf-empty__title">No project earnings yet</p>
+        <p class="tf-empty__body">
+          Projects show here after a milestone plan is accepted. Set a milestone
+          <strong>pay share</strong> in the project workspace so members appear under each project.
+        </p>
+      </div>
+    } @else {
+      <div class="tf-projects">
+        @for (project of projects(); track project.projectId) {
+          <article class="tf-project" [class.is-open]="expandedProject() === project.projectId">
+            <button
+              type="button"
+              class="tf-project__head"
+              (click)="toggleProject(project.projectId)"
+            >
+              <div class="min-w-0">
+                <p class="tf-project__title">{{ project.projectTitle }}</p>
+                <p class="tf-project__meta">
+                  Budget
+                  {{ project.totalBudget | currency: project.currency || currency() : 'symbol' : '1.0-0' }}
+                  ·
+                  {{ project.members?.length || 0 }}
+                  split{{ (project.members?.length || 0) === 1 ? '' : 's' }}
+                </p>
+              </div>
+              <div class="tf-project__right">
+                <div class="tf-project__released">
+                  <span class="tf-kpi__label">Released</span>
+                  <strong>
+                    {{ project.releasedAmount | currency: project.currency || currency() : 'symbol' : '1.0-0' }}
+                  </strong>
+                  <span class="tf-project__pct">{{ releasePercent(project) }}%</span>
+                </div>
+                <hugeicons-icon
+                  [icon]="expandedProject() === project.projectId ? chevronUpIcon : chevronDownIcon"
+                  [size]="16"
+                  color="currentColor"
+                  [strokeWidth]="2"
+                />
+              </div>
+            </button>
+
+            <div class="tf-bar">
+              <span class="tf-bar__fill" [style.width.%]="releasePercent(project)"></span>
+            </div>
+
+            @if (expandedProject() === project.projectId) {
+              <div class="tf-project__body">
+                @if (!(project.members?.length)) {
+                  <p class="tf-empty-inline">
+                    No payout splits on this project yet. Set pay share on a milestone in the
+                    workspace — otherwise releases credit the team wallet at 100%.
+                  </p>
+                } @else {
+                  <ul class="tf-members">
+                    @for (member of project.members; track member.userId) {
+                      <li class="tf-member">
+                        <div class="min-w-0">
+                          <p class="tf-member__name">{{ member.name }}</p>
+                          <p class="tf-member__sub">
+                            {{ member.role || 'Contributor' }} · {{ member.percentage | number: '1.0-2' }}% share
+                          </p>
+                        </div>
+                        <div class="tf-member__money">
+                          <p class="tf-member__released">
+                            {{ member.releasedAmount | currency: project.currency || currency() : 'symbol' : '1.0-0' }}
+                            <span>released</span>
+                          </p>
+                          <p class="tf-member__budget">
+                            of
+                            {{ member.amount | currency: project.currency || currency() : 'symbol' : '1.0-0' }}
+                            plan share
+                          </p>
+                          <span class="tf-status" [attr.data-status]="statusClass(member.status)">
+                            {{ statusLabel(member.status) }}
+                          </span>
+                        </div>
+                      </li>
+                    }
+                  </ul>
+                }
+                <a
+                  class="tf-project__link"
+                  [routerLink]="['/developer/teams', teamId(), 'projects', project.projectId]"
+                >
+                  Open project workspace
+                  <hugeicons-icon [icon]="arrowIcon" [size]="14" color="currentColor" [strokeWidth]="2" />
+                </a>
+              </div>
+            }
+          </article>
+        }
+      </div>
+    }
+  } @else {
+    <!-- Member view -->
+    <div class="tf-kpis tf-kpis--3">
+      <article class="tf-kpi">
+        <p class="tf-kpi__label">Released to me</p>
+        <p class="tf-kpi__value tf-kpi__value--green">
+          {{ myTotals().released | currency: currency() : 'symbol' : '1.0-0' }}
+        </p>
+        <p class="tf-kpi__hint">From team project splits</p>
+      </article>
+      <article class="tf-kpi">
+        <p class="tf-kpi__label">My plan share</p>
+        <p class="tf-kpi__value">
+          {{ myTotals().budgetShare | currency: currency() : 'symbol' : '1.0-0' }}
+        </p>
+        <p class="tf-kpi__hint">Across accepted plans</p>
+      </article>
+      <article class="tf-kpi">
+        <p class="tf-kpi__label">Projects</p>
+        <p class="tf-kpi__value">{{ myTotals().projects }}</p>
+        <p class="tf-kpi__hint">Where you have a split</p>
+      </article>
+    </div>
+
+    <div class="tf-section-head">
+      <div>
+        <h3 class="tf-section-title">My earnings by project</h3>
+        <p class="tf-section-sub">Only projects where you are on the payout split</p>
+      </div>
+    </div>
+
+    @if (projectsLoading() && !projects().length) {
+      <div class="tf-skel-list">
+        @for (_ of [1, 2]; track $index) {
+          <div class="tf-skel-card"></div>
+        }
+      </div>
+    } @else if (projectsError(); as err) {
+      <div class="tf-banner tf-banner--error">{{ err }}</div>
+    } @else if (!myProjectRows().length) {
+      <div class="tf-empty">
+        <p class="tf-empty__title">No personal split yet</p>
+        <p class="tf-empty__body">
+          When the team leader sets your milestone pay share, it shows here.
+          Released amounts land in your personal wallet.
+        </p>
+      </div>
+    } @else {
+      <div class="tf-projects">
+        @for (row of myProjectRows(); track row.project.projectId) {
+          <article class="tf-project tf-project--member">
+            <div class="tf-project__head tf-project__head--static">
+              <div class="min-w-0">
+                <p class="tf-project__title">{{ row.project.projectTitle }}</p>
+                <p class="tf-project__meta">
+                  {{ row.me.role || 'Contributor' }} · {{ row.me.percentage | number: '1.0-2' }}% share
+                </p>
+              </div>
+              <div class="tf-member__money">
+                <p class="tf-member__released">
+                  {{ row.me.releasedAmount | currency: row.project.currency || currency() : 'symbol' : '1.0-0' }}
+                  <span>released</span>
+                </p>
+                <p class="tf-member__budget">
+                  of
+                  {{ row.me.amount | currency: row.project.currency || currency() : 'symbol' : '1.0-0' }}
+                  plan share
+                </p>
+                <span class="tf-status" [attr.data-status]="statusClass(row.me.status)">
+                  {{ statusLabel(row.me.status) }}
+                </span>
+              </div>
+            </div>
+            <div class="tf-bar">
+              <span
+                class="tf-bar__fill"
+                [style.width.%]="
+                  row.me.amount > 0
+                    ? (row.me.releasedAmount / row.me.amount) * 100
+                    : 0
+                "
+              ></span>
+            </div>
+            <a
+              class="tf-project__link"
+              [routerLink]="['/developer/teams', teamId(), 'projects', row.project.projectId]"
+            >
+              Open project workspace
+              <hugeicons-icon [icon]="arrowIcon" [size]="14" color="currentColor" [strokeWidth]="2" />
+            </a>
+          </article>
+        }
+      </div>
+    }
   }
 
-</div>
+  @if (pagination(); as page) {
+    @if (page.totalPages > 1) {
+      <div class="tf-pager">
+        <button
+          type="button"
+          class="tf-pager__btn"
+          [disabled]="!page.hasPreviousPage"
+          (click)="previousPage()"
+        >
+          Previous
+        </button>
+        <span class="tf-pager__meta">Page {{ page.pageNumber }} of {{ page.totalPages }}</span>
+        <button
+          type="button"
+          class="tf-pager__btn"
+          [disabled]="!page.hasNextPage"
+          (click)="nextPage()"
+        >
+          Next
+        </button>
+      </div>
+    }
+  }
+</section>

@@ -35,10 +35,13 @@ export class DeveloperManageWorkService {
     search?: string | null;
     sortBy?: 'CreatedAt' | 'Title' | 'Budget' | 'Deadline';
     sortDirection?: 'asc' | 'desc';
+    /** as-assignee = solo Manage Work; as-team = team workspace projects */
+    role?: 'as-assignee' | 'as-team';
+    teamId?: string | null;
     skipLoading?: boolean;
   }): Observable<PagedResponse<Project>> {
     let params = new HttpParams()
-      .set('role', 'as-assignee')
+      .set('role', options?.role ?? 'as-assignee')
       .set('pageNumber', String(options?.pageNumber ?? 1))
       .set('pageSize', String(options?.pageSize ?? 10))
       .set('sortBy', options?.sortBy ?? 'Deadline')
@@ -49,6 +52,9 @@ export class DeveloperManageWorkService {
     }
     if (options?.search?.trim()) {
       params = params.set('search', options.search.trim());
+    }
+    if (options?.teamId) {
+      params = params.set('teamId', options.teamId);
     }
 
     return this.http

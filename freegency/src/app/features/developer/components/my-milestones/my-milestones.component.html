@@ -1,62 +1,294 @@
-<div class="flex flex-col gap-4 w-full">
-  @if (submitError()) {
-    <div class="card p-4 border-error text-error text-center">{{ submitError() }}</div>
-  }
+<div class="flex flex-col lg:flex-row gap-6 items-start w-full">
+  <!-- Left: projects -->
+  <aside
+    class="w-full lg:w-56 shrink-0 flex flex-row lg:flex-col gap-1 overflow-x-auto lg:overflow-visible no-scrollbar"
+  >
+    <p
+      class="hidden lg:block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant/60 px-3 mb-2"
+    >
+      Projects
+    </p>
 
-  @if (milestones.isLoading()) {
-    <div class="flex justify-center p-12">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-    </div>
-  } @else if (milestones.error()) {
-    <div class="card p-6 border-error text-error text-center">
-      Failed to load milestones.
-      <button (click)="milestones.reload()" class="link ml-2">Try again</button>
-    </div>
-  } @else if (!list().length) {
-    <div class="bg-white rounded-[24px] p-12 text-center border border-outline-variant/20">
-      <p class="text-base text-on-surface-variant">No milestones in your active projects.</p>
-    </div>
-  } @else {
-    @for (ms of list(); track ms.id) {
-      <div class="bg-white rounded-[24px] border border-outline-variant/30 p-6">
-        <div class="flex flex-col sm:flex-row justify-between gap-3">
-          <div class="min-w-0">
-            <div class="flex items-center gap-2.5 flex-wrap">
-              <h2 class="text-lg font-bold text-on-surface truncate">{{ ms.title }}</h2>
-              <span
-                class="shrink-0 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#E3DFFF] text-primary"
-              >
-                {{ ms.workStatus }}
-              </span>
-            </div>
-            <p class="text-xs text-on-surface-variant/70 mt-1">
-              {{ ms.projectTitle }}
-              @if (ms.dueDate) {
-                · Due {{ ms.dueDate | date: 'mediumDate' }}
-              }
-            </p>
-          </div>
-          <div class="text-right shrink-0">
-            <div class="text-xl font-bold text-on-surface">${{ ms.amount | number }}</div>
-            <div class="text-[11px] text-on-surface-variant/60">
-              {{ ms.isFunded ? 'Funded' : 'Not funded' }}
-            </div>
-          </div>
-        </div>
+    <button
+      type="button"
+      class="flex items-center justify-between gap-2 px-3.5 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap lg:whitespace-normal cursor-pointer border-0 text-left"
+      [ngClass]="
+        selectedProjectId() === null
+          ? 'bg-[#E3DFFF] text-primary font-semibold'
+          : 'text-on-surface hover:bg-surface-container-low bg-transparent'
+      "
+      (click)="selectProject(null)"
+    >
+      <span class="truncate">All projects</span>
+      <span class="text-xs px-2 py-0.5 rounded-full bg-black/5 font-semibold shrink-0">{{
+        list().length
+      }}</span>
+    </button>
 
-        @if (ms.canSubmit) {
-          <div class="border-t border-outline-variant/15 mt-4 pt-3 flex justify-end">
-            <button
-              type="button"
-              class="btn btn-primary !w-auto px-5 !h-9 text-xs font-bold rounded-full"
-              [disabled]="submittingId() === ms.id"
-              (click)="submit(ms.id)"
-            >
-              {{ submittingId() === ms.id ? 'Submitting…' : 'Submit milestone' }}
-            </button>
-          </div>
+    @for (p of projects(); track p.projectId) {
+      <button
+        type="button"
+        class="flex items-center justify-between gap-2 px-3.5 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer border-0 text-left min-w-0"
+        [ngClass]="
+          selectedProjectId() === p.projectId
+            ? 'bg-[#E3DFFF] text-primary font-semibold'
+            : 'text-on-surface hover:bg-surface-container-low bg-transparent'
+        "
+        [title]="p.title"
+        (click)="selectProject(p.projectId)"
+      >
+        <span class="truncate">{{ p.title }}</span>
+        <span
+          class="text-xs px-2 py-0.5 rounded-full font-semibold shrink-0"
+          [ngClass]="
+            p.needsActionCount > 0
+              ? 'bg-[#4130D7] text-white'
+              : 'bg-black/5 text-on-surface'
+          "
+          [title]="
+            p.needsActionCount > 0
+              ? p.needsActionCount + ' need action · ' + p.count + ' total'
+              : p.count + ' milestones'
+          "
+          >{{ p.count }}</span
+        >
+      </button>
+    }
+  </aside>
+
+  <!-- Cards -->
+  <div class="flex-1 min-w-0 w-full flex flex-col gap-4">
+    <div class="flex flex-wrap items-center justify-between gap-3 px-1">
+      <div class="min-w-0">
+        <p class="text-sm font-semibold text-on-surface truncate">
+          @if (selectedProjectTitle(); as title) {
+            {{ title }}
+          } @else {
+            All active milestones
+          }
+        </p>
+        @if (selectedProjectId()) {
+          <p class="text-xs text-on-surface-variant mt-0.5">
+            {{ filtered().length }} milestone{{ filtered().length === 1 ? '' : 's' }}
+          </p>
         }
       </div>
+      <input
+        type="search"
+        class="h-10 rounded-full border border-outline-variant/30 bg-white px-4 text-sm w-full sm:w-56"
+        placeholder="Search milestones…"
+        [value]="search()"
+        (input)="onSearch(($any($event.target).value))"
+      />
+    </div>
+
+    @if (milestones.isLoading()) {
+      <div class="bg-white rounded-2xl border border-[#E8E6ED] p-12 flex justify-center">
+        <div
+          class="h-8 w-8 animate-spin rounded-full border-2 border-[#4130D7] border-t-transparent"
+        ></div>
+      </div>
+    } @else if (milestones.error()) {
+      <div class="bg-white rounded-2xl border border-error/30 p-8 text-center text-error">
+        Failed to load milestones.
+        <button type="button" class="link ml-2" (click)="milestones.reload()">Try again</button>
+      </div>
+    } @else if (!projects().length) {
+      <div class="bg-white rounded-2xl border border-dashed border-[#E8E6ED] p-12 text-center">
+        <p class="text-base font-semibold text-on-surface">No projects with milestones yet</p>
+        <p class="text-sm text-on-surface-variant mt-1">
+          Funded or in-progress milestones will appear here once you’re assigned.
+        </p>
+      </div>
+    } @else if (!filtered().length) {
+      <div class="bg-white rounded-2xl border border-dashed border-[#E8E6ED] p-12 text-center">
+        <p class="text-base font-semibold text-on-surface">No milestones match</p>
+        <p class="text-sm text-on-surface-variant mt-1">
+          Try another project or clear the search.
+        </p>
+      </div>
+    } @else {
+      @for (ms of filtered(); track ms.id) {
+        <article class="bg-white rounded-2xl border border-[#E8E6ED] overflow-hidden">
+          @if (ms.workStatus === 'ChangesRequested') {
+            <div class="bg-[#FFEBEE] text-[#B71C1C] px-5 py-2.5 text-xs font-semibold">
+              Changes Requested: Review the client feedback in chat, then submit a revision.
+            </div>
+          }
+
+          <div class="p-5 md:p-6 flex flex-col gap-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                @if (!selectedProjectId()) {
+                  <h2 class="text-lg font-bold text-on-surface truncate">{{ ms.projectTitle }}</h2>
+                  <p class="text-xs text-on-surface-variant mt-0.5">
+                    Milestone {{ ms.sortOrder }}. {{ ms.title }}
+                  </p>
+                } @else {
+                  <h2 class="text-lg font-bold text-on-surface truncate">
+                    Milestone {{ ms.sortOrder }}. {{ ms.title }}
+                  </h2>
+                }
+              </div>
+              <div class="flex flex-wrap gap-1.5 justify-end shrink-0">
+                @if (ms.isFunded) {
+                  <span
+                    class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#E8E6FF] text-[#4130D7]"
+                    >Funded</span
+                  >
+                }
+                <span
+                  class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                  [class]="
+                    ms.workStatus === 'ChangesRequested'
+                      ? 'bg-[#FFDAD6] text-[#93000A]'
+                      : ms.workStatus === 'Submitted'
+                        ? 'bg-[#E8F5E9] text-[#2E7D32]'
+                        : 'bg-[#E3F2FD] text-[#1565C0]'
+                  "
+                >
+                  {{
+                    ms.workStatus === 'ChangesRequested'
+                      ? 'Revision Needed'
+                      : ms.workStatus === 'InProgress'
+                        ? 'In Progress'
+                        : ms.workStatus
+                  }}
+                </span>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap gap-4 text-sm">
+              <div>
+                <p class="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant/70">
+                  Value
+                </p>
+                <p class="font-bold tabular-nums">{{ formatMoney(ms.amount) }}</p>
+              </div>
+              <div>
+                <p class="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant/70">
+                  Due
+                </p>
+                <p class="font-bold" [class.text-error]="isOverdue(ms)">
+                  {{ isOverdue(ms) ? 'Overdue' : formatDate(ms.dueDate) }}
+                </p>
+              </div>
+              <div>
+                <p class="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant/70">
+                  Role
+                </p>
+                <p class="font-bold text-sm">{{ roleLabel(ms) }}</p>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              @if (canSubmitNow(ms)) {
+                <button
+                  type="button"
+                  class="px-5 h-10 rounded-full bg-[#4130D7] text-white text-xs font-bold cursor-pointer border-0"
+                  (click)="openSubmit(ms)"
+                >
+                  {{ ms.workStatus === 'ChangesRequested' ? 'Submit Revision' : 'Submit Work' }}
+                </button>
+              } @else if (ms.workStatus === 'Submitted') {
+                <button
+                  type="button"
+                  class="px-5 h-10 rounded-full bg-surface-container-high text-on-surface-variant text-xs font-bold cursor-default border-0"
+                  disabled
+                >
+                  Waiting for Review
+                </button>
+              } @else if (ms.workStatus === 'Approved') {
+                <span class="text-xs text-on-surface-variant px-1">Milestone approved</span>
+              } @else if (!ms.isFunded) {
+                <span class="text-xs text-on-surface-variant px-1">Waiting for client to fund</span>
+              } @else if (!(ms.isAssignee || ms.canSubmit)) {
+                <span class="text-xs text-on-surface-variant px-1"
+                  >Only the assignee / team leader can submit</span
+                >
+              } @else {
+                <span class="text-xs text-on-surface-variant px-1">Not ready to submit yet</span>
+              }
+
+              <button
+                type="button"
+                class="size-10 rounded-full border border-outline-variant/30 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low cursor-pointer bg-white"
+                title="Open chat"
+                (click)="openChat(ms.projectId)"
+              >
+                <svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="px-4 h-10 rounded-full border border-outline-variant/40 text-xs font-bold cursor-pointer bg-white"
+                (click)="openProject(ms.projectId)"
+              >
+                Open project
+              </button>
+            </div>
+          </div>
+        </article>
+      }
     }
-  }
+  </div>
+
+  <!-- Right rail -->
+  <aside class="w-full lg:w-[280px] shrink-0 flex flex-col gap-4 lg:sticky lg:top-24 h-fit">
+    <div class="bg-white rounded-2xl border border-[#E8E6ED] p-5 flex flex-col gap-4">
+      <p class="text-[11px] font-bold uppercase tracking-wider text-[#8B8798]">Delivery Insights</p>
+      <div>
+        <div class="flex justify-between text-sm mb-1.5">
+          <span class="text-[#8B8798]">Active milestones</span>
+          <span class="font-bold text-[#1C1B2E]">{{ list().length }}</span>
+        </div>
+        <div class="h-1.5 rounded-full bg-[#E4E1E9] overflow-hidden">
+          <div
+            class="h-full bg-[#4130D7] rounded-full"
+            [style.width.%]="activeBarPercent()"
+          ></div>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="rounded-2xl bg-[#F7F6FA] p-3">
+          <p class="text-[10px] font-bold uppercase tracking-wider text-[#8B8798]">Escrow</p>
+          <p class="text-sm font-extrabold mt-1 tabular-nums">{{ formatMoney(activeEscrow()) }}</p>
+        </div>
+        <div class="rounded-2xl bg-[#F7F6FA] p-3">
+          <p class="text-[10px] font-bold uppercase tracking-wider text-[#8B8798]">Pending</p>
+          <p class="text-sm font-extrabold mt-1 tabular-nums">{{ formatMoney(pendingReview()) }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="rounded-2xl bg-[#1C1B2E] text-white p-5 flex flex-col gap-2">
+      <p class="text-sm font-bold m-0">Personal delivery</p>
+      <p class="text-xs text-white/75 leading-relaxed m-0">
+        These milestones are from projects hired to you as a solo developer. Team projects
+        and payouts are managed inside each team workspace.
+      </p>
+    </div>
+
+    @if (needsActionCount() === 0 && list().length > 0) {
+      <div
+        class="rounded-2xl border border-dashed border-[#E8E6ED] bg-white p-5 text-sm text-on-surface-variant text-center"
+      >
+        All caught up! No other milestones require your immediate attention.
+      </div>
+    }
+  </aside>
 </div>
+
+<app-submit-work-modal
+  [open]="submitOpen()"
+  [milestones]="submitOptions()"
+  [initialMilestoneId]="submitMilestoneId()"
+  [isRevision]="submitIsRevision()"
+  (closed)="closeSubmit()"
+  (submitted)="onSubmitted()"
+/>

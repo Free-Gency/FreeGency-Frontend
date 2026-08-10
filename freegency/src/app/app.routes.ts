@@ -207,6 +207,14 @@ export const routes: Routes = [
       ).then((m) => m.PortfolioCaseStudyWizardComponent),
   },
   {
+    path: 'developer/teams/:teamId/projects/:projectId',
+    canActivate: [authGuard, developerModeGuard],
+    loadComponent: () =>
+      import(
+        './features/developer/pages/team-project-workspace/team-project-workspace.component'
+      ).then((m) => m.TeamProjectWorkspaceComponent),
+  },
+  {
     path: 'developer/teams/:teamId',
     canActivate: [authGuard, developerModeGuard],
     loadComponent: () =>

@@ -22,6 +22,7 @@ export interface DeveloperMilestone {
   workStatus: MilestoneWorkStatus;
   dueDate: string | null;
   isFunded: boolean;
+  isAssignee?: boolean;
   canSubmit: boolean;
   submittedAt: string | null;
   createdAt: string;

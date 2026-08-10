@@ -99,6 +99,10 @@ export class ChatApiService {
       fileName: raw.fileName ?? null,
       fileUrl: raw.fileUrl ?? null,
       planVersionId: raw.planVersionId ?? null,
+      milestoneId:
+        raw.milestoneId ??
+        (raw as RoomMessage & { MilestoneId?: string | null }).MilestoneId ??
+        null,
       messageType: raw.messageType || 'Text',
       createdAt: raw.createdAt || new Date().toISOString(),
       isMine: raw.isMine ?? true,

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, Input, computed, effect, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { TaskApiService } from '../../data-access/task-api.service';
 import {
@@ -21,6 +21,7 @@ type Filter = 'all' | TaskStatus;
 
 @Component({
   selector: 'app-my-tasks',
+  standalone: true,
   imports: [CommonModule, TaskDetailPanelComponent],
   templateUrl: './my-tasks.component.html',
   styleUrl: './my-tasks.component.css',
@@ -31,9 +32,14 @@ export class MyTasksComponent {
   private readonly signalr = inject(SignalrService);
 
   readonly currentUserId = input.required<string>();
+  /** When set, only tasks on this team's hired projects (team workspace). */
+  @Input() teamId: string | null = null;
+  /** When set, further narrow to tasks on this project. */
+  @Input() projectId: string | null = null;
 
-  readonly tasks = rxResource<TaskDto[], void>({
-    stream: () => this.api.getMyTasks(),
+  readonly tasks = rxResource({
+    params: () => ({ teamId: this.teamId }),
+    stream: ({ params }) => this.api.getMyTasks(params.teamId),
   });
 
   readonly filter = signal<Filter>('all');
@@ -57,11 +63,18 @@ export class MyTasksComponent {
   readonly viewingFresh = computed<TaskDto | null>(() => {
     const id = this.viewing()?.id;
     if (!id) return null;
-    return (this.tasks.value() ?? []).find((t) => t.id === id) ?? this.viewing();
+    return this.scopedTasks().find((t) => t.id === id) ?? this.viewing();
+  });
+
+  private readonly scopedTasks = computed(() => {
+    const all = this.tasks.value() ?? [];
+    const pid = this.projectId;
+    if (!pid) return all;
+    return all.filter((t) => t.projectId === pid);
   });
 
   readonly filters = computed<{ id: Filter; label: string; count: number }[]>(() => {
-    const all = this.tasks.value() ?? [];
+    const all = this.scopedTasks();
     return [
       { id: 'all' as const, label: 'All', count: all.length },
       ...TASK_STATUSES.map((s) => ({
@@ -73,7 +86,7 @@ export class MyTasksComponent {
   });
 
   readonly filtered = computed(() => {
-    const all = this.tasks.value() ?? [];
+    const all = this.scopedTasks();
     const q = this.query().trim().toLowerCase();
     return all.filter((t) => {
       if (this.filter() !== 'all' && t.status !== this.filter()) return false;

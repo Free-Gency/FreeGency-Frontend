@@ -213,12 +213,12 @@
                       <span>Projects</span>
                     </div>
                     <div class="hire-stat">
-                      <strong>{{ team.specialties?.length || 0 }}</strong>
+                      <strong>{{ team.specialties.length || 0 }}</strong>
                       <span>Specialties</span>
                     </div>
                   </div>
 
-                  @if (teamSpecialtyLabels(team).length || team.skills?.length) {
+                  @if (teamSpecialtyLabels(team).length || team.skills.length) {
                     <div class="hire-card__tags">
                       @for (s of teamSpecialtyLabels(team); track s) {
                         <span class="hire-tag hire-tag--specialty">{{ s }}</span>

@@ -145,7 +145,7 @@
     </div>
   </aside>
 
-  <section class="msg-thread">
+  <section class="msg-thread" [class.msg-thread--with-pulse]="showProjectPulse() && pulseOpen()">
     @if (selectedRoom(); as room) {
       <header class="msg-thread__head">
         <div class="msg-avatar msg-avatar--lg" aria-hidden="true">
@@ -170,6 +170,16 @@
           </p>
         </div>
         <div class="msg-thread__actions">
+          @if (showProjectPulse()) {
+            <button
+              type="button"
+              class="msg-manage-btn"
+              [class.is-active]="pulseOpen()"
+              (click)="togglePulse()"
+            >
+              {{ pulseOpen() ? 'Hide pulse' : 'Project pulse' }}
+            </button>
+          }
           @if (canProposePlan()) {
             <button type="button" class="msg-propose-btn msg-propose-btn--header" (click)="openProposePlan(!!latestPlan())">
               <hugeicons-icon [icon]="planIcon" [size]="15" color="currentColor" [strokeWidth]="1.8" aria-hidden="true" />
@@ -194,6 +204,8 @@
         </div>
       </header>
 
+      <div class="msg-thread__layout">
+        <div class="msg-thread__main">
       <div
         #messagesScroll
         class="msg-thread__messages"
@@ -313,6 +325,155 @@
                 </p>
               </div>
             }
+          } @else if (isWorkCard(message)) {
+            @let kind = workCardKind(message);
+            @let ms = milestoneForMessage(message);
+            <div class="msg-work-card" [attr.data-kind]="kind">
+              <div class="msg-work-card__hd">
+                <div>
+                  <p class="msg-work-card__kicker">
+                    @switch (kind) {
+                      @case ('submitted') { Work submission }
+                      @case ('changes') { Work changes }
+                      @case ('released') { Funds released }
+                      @case ('funded') { Milestone funded }
+                      @default { Milestone update }
+                    }
+                  </p>
+                  <h3>
+                    @if (ms) {
+                      Milestone #{{ ms.sortOrder }} · {{ ms.title }}
+                    } @else {
+                      {{ message.text || 'Milestone update' }}
+                    }
+                  </h3>
+                </div>
+                <span
+                  class="msg-work-status"
+                  [class.st-submitted]="kind === 'submitted'"
+                  [class.st-changes]="kind === 'changes'"
+                  [class.st-released]="kind === 'released'"
+                  [class.st-funded]="kind === 'funded'"
+                >
+                  @switch (kind) {
+                    @case ('submitted') { Awaiting review }
+                    @case ('changes') { Changes requested }
+                    @case ('released') { Released }
+                    @case ('funded') { Funded }
+                    @default { Update }
+                  }
+                </span>
+              </div>
+
+              @if (ms) {
+                <div class="msg-work-card__meta">
+                  <span>{{ formatMoneyShort(ms.amount) }}</span>
+                  @if (ms.dueDate) {
+                    <span>Due {{ ms.dueDate | date: 'mediumDate' }}</span>
+                  }
+                  @if (ms.submittedAt && kind === 'submitted') {
+                    <span>Submitted {{ ms.submittedAt | date: 'short' }}</span>
+                  }
+                </div>
+              }
+
+              @if (kind === 'changes' && message.text) {
+                <p class="msg-work-card__comment">{{ message.text }}</p>
+              } @else if (message.text) {
+                <p class="msg-work-card__text">{{ message.text }}</p>
+              }
+
+              @if ((kind === 'submitted' || kind === 'changes') && ms) {
+                <div class="msg-work-card__files">
+                  <p class="msg-work-card__label">Deliverables</p>
+                  @if (deliverablesForMilestone(ms).length === 0) {
+                    <p class="msg-work-card__muted">No files attached yet.</p>
+                  } @else {
+                    @for (f of deliverablesForMilestone(ms); track f.id) {
+                      <a class="msg-work-card__file" [href]="f.fileUrl" target="_blank" rel="noopener">
+                        <span>{{ f.fileName }}</span>
+                        <em>Open</em>
+                      </a>
+                    }
+                  }
+                </div>
+              }
+
+              @if (canClientActOnWork(message)) {
+                @if (workChangeOpenId() === message.id) {
+                  <textarea
+                    class="msg-work-card__textarea"
+                    rows="3"
+                    placeholder="Describe the changes you need…"
+                    [ngModel]="workChangeComment()"
+                    (ngModelChange)="workChangeComment.set($event)"
+                  ></textarea>
+                  <div class="msg-work-card__actions">
+                    <button
+                      type="button"
+                      class="msg-plan-card__btn msg-plan-card__btn--primary"
+                      [disabled]="workActionBusy()"
+                      (click)="sendWorkChangesFromChat(message)"
+                    >
+                      Send change request
+                    </button>
+                    <button
+                      type="button"
+                      class="msg-plan-card__btn msg-plan-card__btn--ghost"
+                      (click)="cancelWorkChangesFromChat()"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                } @else {
+                  <div class="msg-work-card__actions">
+                    <button
+                      type="button"
+                      class="msg-plan-card__btn msg-plan-card__btn--primary"
+                      [disabled]="workActionBusy()"
+                      (click)="approveWorkFromChat(message)"
+                    >
+                      Approve &amp; Release Funds
+                    </button>
+                    <button
+                      type="button"
+                      class="msg-plan-card__btn msg-plan-card__btn--ghost"
+                      [disabled]="workActionBusy()"
+                      (click)="openWorkChangesFromChat(message)"
+                    >
+                      Request Work Changes
+                    </button>
+                  </div>
+                }
+              }
+
+              @if (kind === 'released' && canFundNextFromChat()) {
+                <div class="msg-work-card__actions">
+                  <button
+                    type="button"
+                    class="msg-plan-card__btn msg-plan-card__btn--primary"
+                    [disabled]="workActionBusy()"
+                    (click)="fundNextFromChat()"
+                  >
+                    Fund Next Milestone
+                  </button>
+                </div>
+              }
+
+              @if (kind === 'changes' && canSubmitCurrentFromChat() && ms) {
+                <div class="msg-work-card__actions">
+                  <button
+                    type="button"
+                    class="msg-plan-card__btn msg-plan-card__btn--primary"
+                    (click)="openSubmitFromChat(ms)"
+                  >
+                    Submit Revision
+                  </button>
+                </div>
+              }
+
+              <time class="msg-work-card__time">{{ message.createdAt | date: 'shortTime' }}</time>
+            </div>
           } @else {
             <div class="msg-bubble-row" [class.is-mine]="message.isMine">
               @if (!message.isMine) {
@@ -386,6 +547,32 @@
       </div>
 
       <footer class="msg-composer">
+        @if (canSubmitCurrentFromChat()) {
+          <div class="msg-sticky-ms">
+            <div class="msg-sticky-ms__copy">
+              <p class="msg-sticky-ms__kicker">Current milestone</p>
+              <p class="msg-sticky-ms__title">
+                #{{ currentActiveMilestone()!.sortOrder }}
+                {{ currentActiveMilestone()!.title }}
+                · {{ formatMoneyShort(currentActiveMilestone()!.amount) }}
+              </p>
+              <p class="msg-sticky-ms__status">
+                {{ milestoneStatusLabel(currentActiveMilestone()!) }}
+              </p>
+            </div>
+            <button
+              type="button"
+              class="msg-sticky-ms__btn"
+              (click)="openSubmitFromChat()"
+            >
+              {{
+                currentActiveMilestone()!.workStatus === 'ChangesRequested'
+                  ? 'Submit Revision'
+                  : 'Submit Work'
+              }}
+            </button>
+          </div>
+        }
         @if (planActionError()) {
           <div class="msg-composer__error" role="alert">
             <p>{{ planActionError() }}</p>
@@ -520,6 +707,109 @@
           </div>
         }
       </footer>
+        </div>
+
+        @if (showProjectPulse() && pulseOpen()) {
+          <aside class="msg-pulse">
+            <div class="msg-pulse__head">
+              <div class="msg-pulse__badge" aria-hidden="true">
+                <hugeicons-icon [icon]="checklistIcon" [size]="18" color="currentColor" [strokeWidth]="1.8" />
+              </div>
+              <div>
+                <p class="msg-pulse__kicker">Project pulse</p>
+                <h4>Delivery &amp; escrow</h4>
+              </div>
+            </div>
+
+            @if (pulseLoading()) {
+              <p class="msg-pulse__muted">Loading…</p>
+            } @else {
+              <div class="msg-pulse__progress">
+                <div class="msg-pulse__progress-top">
+                  <span>Overall progress</span>
+                  <strong>{{ pulseProgressPct() }}%</strong>
+                </div>
+                <div class="msg-pulse__bar" role="progressbar" [attr.aria-valuenow]="pulseProgressPct()" aria-valuemin="0" aria-valuemax="100">
+                  <span [style.width.%]="pulseProgressPct()"></span>
+                </div>
+                <p class="msg-pulse__progress-meta">
+                  {{ pulseReleasedCount() }} of {{ projectMilestones().length }} milestones released
+                </p>
+              </div>
+
+              <div class="msg-pulse__stats">
+                <div class="msg-pulse__stat msg-pulse__stat--escrow">
+                  <span>In escrow</span>
+                  <strong>{{ formatMoneyShort(pulseEscrowRemaining()) }}</strong>
+                </div>
+                <div class="msg-pulse__stat msg-pulse__stat--released">
+                  <span>Released</span>
+                  <strong>{{ formatMoneyShort(pulseReleasedAmount()) }}</strong>
+                </div>
+              </div>
+
+              @if (currentActiveMilestone(); as active) {
+                <div class="msg-pulse__now">
+                  <p class="msg-pulse__now-kicker">Now working</p>
+                  <p class="msg-pulse__now-title">
+                    #{{ active.sortOrder }} {{ active.title }}
+                  </p>
+                  <p class="msg-pulse__now-meta">
+                    {{ milestoneStatusLabel(active) }} · {{ formatMoneyShort(active.amount) }}
+                  </p>
+                </div>
+              }
+
+              <div class="msg-pulse__section">
+                <p class="msg-pulse__label">Timeline</p>
+                <ul class="msg-pulse__timeline">
+                  @for (m of projectMilestones(); track m.id) {
+                    <li
+                      [class.is-done]="m.releaseStatus === 'Released'"
+                      [class.is-current]="currentActiveMilestone()?.id === m.id"
+                      [class.is-queued]="!m.isFunded && m.releaseStatus !== 'Released'"
+                      [class.is-review]="m.workStatus === 'Submitted'"
+                    >
+                      <span class="msg-pulse__dot" aria-hidden="true">
+                        @if (m.releaseStatus === 'Released') {
+                          ✓
+                        } @else {
+                          {{ m.sortOrder }}
+                        }
+                      </span>
+                      <div class="msg-pulse__ms">
+                        <div class="msg-pulse__ms-row">
+                          <strong>{{ m.title }}</strong>
+                          <span class="msg-pulse__chip">{{ milestoneStatusLabel(m) }}</span>
+                        </div>
+                        <em>{{ formatMoneyShort(m.amount) }}</em>
+                      </div>
+                    </li>
+                  } @empty {
+                    <li class="msg-pulse__muted">No milestones yet.</li>
+                  }
+                </ul>
+              </div>
+
+              @if (canSubmitCurrentFromChat()) {
+                <button type="button" class="msg-pulse__cta" (click)="openSubmitFromChat()">
+                  Submit current work
+                </button>
+              }
+              @if (canFundNextFromChat()) {
+                <button
+                  type="button"
+                  class="msg-pulse__cta msg-pulse__cta--secondary"
+                  [disabled]="workActionBusy()"
+                  (click)="fundNextFromChat()"
+                >
+                  Fund next milestone
+                </button>
+              }
+            }
+          </aside>
+        }
+      </div>
     } @else {
       <div class="msg-thread__empty">
         <p class="msg-title">Select a conversation</p>
@@ -538,6 +828,15 @@
     }
   </section>
 </div>
+
+<app-submit-work-modal
+  [open]="submitWorkOpen()"
+  [milestones]="submitWorkOptions()"
+  [initialMilestoneId]="submitWorkMilestoneId()"
+  [isRevision]="submitWorkIsRevision()"
+  (closed)="closeSubmitFromChat()"
+  (submitted)="onSubmitWorkFromChat()"
+/>
 
 @if (createGroupOpen()) {
   <div class="msg-modal-backdrop" (click)="closeCreateGroup()">

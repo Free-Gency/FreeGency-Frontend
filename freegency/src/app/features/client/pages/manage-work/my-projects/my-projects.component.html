@@ -233,18 +233,51 @@
             </div>
 
             <!-- Middle Section Dynamic Visuals -->
-            <div class="mt-4">
+            <div class="mt-5">
               @if (project.status === 'InProgress') {
-                <!-- Progress Bar -->
-                <div class="space-y-1.5 max-w-lg">
-                  <div class="flex justify-between text-xs font-semibold">
-                    <span class="text-on-surface">Milestone 2 of 4 · 800 USD in escrow</span>
-                    <span class="text-primary font-bold">50%</span>
+                @if (progressFor(project.id); as progress) {
+                  @if (progress.total > 0) {
+                    <div class="flex flex-col gap-1 max-w-[min(100%,20rem)]">
+                      <p class="text-[15px] font-bold text-on-surface leading-tight">
+                        Milestone
+                        <span class="text-[#4130D7] tabular-nums">{{ progress.percent }}%</span>
+                      </p>
+                      <p class="text-[12px] text-[#8B8798] font-medium leading-snug whitespace-nowrap">
+                        {{ progress.currentIndex }} of {{ progress.total }}
+                        @if (progress.escrowRemaining > 0) {
+                          · {{ formatEscrowAmount(progress.escrowRemaining) }}
+                          {{ project.currency }} in escrow
+                        } @else if (progress.escrowTotal === 0) {
+                          · awaiting fund
+                        } @else {
+                          · escrow released
+                        }
+                      </p>
+                      <div
+                        class="mt-0.5 w-full h-[6px] rounded-full bg-[#E8E6ED] overflow-hidden"
+                        role="progressbar"
+                        [attr.aria-valuenow]="progress.percent"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                      >
+                        <div
+                          class="h-full rounded-full bg-[#4130D7] transition-[width] duration-300"
+                          [style.width.%]="progress.percent"
+                        ></div>
+                      </div>
+                    </div>
+                  } @else {
+                    <p class="text-xs text-on-surface-variant/70 font-medium">
+                      Milestone plan pending
+                    </p>
+                  }
+                } @else {
+                  <div class="w-64 max-w-full space-y-2">
+                    <div class="h-3.5 w-28 rounded bg-surface-container-high animate-pulse"></div>
+                    <div class="h-3 w-44 rounded bg-surface-container-high animate-pulse"></div>
+                    <div class="h-[6px] w-full rounded-full bg-surface-container-high animate-pulse"></div>
                   </div>
-                  <div class="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
-                    <div class="bg-primary h-full rounded-full" style="width: 50%"></div>
-                  </div>
-                </div>
+                }
               } @else if (project.status === 'Completed') {
                 <!-- Rating Pill -->
                 <div

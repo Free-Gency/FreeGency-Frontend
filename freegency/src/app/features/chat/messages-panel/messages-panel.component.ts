@@ -36,10 +36,18 @@ import { TeamsService } from '../../developer/data-access/teams.service';
 import { TeamMemberRow } from '../../developer/models/team';
 import { ProjectMilestonesApiService } from '../../project/data-access/project-milestones-api.service';
 import { ProjectDetailsApiService } from '../../project/data-access/project-details-api.service';
+import { ProjectFilesApiService } from '../../project/data-access/project-files-api.service';
 import {
   MilestonePlanItem,
   MilestonePlanVersion,
 } from '../../project/models/milestone-plan';
+import { ProjectMilestone } from '../../project/models/project-milestone';
+import { ProjectEscrow } from '../../project/models/project-escrow';
+import { ProjectFile } from '../../project/models/project-file';
+import {
+  SubmitWorkModalComponent,
+  SubmitWorkMilestoneOption,
+} from '../../project/components/submit-work-modal/submit-work-modal.component';
 import {
   ChatRoom,
   RoomMessage,
@@ -49,6 +57,7 @@ import {
   chatRoomSortKey,
 } from '../../../shared/models/ChatModel/chat';
 import { ToastService } from '../../../shared/services/toast.service';
+import { catchError, forkJoin, of } from 'rxjs';
 
 interface ProjectBudgetInfo {
   isFixedPrice: boolean;
@@ -71,7 +80,7 @@ interface PlanDraftRow {
 @Component({
   selector: 'app-messages-panel',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, FormsModule, HugeiconsIconComponent],
+  imports: [DatePipe, DecimalPipe, FormsModule, HugeiconsIconComponent, SubmitWorkModalComponent],
   templateUrl: './messages-panel.component.html',
   styleUrl: './messages-panel.component.css',
 })
@@ -82,6 +91,7 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
   private readonly teamsApi = inject(TeamsService);
   private readonly milestonesApi = inject(ProjectMilestonesApiService);
   private readonly projectApi = inject(ProjectDetailsApiService);
+  private readonly filesApi = inject(ProjectFilesApiService);
   private readonly toast = inject(ToastService);
 
   protected readonly addIcon = Add01Icon as IconSvgObject;
@@ -246,12 +256,99 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
   protected readonly acceptPlanId = signal<string | null>(null);
   protected readonly acceptProjectId = signal<string | null>(null);
 
+  /** Project pulse (delivery timeline + escrow) for Project rooms */
+  protected readonly pulseOpen = signal(true);
+  protected readonly projectMilestones = signal<ProjectMilestone[]>([]);
+  protected readonly projectEscrow = signal<ProjectEscrow | null>(null);
+  protected readonly projectFiles = signal<ProjectFile[]>([]);
+  protected readonly pulseLoading = signal(false);
+
+  protected readonly submitWorkOpen = signal(false);
+  protected readonly submitWorkMilestoneId = signal<string | null>(null);
+  protected readonly submitWorkIsRevision = signal(false);
+
+  protected readonly workChangeOpenId = signal<string | null>(null);
+  protected readonly workChangeComment = signal('');
+  protected readonly workActionBusy = signal(false);
+
   protected readonly isClientMode = computed(
     () => this.auth.session()?.activeProfileMode === 'Client',
   );
   protected readonly isDeveloperMode = computed(
     () => this.auth.session()?.activeProfileMode === 'Developer',
   );
+
+  protected readonly showProjectPulse = computed(() => {
+    const room = this.selectedRoom();
+    return !!room && room.roomType === 'Project' && this.hasGuid(room.projectId);
+  });
+
+  protected readonly currentActiveMilestone = computed(() => {
+    const list = this.projectMilestones();
+    return (
+      list.find(
+        (m) =>
+          m.isFunded &&
+          (m.workStatus === 'InProgress' || m.workStatus === 'ChangesRequested'),
+      ) ??
+      list.find((m) => m.workStatus === 'Submitted') ??
+      null
+    );
+  });
+
+  protected readonly canSubmitCurrentFromChat = computed(() => {
+    if (!this.isDeveloperMode()) return false;
+    const m = this.currentActiveMilestone();
+    if (!m) return false;
+    return (
+      m.isFunded &&
+      (m.workStatus === 'InProgress' || m.workStatus === 'ChangesRequested')
+    );
+  });
+
+  protected readonly submitWorkOptions = computed<SubmitWorkMilestoneOption[]>(() => {
+    const room = this.selectedRoom();
+    const projectId = room?.projectId;
+    return this.projectMilestones()
+      .filter(
+        (m) =>
+          m.isFunded &&
+          (m.workStatus === 'InProgress' || m.workStatus === 'ChangesRequested') &&
+          (!projectId || m.projectId === projectId),
+      )
+      .map((m) => ({
+        id: m.id,
+        projectId: m.projectId,
+        title: m.title,
+        sortOrder: m.sortOrder,
+        amount: m.amount,
+        currency: 'USD',
+      }));
+  });
+
+  protected readonly pulseEscrowRemaining = computed(() => {
+    const e = this.projectEscrow();
+    if (!e) return 0;
+    return Number(e.remaining ?? Math.max(0, (e.totalAmount ?? 0) - (e.totalReleased ?? 0)));
+  });
+
+  protected readonly pulseReleasedCount = computed(
+    () => this.projectMilestones().filter((m) => m.releaseStatus === 'Released').length,
+  );
+
+  protected readonly pulseReleasedAmount = computed(() => {
+    const e = this.projectEscrow();
+    if (e && e.totalReleased != null) return Number(e.totalReleased);
+    return this.projectMilestones()
+      .filter((m) => m.releaseStatus === 'Released')
+      .reduce((sum, m) => sum + (m.releasedAmount || m.amount || 0), 0);
+  });
+
+  protected readonly pulseProgressPct = computed(() => {
+    const list = this.projectMilestones();
+    if (!list.length) return 0;
+    return Math.round((this.pulseReleasedCount() / list.length) * 100);
+  });
 
   protected readonly canProposePlan = computed(() => {
     const room = this.selectedRoom();
@@ -829,6 +926,7 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     this.loadMessages(room.id);
     this.refreshPeerPresence(room.otherProfileId ?? null);
     this.loadPlansForRoom(room);
+    this.loadProjectPulse(room);
     this.chatApi.markAsRead(room.id).subscribe({
       next: () => {
         this.chatRooms.update((rooms) =>
@@ -1038,7 +1136,226 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     return /^milestone plan\b/i.test((message.text || '').trim());
   }
 
-  /** Messages plus any plan versions missing a chat row (legacy / failed inserts). */
+  protected isWorkCard(message: RoomMessage): boolean {
+    const type = String(message.messageType || '').toLowerCase();
+    return (
+      type === 'worksubmitted' ||
+      type === 'workchangesrequested' ||
+      type === 'milestonereleased' ||
+      type === 'milestonefunded' ||
+      type === '4' ||
+      type === '5' ||
+      type === '6' ||
+      type === '7'
+    );
+  }
+
+  protected workCardKind(
+    message: RoomMessage,
+  ): 'submitted' | 'changes' | 'released' | 'funded' | null {
+    const type = String(message.messageType || '').toLowerCase();
+    if (type === 'worksubmitted' || type === '4') return 'submitted';
+    if (type === 'workchangesrequested' || type === '5') return 'changes';
+    if (type === 'milestonereleased' || type === '6') return 'released';
+    if (type === 'milestonefunded' || type === '7') return 'funded';
+    return null;
+  }
+
+  protected milestoneForMessage(message: RoomMessage): ProjectMilestone | null {
+    const id = (message.milestoneId || '').trim().toLowerCase();
+    if (!id) return null;
+    return this.projectMilestones().find((m) => m.id.toLowerCase() === id) ?? null;
+  }
+
+  protected deliverablesForMilestone(
+    m: ProjectMilestone | null,
+  ): Array<{ id: string; fileName: string; fileUrl: string }> {
+    if (!m) return [];
+    const fromMilestone = (m.files ?? [])
+      .filter(
+        (f) =>
+          f.fileKind === 'Deliverable' || f.fileKind === 'Shared' || f.fileKind === 'Other',
+      )
+      .map((f) => ({ id: f.id, fileName: f.fileName, fileUrl: f.fileUrl }));
+    if (fromMilestone.length) return fromMilestone;
+
+    return this.projectFiles().filter(
+      (f) =>
+        (f.milestoneId || '').toLowerCase() === m.id.toLowerCase() &&
+        (f.fileKind === 'Deliverable' || f.fileKind === 'Shared' || f.fileKind === 'Other'),
+    );
+  }
+
+  protected canClientActOnWork(message: RoomMessage): boolean {
+    if (!this.isClientMode()) return false;
+    if (this.workCardKind(message) !== 'submitted') return false;
+    const m = this.milestoneForMessage(message);
+    return !!m && m.workStatus === 'Submitted';
+  }
+
+  protected canFundNextFromChat(): boolean {
+    if (!this.isClientMode()) return false;
+    const list = this.projectMilestones();
+    const hasActive = list.some((m) => m.isFunded && m.releaseStatus !== 'Released');
+    const next = list.find((m) => !m.isFunded && m.workStatus === 'NotStarted');
+    return !hasActive && !!next;
+  }
+
+  protected togglePulse(): void {
+    this.pulseOpen.update((v) => !v);
+  }
+
+  protected openSubmitFromChat(m?: ProjectMilestone | null): void {
+    if (!this.isDeveloperMode()) return;
+    const target = m ?? this.currentActiveMilestone();
+    if (!target) return;
+    const canSubmit =
+      target.isFunded &&
+      (target.workStatus === 'InProgress' || target.workStatus === 'ChangesRequested');
+    if (!canSubmit) return;
+    this.submitWorkMilestoneId.set(target.id);
+    this.submitWorkIsRevision.set(target.workStatus === 'ChangesRequested');
+    this.submitWorkOpen.set(true);
+  }
+
+  protected closeSubmitFromChat(): void {
+    this.submitWorkOpen.set(false);
+  }
+
+  protected onSubmitWorkFromChat(): void {
+    this.submitWorkOpen.set(false);
+    const room = this.selectedRoom();
+    if (room) {
+      this.loadProjectPulse(room);
+      this.loadMessages(room.id);
+    }
+  }
+
+  protected approveWorkFromChat(message: RoomMessage): void {
+    const m = this.milestoneForMessage(message);
+    if (!m) return;
+    this.workActionBusy.set(true);
+    this.planActionError.set(null);
+    this.milestonesApi.approveRelease(m.id).subscribe({
+      next: () => {
+        this.workActionBusy.set(false);
+        const room = this.selectedRoom();
+        if (room) {
+          this.loadProjectPulse(room);
+          this.loadMessages(room.id);
+        }
+        this.toast.success('Funds released.');
+      },
+      error: (err: unknown) => {
+        this.workActionBusy.set(false);
+        this.planActionError.set(extractApiError(err, 'Failed to release funds.'));
+      },
+    });
+  }
+
+  protected openWorkChangesFromChat(message: RoomMessage): void {
+    this.workChangeOpenId.set(message.id);
+    this.workChangeComment.set('');
+  }
+
+  protected cancelWorkChangesFromChat(): void {
+    this.workChangeOpenId.set(null);
+    this.workChangeComment.set('');
+  }
+
+  protected sendWorkChangesFromChat(message: RoomMessage): void {
+    const m = this.milestoneForMessage(message);
+    const comment = this.workChangeComment().trim();
+    if (!m || !comment) {
+      this.planActionError.set('Add a short comment describing the changes.');
+      return;
+    }
+    this.workActionBusy.set(true);
+    this.planActionError.set(null);
+    this.milestonesApi.requestWorkChanges(m.id, comment).subscribe({
+      next: () => {
+        this.workActionBusy.set(false);
+        this.workChangeOpenId.set(null);
+        const room = this.selectedRoom();
+        if (room) {
+          this.loadProjectPulse(room);
+          this.loadMessages(room.id);
+        }
+      },
+      error: (err: unknown) => {
+        this.workActionBusy.set(false);
+        this.planActionError.set(extractApiError(err, 'Failed to request work changes.'));
+      },
+    });
+  }
+
+  protected fundNextFromChat(): void {
+    const room = this.selectedRoom();
+    const projectId = room?.projectId;
+    if (!projectId) return;
+    this.workActionBusy.set(true);
+    this.planActionError.set(null);
+    this.milestonesApi.fundNext(projectId).subscribe({
+      next: () => {
+        this.workActionBusy.set(false);
+        this.loadProjectPulse(room!);
+        this.loadMessages(room!.id);
+        this.toast.success('Milestone funded.');
+      },
+      error: (err: unknown) => {
+        this.workActionBusy.set(false);
+        this.planActionError.set(extractApiError(err, 'Failed to fund milestone.'));
+      },
+    });
+  }
+
+  protected milestoneStatusLabel(m: ProjectMilestone): string {
+    if (m.releaseStatus === 'Released') return 'Released';
+    if (m.workStatus === 'Submitted') return 'Awaiting review';
+    if (m.workStatus === 'ChangesRequested') return 'Changes requested';
+    if (m.workStatus === 'InProgress') return 'In progress';
+    if (m.isFunded) return 'Funded';
+    return 'Queued';
+  }
+
+  protected formatMoneyShort(amount: number): string {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 0,
+    }).format(amount);
+  }
+
+  private loadProjectPulse(room: ChatRoom): void {
+    const projectId = this.resolveRoomProjectId(room);
+    if (!projectId || room.roomType !== 'Project') {
+      this.projectMilestones.set([]);
+      this.projectEscrow.set(null);
+      this.projectFiles.set([]);
+      return;
+    }
+
+    this.pulseLoading.set(true);
+    forkJoin({
+      milestones: this.milestonesApi.getMilestones(projectId).pipe(catchError(() => of([]))),
+      escrow: this.milestonesApi.getEscrow(projectId).pipe(catchError(() => of(null))),
+      files: this.filesApi.getByProjectId(projectId).pipe(catchError(() => of([]))),
+    }).subscribe({
+      next: ({ milestones, escrow, files }) => {
+        this.projectMilestones.set(
+          [...milestones].sort((a, b) => a.sortOrder - b.sortOrder),
+        );
+        this.projectEscrow.set(escrow);
+        this.projectFiles.set(files);
+        this.pulseLoading.set(false);
+      },
+      error: () => {
+        this.pulseLoading.set(false);
+      },
+    });
+  }
+
+  /** Messages plus any plan / work cards missing a chat row (legacy / failed inserts). */
   protected readonly threadMessages = computed(() => {
     const room = this.selectedRoom();
     const base = this.messages();
@@ -1046,30 +1363,54 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
       return base;
     }
 
+    const extras: RoomMessage[] = [];
+
     const plans = Object.values(this.plansById()).sort((a, b) => a.version - b.version);
-    if (!plans.length) return base;
+    if (plans.length) {
+      const coveredPlans = new Set<string>();
+      for (const message of base) {
+        if (!this.isPlan(message)) continue;
+        const id = (message.planVersionId || '').trim().toLowerCase();
+        if (id) coveredPlans.add(id);
 
-    const covered = new Set<string>();
-    for (const message of base) {
-      if (!this.isPlan(message)) continue;
-      const id = (message.planVersionId || '').trim().toLowerCase();
-      if (id) covered.add(id);
+        const match = (message.text || '').match(/\bv(?:ersion\s*)?(\d+)\b/i);
+        if (match) {
+          const version = Number(match[1]);
+          const byVersion = plans.find((p) => p.version === version);
+          if (byVersion) coveredPlans.add(byVersion.id.toLowerCase());
+        }
+      }
 
-      const match = (message.text || '').match(/\bv(?:ersion\s*)?(\d+)\b/i);
-      if (match) {
-        const version = Number(match[1]);
-        const byVersion = plans.find((p) => p.version === version);
-        if (byVersion) covered.add(byVersion.id.toLowerCase());
+      for (const plan of plans) {
+        if (!coveredPlans.has(plan.id.toLowerCase())) {
+          extras.push(this.syntheticPlanMessage(plan, room.id));
+        }
       }
     }
 
-    const extras = plans
-      .filter((plan) => !covered.has(plan.id.toLowerCase()))
-      .map((plan) => this.syntheticPlanMessage(plan, room.id));
+    if (room.roomType === 'Project') {
+      const coveredMilestones = new Set<string>();
+      for (const message of base) {
+        if (!this.isWorkCard(message)) continue;
+        const id = (message.milestoneId || '').trim().toLowerCase();
+        if (id) coveredMilestones.add(id);
+      }
+      for (const message of extras) {
+        if (!this.isWorkCard(message)) continue;
+        const id = (message.milestoneId || '').trim().toLowerCase();
+        if (id) coveredMilestones.add(id);
+      }
+
+      for (const ms of this.projectMilestones()) {
+        const id = ms.id.toLowerCase();
+        if (coveredMilestones.has(id)) continue;
+        const synthetic = this.syntheticWorkMessage(ms, room.id);
+        if (synthetic) extras.push(synthetic);
+      }
+    }
 
     if (!extras.length) return base;
 
-    // Keep chronological order — never pin synthetic plan cards under new messages.
     return [...base, ...extras].sort(
       (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
     );
@@ -1111,6 +1452,41 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
       planVersionId: plan.id,
       createdAt: plan.createdAt || new Date().toISOString(),
       isMine: this.isDeveloperMode(),
+      otherProfileId: null,
+    };
+  }
+
+  private syntheticWorkMessage(ms: ProjectMilestone, roomId: string): RoomMessage | null {
+    let messageType: string | null = null;
+    let text = '';
+    let createdAt = ms.submittedAt || ms.releasedAt || ms.availableAt || ms.createdAt;
+
+    if (ms.workStatus === 'Submitted') {
+      messageType = 'WorkSubmitted';
+      text = `Milestone #${ms.sortOrder} submitted for review: ${ms.title}`;
+      createdAt = ms.submittedAt || createdAt;
+    } else if (ms.workStatus === 'ChangesRequested') {
+      messageType = 'WorkChangesRequested';
+      text = `Changes requested on milestone #${ms.sortOrder}: ${ms.title}`;
+    } else if (ms.releaseStatus === 'Released') {
+      // Only surface the latest released card when nothing newer is active — keep thread calm.
+      return null;
+    } else {
+      return null;
+    }
+
+    return {
+      id: `work-${ms.id}-${messageType.toLowerCase()}`,
+      chatRoomId: roomId,
+      senderId: null,
+      senderName: null,
+      senderProfileType: messageType === 'WorkSubmitted' ? 'Developer' : 'Client',
+      messageType,
+      text,
+      milestoneId: ms.id,
+      createdAt: createdAt || new Date().toISOString(),
+      isMine:
+        messageType === 'WorkSubmitted' ? this.isDeveloperMode() : this.isClientMode(),
       otherProfileId: null,
     };
   }
@@ -1496,6 +1872,10 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     ) {
       this.loadPlansForRoom(room);
     }
+
+    if (this.isWorkCard(normalized)) {
+      this.loadProjectPulse(room);
+    }
   }
 
   private handleRoomUpdated(update: RoomUpdated): void {
@@ -1534,6 +1914,13 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
       this.shouldStickToBottom = true;
       this.loadMessages(update.roomId);
       this.loadPlansForRoom(selected);
+      if (
+        String(update.lastMessageType || '')
+          .toLowerCase()
+          .match(/worksubmitted|workchangesrequested|milestonereleased|milestonefunded|[4-7]/)
+      ) {
+        this.loadProjectPulse(selected);
+      }
     }
   }
 
@@ -1541,18 +1928,28 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     if (!message.id) return;
     this.messages.update((old) => {
       if (old.some((m) => m.id === message.id)) return old;
+      let next = old;
       const planId = (message.planVersionId || '').trim().toLowerCase();
       if (planId) {
-        const withoutSynthetic = old.filter(
+        next = next.filter(
           (m) =>
             !(
               m.id.startsWith('plan-') &&
               (m.planVersionId || '').trim().toLowerCase() === planId
             ),
         );
-        return [...withoutSynthetic, message];
       }
-      return [...old, message];
+      const milestoneId = (message.milestoneId || '').trim().toLowerCase();
+      if (milestoneId && this.isWorkCard(message)) {
+        next = next.filter(
+          (m) =>
+            !(
+              m.id.startsWith('work-') &&
+              (m.milestoneId || '').trim().toLowerCase() === milestoneId
+            ),
+        );
+      }
+      return [...next, message];
     });
     this.shouldStickToBottom = true;
   }
@@ -1729,6 +2126,10 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
       ModerationWarning?: string | null;
     };
     const planRaw = raw.planVersionId ?? r.PlanVersionId ?? null;
+    const milestoneRaw =
+      raw.milestoneId ??
+      (r as { MilestoneId?: string | null }).MilestoneId ??
+      null;
     return {
       ...raw,
       id: String(raw.id || r.Id || ''),
@@ -1738,6 +2139,8 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
       messageType: String(raw.messageType || r.MessageType || 'Text'),
       text: raw.text ?? r.Text ?? null,
       planVersionId: planRaw == null || planRaw === '' ? null : String(planRaw),
+      milestoneId:
+        milestoneRaw == null || milestoneRaw === '' ? null : String(milestoneRaw),
       createdAt: raw.createdAt || r.CreatedAt || new Date().toISOString(),
       isMine: raw.isMine ?? r.IsMine ?? false,
       otherProfileId: raw.otherProfileId ?? null,

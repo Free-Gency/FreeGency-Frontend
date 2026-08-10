@@ -27,10 +27,8 @@ import { extractApiError } from '../../../../core/http/api-error';
 import { ToastService } from '../../../../shared/services/toast.service';
 import { CategoriesApiService } from '../../../auth/data-access/categories-api.service';
 import { TaxonomyApiService } from '../../../auth/data-access/taxonomy-api.service';
-import { Project } from '../../../../shared/models/Project';
 import { DeveloperViewNavbarComponent } from '../../../../shared/components/developer-view-navbar/developer-view-navbar.component';
 import { ClientViewNavbarComponent } from '../../../../shared/components/client-view-navbar/client-view-navbar.component';
-import { DeveloperManageWorkService } from '../../data-access/developer-manage-work.service';
 import { TeamsService, type TeamReview } from '../../data-access/teams.service';
 import {
   Team,
@@ -42,6 +40,7 @@ import {
   TeamPortfolioProject,
   TeamRoleLabel,
 } from '../../models/team';
+import { TeamProjectCard } from '../../models/team-project';
 import { TaskAssigneeOption } from '../../models/task';
 import { ProjectMilestone } from '../../../project/models/project-milestone';
 import { ProjectMilestonesApiService } from '../../../project/data-access/project-milestones-api.service';
@@ -50,6 +49,7 @@ import type { ProjectInvitation } from '../../../client/models/project-invitatio
 import { TeamTaskBoardComponent } from '../team-task-board/team-task-board.component';
 import { MyTasksComponent } from '../../components/my-tasks/my-tasks.component';
 import { FinanceComponent } from './finance/finance.component';
+import { MessagesPanelComponent } from '../../../chat/messages-panel/messages-panel.component';
 
 type SidebarKey = TeamDetailTab;
 type ExpertiseFocus = 'categories' | 'specialties' | 'skills';
@@ -57,14 +57,6 @@ type ExpertiseFocus = 'categories' | 'specialties' | 'skills';
 interface ChipOption {
   id: string;
   label: string;
-}
-
-interface FinanceDemoRow {
-  project: string;
-  role: string;
-  share: string;
-  amount: string;
-  status: 'Released' | 'Pending';
 }
 
 @Component({
@@ -80,7 +72,8 @@ interface FinanceDemoRow {
     ClientViewNavbarComponent,
     TeamTaskBoardComponent,
     MyTasksComponent,
-    FinanceComponent
+    FinanceComponent,
+    MessagesPanelComponent,
   ],
   templateUrl: './team-detail.component.html',
   styleUrl: './team-detail.component.css',
@@ -91,7 +84,6 @@ export class TeamDetailComponent implements OnInit {
   private readonly teamsApi = inject(TeamsService);
   private readonly invitationsApi = inject(ProjectInvitationsApiService);
   private readonly toast = inject(ToastService);
-  private readonly projectsApi = inject(DeveloperManageWorkService);
   private readonly milestonesApi = inject(ProjectMilestonesApiService);
   private readonly categoriesApi = inject(CategoriesApiService);
   private readonly taxonomyApi = inject(TaxonomyApiService);
@@ -118,7 +110,7 @@ export class TeamDetailComponent implements OnInit {
   protected readonly error = signal<string | null>(null);
   protected readonly team = signal<Team | null>(null);
   protected readonly portfolio = signal<TeamPortfolioProject[]>([]);
-  protected readonly projects = signal<Project[]>([]);
+  protected readonly projects = signal<TeamProjectCard[]>([]);
   protected readonly projectsLoading = signal(false);
   protected readonly activeTab = signal<TeamDetailTab>('overview');
   protected readonly codeCopied = signal(false);
@@ -358,11 +350,7 @@ export class TeamDetailComponent implements OnInit {
       .filter(Boolean);
   });
 
-  protected readonly teamProjects = computed(() => {
-    const id = this.team()?.id;
-    if (!id) return [];
-    return this.projects().filter((p) => (p.assignedTeamId ?? null) === id);
-  });
+  protected readonly teamProjects = computed(() => this.projects());
 
   protected readonly assigneeOptions = computed<TaskAssigneeOption[]>(() =>
     this.members().map((m) => ({
@@ -371,11 +359,6 @@ export class TeamDetailComponent implements OnInit {
       imageUrl: m.imageUrl,
     })),
   );
-
-  protected readonly financeMemberRows = computed<FinanceDemoRow[]>(() => [
-    { project: 'Lumina Finance App', role: 'Contributor · 25% share', share: '25%', amount: '$1,000.00', status: 'Released' },
-    { project: 'Aether AI Engine', role: 'Contributor · 25% share', share: '25%', amount: '$1,500.00', status: 'Pending' },
-  ]);
 
   protected readonly sidebarItems: {
     key: SidebarKey;
@@ -1349,8 +1332,10 @@ export class TeamDetailComponent implements OnInit {
     this.expandedFinance.set(this.expandedFinance() === id ? null : id);
   }
 
-  protected openWorkspace(project: Project): void {
-    void this.router.navigateByUrl(`/developer/manage-work`);
+  protected openWorkspace(project: TeamProjectCard): void {
+    const teamId = this.team()?.id;
+    if (!teamId) return;
+    void this.router.navigate(['/developer/teams', teamId, 'projects', project.id]);
   }
 
   protected initials(name: string): string {
@@ -1374,7 +1359,7 @@ export class TeamDetailComponent implements OnInit {
     }
   }
 
-  protected formatBudget(project: Project): string {
+  protected formatBudget(project: TeamProjectCard): string {
     const amount = project.budgetMax || project.budgetMin || 0;
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -1684,31 +1669,22 @@ export class TeamDetailComponent implements OnInit {
 
   private loadProjects(teamId: string): void {
     this.projectsLoading.set(true);
-    this.projectsApi
-      .getMyProjects({ pageNumber: 1, pageSize: 50, skipLoading: true })
-      .subscribe({
-        next: (page) => {
-          const items = (page.items ?? []).map((p) => {
-            const raw = p as Project & { AssignedTeamId?: string | null };
-            return {
-              ...p,
-              assignedTeamId: p.assignedTeamId ?? raw.AssignedTeamId ?? null,
-            };
-          });
-          this.projects.set(items.filter((p) => p.assignedTeamId === teamId));
-          this.projectsLoaded.set(true);
-          this.projectsLoading.set(false);
-          if (this.activeTab() === 'tasks' && !this.taskProjectId()) {
-            const first = this.teamProjects()[0];
-            if (first) this.selectTaskProject(first.id);
-          }
-        },
-        error: () => {
-          this.projects.set([]);
-          this.projectsLoaded.set(true);
-          this.projectsLoading.set(false);
-        },
-      });
+    this.teamsApi.getTeamProjects(teamId).subscribe({
+      next: (items) => {
+        this.projects.set(items);
+        this.projectsLoaded.set(true);
+        this.projectsLoading.set(false);
+        if (this.activeTab() === 'tasks' && !this.taskProjectId()) {
+          const first = items[0];
+          if (first) this.selectTaskProject(first.id);
+        }
+      },
+      error: () => {
+        this.projects.set([]);
+        this.projectsLoaded.set(true);
+        this.projectsLoading.set(false);
+      },
+    });
   }
 
   protected selectTaskProject(projectId: string): void {
