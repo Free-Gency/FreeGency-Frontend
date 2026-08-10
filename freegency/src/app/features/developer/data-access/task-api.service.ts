@@ -1,5 +1,5 @@
 
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
@@ -41,8 +41,10 @@ export class TaskApiService {
     return this.getTasks(`${this.baseUrl}/projects/${projectId}/tasks`);
   }
 
-  getMyTasks(): Observable<TaskDto[]> {
-    return this.getTasks(`${this.tasksUrl}/mine`);
+  getMyTasks(teamId?: string | null): Observable<TaskDto[]> {
+    let params = new HttpParams();
+    if (teamId) params = params.set('teamId', teamId);
+    return this.getTasks(`${this.tasksUrl}/mine`, params);
   }
 
   getTask(taskId: string): Observable<TaskDto> {
@@ -210,8 +212,10 @@ export class TaskApiService {
 
   // ---- Helpers ----
 
-  private getTasks(url: string): Observable<TaskDto[]> {
-    return this.http.get<ApiResponse<TaskDto[]>>(url).pipe(map((res) => this.unwrap(res, 'Failed to load tasks.')));
+  private getTasks(url: string, params?: HttpParams): Observable<TaskDto[]> {
+    return this.http
+      .get<ApiResponse<TaskDto[]>>(url, params ? { params } : undefined)
+      .pipe(map((res) => this.unwrap(res, 'Failed to load tasks.')));
   }
 
   private unwrap<T>(res: ApiResponse<T>, fallback: string): T {

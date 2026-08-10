@@ -142,8 +142,21 @@ export class ProjectMilestonesApiService {
       );
   }
 
-  submitMilestone(milestoneId: string): Observable<void> {
-    return this.postMilestoneAction(milestoneId, 'submit');
+  submitMilestone(milestoneId: string, note?: string | null): Observable<void> {
+    const body =
+      note && note.trim() ? { note: note.trim() } : {};
+    return this.http
+      .post<{ isSuccess: boolean; message?: string | null }>(
+        `${this.baseUrl}/milestones/${milestoneId}/submit`,
+        body,
+      )
+      .pipe(
+        map((res) => {
+          if (!res.isSuccess) {
+            throw new Error(res.message || 'Failed to submit.');
+          }
+        }),
+      );
   }
 
   approveRelease(milestoneId: string): Observable<void> {

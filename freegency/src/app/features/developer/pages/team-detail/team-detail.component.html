@@ -49,7 +49,7 @@
   </aside>
   }
 
-  <div class="tw-main">
+  <div class="tw-main" [class.tw-main--messages]="activeTab() === 'messages'">
     @if (isTeamMember()) {
     <div class="tw-mobile-bar">
       <button type="button" class="tw-back-chip" (click)="goMyTeams()">
@@ -711,7 +711,7 @@
             <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
               @for (project of teamProjects(); track project.id) {
                 <article class="tw-card relative p-5">
-                  @if (!isLeader()) {
+                  @if (!isLeader() && project.isCurrentUserMember) {
                     <span
                       class="absolute top-5 right-5 rounded-full border border-[#bbf7d0] bg-[#ecfdf3] px-2.5 py-1 text-[10px] font-bold text-[#16a34a]"
                     >
@@ -742,6 +742,23 @@
                       </p>
                     </div>
                   </div>
+                  @if (project.totalMilestones > 0) {
+                    <div class="mt-4">
+                      <div class="mb-1.5 flex items-center justify-between text-[11px] font-semibold text-[#6b7280]">
+                        <span>Progress</span>
+                        <span>{{ project.progressPercent }}%</span>
+                      </div>
+                      <div class="h-1.5 overflow-hidden rounded-full bg-[#e5e7eb]">
+                        <div
+                          class="h-full rounded-full bg-[#4130d7]"
+                          [style.width.%]="project.progressPercent"
+                        ></div>
+                      </div>
+                      <p class="mt-1 text-[11px] text-[#9ca3af]">
+                        {{ project.completedMilestones }}/{{ project.totalMilestones }} milestones
+                      </p>
+                    </div>
+                  }
                   <div class="mt-4 flex items-center justify-between">
                     <span class="text-xs font-semibold text-[#6b7280]">{{ project.categoryName || 'Project' }}</span>
                     <button
@@ -749,7 +766,7 @@
                       class="inline-flex h-9 cursor-pointer items-center rounded-full bg-[#4130d7] px-5 font-display text-[13px] font-semibold text-white hover:bg-[#3527b8]"
                       (click)="openWorkspace(project)"
                     >
-                      Open Workspace
+                      Open project
                     </button>
                   </div>
                 </article>
@@ -1216,7 +1233,10 @@
       @if (activeTab() === 'tasks') {
         <div class="pt-8">
           @if (!isLeader()) {
-            <app-my-tasks [currentUserId]="auth.session()?.id ?? ''"></app-my-tasks>
+            <app-my-tasks
+              [currentUserId]="auth.session()?.id ?? ''"
+              [teamId]="t.id"
+            ></app-my-tasks>
           } @else if (projectsLoading()) {
             <div class="tw-card h-32 animate-pulse"></div>
           } @else if (!teamProjects().length) {
@@ -1296,6 +1316,20 @@
     [isTeamLeader]="isLeader()"
   />
 }
+
+      <!-- MESSAGES -->
+      @if (activeTab() === 'messages') {
+        <div class="tm-messages">
+          <app-messages-panel
+            mode="team"
+            [teamId]="t.id"
+            [teamName]="t.name"
+            [teamLogo]="t.logo"
+            [isLeader]="isLeader()"
+            [embedded]="true"
+          />
+        </div>
+      }
      
       <!-- PROJECT INVITATIONS -->
       @if (activeTab() === 'invitations' && isLeader()) {
@@ -1397,9 +1431,9 @@
           </div>
 
           @if (membersLoading()) {
-            <div class="tm-list">
+            <div class="tm-roster" aria-hidden="true">
               @for (i of [1, 2, 3]; track i) {
-                <div class="tm-card tm-card--skel animate-pulse"></div>
+                <div class="tm-row tm-row--skel animate-pulse"></div>
               }
             </div>
           } @else if (membersError()) {
@@ -1419,75 +1453,76 @@
               }
             </div>
           } @else {
-            <div class="tm-list">
+            <div class="tm-roster" role="list">
+              <div class="tm-roster__head" aria-hidden="true">
+                <span>Member</span>
+                <span>Job</span>
+                <span>Role</span>
+              </div>
               @for (member of members(); track member.userId) {
-                <article
-                  class="tm-card"
+                <div
+                  class="tm-row"
+                  role="listitem"
                   [class.is-owner]="member.isOwner"
                   [class.is-leader]="member.role === 'TeamLeader'"
                 >
-                  <div class="tm-card__identity">
-                    <span class="tm-avatar" aria-hidden="true">
+                  <div class="tm-row__person">
+                    <span
+                      class="tm-avatar"
+                      [class.is-leader]="member.role === 'TeamLeader'"
+                      aria-hidden="true"
+                    >
                       @if (member.imageUrl) {
                         <img [src]="member.imageUrl" alt="" />
                       } @else {
                         {{ initials(member.name) }}
                       }
                     </span>
-                    <div class="tm-card__copy">
-                      <div class="tm-card__name-row">
-                        <h3 class="tm-card__name">{{ member.name }}</h3>
+                    <div class="tm-row__who">
+                      <div class="tm-row__name-line">
+                        <h3>{{ member.name }}</h3>
                         @if (member.isOwner) {
                           <span class="tm-owner-pill">Owner</span>
                         }
                       </div>
-                      <p class="tm-card__meta">
-                        <span
-                          class="tm-meta-dot"
-                          [class.is-leader]="member.role === 'TeamLeader'"
-                          aria-hidden="true"
-                        ></span>
-                        {{ roleLabel(member.role) }}
-                        @if (member.job) {
-                          <span class="tm-meta-sep">·</span>
-                          <span class="tm-meta-job">{{ member.job }}</span>
-                        }
+                      <p class="tm-row__mobile-job">
+                        {{ member.job || roleLabel(member.role) }}
                       </p>
                     </div>
                   </div>
 
-                  @if (isLeader()) {
-                    <div class="tm-card__footer">
-                      <label class="tm-role-field">
-                        <span class="tm-role-field__label">Role</span>
-                        <div class="tm-role-select-wrap">
-                          <select
-                            [disabled]="member.isOwner || memberRoleUpdating() === member.userId"
-                            [ngModel]="member.role === 'TeamLeader' ? 'TeamLeader' : 'TeamMember'"
-                            (ngModelChange)="changeMemberRole(member, $event)"
-                          >
-                            <option value="TeamLeader">Team Leader</option>
-                            <option value="TeamMember">Team Member</option>
-                          </select>
-                        </div>
+                  <p class="tm-row__job">
+                    {{ member.job || '—' }}
+                  </p>
+
+                  <div class="tm-row__role">
+                    @if (isLeader()) {
+                      <label class="tm-role-inline">
+                        <span class="sr-only">Role for {{ member.name }}</span>
+                        <select
+                          [disabled]="member.isOwner || memberRoleUpdating() === member.userId"
+                          [ngModel]="member.role === 'TeamLeader' ? 'TeamLeader' : 'TeamMember'"
+                          (ngModelChange)="changeMemberRole(member, $event)"
+                        >
+                          <option value="TeamLeader">Team Leader</option>
+                          <option value="TeamMember">Team Member</option>
+                        </select>
                       </label>
                       @if (member.isOwner) {
-                        <p class="tm-owner-hint">Owner role is locked</p>
+                        <span class="tm-lock">Locked</span>
                       } @else if (memberRoleUpdating() === member.userId) {
-                        <p class="tm-owner-hint">Updating…</p>
+                        <span class="tm-lock">Updating…</span>
                       }
-                    </div>
-                  } @else {
-                    <div class="tm-card__footer tm-card__footer--chip">
+                    } @else {
                       <span
                         class="tm-role-chip"
                         [class.is-leader]="member.role === 'TeamLeader'"
                       >
                         {{ roleLabel(member.role) }}
                       </span>
-                    </div>
-                  }
-                </article>
+                    }
+                  </div>
+                </div>
               }
             </div>
           }

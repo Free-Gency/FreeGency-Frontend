@@ -48,6 +48,7 @@ export interface RoomMessage {
   fileName?: string | null;
   fileUrl?: string | null;
   planVersionId?: string | null;
+  milestoneId?: string | null;
   createdAt: string;
   isMine: boolean;
   otherProfileId: string | null;

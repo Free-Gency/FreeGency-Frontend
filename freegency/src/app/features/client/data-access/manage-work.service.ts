@@ -1,10 +1,14 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map, of } from 'rxjs';
+import { Observable, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { ApiResponse } from '../../../shared/models/ApiResponse';
 import { Project } from '../../../shared/models/Project';
 import { Proposal, PagedResponse, ProposalStatus } from '../../../shared/models/Proposal';
+import { ProjectMilestonesApiService } from '../../project/data-access/project-milestones-api.service';
+import { ProjectMilestone } from '../../project/models/project-milestone';
+import { ProjectEscrow } from '../../project/models/project-escrow';
+import { buildMilestoneProgressSummary } from '../pages/manage-work/milestones/milestone-progress.util';
 
 export interface MyProjectsSummary {
   total: number;
@@ -51,6 +55,7 @@ export interface ProjectRankingResponse {
 })
 export class ManageWorkService {
   private readonly http = inject(HttpClient);
+  private readonly milestonesApi = inject(ProjectMilestonesApiService);
   private readonly baseUrl = `${environment.apiBaseUrl}/api/v1/projects`;
   private readonly proposalsUrl = `${environment.apiBaseUrl}/api/v1/proposals`;
 
@@ -107,13 +112,74 @@ export class ManageWorkService {
       );
   }
 
-  // TODO: replace once backend ready
-  getMilestones(projectId: string): Observable<any[]> {
-    return of([]);
+  /** Count of InProgress projects where client can fund or approve a milestone. */
+  getMilestonesNeedsActionCount(): Observable<number> {
+    return this.getMyProjects({
+      role: 'as-client',
+      status: 'in-progress',
+      pageNumber: 1,
+      pageSize: 50,
+    }).pipe(
+      switchMap((page) => {
+        const projects = page.items ?? [];
+        if (projects.length === 0) return of(0);
+
+        return forkJoin(
+          projects.map((project) =>
+            forkJoin({
+              milestones: this.milestonesApi
+                .getMilestones(project.id)
+                .pipe(catchError(() => of([] as ProjectMilestone[]))),
+              escrow: this.milestonesApi
+                .getEscrow(project.id)
+                .pipe(catchError(() => of(null as ProjectEscrow | null))),
+            }).pipe(
+              map(({ milestones, escrow }) =>
+                buildMilestoneProgressSummary(milestones, escrow).needsAction ? 1 : 0,
+              ),
+            ),
+          ),
+        ).pipe(map((flags) => flags.reduce((sum: number, n) => sum + n, 0)));
+      }),
+      catchError(() => of(0)),
+    );
   }
 
-  // TODO: replace once backend ready
-  getMembers(projectId: string): Observable<any[]> {
+  /** Progress summaries keyed by project id (for My Projects cards). */
+  getMilestoneProgressByProjectIds(
+    projectIds: string[],
+  ): Observable<Record<string, ReturnType<typeof buildMilestoneProgressSummary>>> {
+    const ids = [...new Set(projectIds.filter(Boolean))];
+    if (ids.length === 0) return of({});
+
+    return forkJoin(
+      ids.map((projectId) =>
+        forkJoin({
+          milestones: this.milestonesApi
+            .getMilestones(projectId)
+            .pipe(catchError(() => of([] as ProjectMilestone[]))),
+          escrow: this.milestonesApi
+            .getEscrow(projectId)
+            .pipe(catchError(() => of(null as ProjectEscrow | null))),
+        }).pipe(
+          map(({ milestones, escrow }) => ({
+            projectId,
+            summary: buildMilestoneProgressSummary(milestones, escrow),
+          })),
+        ),
+      ),
+    ).pipe(
+      map((rows) => {
+        const out: Record<string, ReturnType<typeof buildMilestoneProgressSummary>> = {};
+        for (const row of rows) out[row.projectId] = row.summary;
+        return out;
+      }),
+      catchError(() => of({})),
+    );
+  }
+
+  // --- Members (stub until roster UI) ---
+  getMembers(_projectId: string): Observable<unknown[]> {
     return of([]);
   }
 

@@ -15,6 +15,13 @@ import {
   TeamMemberRow,
   TeamPortfolioProject,
 } from '../models/team';
+import {
+  MilestoneAssigneeDto,
+  MilestoneAssignmentDto,
+  MilestonePayoutSplitsDto,
+  ProjectMemberDto,
+  TeamProjectCard,
+} from '../models/team-project';
 import { PagedResponse } from '../../../shared/models/PagedResponse';
 import { TeamProjectEarningsDto } from '../../../shared/models/TeamProjectEarningsDto';
 import { WalletTeam } from '../../../shared/models/WalletTeam';
@@ -73,10 +80,11 @@ const skipLoadingCtx = () => new HttpContext().set(SKIP_LOADING, true);
 @Injectable({ providedIn: 'root' })
 export class TeamsService {
   private readonly http = inject(HttpClient);
-  private readonly teamsUrl = `${environment.apiBaseUrl}/api/v1/teams`;
-  private readonly jobsUrl = `${environment.apiBaseUrl}/api/v1/jobs`;
-  private readonly joinUrl = `${environment.apiBaseUrl}/api/v1/TeamJoinRequest`;
-  private readonly profilesUrl = `${environment.apiBaseUrl}/api/v1/profiles`;
+  private readonly apiUrl = `${environment.apiBaseUrl}/api/v1`;
+  private readonly teamsUrl = `${this.apiUrl}/teams`;
+  private readonly jobsUrl = `${this.apiUrl}/jobs`;
+  private readonly joinUrl = `${this.apiUrl}/TeamJoinRequest`;
+  private readonly profilesUrl = `${this.apiUrl}/profiles`;
 
   getMine(): Observable<Team[]> {
     return this.http
@@ -209,6 +217,183 @@ export class TeamsService {
         }));
       }),
     );
+  }
+
+  /** Mohamed: team projects with progress (leader sees all; member sees staffed only). */
+  getTeamProjects(teamId: string): Observable<TeamProjectCard[]> {
+    return this.http
+      .get<ApiResponse<TeamProjectCard[]>>(`${this.apiUrl}/teams/${teamId}/projects`, {
+        context: skipLoadingCtx(),
+      })
+      .pipe(
+        map((res) => {
+          if (!res.isSuccess) {
+            throw new Error(res.message || 'Failed to load team projects.');
+          }
+          return (res.data ?? []).map((p) => ({
+            id: p.id,
+            title: p.title ?? 'Untitled project',
+            status: p.status ?? 'Unknown',
+            clientName: p.clientName ?? 'Client',
+            budgetMin: Number(p.budgetMin ?? 0),
+            budgetMax: Number(p.budgetMax ?? 0),
+            currency: p.currency ?? 'EGP',
+            deadline: p.deadline ?? null,
+            categoryName: p.categoryName ?? null,
+            totalMilestones: Number(p.totalMilestones ?? 0),
+            completedMilestones: Number(p.completedMilestones ?? 0),
+            progressPercent: Number(p.progressPercent ?? 0),
+            isCurrentUserMember: !!p.isCurrentUserMember,
+          }));
+        }),
+      );
+  }
+
+  getProjectMembers(projectId: string): Observable<ProjectMemberDto[]> {
+    return this.http
+      .get<ApiResponse<ProjectMemberDto[]>>(`${this.apiUrl}/projects/${projectId}/members`, {
+        context: skipLoadingCtx(),
+      })
+      .pipe(
+        map((res) => {
+          if (!res.isSuccess) {
+            throw new Error(res.message || 'Failed to load project members.');
+          }
+          return (res.data ?? []).map((m) => ({
+            userId: m.userId,
+            name: (m.name ?? 'Member').trim() || 'Member',
+            imageUrl: m.imageUrl ?? null,
+            roleInProject: m.roleInProject ?? 'Contributor',
+            assignedAt: m.assignedAt,
+          }));
+        }),
+      );
+  }
+
+  addProjectMember(projectId: string, userId: string, roleInProject = 'Contributor'): Observable<void> {
+    return this.http
+      .post<ApiResponse<unknown>>(`${this.apiUrl}/projects/${projectId}/members`, {
+        userId,
+        roleInProject,
+      })
+      .pipe(
+        map((res) => {
+          if (!res.isSuccess) {
+            throw new Error(res.message || 'Failed to add project member.');
+          }
+        }),
+      );
+  }
+
+  removeProjectMember(projectId: string, userId: string): Observable<void> {
+    return this.http.delete<ApiResponse<unknown>>(`${this.apiUrl}/projects/${projectId}/members/${userId}`).pipe(
+      map((res) => {
+        if (!res.isSuccess) {
+          throw new Error(res.message || 'Failed to remove project member.');
+        }
+      }),
+    );
+  }
+
+  getMilestonePayoutSplits(milestoneId: string): Observable<MilestonePayoutSplitsDto> {
+    return this.http
+      .get<ApiResponse<MilestonePayoutSplitsDto>>(`${this.apiUrl}/milestones/${milestoneId}/payout-splits`, {
+        context: skipLoadingCtx(),
+      })
+      .pipe(
+        map((res) => {
+          if (!res.isSuccess || !res.data) {
+            throw new Error(res.message || 'Failed to load milestone payout splits.');
+          }
+          return {
+            teamId: res.data.teamId,
+            projectId: res.data.projectId ?? null,
+            milestoneId: res.data.milestoneId ?? null,
+            splitType: res.data.splitType ?? 'Percent',
+            items: (res.data.items ?? []).map((i) => ({
+              userId: i.userId,
+              value: Number(i.value ?? 0),
+            })),
+          };
+        }),
+      );
+  }
+
+  putMilestonePayoutSplits(
+    milestoneId: string,
+    items: { userId: string; value: number }[],
+  ): Observable<MilestonePayoutSplitsDto> {
+    return this.http
+      .put<ApiResponse<MilestonePayoutSplitsDto>>(`${this.apiUrl}/milestones/${milestoneId}/payout-splits`, {
+        splitType: 'Percent',
+        items,
+      })
+      .pipe(
+        map((res) => {
+          if (!res.isSuccess || !res.data) {
+            throw new Error(res.message || 'Failed to save milestone payout splits.');
+          }
+          return res.data;
+        }),
+      );
+  }
+
+  getMilestoneAssignments(milestoneId: string): Observable<MilestoneAssignmentDto[]> {
+    return this.http
+      .get<ApiResponse<MilestoneAssignmentDto[]>>(`${this.apiUrl}/milestones/${milestoneId}/assignments`, {
+        context: skipLoadingCtx(),
+      })
+      .pipe(
+        map((res) => {
+          if (!res.isSuccess) {
+            throw new Error(res.message || 'Failed to load milestone assignments.');
+          }
+          return (res.data ?? []).map((a) => ({
+            id: a.id,
+            milestoneId: a.milestoneId,
+            userId: a.userId,
+            userName: (a.userName ?? 'Member').trim() || 'Member',
+            imageUrl: a.imageUrl ?? null,
+            percentage: Number(a.percentage ?? 0),
+          }));
+        }),
+      );
+  }
+
+  putMilestoneAssignments(
+    milestoneId: string,
+    assignments: { userId: string; percentage: number }[],
+  ): Observable<void> {
+    return this.http
+      .put<ApiResponse<unknown>>(`${this.apiUrl}/milestones/${milestoneId}/assignments`, {
+        items: assignments,
+      })
+      .pipe(
+        map((res) => {
+          if (!res.isSuccess) {
+            throw new Error(res.message || 'Failed to save milestone assignments.');
+          }
+        }),
+      );
+  }
+
+  getMilestoneAssignees(milestoneId: string): Observable<MilestoneAssigneeDto[]> {
+    return this.http
+      .get<ApiResponse<MilestoneAssigneeDto[]>>(`${this.apiUrl}/milestones/${milestoneId}/assignees`, {
+        context: skipLoadingCtx(),
+      })
+      .pipe(
+        map((res) => {
+          if (!res.isSuccess) {
+            throw new Error(res.message || 'Failed to load milestone assignees.');
+          }
+          return (res.data ?? []).map((a) => ({
+            userId: a.userId,
+            name: (a.name ?? 'Member').trim() || 'Member',
+            imageUrl: a.imageUrl ?? null,
+          }));
+        }),
+      );
   }
 
   updateMemberRole(teamId: string, userId: string, role: 'TeamLeader' | 'TeamMember'): Observable<void> {
@@ -927,9 +1112,10 @@ export class TeamsService {
     {
       params: {
         TeamId: teamId,
-        PageNumber: options?.pageNumber ?? 1,
-        PageSize: options?.pageSize ?? 10,
+        PageNumber: String(options?.pageNumber ?? 1),
+        PageSize: String(options?.pageSize ?? 10),
       },
+      context: options?.skipLoading ? skipLoadingCtx() : undefined,
     }
   );
 }

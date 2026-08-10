@@ -1,0 +1,563 @@
+<div class="flex flex-col lg:flex-row gap-6 items-start w-full">
+  <!-- Left: projects -->
+  <aside
+    class="w-full lg:w-56 shrink-0 flex flex-row lg:flex-col gap-1 overflow-x-auto lg:overflow-visible no-scrollbar"
+  >
+    <p
+      class="hidden lg:block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant/60 px-3 mb-2"
+    >
+      Projects
+    </p>
+
+    <button
+      type="button"
+      class="flex items-center justify-between gap-2 px-3.5 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap lg:whitespace-normal cursor-pointer border-0 text-left"
+      [ngClass]="
+        selectedProjectId() === null
+          ? 'bg-[#E3DFFF] text-primary font-semibold'
+          : 'text-on-surface hover:bg-surface-container-low bg-transparent'
+      "
+      (click)="selectProject(null)"
+    >
+      <span class="truncate">All projects</span>
+      <span class="text-xs px-2 py-0.5 rounded-full bg-black/5 font-semibold shrink-0">{{
+        cards().length
+      }}</span>
+    </button>
+
+    @for (p of projects(); track p.projectId) {
+      <button
+        type="button"
+        class="flex items-center justify-between gap-2 px-3.5 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer border-0 text-left min-w-0"
+        [ngClass]="
+          selectedProjectId() === p.projectId
+            ? 'bg-[#E3DFFF] text-primary font-semibold'
+            : 'text-on-surface hover:bg-surface-container-low bg-transparent'
+        "
+        [title]="p.title"
+        (click)="selectProject(p.projectId)"
+      >
+        <span class="truncate">{{ p.title }}</span>
+        <span
+          class="text-xs px-2 py-0.5 rounded-full font-semibold shrink-0"
+          [ngClass]="
+            p.needsAction ? 'bg-[#4130D7] text-white' : 'bg-black/5 text-on-surface'
+          "
+          >{{ p.count }}</span
+        >
+      </button>
+    }
+  </aside>
+
+  <!-- Cards -->
+  <div class="flex-1 min-w-0 w-full flex flex-col gap-4">
+    <header
+      class="rounded-[20px] border border-[#EBE8F2] bg-white px-5 py-4 shadow-[0_4px_18px_rgba(28,27,46,0.04)]"
+    >
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div class="min-w-0">
+          <p class="text-[10px] font-extrabold uppercase tracking-[0.1em] text-[#9A96A8] m-0">
+            @if (selectedProjectId()) {
+              Selected project
+            } @else {
+              Milestone inbox
+            }
+          </p>
+          <h2 class="text-lg md:text-xl font-extrabold text-[#1C1B2E] tracking-tight mt-1 mb-0 truncate">
+            @if (selectedProjectTitle(); as title) {
+              {{ title }}
+            } @else {
+              All projects
+            }
+          </h2>
+          <p class="text-[13px] text-[#8B8798] mt-1 mb-0">
+            @if (filter() === 'needs-action') {
+              Showing items that need your action
+            } @else if (filter() === 'in-progress') {
+              Showing in-progress milestones
+            } @else {
+              Showing all active milestones
+            }
+            <span class="text-[#C7C4D8]"> · </span>
+            {{ filteredCards().length }} result{{ filteredCards().length === 1 ? '' : 's' }}
+          </p>
+        </div>
+        <p
+          class="text-[11px] font-semibold text-[#9A96A8] bg-[#F7F6FB] px-3 py-1.5 rounded-full shrink-0"
+        >
+          Sorted by urgency
+        </p>
+      </div>
+
+      <div
+        class="flex items-center gap-2 overflow-x-auto no-scrollbar mt-4 pt-4 border-t border-[#F0EDF5]"
+        role="tablist"
+      >
+        <button
+          type="button"
+          class="px-4 h-9 rounded-full text-xs font-bold shrink-0 cursor-pointer transition-colors border-0"
+          [class]="
+            filter() === 'needs-action'
+              ? 'bg-[#4130D7] text-white shadow-[0_4px_12px_rgba(65,48,215,0.25)]'
+              : 'bg-[#F0EDEF] text-[#2A2835] hover:bg-[#E5E1E4]'
+          "
+          (click)="setFilter('needs-action')"
+        >
+          Needs action
+          <span
+            class="ml-1.5 inline-flex min-w-5 h-5 px-1.5 items-center justify-center rounded-full text-[10px] font-extrabold"
+            [class]="filter() === 'needs-action' ? 'bg-white/20 text-white' : 'bg-black/5 text-[#5C5868]'"
+            >{{ needsActionCount() }}</span
+          >
+        </button>
+        <button
+          type="button"
+          class="px-4 h-9 rounded-full text-xs font-bold shrink-0 cursor-pointer transition-colors border-0"
+          [class]="
+            filter() === 'in-progress'
+              ? 'bg-[#4130D7] text-white shadow-[0_4px_12px_rgba(65,48,215,0.25)]'
+              : 'bg-[#F0EDEF] text-[#2A2835] hover:bg-[#E5E1E4]'
+          "
+          (click)="setFilter('in-progress')"
+        >
+          In progress
+          <span
+            class="ml-1.5 inline-flex min-w-5 h-5 px-1.5 items-center justify-center rounded-full text-[10px] font-extrabold"
+            [class]="filter() === 'in-progress' ? 'bg-white/20 text-white' : 'bg-black/5 text-[#5C5868]'"
+            >{{ inProgressCount() }}</span
+          >
+        </button>
+        <button
+          type="button"
+          class="px-4 h-9 rounded-full text-xs font-bold shrink-0 cursor-pointer transition-colors border-0"
+          [class]="
+            filter() === 'all'
+              ? 'bg-[#4130D7] text-white shadow-[0_4px_12px_rgba(65,48,215,0.25)]'
+              : 'bg-[#F0EDEF] text-[#2A2835] hover:bg-[#E5E1E4]'
+          "
+          (click)="setFilter('all')"
+        >
+          All
+          <span
+            class="ml-1.5 inline-flex min-w-5 h-5 px-1.5 items-center justify-center rounded-full text-[10px] font-extrabold"
+            [class]="filter() === 'all' ? 'bg-white/20 text-white' : 'bg-black/5 text-[#5C5868]'"
+            >{{ allCount() }}</span
+          >
+        </button>
+      </div>
+    </header>
+
+    @if (actionError()) {
+      <p
+        class="text-sm font-semibold text-[#93000A] bg-[#FFDAD6] rounded-2xl px-4 py-3 m-0"
+      >
+        {{ actionError() }}
+      </p>
+    }
+
+    @if (loading()) {
+      <div class="bg-white rounded-2xl border border-[#E8E6ED] p-12 flex justify-center">
+        <div
+          class="h-8 w-8 animate-spin rounded-full border-2 border-[#4130D7] border-t-transparent"
+        ></div>
+      </div>
+    } @else if (error()) {
+      <div class="bg-white rounded-2xl border border-error/30 p-8 text-center text-error">
+        {{ error() }}
+        <button type="button" class="link ml-2" (click)="load()">Try again</button>
+      </div>
+    } @else if (filteredCards().length === 0) {
+      <div class="bg-white rounded-2xl border border-dashed border-[#E8E6ED] p-12 text-center">
+        <p class="text-base font-semibold text-on-surface">
+          @if (filter() === 'needs-action' && projectScopedCards().length > 0) {
+            You're all caught up
+          } @else if (cards().length === 0) {
+            No in-progress projects with milestones yet
+          } @else {
+            No milestones match this filter
+          }
+        </p>
+      </div>
+    } @else {
+      @for (card of filteredCards(); track card.project.id) {
+        @if (card.summary.awaitingApproval; as awaiting) {
+          <article
+            class="bg-white rounded-[24px] border border-[#EBE8F2] shadow-[0_10px_40px_rgba(28,27,46,0.06)] overflow-hidden"
+          >
+            <div class="px-6 md:px-7 pt-6 flex items-start gap-3.5">
+              <div
+                class="size-11 rounded-2xl shrink-0 flex items-center justify-center bg-[#4130D7] text-white shadow-[0_8px_20px_rgba(65,48,215,0.28)]"
+              >
+                <svg class="size-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+
+              <div class="min-w-0 flex-1 pt-0.5">
+                <h2 class="text-[17px] font-extrabold text-[#1C1B2E] leading-snug tracking-tight">
+                  Current Milestone
+                </h2>
+                <p class="text-[13px] text-[#8B8798] mt-0.5">
+                  Phase {{ awaiting.sortOrder }} of {{ card.summary.total }}
+                  <span class="mx-1.5 text-[#D0CDD9]">·</span>
+                  <span class="text-[#5C5868]">{{ card.project.title }}</span>
+                </p>
+              </div>
+
+              <span
+                class="shrink-0 mt-0.5 inline-flex items-center px-3 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-[0.06em] bg-[#FFF4E0] text-[#B86A00]"
+              >
+                Awaiting Review
+              </span>
+            </div>
+
+            <div class="px-6 md:px-7 py-5 flex flex-col gap-6">
+              <section>
+                <p
+                  class="text-[10px] font-extrabold uppercase tracking-[0.1em] text-[#9A96A8] mb-3"
+                >
+                  Milestone Details
+                </p>
+                <div class="flex flex-col lg:flex-row lg:items-stretch gap-4">
+                  <div class="min-w-0 flex-1 rounded-2xl bg-[#F7F6FB] px-5 py-4">
+                    <h3 class="text-[22px] font-extrabold text-[#1C1B2E] tracking-tight leading-tight">
+                      {{ awaiting.title }}
+                    </h3>
+                    @if (awaiting.description) {
+                      <p class="text-[14px] text-[#6B6778] leading-relaxed mt-2 max-w-2xl">
+                        {{ awaiting.description }}
+                      </p>
+                    } @else {
+                      <p class="text-[14px] text-[#9A96A8] mt-2">No description provided.</p>
+                    }
+                  </div>
+                  <div class="grid grid-cols-2 lg:grid-cols-1 gap-2.5 lg:w-[148px] shrink-0">
+                    <div class="rounded-2xl bg-[#F7F6FB] px-4 py-3.5 flex flex-col justify-center">
+                      <p class="text-[10px] font-extrabold uppercase tracking-[0.1em] text-[#9A96A8]">
+                        Value
+                      </p>
+                      <p class="text-lg font-extrabold text-[#1C1B2E] mt-1 tabular-nums tracking-tight">
+                        {{ formatMoney(awaiting.amount, card.project.currency) }}
+                      </p>
+                    </div>
+                    <div class="rounded-2xl bg-[#F7F6FB] px-4 py-3.5 flex flex-col justify-center">
+                      <p class="text-[10px] font-extrabold uppercase tracking-[0.1em] text-[#9A96A8]">
+                        Due Date
+                      </p>
+                      <p class="text-lg font-extrabold text-[#1C1B2E] mt-1 tracking-tight">
+                        {{ formatDueShort(awaiting.dueDate ?? card.project.deadline) }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section>
+                <p
+                  class="text-[10px] font-extrabold uppercase tracking-[0.1em] text-[#9A96A8] mb-3"
+                >
+                  Submitted Deliverables
+                </p>
+                @if (deliverables(awaiting).length === 0) {
+                  <p
+                    class="text-sm text-[#8B8798] rounded-2xl border border-dashed border-[#E4E0EC] bg-[#FAFAFC] px-5 py-4"
+                  >
+                    No files were attached with this submission.
+                  </p>
+                } @else {
+                  <ul class="flex flex-col gap-2.5 m-0 p-0 list-none">
+                    @for (f of deliverables(awaiting); track f.id) {
+                      <li
+                        class="group flex items-center justify-between gap-3 rounded-2xl border border-[#EBE8F2] bg-white hover:border-[#D8D3EA] hover:bg-[#FAFAFC] transition-colors px-4 py-3.5"
+                      >
+                        <div class="flex items-center gap-3.5 min-w-0">
+                          <div
+                            class="size-10 rounded-xl bg-[#EEEBFF] text-[#4130D7] flex items-center justify-center shrink-0"
+                          >
+                            <svg
+                              class="size-[18px]"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="1.8"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                              />
+                            </svg>
+                          </div>
+                          <div class="min-w-0">
+                            <p class="text-[14px] font-semibold text-[#1C1B2E] truncate">
+                              {{ f.fileName }}
+                            </p>
+                            <p class="text-[12px] text-[#8B8798] mt-0.5">
+                              {{ fileKindLabel(f.fileName, f.fileKind) }}
+                            </p>
+                          </div>
+                        </div>
+                        <a
+                          class="text-[12px] font-bold text-[#4130D7] shrink-0 px-2 py-1 rounded-lg hover:bg-[#EEEBFF] transition-colors"
+                          [href]="f.fileUrl"
+                          target="_blank"
+                          rel="noopener"
+                          >Download</a
+                        >
+                      </li>
+                    }
+                  </ul>
+                }
+              </section>
+
+              @if (openChangeFormId() === awaiting.id) {
+                <textarea
+                  class="w-full rounded-2xl border border-[#E4E0EC] bg-[#FAFAFC] px-4 py-3 text-sm min-h-[88px] focus:outline-none focus:border-[#4130D7] focus:ring-2 focus:ring-[#4130D7]/15"
+                  placeholder="Describe the changes you need…"
+                  [ngModel]="changeCommentByMilestone()[awaiting.id] || ''"
+                  (ngModelChange)="setChangeComment(awaiting.id, $event)"
+                ></textarea>
+              }
+            </div>
+
+            <div
+              class="px-6 md:px-7 py-4 border-t border-[#F0EDF5] bg-[#FCFOFB]/40 flex flex-wrap items-center gap-2.5"
+              style="background: #fcfbfd"
+            >
+              <button
+                type="button"
+                class="px-5 h-11 rounded-xl bg-[#4130D7] text-white text-[13px] font-bold disabled:opacity-50 cursor-pointer border-0 shadow-[0_6px_16px_rgba(65,48,215,0.25)] hover:bg-[#3526B8] transition-colors"
+                [disabled]="actionBusy()"
+                (click)="approveRelease(awaiting.id)"
+              >
+                Approve &amp; Release Funds
+              </button>
+              @if (openChangeFormId() === awaiting.id) {
+                <button
+                  type="button"
+                  class="px-5 h-11 rounded-xl border border-[#4130D7] text-[#4130D7] bg-white text-[13px] font-bold disabled:opacity-50 cursor-pointer hover:bg-[#F4F2FF] transition-colors"
+                  [disabled]="actionBusy()"
+                  (click)="requestWorkChanges(awaiting.id)"
+                >
+                  Send change request
+                </button>
+                <button
+                  type="button"
+                  class="px-3 h-11 text-[13px] font-semibold text-[#8B8798] cursor-pointer border-0 bg-transparent hover:text-[#1C1B2E]"
+                  (click)="toggleChangeForm(awaiting.id)"
+                >
+                  Cancel
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  class="px-5 h-11 rounded-xl border border-[#E4E0EC] text-[#2A2835] bg-white text-[13px] font-bold disabled:opacity-50 cursor-pointer hover:bg-[#F7F6FB] transition-colors"
+                  [disabled]="actionBusy()"
+                  (click)="toggleChangeForm(awaiting.id)"
+                >
+                  Request Work Changes
+                </button>
+              }
+              <div class="ml-auto">
+                <ng-container *ngTemplateOutlet="cardUtils; context: { $implicit: card }" />
+              </div>
+            </div>
+          </article>
+        } @else {
+          <article
+            class="bg-white rounded-[24px] border border-[#EBE8F2] shadow-[0_8px_28px_rgba(28,27,46,0.05)] overflow-hidden"
+          >
+            <div class="px-6 pt-6 pb-4 flex items-start gap-3.5">
+              <div
+                class="size-11 rounded-2xl shrink-0 flex items-center justify-center"
+                [class]="cardIconBg(card)"
+              >
+                <svg
+                  class="size-5"
+                  [class]="cardIconColor(card)"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    [attr.d]="cardIconPath(card)"
+                  />
+                </svg>
+              </div>
+
+              <div class="min-w-0 flex-1 pt-0.5">
+                <h2 class="text-[17px] font-extrabold text-[#1C1B2E] leading-snug truncate tracking-tight">
+                  {{ card.project.title }}
+                </h2>
+                <p class="text-[13px] text-[#8B8798] mt-0.5 truncate">
+                  {{ card.project.categoryName }} ·
+                  {{ card.project.isFixedPrice ? 'Fixed Price' : 'Milestone-based' }}
+                </p>
+              </div>
+
+              <span
+                class="shrink-0 mt-0.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-[0.06em]"
+                [class]="urgencyBadgeClass(card)"
+              >
+                <span class="size-1.5 rounded-full bg-current opacity-80"></span>
+                {{ urgencyLabel(card) }}
+              </span>
+            </div>
+
+            @if (card.summary.canFundNext && card.summary.nextUnfunded; as next) {
+              <div
+                class="mx-6 rounded-2xl bg-[#F7F6FB] px-5 py-4 grid grid-cols-1 sm:grid-cols-3 gap-4"
+              >
+                <div class="min-w-0">
+                  <p class="text-[10px] font-extrabold uppercase tracking-[0.1em] text-[#9A96A8]">
+                    Next Milestone
+                  </p>
+                  <p class="text-[14px] font-bold text-[#1C1B2E] mt-1.5 truncate">
+                    {{ next.sortOrder }}. {{ next.title }}
+                  </p>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-[10px] font-extrabold uppercase tracking-[0.1em] text-[#9A96A8]">
+                    Amount Due
+                  </p>
+                  <p class="text-[14px] font-bold text-[#1C1B2E] mt-1.5 tabular-nums">
+                    {{ formatMoney(next.amount, card.project.currency) }}
+                  </p>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-[10px] font-extrabold uppercase tracking-[0.1em] text-[#9A96A8]">
+                    Status
+                  </p>
+                  <p class="text-[14px] font-bold text-[#1C1B2E] mt-1.5">Waiting for funding</p>
+                </div>
+              </div>
+
+              <div
+                class="px-6 py-4 mt-5 border-t border-[#F0EDF5] flex items-center justify-between gap-3 flex-wrap"
+                style="background: #fcfbfd"
+              >
+                <button
+                  type="button"
+                  class="px-5 h-11 rounded-xl bg-[#4130D7] text-white text-[13px] font-bold disabled:opacity-50 cursor-pointer border-0 shadow-[0_6px_16px_rgba(65,48,215,0.25)] hover:bg-[#3526B8] transition-colors"
+                  [disabled]="actionBusy()"
+                  (click)="fundNext(card)"
+                >
+                  Fund Next Milestone
+                </button>
+                <ng-container *ngTemplateOutlet="cardUtils; context: { $implicit: card }" />
+              </div>
+            } @else {
+              <div class="mx-6 rounded-2xl bg-[#F7F6FB] px-5 py-4">
+                <div class="flex items-baseline justify-between gap-3 mb-2.5">
+                  <p class="text-[10px] font-extrabold uppercase tracking-[0.1em] text-[#9A96A8] shrink-0">
+                    Milestone {{ card.summary.percent }}% Complete
+                  </p>
+                  <p class="text-[12px] text-[#6B6778] text-right truncate">
+                    {{ card.summary.currentIndex }} of {{ card.summary.total }}
+                    @if (card.summary.escrowRemaining > 0) {
+                      · {{ formatEscrow(card.summary.escrowRemaining) }}
+                      {{ card.project.currency }} in escrow
+                    }
+                  </p>
+                </div>
+                <div class="w-full h-2.5 rounded-full bg-[#E6E3EE] overflow-hidden">
+                  <div
+                    class="h-full rounded-full bg-[#43A047]"
+                    [style.width.%]="card.summary.percent"
+                  ></div>
+                </div>
+              </div>
+
+              <div
+                class="px-6 py-4 mt-5 border-t border-[#F0EDF5] flex items-center justify-between gap-3 flex-wrap"
+                style="background: #fcfbfd"
+              >
+                <button
+                  type="button"
+                  class="px-5 h-11 rounded-xl bg-[#4130D7] text-white text-[13px] font-bold cursor-pointer border-0 shadow-[0_6px_16px_rgba(65,48,215,0.25)] hover:bg-[#3526B8] transition-colors"
+                  (click)="openProject(card.project.id)"
+                >
+                  Open Workspace
+                </button>
+                <ng-container *ngTemplateOutlet="cardUtils; context: { $implicit: card }" />
+              </div>
+            }
+          </article>
+        }
+      }
+    }
+  </div>
+
+  <ng-template #cardUtils let-card>
+    <div class="flex items-center gap-2 shrink-0">
+      <button
+        type="button"
+        class="size-10 rounded-xl border border-[#EBE8F2] text-[#8B8798] hover:bg-white hover:text-[#4130D7] hover:border-[#D8D3EA] flex items-center justify-center transition-colors cursor-pointer bg-white"
+        title="Open chat"
+        (click)="openChat(card.project.id)"
+      >
+        <svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+          />
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="size-10 rounded-xl border border-[#EBE8F2] text-[#8B8798] hover:bg-white hover:text-[#4130D7] hover:border-[#D8D3EA] flex items-center justify-center transition-colors cursor-pointer bg-white"
+        title="Open project"
+        (click)="openProject(card.project.id)"
+      >
+        <svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+          />
+        </svg>
+      </button>
+    </div>
+  </ng-template>
+
+  <!-- Right rail -->
+  <aside class="w-full lg:w-[280px] shrink-0 flex flex-col gap-4 lg:sticky lg:top-24 h-fit">
+    <div class="bg-white rounded-2xl border border-[#E8E6ED] p-5 flex flex-col gap-3.5">
+      <p class="text-[11px] font-bold uppercase tracking-wider text-[#8B8798]">Escrow Summary</p>
+      <div class="flex justify-between text-sm">
+        <span class="text-[#8B8798]">Funded in Escrow</span>
+        <span class="font-bold tabular-nums text-[#1C1B2E]">{{
+          formatEscrow(totalFundedInEscrow())
+        }}</span>
+      </div>
+      <div class="flex justify-between text-sm">
+        <span class="text-[#8B8798]">Pending Release</span>
+        <span class="font-bold tabular-nums text-[#1C1B2E]">{{
+          formatEscrow(totalPendingRelease())
+        }}</span>
+      </div>
+      <div class="h-px bg-[#E8E6ED]"></div>
+      <div class="flex justify-between items-baseline">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-[#8B8798]"
+          >Active projects</span
+        >
+        <span class="text-xl font-extrabold text-[#4130D7]">{{ cards().length }}</span>
+      </div>
+    </div>
+
+    <div class="rounded-2xl bg-[#4130D7] text-white p-5 flex flex-col gap-2">
+      <p class="text-sm font-bold">Need help with a project?</p>
+      <p class="text-xs text-white/80 leading-relaxed">
+        Open the project workspace or chat with your assignee about funding and reviews.
+      </p>
+    </div>
+  </aside>
+</div>
