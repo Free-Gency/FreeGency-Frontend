@@ -45,16 +45,18 @@
           (click)="switchTab(tab.id)"
         >
           <span>{{ tab.label }}</span>
-          <span
-            class="rounded-full px-2 py-0.5 text-xs font-bold"
-            [ngClass]="
-              activeTab() === tab.id
-                ? 'bg-white/20 text-white'
-                : 'bg-black/5 text-on-surface-variant'
-            "
-          >
-            {{ tab.count }}
-          </span>
+          @if (tab.count !== null && tab.count !== undefined) {
+            <span
+              class="rounded-full px-2 py-0.5 text-xs font-bold"
+              [ngClass]="
+                activeTab() === tab.id
+                  ? 'bg-white/20 text-white'
+                  : 'bg-black/5 text-on-surface-variant'
+              "
+            >
+              {{ tab.count }}
+            </span>
+          }
         </button>
       }
     </div>
@@ -168,6 +170,13 @@
             </article>
           </div>
         }
+      </section>
+    }
+
+    <!-- Suggested for you (RAG) -->
+    @if (activeTab() === 'suggested') {
+      <section class="flex flex-col gap-6">
+        <app-team-suggestions />
       </section>
     }
 
@@ -307,40 +316,51 @@
 
     <!-- Jobs -->
     @if (activeTab() === 'openings') {
-      <section>
+      <section class="jobs-browse" aria-labelledby="jobs-browse-heading">
+        <header class="jobs-browse__head">
+          <div class="min-w-0">
+            <h2 id="jobs-browse-heading" class="jobs-browse__title">Open team roles</h2>
+            <p class="jobs-browse__sub">
+              Browse openings posted by teams — read the pitch, then apply with a short note.
+            </p>
+          </div>
+          @if (hasOpenings()) {
+            <span class="jobs-browse__count">{{ openings()!.totalCount || openings()!.items.length }} open</span>
+          }
+        </header>
+
         @if (loadingOpenings()) {
-          <div class="space-y-3">
-            @for (i of [1, 2, 3, 4]; track i) {
-              <article class="job-open-card job-open-card--skel animate-pulse"></article>
+          <div class="jobs-browse__grid" aria-hidden="true">
+            @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+              <article class="job-open-card job-open-card--skel"></article>
             }
           </div>
         } @else if (openingsError()) {
-          <p class="rounded-2xl border border-[#ffd9d4] bg-[#fff8f7] px-4 py-3 font-body text-sm text-[#93000a]">
-            {{ openingsError() }}
-          </p>
+          <p class="jobs-browse__error">{{ openingsError() }}</p>
         } @else if (hasOpenings()) {
-          <div class="space-y-3">
+          <div class="jobs-browse__grid" role="list">
             @for (job of openings()!.items; track job.id) {
-              <article class="job-open-card" [class.job-open-card--own]="isOwnTeamJob(job)">
-                <button
-                  type="button"
-                  class="job-open-card__logo"
-                  (click)="openJobTeam(job, $event)"
-                  [attr.aria-label]="'Open ' + teamNameForJob(job)"
-                >
-                  @if (teamLogoForJob(job); as logo) {
-                    <img [src]="logo" [alt]="teamNameForJob(job)" />
-                  } @else {
-                    <span>{{ initials(teamNameForJob(job)) }}</span>
-                  }
-                </button>
+              <article
+                class="job-open-card"
+                role="listitem"
+                [class.job-open-card--own]="isOwnTeamJob(job)"
+                [class.job-open-card--applied]="hasApplied(job.id)"
+              >
+                <div class="job-open-card__header">
+                  <button
+                    type="button"
+                    class="job-open-card__logo"
+                    (click)="openJobTeam(job, $event)"
+                    [attr.aria-label]="'Open ' + teamNameForJob(job)"
+                  >
+                    @if (teamLogoForJob(job); as logo) {
+                      <img [src]="logo" [alt]="teamNameForJob(job)" />
+                    } @else {
+                      <span>{{ initials(teamNameForJob(job)) }}</span>
+                    }
+                  </button>
 
-                <div class="job-open-card__body">
-                  <div class="job-open-card__meta">
-                    <span class="job-open-card__status">
-                      <hugeicons-icon [icon]="briefcaseIcon" [size]="13" color="currentColor" [strokeWidth]="1.75" />
-                      {{ jobStatusLabel(job.status) }}
-                    </span>
+                  <div class="job-open-card__who">
                     <button
                       type="button"
                       class="job-open-card__team"
@@ -348,37 +368,43 @@
                     >
                       {{ teamNameForJob(job) }}
                     </button>
-                    @if (relativeTime(job.createdAt)) {
-                      <span class="job-open-card__time">{{ relativeTime(job.createdAt) }}</span>
-                    }
-                  </div>
-
-                  <h3 class="job-open-card__title">{{ job.title }}</h3>
-                  <p class="job-open-card__desc">
-                    {{ job.description || 'No description provided for this role.' }}
-                  </p>
-
-                  <div class="job-open-card__apply-hint">
-                    <p class="job-open-card__hint-label">Application</p>
-                    <p class="job-open-card__hint-copy">
-                      @if (isOwnTeamJob(job)) {
-                        This opening belongs to one of your teams — you can’t apply.
-                      } @else if (hasApplied(job.id)) {
-                        You’ve already submitted an application for this role.
-                      } @else {
-                        Send a short cover letter to introduce yourself to the team.
+                    <div class="job-open-card__badges">
+                      <span class="job-open-card__badge job-open-card__badge--open">
+                        {{ jobStatusLabel(job.status) }}
+                      </span>
+                      @if (relativeTime(job.createdAt)) {
+                        <span class="job-open-card__badge job-open-card__badge--soft">
+                          {{ relativeTime(job.createdAt) }}
+                        </span>
                       }
-                    </p>
+                      @if (isOwnTeamJob(job)) {
+                        <span class="job-open-card__badge job-open-card__badge--own">Your team</span>
+                      } @else if (hasApplied(job.id)) {
+                        <span class="job-open-card__badge job-open-card__badge--applied">Applied</span>
+                      }
+                    </div>
                   </div>
                 </div>
 
+                <h3 class="job-open-card__title">{{ job.title }}</h3>
+                <p class="job-open-card__desc">{{ job.description.trim() || 'No description provided for this role yet.' }}</p>
+
                 <div class="job-open-card__actions">
+                  <button
+                    type="button"
+                    class="job-open-card__btn job-open-card__btn--ghost"
+                    (click)="openJobTeam(job, $event)"
+                  >
+                    View team
+                  </button>
                   @if (isOwnTeamJob(job)) {
                     <button type="button" class="job-open-card__btn job-open-card__btn--disabled" disabled>
-                      Your team
+                      Your opening
                     </button>
                   } @else if (hasApplied(job.id)) {
-                    <span class="job-open-card__applied">Applied</span>
+                    <button type="button" class="job-open-card__btn job-open-card__btn--disabled" disabled>
+                      Applied
+                    </button>
                   } @else {
                     <button
                       type="button"
@@ -388,20 +414,91 @@
                       Apply
                     </button>
                   }
-                  <button
-                    type="button"
-                    class="job-open-card__btn job-open-card__btn--ghost"
-                    (click)="openJobTeam(job, $event)"
-                  >
-                    View team
-                  </button>
                 </div>
               </article>
             }
           </div>
         } @else {
-          <div class="rounded-[28px] border border-dashed border-[#dbe2f0] bg-white px-6 py-16 text-center">
-            <p class="font-display text-lg font-semibold text-[#151c27]">No open jobs right now</p>
+          <div class="jobs-browse__empty">
+            <p class="jobs-browse__empty-title">No open jobs right now</p>
+            <p class="jobs-browse__empty-text">
+              When teams post roles with a clear pitch, they’ll show up here.
+            </p>
+          </div>
+        }
+      </section>
+    }
+
+    @if (activeTab() === 'invitations') {
+      <section class="rounded-3xl border border-[#eceef4] bg-white p-5 sm:p-6" aria-labelledby="invites-heading">
+        <header class="mb-5">
+          <h2 id="invites-heading" class="font-display text-xl font-bold text-[#151c27]">
+            Project invitations
+          </h2>
+          <p class="mt-1 text-sm text-[#667085]">
+            Client invites for you and teams you lead. Accept to open a discussion chat.
+          </p>
+        </header>
+
+        @if (loadingInvitations()) {
+          <p class="text-sm text-[#667085]">Loading invitations…</p>
+        } @else if (invitationsError()) {
+          <p class="text-sm text-[#93000a]">{{ invitationsError() }}</p>
+        } @else if (!invitations().length) {
+          <div class="rounded-2xl bg-[#fafafa] px-5 py-8 text-center">
+            <p class="font-display text-base font-bold text-[#151c27]">No invitations yet</p>
+            <p class="mt-1 text-sm text-[#667085]">When a client invites you to a project, it will appear here.</p>
+          </div>
+        } @else {
+          <div class="flex flex-col gap-3">
+            @for (inv of invitations(); track inv.id) {
+              <article class="flex flex-col gap-3 rounded-2xl border border-[#eceef4] bg-[#fbfbfb] p-4 sm:flex-row sm:items-start">
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <h3 class="font-display text-base font-bold text-[#151c27]">
+                      {{ inv.projectTitle || 'Project' }}
+                    </h3>
+                    <span [class]="invitationStatusClass(inv.status)">{{ inv.status }}</span>
+                    @if (inv.inviteeType === 'Team') {
+                      <span class="rounded-full bg-[#EEECFB] px-2.5 py-0.5 text-xs font-bold text-[#4130D7]">
+                        {{ inv.inviteeTeamName || 'Team' }}
+                      </span>
+                    }
+                  </div>
+                  <p class="mt-1 text-sm font-semibold text-[#4130D7]">From {{ inv.clientName || 'Client' }}</p>
+                  <p class="mt-2 text-sm leading-relaxed text-[#667085]">{{ inv.message }}</p>
+                </div>
+                <div class="flex shrink-0 flex-wrap gap-2">
+                  @if (inv.status === 'Pending') {
+                    <button
+                      type="button"
+                      class="inline-flex h-10 items-center rounded-full bg-[#4130D7] px-4 text-sm font-bold text-white disabled:opacity-60"
+                      [disabled]="inviteActionId() === inv.id"
+                      (click)="acceptInvitation(inv)"
+                    >
+                      Accept
+                    </button>
+                    <button
+                      type="button"
+                      class="inline-flex h-10 items-center rounded-full bg-white px-4 text-sm font-bold text-[#374151] ring-1 ring-[#e5e7eb] disabled:opacity-60"
+                      [disabled]="inviteActionId() === inv.id"
+                      (click)="rejectInvitation(inv)"
+                    >
+                      Reject
+                    </button>
+                  }
+                  @if (inv.status === 'Accepted' && inv.chatRoomId) {
+                    <button
+                      type="button"
+                      class="inline-flex h-10 items-center rounded-full bg-[#27253f] px-4 text-sm font-bold text-white"
+                      (click)="openInvitationChat(inv.chatRoomId)"
+                    >
+                      Open chat
+                    </button>
+                  }
+                </div>
+              </article>
+            }
           </div>
         }
       </section>

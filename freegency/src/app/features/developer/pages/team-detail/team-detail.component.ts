@@ -24,10 +24,12 @@ import {
 import { catchError, forkJoin, of } from 'rxjs';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { extractApiError } from '../../../../core/http/api-error';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { CategoriesApiService } from '../../../auth/data-access/categories-api.service';
 import { TaxonomyApiService } from '../../../auth/data-access/taxonomy-api.service';
 import { Project } from '../../../../shared/models/Project';
 import { DeveloperViewNavbarComponent } from '../../../../shared/components/developer-view-navbar/developer-view-navbar.component';
+import { ClientViewNavbarComponent } from '../../../../shared/components/client-view-navbar/client-view-navbar.component';
 import { DeveloperManageWorkService } from '../../data-access/developer-manage-work.service';
 import { TeamsService, type TeamReview } from '../../data-access/teams.service';
 import {
@@ -43,7 +45,8 @@ import {
 import { TaskAssigneeOption } from '../../models/task';
 import { ProjectMilestone } from '../../../project/models/project-milestone';
 import { ProjectMilestonesApiService } from '../../../project/data-access/project-milestones-api.service';
-import { MessagesPanelComponent } from '../../../chat/messages-panel/messages-panel.component';
+import { ProjectInvitationsApiService } from '../../../client/data-access/project-invitations-api.service';
+import type { ProjectInvitation } from '../../../client/models/project-invitation';
 import { TeamTaskBoardComponent } from '../team-task-board/team-task-board.component';
 import { MyTasksComponent } from '../../components/my-tasks/my-tasks.component';
 import { FinanceComponent } from './finance/finance.component';
@@ -74,7 +77,7 @@ interface FinanceDemoRow {
     DecimalPipe,
     DatePipe,
     DeveloperViewNavbarComponent,
-    MessagesPanelComponent,
+    ClientViewNavbarComponent,
     TeamTaskBoardComponent,
     MyTasksComponent,
     FinanceComponent
@@ -86,6 +89,8 @@ export class TeamDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly teamsApi = inject(TeamsService);
+  private readonly invitationsApi = inject(ProjectInvitationsApiService);
+  private readonly toast = inject(ToastService);
   private readonly projectsApi = inject(DeveloperManageWorkService);
   private readonly milestonesApi = inject(ProjectMilestonesApiService);
   private readonly categoriesApi = inject(CategoriesApiService);
@@ -132,6 +137,10 @@ export class TeamDetailComponent implements OnInit {
   protected readonly joinRequestsLoading = signal(false);
   protected readonly joinRequestsLoaded = signal(false);
   protected readonly joinRequestsError = signal<string | null>(null);
+  protected readonly projectInvitations = signal<ProjectInvitation[]>([]);
+  protected readonly projectInvitationsLoading = signal(false);
+  protected readonly projectInvitationsError = signal<string | null>(null);
+  protected readonly projectInviteActionId = signal<string | null>(null);
   protected readonly requestActionId = signal<string | null>(null);
 
   /** Expanded job card (inline details, no popup). */
@@ -236,6 +245,9 @@ export class TeamDetailComponent implements OnInit {
   });
 
   protected readonly isTeamMember = computed(() => this.role() != null);
+  protected readonly isClientViewer = computed(
+    () => this.auth.session()?.activeProfileMode === 'Client',
+  );
 
   protected readonly isLeader = computed(() => this.role() === 'TeamLeader');
 
@@ -270,6 +282,9 @@ export class TeamDetailComponent implements OnInit {
       { id: 'messages', label: 'Messages' },
       { id: 'members', label: 'Members' },
     ];
+    if (this.isLeader() && !this.isClientViewer()) {
+      items.splice(3, 0, { id: 'invitations', label: 'Invitations' });
+    }
     return items;
   });
 
@@ -380,6 +395,9 @@ export class TeamDetailComponent implements OnInit {
     const id = this.route.snapshot.paramMap.get('teamId');
     const rawTab = this.route.snapshot.queryParamMap.get('tab');
     this.activeTab.set(this.normalizeTab(rawTab));
+    if (this.route.snapshot.fragment === 'portfolio') {
+      this.activeTab.set('overview');
+    }
     if (!id) {
       this.error.set('Team not found.');
       this.loading.set(false);
@@ -398,7 +416,9 @@ export class TeamDetailComponent implements OnInit {
   }
 
   protected goMyTeams(): void {
-    void this.router.navigateByUrl('/developer/teams');
+    void this.router.navigateByUrl(
+      this.isClientViewer() ? '/client/home' : '/developer/teams',
+    );
   }
 
   protected setTab(tab: TeamDetailTab): void {
@@ -429,6 +449,10 @@ export class TeamDetailComponent implements OnInit {
     if (tab === 'jobs' && !this.jobsLoaded()) {
       const id = this.team()?.id;
       if (id) this.loadJobs(id);
+    }
+    if (tab === 'invitations') {
+      const id = this.team()?.id;
+      if (id && this.isLeader()) this.loadProjectInvitations(id);
     }
     if (tab === 'jobs' && this.isLeader() && !this.joinRequestsLoaded()) {
       const id = this.team()?.id;
@@ -770,6 +794,12 @@ export class TeamDetailComponent implements OnInit {
 
   protected openPortfolioDetail(item: TeamPortfolioProject): void {
     const teamId = this.team()?.id;
+    if (this.isClientViewer()) {
+      void this.router.navigate(['/client/inspiration', item.id], {
+        state: { fromTeamId: teamId ?? null },
+      });
+      return;
+    }
     void this.router.navigate(['/developer/portfolio', item.id], {
       state: { fromTeamId: teamId ?? null },
     });
@@ -1073,7 +1103,15 @@ export class TeamDetailComponent implements OnInit {
       return;
     }
     if (!description) {
-      this.jobFormError.set('Job description is required.');
+      this.jobFormError.set('Job description is required — write a short pitch that attracts applicants.');
+      return;
+    }
+    if (description.length < 80) {
+      this.jobFormError.set('Description is too short. Add at least 80 characters about the role.');
+      return;
+    }
+    if (description.length > 2000) {
+      this.jobFormError.set('Description must be 2000 characters or less.');
       return;
     }
 
@@ -1187,18 +1225,30 @@ export class TeamDetailComponent implements OnInit {
       comment: this.teamReviewComment().trim() || null,
     }).subscribe({
       next: (review) => {
-        const next = [review, ...this.teamReviews()];
-        this.teamReviews.set(next);
-        const avg = next.reduce((sum, r) => sum + this.starRating(r.rating), 0) / next.length;
-        this.team.update((t) =>
-          t ? { ...t, averageRating: avg, ratingCount: next.length } : t,
-        );
+        const hidden = (review.moderationStatus || '').toLowerCase() === 'hidden';
+        if (!hidden) {
+          const next = [review, ...this.teamReviews()];
+          this.teamReviews.set(next);
+          const avg = next.reduce((sum, r) => sum + this.starRating(r.rating), 0) / next.length;
+          this.team.update((t) =>
+            t ? { ...t, averageRating: avg, ratingCount: next.length } : t,
+          );
+        }
         this.teamReviewRating.set(0);
         this.teamReviewComment.set('');
         this.teamReviewSubmitting.set(false);
+        if (review.moderationWarning) {
+          this.teamReviewError.set(review.moderationWarning);
+          this.toast.warning(
+            review.moderationWarning,
+            'Your review broke FreeGency rules',
+          );
+        }
       },
       error: (err) => {
-        this.teamReviewError.set(extractApiError(err, 'Could not submit your review.'));
+        const msg = extractApiError(err, 'Could not submit your review.');
+        this.teamReviewError.set(msg);
+        this.toast.warning(msg, 'Review not accepted');
         this.teamReviewSubmitting.set(false);
       },
     });
@@ -1213,7 +1263,12 @@ export class TeamDetailComponent implements OnInit {
   }
 
   protected openApplyJob(job: TeamJob): void {
-    if (this.isTeamMember() || !this.isJobOpen(job.status) || this.appliedJobIds().includes(job.id)) {
+    if (
+      this.isClientViewer() ||
+      this.isTeamMember() ||
+      !this.isJobOpen(job.status) ||
+      this.appliedJobIds().includes(job.id)
+    ) {
       return;
     }
     this.applyJobId.set(job.id);
@@ -1337,11 +1392,73 @@ export class TeamDetailComponent implements OnInit {
       raw === 'tasks' ||
       raw === 'finance' ||
       raw === 'messages' ||
-      raw === 'members'
+      raw === 'members' ||
+      raw === 'invitations'
     ) {
       return raw;
     }
     return 'overview';
+  }
+
+  private loadProjectInvitations(teamId: string): void {
+    this.projectInvitationsLoading.set(true);
+    this.projectInvitationsError.set(null);
+    this.invitationsApi.getForTeam(teamId).subscribe({
+      next: (items) => {
+        this.projectInvitations.set(items);
+        this.projectInvitationsLoading.set(false);
+      },
+      error: (err) => {
+        this.projectInvitationsLoading.set(false);
+        this.projectInvitationsError.set(
+          extractApiError(err) || 'Could not load project invitations.',
+        );
+      },
+    });
+  }
+
+  protected acceptProjectInvitation(inv: ProjectInvitation): void {
+    if (inv.status !== 'Pending' || this.projectInviteActionId()) return;
+    this.projectInviteActionId.set(inv.id);
+    this.invitationsApi.accept(inv.id).subscribe({
+      next: (roomId) => {
+        this.projectInviteActionId.set(null);
+        const teamId = this.team()?.id;
+        if (teamId) this.loadProjectInvitations(teamId);
+        void this.router.navigate(['/developer/messages'], {
+          queryParams: { room: roomId },
+        });
+      },
+      error: (err) => {
+        this.projectInviteActionId.set(null);
+        this.projectInvitationsError.set(
+          extractApiError(err) || 'Could not accept invitation.',
+        );
+      },
+    });
+  }
+
+  protected rejectProjectInvitation(inv: ProjectInvitation): void {
+    if (inv.status !== 'Pending' || this.projectInviteActionId()) return;
+    this.projectInviteActionId.set(inv.id);
+    this.invitationsApi.reject(inv.id).subscribe({
+      next: () => {
+        this.projectInviteActionId.set(null);
+        const teamId = this.team()?.id;
+        if (teamId) this.loadProjectInvitations(teamId);
+      },
+      error: (err) => {
+        this.projectInviteActionId.set(null);
+        this.projectInvitationsError.set(
+          extractApiError(err) || 'Could not reject invitation.',
+        );
+      },
+    });
+  }
+
+  protected openProjectInvitationChat(roomId: string | null): void {
+    if (!roomId) return;
+    void this.router.navigate(['/developer/messages'], { queryParams: { room: roomId } });
   }
 
   private loadTeamReviews(teamId: string): void {
@@ -1381,6 +1498,9 @@ export class TeamDetailComponent implements OnInit {
         if (this.activeTab() === 'jobs') {
           this.loadJobs(id);
           if (this.isLeader()) this.loadJoinRequests(id);
+        }
+        if (this.activeTab() === 'invitations' && this.isLeader()) {
+          this.loadProjectInvitations(id);
         }
         if (this.activeTab() === 'members') {
           this.loadMembers(id);
@@ -1455,8 +1575,22 @@ export class TeamDetailComponent implements OnInit {
 
   private reloadPortfolio(teamId: string): void {
     this.teamsApi.getTeamPortfolio(teamId, { skipLoading: true }).subscribe({
-      next: (items) => this.portfolio.set(items),
-      error: () => this.portfolio.set([]),
+      next: (items) => {
+        this.portfolio.set(items);
+        this.scrollToPortfolioFragment();
+      },
+      error: () => {
+        this.portfolio.set([]);
+        this.scrollToPortfolioFragment();
+      },
+    });
+  }
+
+  private scrollToPortfolioFragment(): void {
+    if (this.route.snapshot.fragment !== 'portfolio') return;
+    if (this.activeTab() !== 'overview') this.activeTab.set('overview');
+    requestAnimationFrame(() => {
+      document.getElementById('portfolio')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   }
 

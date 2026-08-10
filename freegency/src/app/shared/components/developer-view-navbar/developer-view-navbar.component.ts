@@ -13,14 +13,15 @@ import { filter } from 'rxjs';
 import { HugeiconsIconComponent, type IconSvgObject } from '@hugeicons/angular';
 import {
   ArrowDown01Icon,
-  Briefcase01Icon,
+  BriefcaseDollarIcon,
+  CodeIcon,
+  Folder01Icon,
   HelpCircleIcon,
   Logout01Icon,
   Notification02Icon,
   Search01Icon,
   Settings01Icon,
   Tick02Icon,
-  UserAccountIcon,
   Wallet01Icon,
 } from '@hugeicons/core-free-icons';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -55,15 +56,15 @@ export class DeveloperViewNavbarComponent implements OnInit {
   protected readonly walletIcon = Wallet01Icon as IconSvgObject;
   protected readonly helpIcon = HelpCircleIcon as IconSvgObject;
   protected readonly logoutIcon = Logout01Icon as IconSvgObject;
-  protected readonly clientIcon = UserAccountIcon as IconSvgObject;
-  protected readonly developerIcon = Briefcase01Icon as IconSvgObject;
+  protected readonly clientIcon = BriefcaseDollarIcon as IconSvgObject;
+  protected readonly developerIcon = CodeIcon as IconSvgObject;
+  protected readonly portfolioIcon = Folder01Icon as IconSvgObject;
   protected readonly profileImage = this.auth.profileImage;
 
   protected readonly navItems = [
     { label: 'Home', route: '/developer/home' },
-    { label: 'Explore', route: '/developer/explore' },
-    { label: 'Manage Work', route: '/developer/manage-work' },
     { label: 'Teams', route: '/developer/teams' },
+    { label: 'Manage Work', route: '/developer/manage-work' },
     { label: 'Messages', route: '/developer/messages' },
   ] as const;
 
@@ -160,6 +161,13 @@ export class DeveloperViewNavbarComponent implements OnInit {
 
   protected closeAccountMenu(): void {
     this.accountMenuOpen.set(false);
+  }
+
+  /** Personal portfolio page (Sama's freelancer portfolio). */
+  protected goToPortfolio(event: MouseEvent): void {
+    event.stopPropagation();
+    this.closeAccountMenu();
+    void this.router.navigateByUrl('/developer/me/portfolio');
   }
 
   protected selectProfileMode(mode: UserMode, event: MouseEvent): void {

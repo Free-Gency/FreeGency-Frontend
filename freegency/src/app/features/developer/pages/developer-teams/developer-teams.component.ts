@@ -13,7 +13,7 @@ import {
   StarIcon,
   UserGroupIcon,
 } from '@hugeicons/core-free-icons';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { extractApiError } from '../../../../core/http/api-error';
@@ -22,11 +22,14 @@ import {
   CategoriesApiService,
   type CategoryDto,
 } from '../../../auth/data-access/categories-api.service';
+import { ProjectInvitationsApiService } from '../../../client/data-access/project-invitations-api.service';
+import type { ProjectInvitation } from '../../../client/models/project-invitation';
 import { TeamHubCardComponent } from '../../components/team-hub-card/team-hub-card.component';
+import { TeamSuggestionsComponent } from '../../components/team-suggestions/team-suggestions.component';
 import { TeamsService } from '../../data-access/teams.service';
 import { PagedTeamJobs, Team, TeamJob, TeamMemberAvatar } from '../../models/team';
 
-type TeamsHubTab = 'active' | 'discover' | 'openings';
+type TeamsHubTab = 'active' | 'discover' | 'openings' | 'suggested' | 'invitations';
 
 const DISCOVER_PAGE_SIZE = 9;
 
@@ -39,6 +42,7 @@ const DISCOVER_PAGE_SIZE = 9;
     HugeiconsIconComponent,
     NgClass,
     TeamHubCardComponent,
+    TeamSuggestionsComponent,
   ],
   templateUrl: './developer-teams.component.html',
   styleUrl: './developer-teams.component.css',
@@ -46,8 +50,10 @@ const DISCOVER_PAGE_SIZE = 9;
 export class DeveloperTeamsComponent {
   private readonly teamsApi = inject(TeamsService);
   private readonly categoriesApi = inject(CategoriesApiService);
+  private readonly invitationsApi = inject(ProjectInvitationsApiService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly groupIcon = UserGroupIcon as IconSvgObject;
   protected readonly plusIcon = PlusSignIcon as IconSvgObject;
@@ -104,6 +110,11 @@ export class DeveloperTeamsComponent {
   protected readonly applySuccess = signal(false);
   protected readonly appliedJobIds = signal<string[]>([]);
 
+  protected readonly invitations = signal<ProjectInvitation[]>([]);
+  protected readonly loadingInvitations = signal(false);
+  protected readonly invitationsError = signal<string | null>(null);
+  protected readonly inviteActionId = signal<string | null>(null);
+
   protected readonly canSubmitJoin = computed(() => this.joinCode().trim().length >= 4);
 
   private readonly myTeamIds = computed(
@@ -112,6 +123,7 @@ export class DeveloperTeamsComponent {
 
   protected readonly tabs = computed(() => [
     { id: 'active' as const, label: 'My Teams', count: this.activeTeams().length },
+    { id: 'suggested' as const, label: 'For you', count: null as number | null },
     {
       id: 'discover' as const,
       label: 'Discover',
@@ -121,6 +133,11 @@ export class DeveloperTeamsComponent {
       id: 'openings' as const,
       label: 'Jobs',
       count: this.openings()?.totalCount ?? this.openings()?.items.length ?? 0,
+    },
+    {
+      id: 'invitations' as const,
+      label: 'Invitations',
+      count: this.invitations().filter((i) => i.status === 'Pending').length,
     },
   ]);
 
@@ -144,6 +161,11 @@ export class DeveloperTeamsComponent {
   constructor() {
     this.loadActiveTeams();
     this.loadCategories();
+    const tab = this.route.snapshot.queryParamMap.get('tab');
+    if (tab === 'invitations') {
+      this.activeTab.set('invitations');
+      this.loadInvitations();
+    }
   }
 
   protected switchTab(tab: TeamsHubTab): void {
@@ -156,6 +178,73 @@ export class DeveloperTeamsComponent {
     if (tab === 'openings' && !this.openings() && !this.loadingOpenings()) {
       this.loadOpenings();
     }
+
+    if (tab === 'invitations') {
+      this.loadInvitations();
+    }
+  }
+
+  protected invitationStatusClass(status: string): string {
+    return `rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide ${
+      status === 'Pending'
+        ? 'bg-orange-50 text-orange-700'
+        : status === 'Accepted'
+          ? 'bg-emerald-50 text-emerald-700'
+          : 'bg-gray-100 text-gray-600'
+    }`;
+  }
+
+  protected acceptInvitation(inv: ProjectInvitation): void {
+    if (inv.status !== 'Pending' || this.inviteActionId()) return;
+    this.inviteActionId.set(inv.id);
+    this.invitationsApi.accept(inv.id).subscribe({
+      next: (roomId) => {
+        this.inviteActionId.set(null);
+        this.loadInvitations();
+        void this.router.navigate(['/developer/messages'], {
+          queryParams: { room: roomId },
+        });
+      },
+      error: (err) => {
+        this.inviteActionId.set(null);
+        this.invitationsError.set(extractApiError(err) || 'Could not accept invitation.');
+      },
+    });
+  }
+
+  protected rejectInvitation(inv: ProjectInvitation): void {
+    if (inv.status !== 'Pending' || this.inviteActionId()) return;
+    this.inviteActionId.set(inv.id);
+    this.invitationsApi.reject(inv.id).subscribe({
+      next: () => {
+        this.inviteActionId.set(null);
+        this.loadInvitations();
+      },
+      error: (err) => {
+        this.inviteActionId.set(null);
+        this.invitationsError.set(extractApiError(err) || 'Could not reject invitation.');
+      },
+    });
+  }
+
+  protected openInvitationChat(roomId: string | null): void {
+    if (!roomId) return;
+    void this.router.navigate(['/developer/messages'], { queryParams: { room: roomId } });
+  }
+
+  private loadInvitations(): void {
+    this.loadingInvitations.set(true);
+    this.invitationsError.set(null);
+    this.invitationsApi.getReceived().subscribe({
+      next: (items) => {
+        this.invitations.set(items);
+        this.loadingInvitations.set(false);
+      },
+      error: (err) => {
+        this.loadingInvitations.set(false);
+        this.invitationsError.set(extractApiError(err) || 'Could not load invitations.');
+      },
+    });
   }
 
   protected isOwnTeamJob(job: TeamJob): boolean {

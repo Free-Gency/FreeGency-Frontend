@@ -95,6 +95,7 @@ export class ProposalDetailDrawerComponent {
       Pending: 'status-pending',
       Viewed: 'status-viewed',
       InDiscussion: 'status-discussion',
+      Accepted: 'status-accepted',
       Rejected: 'status-rejected',
       Withdrawn: 'status-withdrawn',
       Expired: 'status-expired',
@@ -134,7 +135,9 @@ export class ProposalDetailDrawerComponent {
   }
 
   protected canOpenMessages(p: ProposalDetailModel): boolean {
-    return p.status === 'InDiscussion' && !!p.chatRoomId;
+    return (
+      (p.status === 'InDiscussion' || p.status === 'Accepted') && !!p.chatRoomId
+    );
   }
 
   protected onBackdrop(event: MouseEvent) {

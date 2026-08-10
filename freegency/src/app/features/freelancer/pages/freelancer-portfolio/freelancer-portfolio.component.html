@@ -1,0 +1,131 @@
+@if (isClientViewer()) {
+  <app-client-view-navbar />
+} @else {
+  <app-developer-view-navbar />
+}
+
+<main class="pf-page">
+  @if (loading()) {
+    <p class="pf-page__loading">Loading portfolio…</p>
+  } @else if (error()) {
+    <div class="pf-page__error">{{ error() }}</div>
+  } @else if (profile(); as p) {
+    <div class="pf-page__grid">
+      <div class="pf-page__main">
+        <app-portfolio-header
+          [profile]="p"
+          [socialLinks]="socialLinks()"
+          [canEdit]="canEdit()"
+          [projectsCount]="projects().length"
+        />
+
+        <app-portfolio-about [bio]="p.bio || ''" [canEdit]="canEdit()" />
+
+        <section class="pf-page__portfolio">
+          <div class="pf-page__portfolio-head">
+            <h2 class="pf-page__portfolio-title">Portfolio</h2>
+            <span class="pf-page__portfolio-count">{{ projects().length }} projects</span>
+          </div>
+
+          @if (!projects().length) {
+            <div class="pf-page__empty">No public portfolio projects yet.</div>
+          } @else {
+            <div class="pf-page__projects">
+              @for (project of projects(); track project.id) {
+                <div
+                  role="button"
+                  tabindex="0"
+                  (click)="openProject(project)"
+                  (keydown.enter)="openProject(project)"
+                >
+                  <app-project-card [project]="project" />
+                </div>
+              }
+            </div>
+          }
+        </section>
+
+        <section class="pf-page__reviews">
+          <div class="pf-page__portfolio-head">
+            <h2 class="pf-page__portfolio-title">Reviews</h2>
+            <span class="pf-page__portfolio-count">
+              {{ reviews().length || profile()?.ratingCount || 0 }} reviews
+            </span>
+          </div>
+
+          @if (canLeaveReview()) {
+            <form class="pf-review-form" (submit)="$event.preventDefault(); submitReview()">
+              <p class="pf-review-form__title">Leave a review</p>
+
+              <div class="pf-review-form__rating">
+                <span class="pf-review-form__label">Your rating</span>
+                <div
+                  class="pf-review-form__stars"
+                  (mouseleave)="reviewHover.set(0)"
+                  role="radiogroup"
+                  aria-label="Rating"
+                >
+                  @for (value of starChoices; track value) {
+                    <button
+                      type="button"
+                      class="pf-review-form__star-btn"
+                      [class.is-on]="value <= (reviewHover() || reviewRating())"
+                      (mouseenter)="reviewHover.set(value)"
+                      (click)="reviewRating.set(value); reviewError.set(null)"
+                      [attr.aria-label]="value + ' stars'"
+                    >
+                      ★
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <label class="pf-review-form__field">
+                <span class="pf-review-form__label">Your comment</span>
+                <textarea
+                  rows="3"
+                  maxlength="500"
+                  placeholder="What stood out about working with this developer?"
+                  class="pf-review-form__textarea"
+                  [value]="reviewComment()"
+                  (input)="onReviewCommentInput($event)"
+                ></textarea>
+                <span class="pf-review-form__count">{{ reviewComment().length }}/500</span>
+              </label>
+
+              @if (reviewError()) {
+                <p class="pf-review-form__error">{{ reviewError() }}</p>
+              }
+
+              <button type="submit" class="pf-review-form__submit" [disabled]="reviewSubmitting()">
+                {{ reviewSubmitting() ? 'Submitting…' : 'Submit review' }}
+              </button>
+            </form>
+          } @else if (!auth.session() && !canEdit()) {
+            <p class="pf-page__login-hint">
+              <a routerLink="/auth/login">Sign in</a>
+              to leave a review for this developer.
+            </p>
+          }
+
+          @if (!reviews().length) {
+            <div class="pf-page__empty">No client reviews yet.</div>
+          } @else {
+            <div class="pf-page__review-grid">
+              @for (review of reviews(); track review.id) {
+                <app-review-card [review]="review" />
+              }
+            </div>
+          }
+        </section>
+      </div>
+
+      <aside class="pf-page__aside">
+        <app-portfolio-availability [profile]="p" [canEdit]="canEdit()" />
+        @if (canEdit()) {
+          <app-profile-strength [profile]="p" [projects]="projects()" />
+        }
+      </aside>
+    </div>
+  }
+</main>

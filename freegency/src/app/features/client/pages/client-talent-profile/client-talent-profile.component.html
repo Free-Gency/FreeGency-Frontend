@@ -1,0 +1,100 @@
+<div class="talent-profile min-h-dvh bg-background">
+  <app-client-view-navbar />
+
+  <main class="mx-auto w-full max-w-[1100px] px-4 py-8 sm:px-6 md:px-10">
+    <button type="button" class="talent-profile__back" (click)="backHome()">
+      ← Back to For you
+    </button>
+
+    @if (loading()) {
+      <div class="talent-profile__loading">Loading profile…</div>
+    } @else if (error()) {
+      <div class="talent-profile__empty">
+        <p>{{ error() }}</p>
+        <a routerLink="/client/home" class="talent-profile__cta">Go home</a>
+      </div>
+    } @else {
+      <section class="talent-profile__hero">
+        <div class="talent-profile__identity">
+          @if (avatarUrl()) {
+            <img class="talent-profile__avatar" [src]="avatarUrl()!" [alt]="displayName()" />
+          } @else {
+            <div class="talent-profile__avatar talent-profile__avatar--fallback">
+              {{ initials(displayName()) }}
+            </div>
+          }
+          <div class="min-w-0">
+            <div class="talent-profile__name-row">
+              <h1>{{ displayName() }}</h1>
+              <span class="talent-profile__chip">{{ kind() === 'team' ? 'Team' : 'Developer' }}</span>
+            </div>
+            <p class="talent-profile__about">{{ aboutText() }}</p>
+            <div class="talent-profile__stats">
+              <span>★ {{ (preview().averageRating || team()?.averageRating || 0) | number: '1.1-1' }}
+                ({{ preview().ratingCount || team()?.ratingCount || 0 }})</span>
+              <span>{{ portfolio().length || preview().portfolioProjectCount || 0 }} portfolio</span>
+              <span>{{ preview().completedProjectsCount || 0 }} completed</span>
+              @if (kind() === 'team') {
+                <span>{{ preview().memberCount ?? team()?.membersCount ?? 0 }} members</span>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="talent-profile__actions">
+          <button type="button" class="talent-profile__cta" (click)="invite()">Invite to job</button>
+        </div>
+      </section>
+
+      @if ((preview().specialties?.length || 0) > 0 || (preview().skills?.length || 0) > 0 || (team()?.skills?.length || 0) > 0) {
+        <div class="talent-profile__tags">
+          @for (s of preview().specialties?.slice(0, 4) ?? []; track s) {
+            <span class="tag tag--specialty">{{ s }}</span>
+          }
+          @for (s of skillLabels().slice(0, 8); track s) {
+            <span class="tag">{{ s }}</span>
+          }
+        </div>
+      }
+
+      <section class="talent-profile__portfolio">
+        <div class="talent-profile__section-head">
+          <h2>Portfolio</h2>
+          <p>Case studies and shipped work.</p>
+        </div>
+
+        @if (!portfolio().length) {
+          <div class="talent-profile__empty">No public portfolio projects yet.</div>
+        } @else {
+          <div class="talent-profile__grid">
+            @for (item of portfolio(); track item.id) {
+              <button type="button" class="pf-card" (click)="openPortfolio(item.id)">
+                <div
+                  class="pf-card__cover"
+                  [style.background-image]="item.imageCover ? 'url(' + item.imageCover + ')' : null"
+                ></div>
+                <div class="pf-card__body">
+                  @if (item.categoryName) {
+                    <span class="pf-card__cat">{{ item.categoryName }}</span>
+                  }
+                  <h3>{{ item.title }}</h3>
+                  @if (item.description) {
+                    <p>{{ item.description }}</p>
+                  }
+                </div>
+              </button>
+            }
+          </div>
+        }
+      </section>
+    }
+  </main>
+</div>
+
+@if (inviteOpen()) {
+  <app-invite-to-project-modal
+    [target]="inviteTarget()"
+    [preferredProjectId]="preview().projectId ?? null"
+    (closed)="closeInvite()"
+  />
+}

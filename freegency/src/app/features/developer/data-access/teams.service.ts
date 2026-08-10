@@ -64,6 +64,8 @@ export interface TeamReview {
   reviewerUserId?: string | null;
   reviewerName: string;
   reviewerAvatar: string | null;
+  moderationStatus?: string | null;
+  moderationWarning?: string | null;
 }
 
 const skipLoadingCtx = () => new HttpContext().set(SKIP_LOADING, true);
@@ -859,6 +861,10 @@ export class TeamsService {
   }
 
   private normalizeTeamReview(review: TeamReview): TeamReview {
+    const r = review as TeamReview & {
+      ModerationStatus?: string | null;
+      ModerationWarning?: string | null;
+    };
     return {
       id: String(review.id ?? ''),
       rating: Number(review.rating ?? 0),
@@ -867,6 +873,8 @@ export class TeamsService {
       reviewerUserId: review.reviewerUserId ?? null,
       reviewerName: String(review.reviewerName ?? '').trim() || 'Community member',
       reviewerAvatar: review.reviewerAvatar ?? null,
+      moderationStatus: review.moderationStatus ?? r.ModerationStatus ?? null,
+      moderationWarning: review.moderationWarning ?? r.ModerationWarning ?? null,
     };
   }
 

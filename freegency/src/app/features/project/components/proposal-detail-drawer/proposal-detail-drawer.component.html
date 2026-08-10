@@ -307,6 +307,24 @@
               Continue in messages, then negotiate the milestone plan to hire.
             </p>
           </div>
+        } @else if (proposal.status === 'Accepted') {
+          <div class="tip-banner tip-banner--success">
+            <span class="material-symbols-outlined shrink-0 text-[18px] text-[#166534]">
+              check_circle
+            </span>
+            <p class="text-xs leading-relaxed text-[#166534]">
+              This proposal was accepted — the freelancer/team is hired for the project.
+            </p>
+          </div>
+        } @else if (proposal.status === 'Rejected') {
+          <div class="tip-banner tip-banner--danger">
+            <span class="material-symbols-outlined shrink-0 text-[18px] text-[#93000A]">
+              cancel
+            </span>
+            <p class="text-xs leading-relaxed text-[#93000A]">
+              This proposal was rejected and is no longer in consideration.
+            </p>
+          </div>
         }
       </div>
 

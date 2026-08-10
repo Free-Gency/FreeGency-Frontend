@@ -10,6 +10,7 @@ import { FormsModule } from '@angular/forms';
 })
 export class PortfolioAboutComponent {
   bio = input<string>('');
+  canEdit = input(true);
 
   bioUpdated = output<string>();
 
@@ -17,6 +18,7 @@ export class PortfolioAboutComponent {
   tempBio = signal('');
 
   startEditing() {
+    if (!this.canEdit()) return;
     this.tempBio.set(this.bio());
     this.isEditing.set(true);
   }

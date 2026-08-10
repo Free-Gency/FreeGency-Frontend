@@ -16,6 +16,7 @@ import { MessagesPanelComponent } from '../../../chat/messages-panel/messages-pa
         <app-messages-panel
           mode="personal"
           [initialRoomId]="roomId()"
+          [initialProjectId]="projectId()"
           [embedded]="false"
         />
       </main>
@@ -27,6 +28,11 @@ export class ClientMessagesComponent {
 
   protected readonly roomId = toSignal(
     this.route.queryParamMap.pipe(map((params) => params.get('room'))),
+    { initialValue: null as string | null },
+  );
+
+  protected readonly projectId = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get('project'))),
     { initialValue: null as string | null },
   );
 }

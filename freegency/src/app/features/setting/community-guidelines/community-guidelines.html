@@ -1,0 +1,67 @@
+<section class="cg-page">
+  <header class="cg-header">
+    <div class="cg-header__icon" aria-hidden="true">
+      <hugeicons-icon [icon]="shieldIcon" [size]="22" color="currentColor" [strokeWidth]="1.8" />
+    </div>
+    <div>
+      <h1>Community guidelines</h1>
+      <p>
+        Warnings from chat and reviews on your FreeGency account. Repeated
+        violations can temporarily restrict posting for Client and Developer modes.
+      </p>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <p class="cg-hint">Loading your warnings…</p>
+  } @else if (status(); as s) {
+    <div class="cg-summary" [class.cg-summary--restricted]="s.isRestricted">
+      <div class="cg-stat">
+        <span class="cg-stat__value">{{ s.strikeCount }}</span>
+        <span class="cg-stat__label">Warnings ({{ s.strikeWindowDays }} days)</span>
+      </div>
+      <div class="cg-stat">
+        <span class="cg-stat__value">{{ s.strikesRemainingUntilRestriction }}</span>
+        <span class="cg-stat__label">Left before temporary restrict</span>
+      </div>
+      <div class="cg-stat">
+        <span class="cg-stat__value">{{ s.strikeThreshold }}</span>
+        <span class="cg-stat__label">Limit before restrict</span>
+      </div>
+    </div>
+
+    <p class="cg-banner" [class.cg-banner--alert]="s.isRestricted">
+      <hugeicons-icon [icon]="alertIcon" [size]="18" color="currentColor" [strokeWidth]="1.8" />
+      <span>{{ s.restrictionSummary }}</span>
+    </p>
+
+    @if (s.isRestricted && s.restrictedUntil) {
+      <p class="cg-muted-until">
+        Restricted until {{ s.restrictedUntil | date: 'medium' }}
+      </p>
+    }
+
+    <h2 class="cg-list-title">Your recent warnings</h2>
+
+    @if (s.recentStrikes.length === 0) {
+      <p class="cg-hint">No warnings in the current window.</p>
+    } @else {
+      <ul class="cg-list">
+        @for (item of s.recentStrikes; track item.id) {
+          <li class="cg-item">
+            <div class="cg-item__top">
+              <strong>{{ item.categoryLabel }}</strong>
+              <time>{{ item.createdAt | date: 'medium' }}</time>
+            </div>
+            <p class="cg-item__meta">{{ sourceLabel(item.sourceType) }}</p>
+            @if (item.userMessage) {
+              <p class="cg-item__msg">{{ item.userMessage }}</p>
+            } @else if (item.reason) {
+              <p class="cg-item__msg">{{ item.reason }}</p>
+            }
+          </li>
+        }
+      </ul>
+    }
+  }
+</section>

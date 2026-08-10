@@ -13,6 +13,11 @@
   color: #110068;
 }
 
+.status-accepted {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
 .status-rejected {
   background-color: var(--color-error-container);
   color: var(--color-on-error-container);

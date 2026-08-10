@@ -1,0 +1,227 @@
+<section class="talent-tab" aria-labelledby="talent-you-might-like">
+  @if (loadingProjects()) {
+    <div class="talent-project-panel talent-project-panel--skeleton" aria-hidden="true"></div>
+    <div class="talent-list" aria-hidden="true">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <div class="talent-card talent-card--skeleton"></div>
+      }
+    </div>
+  } @else if (!hasOpenProjects()) {
+    <div class="talent-empty talent-empty--center">
+      <h2 id="talent-you-might-like" class="talent-empty__title">No open projects yet</h2>
+      <p class="talent-empty__text">
+        Publish a project first, then we’ll suggest teams and developers that match your needs.
+      </p>
+      <a routerLink="/client/create-project" class="talent-empty__cta">Create a project</a>
+    </div>
+  } @else {
+    @if (openProjects().length > 1) {
+      <div class="talent-project-pills" role="tablist" aria-label="Choose a project">
+        @for (project of openProjects(); track project.id) {
+          <button
+            type="button"
+            role="tab"
+            class="talent-pill"
+            [class.talent-pill--active]="selectedProjectId() === project.id"
+            [attr.aria-selected]="selectedProjectId() === project.id"
+            (click)="selectProject(project.id)"
+          >
+            {{ project.title }}
+          </button>
+        }
+      </div>
+    }
+
+    @if (selectedProject(); as project) {
+      <article class="talent-project-panel">
+        <div class="talent-project-panel__top">
+          <div class="min-w-0 flex-1">
+            <p class="talent-project-panel__eyebrow">Matching for</p>
+            <h2 id="talent-you-might-like" class="talent-project-panel__title">
+              {{ project.title }}
+            </h2>
+            <p class="talent-project-panel__desc">{{ project.description }}</p>
+          </div>
+          <a class="talent-project-panel__link" [routerLink]="['/projects', project.id]">
+            Open project
+            <span aria-hidden="true">→</span>
+          </a>
+        </div>
+
+        <div class="talent-project-panel__meta">
+          <div class="talent-meta">
+            <span class="talent-meta__label">Budget</span>
+            <span class="talent-meta__value">{{ formatBudget(project) }}</span>
+          </div>
+          <div class="talent-meta">
+            <span class="talent-meta__label">Timeline</span>
+            <span class="talent-meta__value">{{ formatTimeline(project) }}</span>
+          </div>
+          <div class="talent-meta">
+            <span class="talent-meta__label">Category</span>
+            <span class="talent-meta__value">{{ project.categoryName || 'General' }}</span>
+          </div>
+          <div class="talent-meta">
+            <span class="talent-meta__label">Proposals</span>
+            <span class="talent-meta__value">{{ project.proposalCount }}</span>
+          </div>
+        </div>
+
+        @if (project.skills.length || project.specialties.length) {
+          <div class="talent-project-panel__tags">
+            @for (s of project.specialties.slice(0, 4); track s) {
+              <span class="talent-tag talent-tag--specialty">{{ s }}</span>
+            }
+            @for (s of project.skills.slice(0, 6); track s) {
+              <span class="talent-tag">{{ s }}</span>
+            }
+          </div>
+        }
+      </article>
+    }
+
+    <div class="talent-results-head">
+      <h3 class="talent-results-head__title">Talent you might like</h3>
+      <p class="talent-results-head__sub">
+        Profiles ranked by skills, specialties, rating, and portfolio fit.
+      </p>
+    </div>
+
+    @if (loadingTalent()) {
+      <div class="talent-list" aria-hidden="true">
+        @for (i of [1, 2, 3, 4]; track i) {
+          <div class="talent-card talent-card--skeleton"></div>
+        }
+      </div>
+    } @else if (error()) {
+      <div class="talent-empty">
+        <p>{{ error() }}</p>
+        <button type="button" class="talent-empty__btn" (click)="retry()">Try again</button>
+      </div>
+    } @else if (!talent().length) {
+      <div class="talent-empty">
+        <p>No strong matches yet. Check back after more talent is indexed.</p>
+      </div>
+    } @else {
+      <div class="talent-list" role="list">
+        @for (card of talent(); track card.id + card.candidateType; let i = $index) {
+          <article class="talent-card" role="listitem" [class.talent-card--top]="i === 0">
+            <div class="talent-card__header">
+              <div class="talent-card__identity">
+                <div class="talent-card__avatar-wrap">
+                  @if (card.avatarUrl) {
+                    <img
+                      class="talent-card__avatar"
+                      [src]="card.avatarUrl"
+                      [alt]="card.name"
+                      width="48"
+                      height="48"
+                    />
+                  } @else {
+                    <div class="talent-card__avatar talent-card__avatar--fallback" aria-hidden="true">
+                      {{ initials(card.name) }}
+                    </div>
+                  }
+                </div>
+
+                <div class="talent-card__who">
+                  <h4 class="talent-card__name">{{ card.name || 'Talent' }}</h4>
+                  <div class="talent-card__badges">
+                    <span
+                      class="talent-badge"
+                      [class.talent-badge--team]="isTeam(card)"
+                      [class.talent-badge--dev]="!isTeam(card)"
+                    >
+                      {{ typeLabel(card.candidateType) }}
+                    </span>
+                    @if (i === 0) {
+                      <span class="talent-badge talent-badge--best">Best fit</span>
+                    }
+                    @if (card.categories?.length) {
+                      <span class="talent-badge talent-badge--soft">
+                        {{ card.categories![0] }}
+                      </span>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <div class="talent-card__match" aria-label="Match score">
+                <span class="talent-card__match-value">{{ matchPercent(card.finalScore) }}%</span>
+                <span class="talent-card__match-label">match</span>
+              </div>
+            </div>
+
+            <p class="talent-card__about">
+              {{
+                card.about ||
+                  'Strong overlap with your project needs — explore their portfolio and invite them.'
+              }}
+            </p>
+
+            <div class="talent-card__stats" [class.talent-card__stats--team]="isTeam(card)">
+              <div class="talent-stat">
+                <strong>★ {{ card.averageRating | number: '1.1-1' }}</strong>
+                <span>{{ card.ratingCount }} reviews</span>
+              </div>
+              <div class="talent-stat">
+                <strong>{{ card.portfolioProjectCount }}</strong>
+                <span>Portfolio</span>
+              </div>
+              <div class="talent-stat">
+                <strong>{{ card.completedProjectsCount }}</strong>
+                <span>Done</span>
+              </div>
+              @if (isTeam(card)) {
+                <div class="talent-stat">
+                  <strong>{{ card.memberCount ?? 0 }}</strong>
+                  <span>Members</span>
+                </div>
+              }
+            </div>
+
+            @if (
+              (card.specialties?.length ?? 0) > 0 ||
+              card.skills.length ||
+              (card.categories?.length ?? 0) > 1
+            ) {
+              <div class="talent-card__tags">
+                @for (s of card.specialties?.slice(0, 2) ?? []; track s) {
+                  <span class="talent-tag talent-tag--specialty">{{ s }}</span>
+                }
+                @for (skill of card.skills.slice(0, 3); track skill) {
+                  <span class="talent-tag">{{ skill }}</span>
+                }
+              </div>
+            }
+
+            <div class="talent-card__actions">
+              <button
+                type="button"
+                class="talent-card__btn talent-card__btn--ghost"
+                (click)="viewDetails(card)"
+              >
+                View details
+              </button>
+              <button
+                type="button"
+                class="talent-card__btn talent-card__btn--primary"
+                (click)="invite(card)"
+              >
+                Invite
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  }
+</section>
+
+@if (inviteTarget(); as target) {
+  <app-invite-to-project-modal
+    [target]="target"
+    [preferredProjectId]="inviteProjectId()"
+    (closed)="closeInvite()"
+  />
+}

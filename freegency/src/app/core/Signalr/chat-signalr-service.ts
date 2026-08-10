@@ -205,6 +205,8 @@ leaveRoom(roomId: string): Promise<void> {
       FileUrl?: string | null;
       SenderProfileType?: string | null;
       PlanVersionId?: string | null;
+      ModerationStatus?: string | null;
+      ModerationWarning?: string | null;
     };
     const planRaw = raw.planVersionId ?? r.PlanVersionId ?? null;
     return {
@@ -221,6 +223,8 @@ leaveRoom(roomId: string): Promise<void> {
       createdAt: raw.createdAt || r.CreatedAt || new Date().toISOString(),
       messageType: raw.messageType || r.MessageType || 'Text',
       otherProfileId: raw.otherProfileId ?? r.OtherProfileId ?? null,
+      moderationStatus: raw.moderationStatus ?? r.ModerationStatus ?? null,
+      moderationWarning: raw.moderationWarning ?? r.ModerationWarning ?? null,
     };
   }
 

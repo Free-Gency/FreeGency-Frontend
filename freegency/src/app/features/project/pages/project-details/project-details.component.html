@@ -40,7 +40,7 @@
                 ? 'bg-[#4130D7] text-white'
                 : 'bg-[#F0EDEF] text-on-surface hover:bg-[#E5E1E4]'
             "
-            (click)="activeTab.set(tab.key)"
+            (click)="setTab(tab.key)"
           >
             <span>{{ tab.label }}</span>
             @if (tab.key === 'proposals' && (proposalsCount() || p.proposalCount) > 0) {

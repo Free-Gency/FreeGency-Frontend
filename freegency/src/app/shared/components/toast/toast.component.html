@@ -8,6 +8,7 @@
         class="toast-item"
         [class.toast-item--success]="toast.variant === 'success'"
         [class.toast-item--error]="toast.variant === 'error'"
+        [class.toast-item--warning]="toast.variant === 'warning'"
         role="status"
       >
         <span
@@ -16,13 +17,18 @@
         >
           <hugeicons-icon
             [icon]="variantIcon(toast.variant)"
-            [size]="20"
+            [size]="toast.variant === 'warning' ? 24 : 20"
             color="currentColor"
             [strokeWidth]="1.85"
           />
         </span>
 
-        <p class="toast-text">{{ toast.text }}</p>
+        <div class="toast-copy">
+          @if (toast.title) {
+            <p class="toast-title">{{ toast.title }}</p>
+          }
+          <p class="toast-text">{{ toast.text }}</p>
+        </div>
 
         <button
           type="button"

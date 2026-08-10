@@ -31,7 +31,7 @@
   @if (notificationOpen()) {
 
     <div
-      class="absolute right-0 top-[calc(100%+10px)] z-[80] w-[380px] overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-[0_12px_40px_rgba(39,37,63,0.16)]"
+      class="absolute right-0 top-[calc(100%+10px)] z-[80] w-[min(94vw,420px)] overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-[0_12px_40px_rgba(39,37,63,0.16)]"
       (click)="$event.stopPropagation()"
     >
 
@@ -181,7 +181,7 @@
                 >
 
                   <p
-                    class="truncate font-body text-sm"
+                    class="font-body text-sm leading-snug"
                     [class.font-semibold]="!notification.isRead"
                     [class.text-[#27253f]]="!notification.isRead"
                     [class.text-[#5e5b6e]]="notification.isRead"
@@ -198,7 +198,7 @@
                 </div>
 
                 <p
-                  class="mt-1 line-clamp-2 font-body text-xs leading-5 text-[#737083]"
+                  class="mt-1.5 line-clamp-4 font-body text-[13px] leading-5 text-[#5e5b6e]"
                 >
                   {{ notification.body }}
                 </p>

@@ -1,101 +1,118 @@
-<section class="w-full flex flex-col gap-4">
-  <div class="flex items-center justify-between">
-    <div>
-      <h2 class="text-xl font-extrabold text-on-surface tracking-tight">Teams you could join</h2>
-      <p class="text-xs text-on-surface-variant/70 mt-0.5">
-        Open team jobs matched to your skills, specialties and categories.
+<section class="foryou" aria-labelledby="foryou-heading">
+  <div class="foryou__head">
+    <div class="min-w-0">
+      <h2 id="foryou-heading" class="foryou__title">Suggested for you</h2>
+      <p class="foryou__sub">
+        Open team roles matched to your profile, skills, and portfolio.
       </p>
     </div>
-    <button type="button" class="btn btn-primary !w-auto px-4 !h-9 text-xs font-bold rounded-full" (click)="retry()">
-      Refresh
-    </button>
+    <button type="button" class="foryou__refresh" (click)="retry()">Refresh</button>
   </div>
 
   @if (applyError()) {
-    <div class="card p-4 border-error text-error text-center">{{ applyError() }}</div>
+    <div class="foryou-banner foryou-banner--error">{{ applyError() }}</div>
   }
 
   @if (suggestions.isLoading()) {
-    <div class="flex justify-center p-12">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+    <div class="foryou-list" aria-hidden="true">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <div class="job-card job-card--skeleton"></div>
+      }
     </div>
   } @else if (suggestions.error()) {
-    <div class="card p-6 border-error text-error text-center">
-      Failed to load suggestions.
-      <button (click)="retry()" class="link ml-2">Try again</button>
+    <div class="foryou-empty">
+      <p>{{ loadErrorMessage() }}</p>
+      <button type="button" class="foryou-empty__btn" (click)="retry()">Try again</button>
+    </div>
+  } @else if (!suggestions.value()?.suggestions?.length) {
+    <div class="foryou-empty">
+      <p>
+        {{
+          suggestions.value()?.metadata?.warnings?.[0] ||
+            'No matching open roles yet. Enrich your skills to improve matches.'
+        }}
+      </p>
     </div>
   } @else {
-    @if (suggestions.value()?.aiSummary; as summary) {
-      <div class="bg-[#E3DFFF] text-primary rounded-2xl px-4 py-3 text-sm font-semibold">
-        {{ summary }}
-      </div>
-    }
-
     @if (suggestions.value()?.metadata?.warnings?.length) {
-      <p class="text-xs text-on-surface-variant/70">{{ suggestions.value()!.metadata!.warnings![0] }}</p>
+      <p class="foryou-note">{{ suggestions.value()!.metadata!.warnings![0] }}</p>
     }
 
-    @if (!suggestions.value()?.rankedTeams?.length) {
-      <div class="bg-white rounded-[24px] p-12 text-center border border-outline-variant/20">
-        <p class="text-base text-on-surface-variant">No matching open teams yet.</p>
-      </div>
-    } @else {
-      @for (team of suggestions.value()!.rankedTeams; track team.teamId; let i = $index) {
-        <article class="bg-white rounded-[24px] border border-outline-variant/30 p-6"
-          [class.border-[#C7EF2E]]="i === 0">
-          <div class="flex flex-col sm:flex-row justify-between gap-4">
-            <div class="min-w-0">
-              <div class="flex items-center gap-2.5 flex-wrap">
-                <h3 class="text-lg font-bold text-on-surface truncate">{{ team.teamName }}</h3>
-                @if (i === 0) {
-                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#C7EF2E] text-[#3D4C00]">
-                    Top match
-                  </span>
-                }
-                @if (team.jobTitle) {
-                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#E3DFFF] text-primary">
-                    {{ team.jobTitle }}
-                  </span>
-                }
-              </div>
-              @if (team.summary) {
-                <p class="text-sm text-on-surface-variant/80 mt-1.5">{{ team.summary }}</p>
-              }
-              @if (team.jobSkills.length) {
-                <div class="flex flex-wrap gap-1.5 mt-3">
-                  @for (s of team.jobSkills; track s) {
-                    <span class="px-2.5 py-1 rounded-full bg-surface-container-low text-on-surface-variant text-[11px] font-semibold">{{ s }}</span>
+    <div class="foryou-list" role="list">
+      @for (team of suggestions.value()!.suggestions; track team.jobId; let i = $index) {
+        <article class="job-card" role="listitem" [class.job-card--top]="i === 0">
+          <div class="job-card__header">
+            <div class="job-card__identity">
+              <div class="job-card__avatar" aria-hidden="true">{{ initials(team.teamName) }}</div>
+              <div class="job-card__who">
+                <h3 class="job-card__name">
+                  <a [routerLink]="['/developer/teams', team.teamId]">{{ team.teamName }}</a>
+                </h3>
+                <div class="job-card__badges">
+                  <span class="job-badge job-badge--role">Open role</span>
+                  @if (i === 0) {
+                    <span class="job-badge job-badge--best">Best fit</span>
                   }
                 </div>
-              }
-              @if (team.weaknesses.length) {
-                <p class="text-xs text-on-surface-variant/60 mt-2">Watch-out: {{ team.weaknesses.join('; ') }}</p>
-              }
+              </div>
             </div>
 
-            <div class="sm:text-right shrink-0 flex sm:flex-col items-center sm:items-end gap-2">
-              <div class="text-2xl font-extrabold text-primary">{{ team.score * 100 | number: '1.0-0' }}%</div>
-              <div class="text-[11px] text-on-surface-variant/60">match</div>
-              <div class="text-xs text-on-surface-variant/70">★ {{ team.averageRating | number: '1.1-1' }} ({{ team.ratingCount }}) · {{ team.memberCount }} members</div>
+            <div class="job-card__match" aria-label="Match score">
+              <span class="job-card__match-value">{{ matchPercent(team.finalScore) }}%</span>
+              <span class="job-card__match-label">match</span>
             </div>
           </div>
 
-          <div class="border-t border-outline-variant/15 mt-4 pt-3 flex justify-end">
-            @if (team.hasApplied) {
-              <span class="px-4 h-9 inline-flex items-center text-xs font-bold rounded-full bg-surface-container-low text-on-surface-variant">
-                Application sent
-              </span>
-            } @else if (team.jobId) {
-              <button type="button"
-                class="btn btn-primary !w-auto px-4 !h-9 text-xs font-bold rounded-full"
-                [disabled]="applyingTeamId() === team.teamId"
-                (click)="apply(team.teamId, team.jobId)">
-                {{ applyingTeamId() === team.teamId ? 'Applying…' : 'Apply to join' }}
-              </button>
-            }
+          <h4 class="job-card__role">{{ team.jobTitle }}</h4>
+
+          <p class="job-card__about">
+            {{
+              team.jobDescription.trim() ||
+                'This team is hiring — open the role to learn more and apply.'
+            }}
+          </p>
+
+          <div class="job-card__stats">
+            <div class="job-stat">
+              <strong>★ {{ team.teamAverageRating | number: '1.1-1' }}</strong>
+              <span>{{ team.teamRatingCount }} reviews</span>
+            </div>
+            <div class="job-stat">
+              <strong>{{ team.requiredSkills.length || '—' }}</strong>
+              <span>Skills</span>
+            </div>
+            <div class="job-stat">
+              <strong>{{ matchPercent(team.finalScore) }}%</strong>
+              <span>Fit</span>
+            </div>
+          </div>
+
+          @if (team.requiredSkills.length) {
+            <div class="job-card__tags">
+              @for (skill of team.requiredSkills.slice(0, 4); track skill) {
+                <span class="job-tag">{{ skill }}</span>
+              }
+            </div>
+          }
+
+          <div class="job-card__actions">
+            <a
+              class="job-card__btn job-card__btn--ghost"
+              [routerLink]="['/developer/teams', team.teamId]"
+            >
+              View team
+            </a>
+            <button
+              type="button"
+              class="job-card__btn job-card__btn--primary"
+              [disabled]="applyingTeamId() === team.teamId"
+              (click)="apply(team.teamId, team.jobId)"
+            >
+              {{ applyingTeamId() === team.teamId ? 'Applying…' : 'Apply to join' }}
+            </button>
           </div>
         </article>
       }
-    }
+    </div>
   }
 </section>

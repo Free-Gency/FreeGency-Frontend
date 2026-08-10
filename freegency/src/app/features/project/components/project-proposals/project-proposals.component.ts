@@ -52,6 +52,7 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
     'Pending',
     'Viewed',
     'InDiscussion',
+    'Accepted',
     'Rejected',
     'Withdrawn',
     'Expired',
@@ -207,11 +208,51 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
       .trim();
   }
 
+  protected canOpenMessages(p: ProjectProposal): boolean {
+    return (
+      (p.status === 'InDiscussion' || p.status === 'Accepted') &&
+      (!!p.chatRoomId || (p.status === 'Accepted' && !!p.projectId))
+    );
+  }
+
   protected goToMessages(chatRoomId: string): void {
+    if (!chatRoomId) {
+      this.toast.error('Chat room is not available for this proposal yet.');
+      return;
+    }
     this.closeDetail();
     void this.router.navigate(['/client/messages'], {
       queryParams: { room: chatRoomId },
     });
+  }
+
+  protected openProposalMessages(p: ProjectProposal): void {
+    this.closeDetail();
+    if (p.chatRoomId) {
+      void this.router.navigate(['/client/messages'], {
+        queryParams: { room: p.chatRoomId },
+      });
+      return;
+    }
+    if (p.status === 'Accepted' && p.projectId) {
+      void this.router.navigate(['/client/messages'], {
+        queryParams: { project: p.projectId },
+      });
+      return;
+    }
+    this.toast.error('Chat room is not available for this proposal yet.');
+  }
+
+  protected onDrawerGoToMessages(chatRoomId: string): void {
+    const selected = this.selectedProposal();
+    if (selected) {
+      this.openProposalMessages({
+        ...selected,
+        chatRoomId: chatRoomId || selected.chatRoomId,
+      });
+      return;
+    }
+    this.goToMessages(chatRoomId);
   }
 
   protected onViewProfile(event: {
@@ -280,12 +321,15 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
     this.actionId.set(id);
     this.actionError.set(null);
     this.proposalsApi.startDiscussion(id).subscribe({
-      next: () => {
+      next: (chatRoomId) => {
         this.actionId.set(null);
         this.hasActiveDiscussion.set(true);
         this.proposalsChanged.emit();
         this.closeDetail();
         this.loadProposals();
+        if (chatRoomId) {
+          this.goToMessages(chatRoomId);
+        }
       },
       error: (err) => {
         this.actionId.set(null);
@@ -356,6 +400,7 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
 
   protected statusLabel(status: string): string {
     if (status === 'InDiscussion') return 'IN DISCUSSION';
+    if (status === 'Accepted') return 'ACCEPTED';
     return status.toUpperCase();
   }
 
@@ -373,6 +418,7 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
       Pending: 'status-pending',
       Viewed: 'status-viewed',
       InDiscussion: 'status-discussion',
+      Accepted: 'status-accepted',
       Rejected: 'status-rejected',
       Withdrawn: 'status-withdrawn',
       Expired: 'status-expired',

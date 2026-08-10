@@ -1,16 +1,44 @@
-export interface TeamSuggestionResponse {
-  developerId: string;
-  aiSummary: string | null;
-  rankedTeams: RankedTeamSuggestion[];
-  metadata?: {
-    totalCandidatesEvaluated: number;
-    returnedCount: number;
-    processingTimeMs: number;
-    usedFallbackScoring: boolean;
-    warnings?: string[] | null;
-  };
+export interface TeamsForMeResponse {
+  suggestions: SuggestedTeamJob[];
+  metadata?: SuggestionMetadata;
 }
 
+export interface SuggestedTeamJob {
+  teamId: string;
+  teamName: string;
+  teamAverageRating: number;
+  teamRatingCount: number;
+  jobId: string;
+  jobTitle: string;
+  jobDescription: string;
+  requiredSkills: string[];
+  finalScore: number;
+  vectorScore: number;
+  breakdown?: SuggestionScoreBreakdown;
+}
+
+export interface SuggestionScoreBreakdown {
+  vector: number;
+  skillOverlap: number;
+  specialtyOverlap: number;
+  rating: number;
+  portfolio: number;
+}
+
+export interface SuggestionMetadata {
+  returnedCount: number;
+  elapsedMs: number;
+  warnings?: string[];
+}
+
+/** @deprecated Use TeamsForMeResponse — kept for gradual migration */
+export type TeamSuggestionResponse = TeamsForMeResponse & {
+  developerId?: string;
+  aiSummary?: string | null;
+  rankedTeams?: RankedTeamSuggestion[];
+};
+
+/** @deprecated mapped from SuggestedTeamJob in the component */
 export interface RankedTeamSuggestion {
   teamId: string;
   teamName: string;

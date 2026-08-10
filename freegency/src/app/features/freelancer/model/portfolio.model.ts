@@ -24,6 +24,22 @@ export interface SocialLinkDto {
   url: string;
 }
 
+export interface PortfolioReviewDto {
+  id: string;
+  rating: number;
+  comment?: string | null;
+  createdAt: string;
+  reviewerUserId?: string | null;
+  reviewerName: string;
+  reviewerTitle?: string | null;
+  reviewerAvatar?: string | null;
+  moderationStatus?: string | null;
+  moderationWarning?: string | null;
+  /** Aliases used by review-card template */
+  avatar?: string | null;
+  date?: string;
+}
+
 export interface PortfolioProjectDto {
   id: string;
   title: string;
@@ -40,6 +56,7 @@ export interface PortfolioProjectDto {
 /** Portfolio page view of a developer profile. */
 export interface DeveloperProfile {
   id: string;
+  userId?: string;
   firstName: string;
   lastName: string;
   profileImage: string | null;

@@ -1,7 +1,8 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { SKIP_LOADING } from '../../core/http/loading.interceptor';
 import { PagedResponse } from '../../shared/models/PagedResponse';
 import {
   ChatRoom,
@@ -9,6 +10,8 @@ import {
   RoomMessage,
   chatRoomSortKey,
 } from '../../shared/models/ChatModel/chat';
+
+const skipLoading = () => new HttpContext().set(SKIP_LOADING, true);
 
 @Injectable({ providedIn: 'root' })
 export class ChatApiService {
@@ -25,7 +28,9 @@ export class ChatApiService {
       });
     }
 
-    return this.http.get<PagedResponse<ChatRoom>>(this.apiUrl, { params }).pipe(
+    return this.http
+      .get<PagedResponse<ChatRoom>>(this.apiUrl, { params, context: skipLoading() })
+      .pipe(
       map((res) => {
         const items = (res.items ?? [])
           .map((r) => this.normalizeRoom(r))
@@ -46,6 +51,7 @@ export class ChatApiService {
           pageNumber,
           pageSize,
         },
+        context: skipLoading(),
       })
       .pipe(
         map((res) => ({
@@ -59,16 +65,30 @@ export class ChatApiService {
     const form = new FormData();
     if (text?.trim()) form.append('Text', text.trim());
     if (file) form.append('File', file);
-    return this.http.post<RoomMessage>(`${this.apiUrl}/Send-message/${roomId}`, form).pipe(
-      map((raw) => this.normalizeMessage(raw, roomId)),
-    );
+    return this.http
+      .post<RoomMessage>(`${this.apiUrl}/Send-message/${roomId}`, form, {
+        context: skipLoading(),
+      })
+      .pipe(map((raw) => this.normalizeMessage(raw, roomId)));
   }
 
   markAsRead(roomId: string): Observable<void> {
-    return this.http.put<void>(`${this.apiUrl}/rooms/${roomId}/read`, {});
+    return this.http.put<void>(`${this.apiUrl}/rooms/${roomId}/read`, {}, {
+      context: skipLoading(),
+    });
+  }
+
+  archiveRoom(roomId: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/rooms/${roomId}/archive`, {}, {
+      context: skipLoading(),
+    });
   }
 
   private normalizeMessage(raw: RoomMessage, fallbackRoomId: string): RoomMessage {
+    const r = raw as RoomMessage & {
+      ModerationStatus?: string | null;
+      ModerationWarning?: string | null;
+    };
     return {
       id: String(raw.id || ''),
       chatRoomId: raw.chatRoomId ?? fallbackRoomId,
@@ -83,6 +103,8 @@ export class ChatApiService {
       createdAt: raw.createdAt || new Date().toISOString(),
       isMine: raw.isMine ?? true,
       otherProfileId: raw.otherProfileId ?? null,
+      moderationStatus: raw.moderationStatus ?? r.ModerationStatus ?? null,
+      moderationWarning: raw.moderationWarning ?? r.ModerationWarning ?? null,
     };
   }
 

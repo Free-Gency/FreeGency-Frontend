@@ -35,6 +35,7 @@ import { extractApiError } from '../../../core/http/api-error';
 import { TeamsService } from '../../developer/data-access/teams.service';
 import { TeamMemberRow } from '../../developer/models/team';
 import { ProjectMilestonesApiService } from '../../project/data-access/project-milestones-api.service';
+import { ProjectDetailsApiService } from '../../project/data-access/project-details-api.service';
 import {
   MilestonePlanItem,
   MilestonePlanVersion,
@@ -47,6 +48,13 @@ import {
   chatRoomDisplayTitle,
   chatRoomSortKey,
 } from '../../../shared/models/ChatModel/chat';
+import { ToastService } from '../../../shared/services/toast.service';
+
+interface ProjectBudgetInfo {
+  isFixedPrice: boolean;
+  budgetMin: number;
+  budgetMax: number;
+}
 
 export type MessagesPanelMode = 'personal' | 'team';
 export type InboxListFilter = 'active' | 'discussions' | 'groups' | 'projects' | 'archived';
@@ -73,6 +81,8 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
   private readonly auth = inject(AuthService);
   private readonly teamsApi = inject(TeamsService);
   private readonly milestonesApi = inject(ProjectMilestonesApiService);
+  private readonly projectApi = inject(ProjectDetailsApiService);
+  private readonly toast = inject(ToastService);
 
   protected readonly addIcon = Add01Icon as IconSvgObject;
   protected readonly addCircleIcon = AddCircleIcon as IconSvgObject;
@@ -93,6 +103,8 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
   readonly teamName = input<string | null>(null);
   readonly teamLogo = input<string | null>(null);
   readonly initialRoomId = input<string | null>(null);
+  /** Open the active Project room for a hired project (Accepted proposals). */
+  readonly initialProjectId = input<string | null>(null);
   /** Compact height when embedded in team detail */
   readonly embedded = input(false);
   /** Leaders see negotiation section labels */
@@ -132,6 +144,7 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
   protected readonly loading = signal(false);
   protected readonly messagesLoading = signal(false);
   protected readonly sending = signal(false);
+  protected readonly archivingRoom = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly search = signal('');
   protected readonly isOtherOnline = signal(false);
@@ -164,6 +177,52 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     return !!room && (room.roomType === 'TeamMain' || room.roomType === 'TeamGroup');
   });
 
+  protected readonly canArchiveSelectedRoom = computed(() => {
+    const room = this.selectedRoom();
+    if (!room || room.status === 'Archived') return false;
+    if (!this.isClientMode()) return false;
+    return this.isProjectClient(room) && room.roomType === 'Proposal';
+  });
+
+  protected archiveSelectedRoom(): void {
+    const room = this.selectedRoom();
+    if (!room || !this.canArchiveSelectedRoom() || this.archivingRoom()) return;
+    this.archivingRoom.set(true);
+    this.chatApi.archiveRoom(room.id).subscribe({
+      next: () => {
+        this.archivingRoom.set(false);
+        this.chatRooms.update((rooms) =>
+          rooms.map((r) =>
+            r.id === room.id
+              ? {
+                  ...r,
+                  status: 'Archived',
+                  archivedAt: new Date().toISOString(),
+                  canSend: false,
+                }
+              : r,
+          ),
+        );
+        this.selectedRoom.update((r) =>
+          r && r.id === room.id
+            ? {
+                ...r,
+                status: 'Archived',
+                archivedAt: new Date().toISOString(),
+                canSend: false,
+              }
+            : r,
+        );
+        this.listFilter.set('archived');
+        this.loadChatRooms(false);
+      },
+      error: (err) => {
+        this.archivingRoom.set(false);
+        this.error.set(extractApiError(err) || 'Could not archive this conversation.');
+      },
+    });
+  }
+
   protected readonly plansById = signal<Record<string, MilestonePlanVersion>>({});
   protected readonly latestPlan = signal<MilestonePlanVersion | null>(null);
   protected readonly plansLoading = signal(false);
@@ -171,6 +230,7 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
   protected readonly planActionError = signal<string | null>(null);
 
   protected readonly proposeOpen = signal(false);
+  protected readonly proposeBudget = signal<ProjectBudgetInfo | null>(null);
   protected readonly proposeSaving = signal(false);
   protected readonly proposeError = signal<string | null>(null);
   protected readonly proposeRows = signal<PlanDraftRow[]>([]);
@@ -243,6 +303,20 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
       return `Propose revised plan (v${latest.version + 1})`;
     }
     return 'Propose Milestone Plan';
+  });
+
+  protected readonly proposeTotal = computed(() =>
+    this.proposeRows().reduce((sum, row) => sum + (Number(row.amount) || 0), 0),
+  );
+
+  protected readonly proposeBudgetHint = computed(() => {
+    const budget = this.proposeBudget();
+    if (!budget) return null;
+    if (budget.isFixedPrice) {
+      const fixed = budget.budgetMax > 0 ? budget.budgetMax : budget.budgetMin;
+      return `Fixed budget: $${fixed.toLocaleString()} — milestone total must match exactly.`;
+    }
+    return `Budget range: $${budget.budgetMin.toLocaleString()} – $${budget.budgetMax.toLocaleString()}.`;
   });
 
   protected readonly filteredRooms = computed(() => {
@@ -341,6 +415,49 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
       if (msgs.length && this.shouldStickToBottom) {
         untracked(() => this.queueScrollToBottom('smooth'));
       }
+    });
+
+    effect(() => {
+      const roomId = this.initialRoomId();
+      const projectId = this.initialProjectId();
+      const rooms = this.chatRooms();
+      if (!rooms.length) return;
+
+      if (roomId) {
+        const match = rooms.find(
+          (r) => r.id.toLowerCase() === roomId.toLowerCase(),
+        );
+        if (match) {
+          const selected = this.selectedRoom();
+          if (selected?.id.toLowerCase() === match.id.toLowerCase()) return;
+
+          untracked(() => {
+            if (match.roomType === 'Proposal') this.listFilter.set('discussions');
+            else if (match.roomType === 'Project') this.listFilter.set('projects');
+            else if (match.status === 'Archived') this.listFilter.set('archived');
+            void this.openChat(match);
+          });
+          return;
+        }
+      }
+
+      if (!projectId) return;
+
+      const projectRoom = rooms.find(
+        (r) =>
+          r.roomType === 'Project' &&
+          r.projectId?.toLowerCase() === projectId.toLowerCase() &&
+          r.status !== 'Archived',
+      );
+      if (!projectRoom) return;
+
+      const selected = this.selectedRoom();
+      if (selected?.id.toLowerCase() === projectRoom.id.toLowerCase()) return;
+
+      untracked(() => {
+        this.listFilter.set('projects');
+        void this.openChat(projectRoom);
+      });
     });
   }
 
@@ -822,16 +939,33 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
           messageType: msg.messageType || (file ? 'Attachment' : 'Text'),
           otherProfileId: msg.otherProfileId ?? null,
         });
+        const previewText = this.isModerationHidden(msg)
+          ? 'Message removed by FreeGency for a policy violation.'
+          : msg.text || msg.fileName || text || 'Attachment';
         this.patchRoomPreview(room.id, {
-          lastMessage: msg.text || msg.fileName || text || 'Attachment',
+          lastMessage: previewText,
           lastMessageType: msg.messageType || (file ? 'Attachment' : 'Text'),
           lastMessageAt: msg.createdAt || new Date().toISOString(),
           lastMessageSender: msg.senderName || 'You',
         });
+        if (msg.moderationWarning) {
+          this.toast.warning(
+            msg.moderationWarning,
+            'Your message broke FreeGency rules',
+          );
+        }
       },
       error: (err) => {
         this.sending.set(false);
-        this.error.set(err?.error?.detail || err?.error?.title || 'Failed to send message');
+        const detail =
+          err?.error?.detail || err?.error?.title || err?.error?.message || 'Failed to send message';
+        this.error.set(detail);
+        const restricted = /restrict|moderat|guideline|policy/i.test(detail);
+        if (restricted) {
+          this.toast.warning(detail, 'Sending blocked');
+        } else {
+          this.toast.error(detail);
+        }
       },
     });
   }
@@ -845,6 +979,16 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
 
   protected isSystem(message: RoomMessage): boolean {
     return message.messageType === 'System';
+  }
+
+  protected isModerationHidden(message: RoomMessage): boolean {
+    const status = (message.moderationStatus || '').toLowerCase();
+    if (status === 'hidden') return true;
+    return /removed by freegency/i.test((message.text || '').trim());
+  }
+
+  protected isModerationRedacted(message: RoomMessage): boolean {
+    return (message.moderationStatus || '').toLowerCase() === 'redacted';
   }
 
   /** Structured layout for hire / project-start system notices (new + legacy text). */
@@ -1045,12 +1189,30 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     this.proposeRows.set(rows);
     this.proposeNote.set('');
     this.proposeError.set(null);
+    this.proposeBudget.set(null);
     this.proposeOpen.set(true);
+
+    const projectId = this.resolveRoomProjectId(room);
+    if (projectId) {
+      this.projectApi.getById(projectId).subscribe({
+        next: (project) => {
+          this.proposeBudget.set({
+            isFixedPrice: !!project.isFixedPrice,
+            budgetMin: Number(project.budgetMin) || 0,
+            budgetMax: Number(project.budgetMax) || 0,
+          });
+        },
+        error: () => {
+          this.proposeBudget.set(null);
+        },
+      });
+    }
   }
 
   protected closeProposePlan(): void {
     this.proposeOpen.set(false);
     this.proposeError.set(null);
+    this.proposeBudget.set(null);
   }
 
   protected addProposeRow(): void {
@@ -1085,6 +1247,12 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
 
     if (!milestones.length) {
       this.proposeError.set('Add at least one milestone with a title and amount.');
+      return;
+    }
+
+    const budgetError = this.validateProposeBudget(milestones);
+    if (budgetError) {
+      this.proposeError.set(budgetError);
       return;
     }
 
@@ -1452,17 +1620,39 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
             this.listFilter.set('active');
           }
 
-          const initial = this.initialRoomId();
-          if (initial && !this.selectedRoom()) {
-            const match = items.find((r) => r.id === initial);
-            if (match) this.openChat(match);
-          }
+          // Deep-link open is handled by the initialRoomId effect.
         },
         error: () => {
           this.error.set('Failed to load conversations');
           this.loading.set(false);
         },
       });
+  }
+
+  private validateProposeBudget(
+    milestones: { amount: number }[],
+  ): string | null {
+    const budget = this.proposeBudget();
+    if (!budget) return null;
+
+    const round2 = (n: number) => Math.round(n * 100) / 100;
+    const total = round2(milestones.reduce((sum, m) => sum + m.amount, 0));
+
+    if (budget.isFixedPrice) {
+      const fixed = round2(budget.budgetMax > 0 ? budget.budgetMax : budget.budgetMin);
+      if (fixed > 0 && total !== fixed) {
+        return `Fixed-price project: milestone total must equal $${fixed.toLocaleString()} (current: $${total.toLocaleString()}).`;
+      }
+      return null;
+    }
+
+    const min = round2(budget.budgetMin);
+    const max = round2(budget.budgetMax);
+    if (total < min || total > max) {
+      return `Milestone total ($${total.toLocaleString()}) must be within $${min.toLocaleString()} – $${max.toLocaleString()}.`;
+    }
+
+    return null;
   }
 
   private loadMessages(roomId: string): void {
@@ -1535,6 +1725,8 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
       SenderName?: string | null;
       CreatedAt?: string;
       IsMine?: boolean;
+      ModerationStatus?: string | null;
+      ModerationWarning?: string | null;
     };
     const planRaw = raw.planVersionId ?? r.PlanVersionId ?? null;
     return {
@@ -1549,6 +1741,8 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
       createdAt: raw.createdAt || r.CreatedAt || new Date().toISOString(),
       isMine: raw.isMine ?? r.IsMine ?? false,
       otherProfileId: raw.otherProfileId ?? null,
+      moderationStatus: raw.moderationStatus ?? r.ModerationStatus ?? null,
+      moderationWarning: raw.moderationWarning ?? r.ModerationWarning ?? null,
     };
   }
 

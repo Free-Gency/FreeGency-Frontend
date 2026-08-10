@@ -226,7 +226,7 @@
                   }
                 </div>
               </div>
-            } @else if (p.status === 'InDiscussion') {
+            } @else if (p.status === 'InDiscussion' || p.status === 'Accepted') {
               <div class="pt-3 border-t border-outline-variant/15 flex flex-col items-end gap-2.5">
                 <div class="flex flex-wrap items-center justify-end gap-2.5">
                   <button
@@ -236,11 +236,11 @@
                   >
                     View Proposal
                   </button>
-                  @if (p.chatRoomId) {
+                  @if (canOpenMessages(p)) {
                     <button
                       type="button"
                       class="inline-flex h-10 min-w-[8.5rem] items-center justify-center rounded-2xl bg-[#4130D7] px-5 text-xs font-bold text-white transition-colors hover:bg-[#5B4FF0] cursor-pointer"
-                      (click)="goToMessages(p.chatRoomId)"
+                      (click)="openProposalMessages(p)"
                     >
                       Go to messages
                     </button>
@@ -322,7 +322,7 @@
       (startDiscussion)="startDiscussion($event)"
       (closeDiscussion)="closeDiscussion($event)"
       (reject)="rejectProposal($event)"
-      (goToMessages)="goToMessages($event)"
+      (goToMessages)="onDrawerGoToMessages($event)"
       (viewProfile)="onViewProfile($event)"
     />
   </div>

@@ -1,5 +1,9 @@
 @if (!isTeamMember() && team()) {
-  <app-developer-view-navbar />
+  @if (isClientViewer()) {
+    <app-client-view-navbar />
+  } @else {
+    <app-developer-view-navbar />
+  }
 }
 
 <div class="tw-shell" [class.tw-shell--public]="!!team() && !isTeamMember()">
@@ -87,10 +91,10 @@
         {{ error() }}
       </p>
     } @else if (team(); as t) {
-      <a routerLink="/developer/teams" class="tw-desktop-back">
+      <button type="button" class="tw-desktop-back" (click)="goMyTeams()">
         <hugeicons-icon [icon]="backIcon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
-        My Teams
-      </a>
+        {{ isClientViewer() ? 'Back' : 'My Teams' }}
+      </button>
 
       <input id="tw-quick-cover" type="file" accept="image/*" class="sr-only" (change)="onQuickCoverChange($event)" />
       <input id="tw-quick-logo" type="file" accept="image/*" class="sr-only" (change)="onQuickLogoChange($event)" />
@@ -278,63 +282,61 @@
               {{ t.aboutUs || 'This team has not added an about section yet.' }}
             </p>
 
-            @if (!isTeamMember()) {
-              <div class="mt-8">
-                <div class="mb-3 flex items-center justify-between gap-2">
-                  <h2 class="font-display text-[17px] font-bold text-[#111827]">Open team jobs</h2>
+            @if (!isTeamMember() && !isClientViewer()) {
+              <div class="otj-section mt-8">
+                <div class="otj-section__head">
+                  <div class="min-w-0">
+                    <h2 class="otj-section__title">Open roles</h2>
+                    <p class="otj-section__sub">Join this team if a role matches your skills.</p>
+                  </div>
                   @if (openJobs().length) {
-                    <span class="rounded-full bg-[#eeecfb] px-2.5 py-1 font-mono text-[10px] font-bold tracking-[0.06em] text-[#4130d7] uppercase">
-                      {{ openJobs().length }} open
-                    </span>
+                    <span class="otj-section__count">{{ openJobs().length }} open</span>
                   }
                 </div>
 
                 @if (jobsLoading()) {
-                  <div class="space-y-2">
+                  <div class="otj-grid" aria-hidden="true">
                     @for (i of [1, 2]; track i) {
-                      <div class="otj-card otj-card--skel animate-pulse"></div>
+                      <div class="otj-card otj-card--skel"></div>
                     }
                   </div>
                 } @else if (openJobs().length) {
-                  <div class="space-y-3">
+                  <div class="otj-grid" role="list">
                     @for (job of openJobs(); track job.id) {
-                      <article class="otj-card">
-                        <div class="otj-card__top">
-                          <span class="otj-card__status">
-                            <hugeicons-icon [icon]="briefcaseIcon" [size]="12" color="currentColor" [strokeWidth]="1.75" />
+                      <article
+                        class="otj-card"
+                        role="listitem"
+                        [class.otj-card--applied]="appliedJobIds().includes(job.id)"
+                      >
+                        <div class="otj-card__badges">
+                          <span class="otj-badge otj-badge--open">
                             {{ jobStatusLabel(job.status) }}
                           </span>
                           @if (relativeTime(job.createdAt)) {
-                            <span class="otj-card__time">{{ relativeTime(job.createdAt) }}</span>
+                            <span class="otj-badge otj-badge--soft">{{ relativeTime(job.createdAt) }}</span>
+                          }
+                          @if (appliedJobIds().includes(job.id)) {
+                            <span class="otj-badge otj-badge--applied">Applied</span>
                           }
                         </div>
 
                         <h3 class="otj-card__title">{{ job.title }}</h3>
                         <p class="otj-card__desc">
-                          {{ job.description || 'No description provided.' }}
+                          {{ job.description.trim() || 'No description provided for this role yet.' }}
                         </p>
 
-                        <div class="otj-card__footer">
-                          <div class="otj-card__hint">
-                            <span class="otj-card__hint-label">Application</span>
-                            <span class="otj-card__hint-copy">
-                              @if (appliedJobIds().includes(job.id)) {
-                                Application submitted — wait for a response from the team.
-                              } @else {
-                                Introduce yourself with a short cover letter.
-                              }
-                            </span>
-                          </div>
-
+                        <div class="otj-card__actions">
                           @if (appliedJobIds().includes(job.id)) {
-                            <span class="otj-card__applied">Applied</span>
+                            <button type="button" class="otj-card__btn otj-card__btn--disabled" disabled>
+                              Applied
+                            </button>
                           } @else {
                             <button
                               type="button"
-                              class="otj-card__apply"
+                              class="otj-card__btn otj-card__btn--primary"
                               (click)="openApplyJob(job)"
                             >
-                              Apply
+                              Apply to join
                             </button>
                           }
                         </div>
@@ -342,9 +344,9 @@
                     }
                   </div>
                 } @else {
-                  <div class="rounded-2xl border border-dashed border-[#dbe2f0] bg-white px-4 py-8 text-center">
-                    <p class="font-display text-sm font-semibold text-[#111827]">No open roles right now</p>
-                    <p class="mt-1 font-body text-xs text-[#98a2b3]">Check back later or join with a team code.</p>
+                  <div class="otj-empty">
+                    <p class="otj-empty__title">No open roles right now</p>
+                    <p class="otj-empty__text">Check back later or join with a team code.</p>
                   </div>
                 }
               </div>
@@ -515,7 +517,7 @@
               }
             </section>
 
-            <div class="mb-4 mt-10 flex flex-wrap items-center justify-between gap-3">
+            <div id="portfolio" class="mb-4 mt-10 flex flex-wrap items-center justify-between gap-3 scroll-mt-24">
               <div>
                 <h2 class="font-display text-[17px] font-bold text-[#111827]">Portfolio Highlights</h2>
                 @if (!isLeader()) {
@@ -1295,6 +1297,79 @@
   />
 }
      
+      <!-- PROJECT INVITATIONS -->
+      @if (activeTab() === 'invitations' && isLeader()) {
+        <div class="tm-page pt-8">
+          <div class="tm-hero">
+            <div class="min-w-0">
+              <p class="tw-mono-label">Client outreach</p>
+              <h2 class="tm-hero__title">Project invitations</h2>
+              <p class="tm-hero__sub">
+                Accept to open a discussion chat with the client. Reject closes the invite.
+              </p>
+            </div>
+          </div>
+
+          @if (projectInvitationsLoading()) {
+            <p class="mt-4 text-sm text-[#6b7280]">Loading invitations…</p>
+          } @else if (projectInvitationsError()) {
+            <p class="mt-4 text-sm text-[#93000a]">{{ projectInvitationsError() }}</p>
+          } @else if (!projectInvitations().length) {
+            <div class="tm-empty mt-6">
+              <p class="tm-empty__title">No project invitations</p>
+              <p class="tm-empty__sub">When clients invite this team, invitations will show up here.</p>
+            </div>
+          } @else {
+            <div class="mt-5 flex flex-col gap-3">
+              @for (inv of projectInvitations(); track inv.id) {
+                <article class="rounded-2xl border border-[#e5e7eb] bg-white p-4">
+                  <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div class="min-w-0">
+                      <h3 class="font-display text-base font-bold text-[#111827]">
+                        {{ inv.projectTitle || 'Project' }}
+                      </h3>
+                      <p class="mt-1 text-sm font-semibold text-[#4130d7]">
+                        From {{ inv.clientName || 'Client' }} · {{ inv.status }}
+                      </p>
+                      <p class="mt-2 text-sm leading-relaxed text-[#6b7280]">{{ inv.message }}</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                      @if (inv.status === 'Pending') {
+                        <button
+                          type="button"
+                          class="tm-invite"
+                          [disabled]="projectInviteActionId() === inv.id"
+                          (click)="acceptProjectInvitation(inv)"
+                        >
+                          Accept
+                        </button>
+                        <button
+                          type="button"
+                          class="rounded-full border border-[#e5e7eb] bg-white px-4 py-2 text-sm font-bold text-[#374151]"
+                          [disabled]="projectInviteActionId() === inv.id"
+                          (click)="rejectProjectInvitation(inv)"
+                        >
+                          Reject
+                        </button>
+                      }
+                      @if (inv.status === 'Accepted' && inv.chatRoomId) {
+                        <button
+                          type="button"
+                          class="tm-invite"
+                          (click)="openProjectInvitationChat(inv.chatRoomId)"
+                        >
+                          Open chat
+                        </button>
+                      }
+                    </div>
+                  </div>
+                </article>
+              }
+            </div>
+          }
+        </div>
+      }
+
       <!-- MEMBERS -->
       @if (activeTab() === 'members') {
         <div class="tm-page pt-8">
@@ -1631,26 +1706,38 @@
         {{ editingJobId() ? 'Edit team job' : 'Add team job' }}
       </h3>
       <p class="mt-1 text-sm text-[#6b7280]">
-        Publish a role so freelancers can apply to join this team.
+        Write a clear role pitch — title alone isn’t enough to attract the right people.
       </p>
 
       <label class="modal-field">
         <span class="tw-mono-label">Job title</span>
         <input
           type="text"
-          placeholder="e.g. UI Designer"
+          placeholder="e.g. Senior UI Designer"
           [ngModel]="jobFormTitle()"
           (ngModelChange)="jobFormTitle.set($event)"
         />
       </label>
       <label class="modal-field">
-        <span class="tw-mono-label">About the job</span>
+        <span class="tw-mono-label">Role pitch / description</span>
         <textarea
-          rows="5"
-          placeholder="Describe responsibilities, seniority, and what you’re looking for…"
+          rows="7"
+          placeholder="Sell the role: what they’ll own, stack/tools, seniority, how you work, and what a strong applicant looks like…"
           [ngModel]="jobFormDescription()"
           (ngModelChange)="jobFormDescription.set($event)"
         ></textarea>
+        <div class="job-form-desc-meta">
+          <span [class.is-short]="jobFormDescription().trim().length < 80">
+            {{ jobFormDescription().trim().length }}/80 min
+          </span>
+          <span>{{ jobFormDescription().trim().length }}/2000</span>
+        </div>
+        <ul class="job-form-tips">
+          <li>What the person will own day to day</li>
+          <li>Must-have skills / tools</li>
+          <li>Team vibe &amp; how you collaborate</li>
+          <li>What makes a great application stand out</li>
+        </ul>
       </label>
 
       <div class="mt-4">

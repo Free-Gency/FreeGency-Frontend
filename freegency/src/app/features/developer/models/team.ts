@@ -148,4 +148,5 @@ export type TeamDetailTab =
   | 'tasks'
   | 'finance'
   | 'messages'
-  | 'members';
+  | 'members'
+  | 'invitations';

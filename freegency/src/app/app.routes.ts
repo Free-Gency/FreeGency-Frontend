@@ -17,6 +17,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'client/hire-talent',
+    canActivate: [authGuard, clientModeGuard],
+    loadComponent: () =>
+      import('./features/client/pages/hire-talent/hire-talent.component').then(
+        (m) => m.HireTalentComponent,
+      ),
+  },
+  {
     path: 'client/manage-work',
     canActivate: [authGuard, clientModeGuard],
     loadComponent: () =>
@@ -40,6 +48,39 @@ export const routes: Routes = [
       import(
         './features/client/pages/portfolio-project-details/portfolio-project-details.component'
       ).then((m) => m.PortfolioProjectDetailsComponent),
+  },
+  {
+    path: 'client/teams/:teamId',
+    canActivate: [authGuard, clientModeGuard],
+    loadComponent: () =>
+      import('./features/developer/pages/team-detail/team-detail.component').then(
+        (m) => m.TeamDetailComponent,
+      ),
+  },
+  {
+    path: 'client/developers/:userId',
+    canActivate: [authGuard, clientModeGuard],
+    loadComponent: () =>
+      import(
+        './features/freelancer/pages/freelancer-portfolio/freelancer-portfolio.component'
+      ).then((m) => m.FreelancerPortfolioComponent),
+  },
+  {
+    path: 'client/talent/:kind/:id',
+    canActivate: [authGuard, clientModeGuard],
+    loadComponent: () =>
+      import(
+        './features/client/pages/client-talent-profile/client-talent-profile.component'
+      ).then((m) => m.ClientTalentProfileComponent),
+  },
+  {
+    path: 'developer/me/portfolio',
+    canActivate: [authGuard, developerModeGuard],
+    data: { me: true },
+    loadComponent: () =>
+      import(
+        './features/freelancer/pages/freelancer-portfolio/freelancer-portfolio.component'
+      ).then((m) => m.FreelancerPortfolioComponent),
   },
   {
     path: 'developer/portfolio/:id',
@@ -124,18 +165,7 @@ export const routes: Routes = [
         './features/freelancer/pages/freelancer-home/freelancer-home.component'
       ).then((m) => m.FreelancerHomeComponent),
   },
-  {
-    path: 'developer/explore',
-    canActivate: [authGuard, developerModeGuard],
-    data: {
-      title: 'Explore',
-      description: 'Discover talent, inspiration, and opportunities across FreeGency.',
-    },
-    loadComponent: () =>
-      import(
-        './features/developer/pages/developer-placeholder/developer-placeholder.component'
-      ).then((m) => m.DeveloperPlaceholderComponent),
-  },
+  { path: 'developer/explore', redirectTo: 'developer/teams', pathMatch: 'full' },
   {
     path: 'developer/manage-work',
     canActivate: [authGuard, developerModeGuard],

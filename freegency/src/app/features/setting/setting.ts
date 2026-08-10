@@ -1,7 +1,8 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { HugeiconsIconComponent, type IconSvgObject } from '@hugeicons/angular';
 import {
+  Alert02Icon,
   CreditCardIcon,
   DangerIcon,
   IdentityCardIcon,
@@ -15,6 +16,7 @@ import {
 import { AuthService } from '../../core/auth/auth.service';
 import { ClientViewNavbarComponent } from '../../shared/components/client-view-navbar/client-view-navbar.component';
 import { DeveloperViewNavbarComponent } from '../../shared/components/developer-view-navbar/developer-view-navbar.component';
+import { ModerationStatusService } from './Data-Access/moderation-status.service';
 
 type SettingNavItem = {
   label: string;
@@ -37,14 +39,17 @@ type SettingNavItem = {
   templateUrl: './setting.html',
   styleUrl: './setting.css',
 })
-export class Setting {
+export class Setting implements OnInit {
   private readonly auth = inject(AuthService);
+  private readonly moderationApi = inject(ModerationStatusService);
 
   protected readonly isDeveloper = computed(
     () => this.auth.session()?.activeProfileMode === 'Developer',
   );
 
-  protected readonly navItems: SettingNavItem[] = [
+  protected readonly hasGuidelineWarnings = signal(false);
+
+  private readonly baseNavItems: SettingNavItem[] = [
     {
       label: 'Account',
       route: 'account',
@@ -87,10 +92,30 @@ export class Setting {
     },
   ];
 
+  private readonly guidelinesItem: SettingNavItem = {
+    label: 'Community guidelines',
+    route: 'community-guidelines',
+    icon: Alert02Icon as IconSvgObject,
+  };
+
+  protected readonly navItems = computed(() => {
+    if (!this.hasGuidelineWarnings()) return this.baseNavItems;
+    const items = [...this.baseNavItems];
+    const insertAt = items.findIndex((i) => i.route === 'notifications') + 1;
+    items.splice(insertAt > 0 ? insertAt : items.length, 0, this.guidelinesItem);
+    return items;
+  });
+
   protected readonly dangerItem: SettingNavItem = {
     label: 'Danger Zone',
     route: 'danger-zone',
     icon: DangerIcon as IconSvgObject,
     danger: true,
   };
+
+  ngOnInit(): void {
+    this.moderationApi.getMyStatus().subscribe((status) => {
+      this.hasGuidelineWarnings.set(status.hasViolations);
+    });
+  }
 }

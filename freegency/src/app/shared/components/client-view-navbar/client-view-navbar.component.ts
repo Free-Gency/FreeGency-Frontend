@@ -14,16 +14,15 @@ import { filter } from 'rxjs';
 import { HugeiconsIconComponent, type IconSvgObject } from '@hugeicons/angular';
 import {
   ArrowDown01Icon,
-  Briefcase01Icon,
+  BriefcaseDollarIcon,
+  CodeIcon,
   HelpCircleIcon,
   Logout01Icon,
   Notification02Icon,
   Search01Icon,
   Settings01Icon,
   Tick02Icon,
-  UserAccountIcon,
   Wallet01Icon,
-  
 } from '@hugeicons/core-free-icons';
 import { AuthService } from '../../../core/auth/auth.service';
 import type { UserMode } from '../../../core/auth/auth.models';
@@ -37,14 +36,13 @@ import {
 import { NotificationDto } from '../../models/notification';
 import { NotificationService } from '../../../features/notification/notification.service';
 import { PagedResponse } from '../../models/PagedResponse';
-import { DatePipe } from '@angular/common';
 import { NotificationComponent } from '../../../features/notification/notification.component';
 
 export type ClientSearchScope = 'Projects' | 'Talents';
 
 @Component({
   selector: 'app-client-view-navbar',
-  imports: [HugeiconsIconComponent, RouterLink,DatePipe,NotificationComponent],
+  imports: [HugeiconsIconComponent, RouterLink, NotificationComponent],
   templateUrl: './client-view-navbar.component.html',
 })
 export class ClientViewNavbarComponent implements OnInit {
@@ -62,14 +60,14 @@ export class ClientViewNavbarComponent implements OnInit {
   protected readonly walletIcon = Wallet01Icon as IconSvgObject;
   protected readonly helpIcon = HelpCircleIcon as IconSvgObject;
   protected readonly logoutIcon = Logout01Icon as IconSvgObject;
-  protected readonly clientIcon = UserAccountIcon as IconSvgObject;
-  protected readonly developerIcon = Briefcase01Icon as IconSvgObject;
+  protected readonly clientIcon = BriefcaseDollarIcon as IconSvgObject;
+  protected readonly developerIcon = CodeIcon as IconSvgObject;
   signalrService=inject(SignalrService);
   chatSignalrService=inject(ChatSignalrService);
   protected readonly profileImage = this.auth.profileImage;
 
   protected readonly navItems = [
-    { label: 'Hire Talent', dropdown: true, route: null },
+    { label: 'Hire Talent', dropdown: false, route: '/client/hire-talent' },
     { label: 'Manage Work', dropdown: false, route: '/client/manage-work' },
     { label: 'Reports', dropdown: true, route: null },
     { label: 'Messages', dropdown: false, route: '/client/messages' },
@@ -235,7 +233,8 @@ export class ClientViewNavbarComponent implements OnInit {
   }
 
   private getActiveLabelFromUrl(url: string): string {
+    if (url.startsWith('/client/home')) return '';
     const match = this.navItems.find((item) => item.route && url.startsWith(item.route));
-    return match?.label ?? 'Hire Talent';
+    return match?.label ?? '';
   }
 }

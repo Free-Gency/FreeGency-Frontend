@@ -607,6 +607,30 @@
   word-break: break-word;
 }
 
+.msg-bubble.is-moderated {
+  opacity: 0.92;
+}
+
+.msg-bubble__text--moderated {
+  font-style: italic;
+  color: #6b7280;
+}
+
+.msg-bubble.is-mine .msg-bubble__text--moderated {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.msg-bubble__warn {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #b45309;
+}
+
+.msg-bubble.is-mine .msg-bubble__warn {
+  color: rgba(255, 236, 179, 0.95);
+}
+
 .msg-bubble__foot {
   display: flex;
   justify-content: flex-end;

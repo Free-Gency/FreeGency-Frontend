@@ -9,6 +9,7 @@ import { Integrations } from './integrations/integrations';
 import { DangerZone } from '../setting/dangerzone/dangerzone';
 import { SecurityComponent } from './security/security.component';
 import { ProfileModePage } from './profile-mode/profile-mode';
+import { CommunityGuidelines } from './community-guidelines/community-guidelines';
 
 export const settingRoutes: Routes = [
   {
@@ -30,6 +31,7 @@ export const settingRoutes: Routes = [
       },
       { path: 'security', component: SecurityComponent },
       { path: 'notifications', component: Notifications },
+      { path: 'community-guidelines', component: CommunityGuidelines },
       { path: 'payments', component: Payment },
       { path: 'privacy', component: Privacy },
       { path: 'verification', component: Verification },

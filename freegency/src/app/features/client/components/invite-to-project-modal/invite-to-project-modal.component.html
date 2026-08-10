@@ -1,0 +1,58 @@
+<div class="invite-backdrop" (click)="close()">
+  <div class="invite-panel" role="dialog" aria-modal="true" aria-labelledby="invite-title" (click)="$event.stopPropagation()">
+    <header class="invite-panel__head">
+      <div>
+        <p class="invite-panel__eyebrow">Invite to project</p>
+        <h2 id="invite-title" class="invite-panel__title">{{ target().displayName }}</h2>
+      </div>
+      <button type="button" class="invite-panel__close" (click)="close()" aria-label="Close">×</button>
+    </header>
+
+    @if (loading()) {
+      <p class="invite-panel__hint">Loading your open projects…</p>
+    } @else if (!projects().length) {
+      <p class="invite-panel__hint">
+        You need an open project before sending an invitation.
+        <a href="/client/create-project">Create a project</a>
+      </p>
+    } @else {
+      <label class="invite-field">
+        <span>Project</span>
+        <select
+          [ngModel]="projectId()"
+          (ngModelChange)="projectId.set($event)"
+          [disabled]="submitting()"
+        >
+          @for (p of projects(); track p.id) {
+            <option [value]="p.id">{{ p.title }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="invite-field">
+        <span>Message</span>
+        <textarea
+          rows="5"
+          maxlength="4000"
+          placeholder="Tell them why they’re a fit and invite them to discuss this project…"
+          [ngModel]="message()"
+          (ngModelChange)="message.set($event)"
+          [disabled]="submitting()"
+        ></textarea>
+      </label>
+
+      @if (error()) {
+        <p class="invite-panel__error">{{ error() }}</p>
+      }
+
+      <div class="invite-panel__actions">
+        <button type="button" class="invite-btn invite-btn--ghost" [disabled]="submitting()" (click)="close()">
+          Cancel
+        </button>
+        <button type="button" class="invite-btn invite-btn--primary" [disabled]="submitting()" (click)="submit()">
+          {{ submitting() ? 'Sending…' : 'Send invitation' }}
+        </button>
+      </div>
+    }
+  </div>
+</div>

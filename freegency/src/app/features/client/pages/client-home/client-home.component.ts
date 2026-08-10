@@ -28,8 +28,9 @@ import {
   type ProjectDto,
 } from '../../../auth/data-access/projects-api.service';
 import { ClientViewNavbarComponent } from '../../../../shared/components/client-view-navbar/client-view-navbar.component';
+import { HomeTalentSuggestionsComponent } from '../../components/home-talent-suggestions/home-talent-suggestions.component';
 
-type HomeTab = 'inspiration' | 'my-projects';
+type HomeTab = 'inspiration' | 'my-projects' | 'suggested';
 type ProjectStatusUi = 'draft' | 'in-progress' | 'completed' | 'open' | 'cancelled';
 type ProjectStatusFilter = 'all' | 'in-progress' | 'draft' | 'completed' | 'cancelled';
 type DeadlineTone = 'urgent' | 'soon' | 'neutral' | 'planned';
@@ -73,7 +74,13 @@ interface DeadlineItem {
 
 @Component({
   selector: 'app-client-home',
-  imports: [HugeiconsIconComponent, ClientViewNavbarComponent, RouterLink, NgClass],
+  imports: [
+    HugeiconsIconComponent,
+    ClientViewNavbarComponent,
+    RouterLink,
+    NgClass,
+    HomeTalentSuggestionsComponent,
+  ],
   templateUrl: './client-home.component.html',
   styleUrl: './client-home.component.css',
 })
@@ -147,6 +154,8 @@ export class ClientHomeComponent implements OnInit, OnDestroy {
   });
 
   protected readonly activeFiltersCount = computed(() => {
+    if (this.activeTab() === 'suggested') return 0;
+
     let count = 0;
     if (this.searchQuery().trim()) count += 1;
 
@@ -188,7 +197,7 @@ export class ClientHomeComponent implements OnInit, OnDestroy {
     if (this.activeTab() === 'inspiration') {
       this.activeCategory.set('All');
       this.reloadInspiration();
-    } else {
+    } else if (this.activeTab() === 'my-projects') {
       this.projectStatusFilter.set('all');
       this.reloadProjects();
     }
@@ -198,7 +207,7 @@ export class ClientHomeComponent implements OnInit, OnDestroy {
     this.activeTab.set(tab);
     if (tab === 'inspiration') {
       this.reloadInspiration();
-    } else {
+    } else if (tab === 'my-projects') {
       this.reloadProjects();
     }
   }
@@ -250,7 +259,7 @@ export class ClientHomeComponent implements OnInit, OnDestroy {
     this.searchDebounceTimer = setTimeout(() => {
       if (this.activeTab() === 'inspiration') {
         this.reloadInspiration();
-      } else {
+      } else if (this.activeTab() === 'my-projects') {
         this.reloadProjects();
       }
     }, 350);

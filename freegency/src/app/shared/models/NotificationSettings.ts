@@ -15,7 +15,7 @@ export interface NotificationSettings {
 }
 
 export interface UpdateNotificationSettings {
-  id:string,
+  id: string;
   newMessageInApp: boolean;
   newMessageEmail: boolean;
 
@@ -27,4 +27,42 @@ export interface UpdateNotificationSettings {
 
   walletUpdatedInApp: boolean;
   walletUpdatedEmail: boolean;
+}
+
+export interface DeveloperNotificationSettings {
+  id: string;
+
+  messagesInApp: boolean;
+  messagesEmail: boolean;
+
+  projectsInApp: boolean;
+  projectsEmail: boolean;
+
+  milestonesInApp: boolean;
+  milestonesEmail: boolean;
+
+  walletInApp: boolean;
+  walletEmail: boolean;
+
+  teamsInApp: boolean;
+  teamsEmail: boolean;
+}
+
+export interface UpdateDeveloperNotificationSettings {
+  id: string;
+
+  messagesInApp: boolean;
+  messagesEmail: boolean;
+
+  projectsInApp: boolean;
+  projectsEmail: boolean;
+
+  milestonesInApp: boolean;
+  milestonesEmail: boolean;
+
+  walletInApp: boolean;
+  walletEmail: boolean;
+
+  teamsInApp: boolean;
+  teamsEmail: boolean;
 }

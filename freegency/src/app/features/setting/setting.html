@@ -24,7 +24,7 @@
         </div>
 
         <nav class="flex flex-col gap-1" aria-label="Settings sections">
-          @for (item of navItems; track item.route) {
+          @for (item of navItems(); track item.route) {
             <a
               [routerLink]="item.route"
               routerLinkActive

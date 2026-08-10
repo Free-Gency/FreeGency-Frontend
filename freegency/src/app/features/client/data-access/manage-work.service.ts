@@ -183,8 +183,22 @@ export class ManageWorkService {
     return this.postProposalAction(id, 'view');
   }
 
-  startDiscussion(id: string): Observable<void> {
-    return this.postProposalAction(id, 'start-discussion');
+  startDiscussion(id: string): Observable<string> {
+    return this.http
+      .post<ApiResponse<string> & { message?: string | null; error?: { message?: string } | null }>(
+        `${this.proposalsUrl}/${id}/start-discussion`,
+        {},
+      )
+      .pipe(
+        map((res) => {
+          if (!res.isSuccess || !res.data) {
+            throw new Error(
+              res.message || res.error?.message || 'Failed to start discussion.',
+            );
+          }
+          return res.data;
+        }),
+      );
   }
 
   closeDiscussion(id: string): Observable<void> {

@@ -1,44 +1,32 @@
-<div class="bg-white rounded-2xl border border-gray-200 p-6 md:p-8 shadow-sm">
-  <div class="flex justify-between items-center mb-4">
-    <h2 class="text-xl font-bold text-gray-900 tracking-tight">About</h2>
-    
-    <!-- Only show the edit button when NOT editing -->
-    @if (!isEditing()) {
-      <button 
-        (click)="startEditing()"
-        class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
-      >
-        <span class="material-symbols-outlined text-[18px]">edit</span>
+<div class="pf-about">
+  <div class="pf-about__head">
+    <h2 class="pf-about__title">About</h2>
+
+    @if (canEdit() && !isEditing()) {
+      <button type="button" (click)="startEditing()" class="pf-about__edit" aria-label="Edit about">
+        <span class="material-symbols-outlined">edit</span>
       </button>
     }
   </div>
 
-  <!-- View Mode -->
   @if (!isEditing()) {
-    <p class="text-[15px] text-gray-600 leading-relaxed whitespace-pre-wrap">
+    <p class="pf-about__body">
       {{ bio() || 'No bio provided yet.' }}
     </p>
-  } 
-  <!-- Edit Mode -->
-  @else {
-    <div class="flex flex-col gap-3">
-      <textarea 
-        [(ngModel)]="tempBio"
-        rows="4"
-        class="w-full p-3 border border-gray-300 rounded-2xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#4f46e5]"
+  } @else {
+    <div class="pf-about__edit-panel">
+      <textarea
+        [ngModel]="tempBio()"
+        (ngModelChange)="tempBio.set($event)"
+        rows="5"
+        class="pf-about__textarea"
       ></textarea>
-      
-      <div class="flex justify-end gap-2">
-        <button 
-          (click)="cancelEditing()" 
-          class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-        >
+
+      <div class="pf-about__actions">
+        <button type="button" (click)="cancelEditing()" class="pf-about__btn pf-about__btn--ghost">
           Cancel
         </button>
-        <button 
-          (click)="saveBio()" 
-          class="px-4 py-2 text-sm font-medium text-white bg-[#4f46e5] rounded-lg hover:bg-indigo-700 transition-colors"
-        >
+        <button type="button" (click)="saveBio()" class="pf-about__btn pf-about__btn--primary">
           Save
         </button>
       </div>

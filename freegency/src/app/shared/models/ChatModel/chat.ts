@@ -51,6 +51,8 @@ export interface RoomMessage {
   createdAt: string;
   isMine: boolean;
   otherProfileId: string | null;
+  moderationStatus?: string | null;
+  moderationWarning?: string | null;
 }
 
 export interface RoomUpdated {

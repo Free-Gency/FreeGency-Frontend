@@ -1,0 +1,238 @@
+.talent-profile__back {
+  margin-bottom: 1.25rem;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-display, inherit);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #4036e0;
+}
+
+.talent-profile__loading,
+.talent-profile__empty {
+  border-radius: 20px;
+  border: 1px dashed #d0d5dd;
+  background: #fbfbfb;
+  padding: 2rem;
+  color: #667085;
+}
+
+.talent-profile__hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  border-radius: 24px;
+  border: 1px solid #e7eefe;
+  background: #fff;
+  padding: 1.25rem;
+}
+
+.talent-profile__identity {
+  display: flex;
+  gap: 1rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.talent-profile__avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  object-fit: cover;
+  background: #ebe9ff;
+  flex-shrink: 0;
+}
+
+.talent-profile__avatar--fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #4036e0;
+  font-family: var(--font-display, inherit);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.talent-profile__name-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.talent-profile__name-row h1 {
+  margin: 0;
+  font-family: var(--font-display, inherit);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #151c27;
+}
+
+.talent-profile__chip {
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  background: #e7eefe;
+  color: #4036e0;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.talent-profile__about {
+  margin: 0.55rem 0 0;
+  max-width: 40rem;
+  color: #667085;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.talent-profile__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.85rem;
+  margin-top: 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #667085;
+}
+
+.talent-profile__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.talent-profile__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.7rem 1.2rem;
+  cursor: pointer;
+  text-decoration: none;
+  background: #4036e0;
+  color: #fff;
+  font-family: var(--font-display, inherit);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.talent-profile__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 1rem;
+}
+
+.tag {
+  border-radius: 999px;
+  padding: 0.28rem 0.7rem;
+  background: #f4f5f8;
+  color: #344054;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.tag--specialty {
+  background: #ebe9ff;
+  color: #4036e0;
+}
+
+.talent-profile__portfolio {
+  margin-top: 1.75rem;
+}
+
+.talent-profile__section-head h2 {
+  margin: 0;
+  font-family: var(--font-display, inherit);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #151c27;
+}
+
+.talent-profile__section-head p {
+  margin: 0.25rem 0 1rem;
+  color: #667085;
+  font-size: 0.875rem;
+}
+
+.talent-profile__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.85rem;
+}
+
+@media (min-width: 720px) {
+  .talent-profile__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .talent-profile__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.pf-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #eceef4;
+  border-radius: 18px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.pf-card:hover {
+  border-color: #cfd6e8;
+  box-shadow: 0 10px 24px rgb(21 28 39 / 0.08);
+}
+
+.pf-card__cover {
+  height: 120px;
+  background: linear-gradient(135deg, #e7eefe, #f4f5f8);
+  background-size: cover;
+  background-position: center;
+}
+
+.pf-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.9rem 1rem 1rem;
+}
+
+.pf-card__cat {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #4036e0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pf-card__body h3 {
+  margin: 0;
+  font-family: var(--font-display, inherit);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #151c27;
+}
+
+.pf-card__body p {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: #667085;
+}

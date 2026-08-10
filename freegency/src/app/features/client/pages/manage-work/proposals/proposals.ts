@@ -225,6 +225,7 @@ export class Proposals implements OnInit {
       Pending: 'status-pending',
       Viewed: 'status-viewed',
       InDiscussion: 'status-discussion',
+      Accepted: 'status-accepted',
       Rejected: 'status-rejected',
       Withdrawn: 'status-withdrawn',
       Expired: 'status-expired',
@@ -233,21 +234,51 @@ export class Proposals implements OnInit {
   }
 
   statusLabel(status: string): string {
-    return status === 'InDiscussion' ? 'IN DISCUSSION' : status.toUpperCase();
+    if (status === 'InDiscussion') return 'IN DISCUSSION';
+    return status.toUpperCase();
   }
 
   canOpenMessages(proposal: Proposal): boolean {
-    return proposal.status === 'InDiscussion' && !!proposal.chatRoomId;
+    return (
+      (proposal.status === 'InDiscussion' || proposal.status === 'Accepted') &&
+      (!!proposal.chatRoomId || (proposal.status === 'Accepted' && !!proposal.projectId))
+    );
   }
 
   goToMessages(chatRoomId: string): void {
+    if (!chatRoomId) {
+      this.toast.error('Chat room is not available for this proposal yet.');
+      return;
+    }
     void this.router.navigate(['/client/messages'], {
       queryParams: { room: chatRoomId },
     });
   }
 
+  openProposalMessages(proposal: Proposal): void {
+    if (proposal.chatRoomId) {
+      this.goToMessages(proposal.chatRoomId);
+      return;
+    }
+    if (proposal.status === 'Accepted' && proposal.projectId) {
+      void this.router.navigate(['/client/messages'], {
+        queryParams: { project: proposal.projectId },
+      });
+      return;
+    }
+    this.toast.error('Chat room is not available for this proposal yet.');
+  }
+
   onDrawerGoToMessages(chatRoomId: string): void {
+    const selected = this.selectedProposal();
     this.closeDetail();
+    if (selected) {
+      this.openProposalMessages({
+        ...selected,
+        chatRoomId: chatRoomId || selected.chatRoomId,
+      });
+      return;
+    }
     this.goToMessages(chatRoomId);
   }
 
@@ -451,7 +482,7 @@ export class Proposals implements OnInit {
     this.manageWorkService.startDiscussion(proposal.id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: () => {
+        next: (chatRoomId) => {
           this.actionInProgress.set(null);
           this.assistantAcceptTip.set(true);
           this.closeDetail();
@@ -459,6 +490,9 @@ export class Proposals implements OnInit {
           this.refreshDiscussionLock();
           if (this.aiRankingEnabled() && this.activeProjectId()) {
             this.loadRanking(this.activeProjectId());
+          }
+          if (chatRoomId) {
+            this.goToMessages(chatRoomId);
           }
         },
         error: (err) => {

@@ -1,0 +1,526 @@
+<div class="hire-page">
+  <app-client-view-navbar />
+
+  <main class="hire-main">
+    <header class="hire-hero">
+      <div class="hire-hero__copy">
+        <p class="hire-hero__eyebrow">Hire Talent</p>
+        <h1 class="hire-hero__title">Discover who you’ll work with</h1>
+        <p class="hire-hero__sub">
+          Explore teams and developers with clear ratings, skills, and delivery history — then invite
+          the right fit to your open projects.
+        </p>
+      </div>
+
+      <aside class="hire-hero__cta">
+        <h2>Need someone specific?</h2>
+        <p>Publish a project and we’ll surface stronger matches for you.</p>
+        <a routerLink="/client/create-project" class="hire-cta-btn">Create a project</a>
+      </aside>
+    </header>
+
+    <div class="hire-tabs" role="tablist" aria-label="Hire talent views">
+      <button
+        type="button"
+        role="tab"
+        class="hire-tab"
+        [class.is-active]="tab() === 'discover'"
+        [attr.aria-selected]="tab() === 'discover'"
+        (click)="setTab('discover')"
+      >
+        Discover
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="hire-tab"
+        [class.is-active]="tab() === 'matched'"
+        [attr.aria-selected]="tab() === 'matched'"
+        (click)="setTab('matched')"
+      >
+        Matched for your projects
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="hire-tab"
+        [class.is-active]="tab() === 'invitations'"
+        [attr.aria-selected]="tab() === 'invitations'"
+        (click)="setTab('invitations')"
+      >
+        My invitations
+        @if (pendingInviteCount() > 0) {
+          <span class="hire-tab__count">{{ pendingInviteCount() }}</span>
+        }
+      </button>
+    </div>
+
+    @if (toast()) {
+      <p class="hire-toast" role="status">{{ toast() }}</p>
+    }
+
+    <!-- DISCOVER -->
+    @if (tab() === 'discover') {
+      @if (loadingDiscover()) {
+        <div class="hire-grid" aria-hidden="true">
+          @for (i of [1, 2, 3, 4]; track i) {
+            <div class="hire-card hire-card--skeleton"></div>
+          }
+        </div>
+      } @else if (error()) {
+        <div class="hire-empty">
+          <h2>Couldn’t load talent</h2>
+          <p>{{ error() }}</p>
+        </div>
+      } @else if (!hasDiscoverContent()) {
+        <div class="hire-empty">
+          <h2>No talent to show yet</h2>
+          <p>Check back once more teams and developers are available in the marketplace.</p>
+          <a routerLink="/client/create-project" class="hire-btn hire-btn--primary">Create a project</a>
+        </div>
+      } @else {
+        @for (rail of teamCarousels(); track rail.category.id) {
+          <section class="hire-section">
+            <div class="hire-section__head">
+              <div>
+                <p class="hire-section__eyebrow">Teams</p>
+                <h2>{{ rail.category.nameEn || rail.category.name }}</h2>
+                <p>Agencies and squads with shared delivery history.</p>
+              </div>
+              <div class="hire-rail-controls">
+                <button type="button" class="hire-rail-nav" (click)="scrollRail(teamRail, -1)" aria-label="Scroll left">‹</button>
+                <button type="button" class="hire-rail-nav" (click)="scrollRail(teamRail, 1)" aria-label="Scroll right">›</button>
+              </div>
+            </div>
+            <div class="hire-rail" #teamRail>
+              @for (team of rail.items; track team.id) {
+                <article class="hire-card hire-card--rich">
+                  <div
+                    class="hire-card__cover"
+                    [style.backgroundImage]="team.cover ? 'url(' + team.cover + ')' : null"
+                  ></div>
+                  <div class="hire-card__body">
+                    <div class="hire-card__header">
+                      <div class="hire-card__identity">
+                        <div class="hire-card__avatar" aria-hidden="true">
+                          @if (team.logo) {
+                            <img [src]="team.logo" alt="" />
+                          } @else {
+                            {{ initials(team.name) }}
+                          }
+                        </div>
+                        <div class="min-w-0">
+                          <h3 class="hire-card__name">{{ team.name }}</h3>
+                          <div class="hire-card__badges">
+                            <span class="hire-badge hire-badge--team">Team</span>
+                            @if (teamPrimaryCategory(team); as cat) {
+                              <span class="hire-badge hire-badge--soft">{{ cat }}</span>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                      <div class="hire-card__score" aria-label="Rating">
+                        <span class="hire-card__score-value">★ {{ team.averageRating | number: '1.1-1' }}</span>
+                        <span class="hire-card__score-label">{{ team.ratingCount }} reviews</span>
+                      </div>
+                    </div>
+
+                    <p class="hire-card__about">
+                      {{ team.aboutUs || 'Collaborative team ready to ship client work end-to-end.' }}
+                    </p>
+
+                    <div class="hire-card__stats">
+                      <div class="hire-stat">
+                        <strong>{{ team.membersCount || team.memberAvatars?.length || 0 }}</strong>
+                        <span>Members</span>
+                      </div>
+                      <div class="hire-stat">
+                        <strong>{{ team.projectsCount ?? 0 }}</strong>
+                        <span>Projects</span>
+                      </div>
+                      <div class="hire-stat">
+                        <strong>{{ team.specialties?.length || 0 }}</strong>
+                        <span>Specialties</span>
+                      </div>
+                    </div>
+
+                    @if (teamSpecialtyLabels(team).length || team.skills?.length) {
+                      <div class="hire-card__tags">
+                        @for (s of teamSpecialtyLabels(team); track s) {
+                          <span class="hire-tag hire-tag--specialty">{{ s }}</span>
+                        }
+                        @for (skill of (team.skills || []).slice(0, 4); track skill.skillId || skill.name) {
+                          <span class="hire-tag">{{ skill.name }}</span>
+                        }
+                      </div>
+                    }
+
+                    @if (team.memberAvatars?.length) {
+                      <div class="hire-card__members" aria-label="Team members">
+                        @for (m of team.memberAvatars!.slice(0, 5); track m.userId) {
+                          <span class="hire-member" [title]="m.name">
+                            @if (m.imageUrl) {
+                              <img [src]="m.imageUrl" [alt]="m.name" />
+                            } @else {
+                              {{ initials(m.name) }}
+                            }
+                          </span>
+                        }
+                        @if ((team.membersCount || 0) > 5) {
+                          <span class="hire-member hire-member--more">+{{ (team.membersCount || 0) - 5 }}</span>
+                        }
+                      </div>
+                    }
+
+                    <div class="hire-card__actions">
+                      <a class="hire-btn hire-btn--ghost" [routerLink]="['/client/teams', team.id]">View profile</a>
+                      <button type="button" class="hire-btn hire-btn--primary" (click)="inviteTeam(team)">
+                        Invite to project
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              }
+            </div>
+          </section>
+        }
+
+        @for (rail of developerCarousels(); track rail.category.id) {
+          <section class="hire-section">
+            <div class="hire-section__head">
+              <div>
+                <p class="hire-section__eyebrow">Developers</p>
+                <h2>{{ rail.category.nameEn || rail.category.name }}</h2>
+                <p>Independent talent available for client projects.</p>
+              </div>
+              <div class="hire-rail-controls">
+                <button type="button" class="hire-rail-nav" (click)="scrollRail(devRail, -1)" aria-label="Scroll left">‹</button>
+                <button type="button" class="hire-rail-nav" (click)="scrollRail(devRail, 1)" aria-label="Scroll right">›</button>
+              </div>
+            </div>
+            <div class="hire-rail" #devRail>
+              @for (dev of rail.items; track dev.userId) {
+                <article class="hire-card hire-card--rich">
+                  <div class="hire-card__body">
+                    <div class="hire-card__header">
+                      <div class="hire-card__identity">
+                        <div class="hire-card__avatar hire-card__avatar--lg" aria-hidden="true">
+                          @if (dev.profileImage) {
+                            <img [src]="dev.profileImage" alt="" />
+                          } @else {
+                            {{ initials(dev.firstName + ' ' + dev.lastName) }}
+                          }
+                        </div>
+                        <div class="min-w-0">
+                          <h3 class="hire-card__name">{{ dev.firstName }} {{ dev.lastName }}</h3>
+                          <div class="hire-card__badges">
+                            <span class="hire-badge hire-badge--dev">Developer</span>
+                            @if (dev.title) {
+                              <span class="hire-badge hire-badge--soft">{{ dev.title }}</span>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                      <div class="hire-card__score" aria-label="Rating">
+                        <span class="hire-card__score-value">★ {{ dev.averageRating | number: '1.1-1' }}</span>
+                        <span class="hire-card__score-label">{{ dev.ratingCount }} reviews</span>
+                      </div>
+                    </div>
+
+                    <p class="hire-card__about">
+                      {{ dev.bio || 'Available for new client projects and long-term collaboration.' }}
+                    </p>
+
+                    <div class="hire-card__stats">
+                      <div class="hire-stat">
+                        <strong>{{ dev.skills.length }}</strong>
+                        <span>Skills</span>
+                      </div>
+                      <div class="hire-stat">
+                        <strong>{{ dev.categories.length }}</strong>
+                        <span>Focus</span>
+                      </div>
+                      <div class="hire-stat">
+                        <strong>{{ dev.country || '—' }}</strong>
+                        <span>Location</span>
+                      </div>
+                    </div>
+
+                    @if (dev.skills.length || dev.categories.length) {
+                      <div class="hire-card__tags">
+                        @for (c of dev.categories.slice(0, 2); track c) {
+                          <span class="hire-tag hire-tag--specialty">{{ c }}</span>
+                        }
+                        @for (skill of dev.skills.slice(0, 4); track skill) {
+                          <span class="hire-tag">{{ skill }}</span>
+                        }
+                      </div>
+                    }
+
+                    <div class="hire-card__actions">
+                      <a class="hire-btn hire-btn--ghost" [routerLink]="['/client/developers', dev.userId]">View profile</a>
+                      <button type="button" class="hire-btn hire-btn--primary" (click)="inviteDeveloper(dev)">
+                        Invite to project
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              }
+            </div>
+          </section>
+        }
+      }
+    }
+
+    <!-- MATCHED -->
+    @if (tab() === 'matched') {
+      @if (!openProjects().length) {
+        <div class="hire-empty">
+          <h2>No open projects yet</h2>
+          <p>Publish a project first — then we’ll rank teams and developers that fit your brief.</p>
+          <a routerLink="/client/create-project" class="hire-btn hire-btn--primary">Create a project</a>
+        </div>
+      } @else {
+        @if (openProjects().length > 1) {
+          <div class="hire-pills" role="tablist" aria-label="Choose a project">
+            @for (project of openProjects(); track project.id) {
+              <button
+                type="button"
+                class="hire-pill"
+                [class.is-active]="selectedMatchProjectId() === project.id"
+                (click)="selectMatchProject(project.id)"
+              >
+                {{ project.title }}
+              </button>
+            }
+          </div>
+        }
+
+        @if (selectedMatchProject(); as project) {
+          <article class="hire-project-panel">
+            <div class="hire-project-panel__top">
+              <div>
+                <p class="hire-project-panel__eyebrow">Matching for</p>
+                <h2>{{ project.title }}</h2>
+                <p>{{ project.description }}</p>
+              </div>
+              <a class="hire-project-panel__link" [routerLink]="['/projects', project.id]">
+                Open project →
+              </a>
+            </div>
+            <div class="hire-project-panel__meta">
+              <div>
+                <span>Budget</span>
+                <strong>{{ formatBudget(project) }}</strong>
+              </div>
+              <div>
+                <span>Category</span>
+                <strong>{{ project.categoryName || 'General' }}</strong>
+              </div>
+              <div>
+                <span>Proposals</span>
+                <strong>{{ project.proposalCount }}</strong>
+              </div>
+            </div>
+          </article>
+        }
+
+        @if (loadingMatched()) {
+          <div class="hire-grid" aria-hidden="true">
+            @for (i of [1, 2, 3, 4]; track i) {
+              <div class="hire-card hire-card--skeleton"></div>
+            }
+          </div>
+        } @else if (!matched().length) {
+          <div class="hire-empty">
+            <h2>No strong matches yet</h2>
+            <p>Try another open project, or invite talent from Discover.</p>
+            <button type="button" class="hire-btn hire-btn--primary" (click)="setTab('discover')">
+              Browse Discover
+            </button>
+          </div>
+        } @else {
+          <div class="hire-grid">
+            @for (card of matched(); track card.id + card.projectId; let i = $index) {
+              <article class="hire-card hire-card--rich" [class.hire-card--top]="i === 0">
+                <div class="hire-card__body">
+                  <div class="hire-card__header">
+                    <div class="hire-card__identity">
+                      <div class="hire-card__avatar hire-card__avatar--lg" aria-hidden="true">
+                        @if (card.avatarUrl) {
+                          <img [src]="card.avatarUrl" [alt]="card.name" />
+                        } @else {
+                          {{ initials(card.name) }}
+                        }
+                      </div>
+                      <div class="min-w-0">
+                        <h3 class="hire-card__name">{{ card.name || 'Talent' }}</h3>
+                        <div class="hire-card__badges">
+                          <span
+                            class="hire-badge"
+                            [class.hire-badge--team]="isTeamCandidate(card)"
+                            [class.hire-badge--dev]="!isTeamCandidate(card)"
+                          >
+                            {{ isTeamCandidate(card) ? 'Team' : 'Developer' }}
+                          </span>
+                          @if (i === 0) {
+                            <span class="hire-badge hire-badge--best">Best fit</span>
+                          }
+                          @if (card.categories?.length) {
+                            <span class="hire-badge hire-badge--soft">{{ card.categories![0] }}</span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                    <div class="hire-card__score hire-card__score--match" aria-label="Match score">
+                      <span class="hire-card__score-value">{{ matchPercent(card.finalScore) }}%</span>
+                      <span class="hire-card__score-label">match</span>
+                    </div>
+                  </div>
+
+                  <p class="hire-card__about">
+                    {{
+                      card.about ||
+                        'Strong overlap with your project needs — explore their portfolio and invite them.'
+                    }}
+                  </p>
+
+                  <div class="hire-card__stats" [class.hire-card__stats--4]="isTeamCandidate(card)">
+                    <div class="hire-stat">
+                      <strong>★ {{ card.averageRating | number: '1.1-1' }}</strong>
+                      <span>{{ card.ratingCount }} reviews</span>
+                    </div>
+                    <div class="hire-stat">
+                      <strong>{{ card.portfolioProjectCount }}</strong>
+                      <span>Portfolio</span>
+                    </div>
+                    <div class="hire-stat">
+                      <strong>{{ card.completedProjectsCount }}</strong>
+                      <span>Done</span>
+                    </div>
+                    @if (isTeamCandidate(card)) {
+                      <div class="hire-stat">
+                        <strong>{{ card.memberCount ?? 0 }}</strong>
+                        <span>Members</span>
+                      </div>
+                    }
+                  </div>
+
+                  @if ((card.specialties?.length ?? 0) > 0 || card.skills.length) {
+                    <div class="hire-card__tags">
+                      @for (s of card.specialties?.slice(0, 2) ?? []; track s) {
+                        <span class="hire-tag hire-tag--specialty">{{ s }}</span>
+                      }
+                      @for (skill of card.skills.slice(0, 4); track skill) {
+                        <span class="hire-tag">{{ skill }}</span>
+                      }
+                    </div>
+                  }
+
+                  <div class="hire-card__actions">
+                    <button type="button" class="hire-btn hire-btn--ghost" (click)="viewMatched(card)">
+                      View profile
+                    </button>
+                    <button type="button" class="hire-btn hire-btn--primary" (click)="inviteMatched(card)">
+                      Invite to project
+                    </button>
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      }
+    }
+
+    <!-- INVITATIONS -->
+    @if (tab() === 'invitations') {
+      <section class="hire-section">
+        <div class="hire-section__head">
+          <div>
+            <p class="hire-section__eyebrow">Outreach</p>
+            <h2>Sent invitations</h2>
+            <p>Track every invite and jump into chat when talent accepts.</p>
+          </div>
+        </div>
+
+        @if (invitationsLoading()) {
+          <div class="hire-skeleton-row" aria-hidden="true"></div>
+          <div class="hire-skeleton-row" aria-hidden="true"></div>
+        } @else if (invitationsError()) {
+          <div class="hire-empty">
+            <h2>Couldn’t load invitations</h2>
+            <p>{{ invitationsError() }}</p>
+          </div>
+        } @else if (!invitations().length) {
+          <div class="hire-empty">
+            <h2>No invitations yet</h2>
+            <p>Invite a team or developer from Discover or Matched.</p>
+            <button type="button" class="hire-btn hire-btn--primary" (click)="setTab('discover')">
+              Browse talent
+            </button>
+          </div>
+        } @else {
+          <div class="hire-invite-list">
+            @for (inv of invitations(); track inv.id) {
+              <article class="hire-invite-row">
+                <div class="hire-invite-row__avatar" aria-hidden="true">
+                  {{
+                    initials(
+                      inv.inviteeType === 'Team'
+                        ? inv.inviteeTeamName || 'Team'
+                        : inv.inviteeUserName || 'Dev'
+                    )
+                  }}
+                </div>
+                <div class="min-w-0 flex-1">
+                  <div class="hire-invite-row__top">
+                    <h3>
+                      {{
+                        inv.inviteeType === 'Team'
+                          ? inv.inviteeTeamName || 'Team'
+                          : inv.inviteeUserName || 'Developer'
+                      }}
+                    </h3>
+                    <span [class]="statusClass(inv.status)">{{ inv.status }}</span>
+                    <span class="hire-badge hire-badge--soft">
+                      {{ inv.inviteeType === 'Team' ? 'Team' : 'Developer' }}
+                    </span>
+                  </div>
+                  <p class="hire-invite-row__project">{{ inv.projectTitle }}</p>
+                  <p class="hire-invite-row__msg">{{ inv.message }}</p>
+                </div>
+                <div class="hire-invite-row__actions">
+                  @if (inv.status === 'Pending') {
+                    <button
+                      type="button"
+                      class="hire-btn hire-btn--ghost"
+                      [disabled]="actionBusyId() === inv.id"
+                      (click)="cancelInvitation(inv.id)"
+                    >
+                      Cancel
+                    </button>
+                  }
+                  @if (inv.status === 'Accepted' && inv.chatRoomId) {
+                    <button type="button" class="hire-btn hire-btn--primary" (click)="openChat(inv.chatRoomId)">
+                      Open chat
+                    </button>
+                  }
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </section>
+    }
+  </main>
+</div>
+
+@if (inviteTarget(); as target) {
+  <app-invite-to-project-modal
+    [target]="target"
+    [preferredProjectId]="inviteProjectId()"
+    (closed)="closeInvite()"
+    (sent)="onInviteSent()"
+  />
+}

@@ -181,6 +181,16 @@
               Manage
             </button>
           }
+          @if (canArchiveSelectedRoom()) {
+            <button
+              type="button"
+              class="msg-manage-btn"
+              [disabled]="archivingRoom()"
+              (click)="archiveSelectedRoom()"
+            >
+              {{ archivingRoom() ? 'Archiving…' : 'Archive' }}
+            </button>
+          }
         </div>
       </header>
 
@@ -310,7 +320,11 @@
                   {{ (message.senderName || '?').charAt(0).toUpperCase() }}
                 </span>
               }
-              <div class="msg-bubble" [class.is-mine]="message.isMine">
+              <div
+                class="msg-bubble"
+                [class.is-mine]="message.isMine"
+                [class.is-moderated]="isModerationHidden(message) || isModerationRedacted(message)"
+              >
                 @if (!message.isMine) {
                   <p class="msg-bubble__name">
                     {{ message.senderName }}
@@ -319,34 +333,48 @@
                     }
                   </p>
                 }
-                @if (message.text) {
-                  <p class="msg-bubble__text">{{ message.text }}</p>
-                }
-                @if (message.fileUrl) {
-                  @if (isImageAttachment(message.fileName, message.fileUrl)) {
-                    <a
-                      class="msg-attach msg-attach--image"
-                      [href]="message.fileUrl"
-                      target="_blank"
-                      rel="noopener"
+                @if (isModerationHidden(message) && !message.isMine) {
+                  <p class="msg-bubble__text msg-bubble__text--moderated">
+                    Message removed by FreeGency for a policy violation.
+                  </p>
+                } @else {
+                  @if (message.text) {
+                    <p
+                      class="msg-bubble__text"
+                      [class.msg-bubble__text--moderated]="isModerationHidden(message) || isModerationRedacted(message)"
                     >
-                      <img [src]="message.fileUrl" [alt]="message.fileName || 'Image'" loading="lazy" />
-                      <span class="msg-attach__caption">{{ message.fileName || 'Image' }}</span>
-                    </a>
-                  } @else {
-                    <a
-                      class="msg-attach msg-attach--file"
-                      [href]="message.fileUrl"
-                      target="_blank"
-                      rel="noopener"
-                    >
-                      <span class="msg-attach__icon" aria-hidden="true">{{ fileExtLabel(message.fileName) }}</span>
-                      <span class="msg-attach__meta">
-                        <strong>{{ message.fileName || 'Attachment' }}</strong>
-                        <em>Open file</em>
-                      </span>
-                    </a>
+                      {{ message.text }}
+                    </p>
                   }
+                  @if (message.fileUrl) {
+                    @if (isImageAttachment(message.fileName, message.fileUrl)) {
+                      <a
+                        class="msg-attach msg-attach--image"
+                        [href]="message.fileUrl"
+                        target="_blank"
+                        rel="noopener"
+                      >
+                        <img [src]="message.fileUrl" [alt]="message.fileName || 'Image'" loading="lazy" />
+                        <span class="msg-attach__caption">{{ message.fileName || 'Image' }}</span>
+                      </a>
+                    } @else {
+                      <a
+                        class="msg-attach msg-attach--file"
+                        [href]="message.fileUrl"
+                        target="_blank"
+                        rel="noopener"
+                      >
+                        <span class="msg-attach__icon" aria-hidden="true">{{ fileExtLabel(message.fileName) }}</span>
+                        <span class="msg-attach__meta">
+                          <strong>{{ message.fileName || 'Attachment' }}</strong>
+                          <em>Open file</em>
+                        </span>
+                      </a>
+                    }
+                  }
+                }
+                @if (message.isMine && message.moderationWarning) {
+                  <p class="msg-bubble__warn">{{ message.moderationWarning }}</p>
                 }
                 <div class="msg-bubble__foot">
                   <time>{{ message.createdAt | date: 'shortTime' }}</time>
@@ -667,6 +695,12 @@
           <h3>{{ latestPlan()?.status === 'ChangesRequested' ? 'Propose revised plan' : 'Propose Milestone Plan' }}</h3>
           <p class="msg-modal__hint">
             Send a full plan — new or changed milestones are tagged automatically.
+          </p>
+          @if (proposeBudgetHint()) {
+            <p class="msg-modal__hint msg-plan-modal__budget">{{ proposeBudgetHint() }}</p>
+          }
+          <p class="msg-modal__hint msg-plan-modal__total">
+            Plan total: <strong>${{ proposeTotal() | number: '1.0-2' }}</strong>
           </p>
         </div>
         <button type="button" class="msg-plan-modal__close" (click)="closeProposePlan()" aria-label="Close">

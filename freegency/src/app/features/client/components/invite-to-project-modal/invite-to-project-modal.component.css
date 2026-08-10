@@ -1,0 +1,135 @@
+.invite-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgba(17, 24, 39, 0.45);
+  backdrop-filter: blur(4px);
+}
+
+.invite-panel {
+  width: min(100%, 32rem);
+  border-radius: 1.25rem;
+  background: #fff;
+  border: 1px solid #eceef4;
+  box-shadow: 0 24px 60px rgba(39, 37, 63, 0.18);
+  padding: 1.25rem 1.35rem 1.4rem;
+}
+
+.invite-panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.invite-panel__eyebrow {
+  margin: 0;
+  font-family: var(--font-body, 'DM Sans', system-ui, sans-serif);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.invite-panel__title {
+  margin: 0.2rem 0 0;
+  font-family: var(--font-display, 'Syne', sans-serif);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.invite-panel__close {
+  border: 0;
+  background: #f4f3ff;
+  color: #27253f;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.invite-field {
+  display: grid;
+  gap: 0.4rem;
+  margin-bottom: 0.9rem;
+  font-family: var(--font-body, 'DM Sans', system-ui, sans-serif);
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.invite-field select,
+.invite-field textarea {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.85rem;
+  padding: 0.7rem 0.85rem;
+  background: #fbfbfb;
+  color: #111827;
+  outline: none;
+  resize: vertical;
+}
+
+.invite-field select:focus,
+.invite-field textarea:focus {
+  border-color: #4130d7;
+  box-shadow: 0 0 0 3px rgba(65, 48, 215, 0.12);
+}
+
+.invite-panel__hint {
+  margin: 0;
+  font-family: var(--font-body, 'DM Sans', system-ui, sans-serif);
+  font-size: 0.9rem;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.invite-panel__hint a {
+  color: #4130d7;
+  font-weight: 600;
+}
+
+.invite-panel__error {
+  margin: 0 0 0.75rem;
+  color: #93000a;
+  font-size: 0.85rem;
+}
+
+.invite-panel__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.invite-btn {
+  min-height: 2.5rem;
+  padding: 0 1rem;
+  border-radius: 999px;
+  border: 0;
+  font-family: var(--font-display, 'Syne', sans-serif);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.invite-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.invite-btn--ghost {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.invite-btn--primary {
+  background: #27253f;
+  color: #f7f7f7;
+}

@@ -58,8 +58,20 @@ export class ProjectProposalsApiService {
     return this.postAction(proposalId, 'view');
   }
 
-  startDiscussion(proposalId: string): Observable<void> {
-    return this.postAction(proposalId, 'start-discussion');
+  startDiscussion(proposalId: string): Observable<string> {
+    return this.http
+      .post<{ isSuccess: boolean; data?: string; message?: string | null }>(
+        `${this.baseUrl}/api/v1/proposals/${proposalId}/start-discussion`,
+        null,
+      )
+      .pipe(
+        map((res) => {
+          if (!res.isSuccess || !res.data) {
+            throw new Error(res.message || 'Failed to start discussion.');
+          }
+          return res.data;
+        }),
+      );
   }
 
   closeDiscussion(proposalId: string): Observable<void> {

@@ -35,7 +35,7 @@
 
     @if (loading()) {
       <div class="flex flex-col gap-0 px-5 py-2 sm:px-6" aria-busy="true" aria-label="Loading settings">
-        @for (i of [1, 2, 3, 4]; track i) {
+        @for (i of skeletonRows(); track i) {
           <div class="flex items-center gap-4 border-b border-[#f0f1f5] py-5 last:border-b-0">
             <div class="size-10 shrink-0 animate-pulse rounded-[12px] bg-[#f0f1f5]"></div>
             <div class="flex min-w-0 flex-1 flex-col gap-2">
@@ -81,7 +81,7 @@
       </div>
 
       <ul class="flex flex-col">
-        @for (row of rows; track row.inAppKey) {
+        @for (row of rows(); track row.inAppKey) {
           <li
             class="notification-grid group border-b border-[#f0f1f5] px-5 py-5 transition-colors last:border-b-0 hover:bg-[#fafafb] sm:px-6"
           >
@@ -111,7 +111,7 @@
                   <label class="inline-flex items-center gap-2.5">
                     <span class="font-body text-xs font-medium text-[#6b7285]">In App</span>
                     <app-toggle-switch
-                      [checked]="settings()?.[row.inAppKey] ?? false"
+                      [checked]="isEnabled(row.inAppKey)"
                       [ariaLabel]="'Toggle in-app for ' + row.title"
                       (toggled)="toggle(row.inAppKey)"
                     />
@@ -119,7 +119,7 @@
                   <label class="inline-flex items-center gap-2.5">
                     <span class="font-body text-xs font-medium text-[#6b7285]">Email</span>
                     <app-toggle-switch
-                      [checked]="settings()?.[row.emailKey] ?? false"
+                      [checked]="isEnabled(row.emailKey)"
                       [ariaLabel]="'Toggle email for ' + row.title"
                       (toggled)="toggle(row.emailKey)"
                     />
@@ -130,7 +130,7 @@
 
             <div class="hidden items-center justify-center sm:flex">
               <app-toggle-switch
-                [checked]="settings()?.[row.inAppKey] ?? false"
+                [checked]="isEnabled(row.inAppKey)"
                 [ariaLabel]="'Toggle in-app for ' + row.title"
                 (toggled)="toggle(row.inAppKey)"
               />
@@ -138,7 +138,7 @@
 
             <div class="hidden items-center justify-center sm:flex">
               <app-toggle-switch
-                [checked]="settings()?.[row.emailKey] ?? false"
+                [checked]="isEnabled(row.emailKey)"
                 [ariaLabel]="'Toggle email for ' + row.title"
                 (toggled)="toggle(row.emailKey)"
               />

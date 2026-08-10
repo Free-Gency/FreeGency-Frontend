@@ -2,6 +2,7 @@ export type ProposalStatus =
   | 'Pending'
   | 'Viewed'
   | 'InDiscussion'
+  | 'Accepted'
   | 'Rejected'
   | 'Withdrawn'
   | 'Expired';

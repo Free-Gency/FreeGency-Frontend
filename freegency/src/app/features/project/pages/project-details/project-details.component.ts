@@ -1,5 +1,13 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import {
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ProjectDetailsApiService } from '../../data-access/project-details-api.service';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ClientViewNavbarComponent } from '../../../../shared/components/client-view-navbar/client-view-navbar.component';
@@ -32,6 +40,8 @@ type ProjectTab = 'overview' | 'proposals' | 'milestones' | 'files' | 'activity'
 })
 export class ProjectDetailsComponent {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly projectApi = inject(ProjectDetailsApiService);
   private readonly auth = inject(AuthService);
 
@@ -61,15 +71,46 @@ export class ProjectDetailsComponent {
   });
 
   constructor() {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
-      this.loadProject(id);
-    }
+    this.route.paramMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        const id = params.get('id');
+        if (id) this.loadProject(id);
+      });
+
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        this.activeTab.set(this.normalizeTab(params.get('tab')));
+      });
 
     effect(() => {
       const open = this.showEdit() || this.showDelete();
       document.body.style.overflow = open ? 'hidden' : '';
     });
+  }
+
+  protected setTab(tab: ProjectTab): void {
+    this.activeTab.set(tab);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  private normalizeTab(raw: string | null): ProjectTab {
+    const allowed: ProjectTab[] = [
+      'overview',
+      'proposals',
+      'milestones',
+      'files',
+      'activity',
+    ];
+    return raw && (allowed as string[]).includes(raw)
+      ? (raw as ProjectTab)
+      : 'overview';
   }
 
   protected loadProject(id?: string) {

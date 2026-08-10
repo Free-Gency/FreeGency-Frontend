@@ -7,6 +7,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './profile-strength.component.html',
+  styleUrl: './profile-strength.component.css',
 })
 export class ProfileStrengthComponent {
   profile = input.required<DeveloperProfile>();

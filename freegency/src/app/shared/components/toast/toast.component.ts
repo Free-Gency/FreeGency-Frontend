@@ -14,8 +14,7 @@ export class ToastOutletComponent {
   protected readonly closeIcon = Cancel01Icon as IconSvgObject;
 
   protected variantIcon(variant: ToastVariant): IconSvgObject {
-    return variant === 'success'
-      ? (CheckmarkCircle02Icon as IconSvgObject)
-      : (Alert02Icon as IconSvgObject);
+    if (variant === 'success') return CheckmarkCircle02Icon as IconSvgObject;
+    return Alert02Icon as IconSvgObject;
   }
 }
