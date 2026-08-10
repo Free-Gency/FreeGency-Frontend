@@ -71,3 +71,9 @@ export interface DeveloperProfile {
   jobSuccessRate?: number | null;
   totalJobs?: number | null;
 }
+
+export interface ApiResponse<T> {
+  data: T;
+  isSuccess: boolean;
+  isFailure: boolean;
+}
