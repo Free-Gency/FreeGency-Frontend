@@ -235,7 +235,7 @@
                             class="tpw-member__remove"
                             title="Remove from project"
                             [disabled]="memberActionBusy()"
-                            (click)="removeProjectMember(stat.member.userId)"
+                            (click)="askRemoveProjectMember(stat.member.userId, stat.member.name)"
                           >
                             Remove
                           </button>
@@ -557,13 +557,15 @@
                       <h3 class="tpw-split-card__title">Pay share</h3>
                       <p class="tpw-split-card__lead">
                         1) Add team members to this project · 2) Set their % for this milestone
-                        (must total <strong>100%</strong>). Same % pays out on release and drives task assignees.
+                        (up to <strong>100%</strong>). Any leftover goes to the
+                        <strong>team wallet</strong>. Same % pays out on release and drives task assignees.
                       </p>
                     </div>
                     <div
                       class="tpw-split-card__meta"
                       [class.is-over]="assignmentTotal() > 100"
-                      [class.is-ready]="assignmentTotal() === 100"
+                      [class.is-ready]="assignmentTotal() > 0 && assignmentTotal() <= 100"
+                      [class.is-wallet]="assignmentTotal() === 0"
                     >
                       {{ assignmentTotal() }}%
                     </div>
@@ -611,7 +613,7 @@
                               type="button"
                               class="tpw-member__remove"
                               [disabled]="memberActionBusy()"
-                              (click)="removeProjectMember(m.userId)"
+                              (click)="askRemoveProjectMember(m.userId, m.name)"
                             >
                               Remove
                             </button>
@@ -704,13 +706,35 @@
                       <div class="tpw-split-card__actions">
                         <button
                           type="button"
+                          class="tpw-btn tpw-btn--soft-outline"
+                          [disabled]="!assignmentDraft().length || assignmentSaving()"
+                          (click)="splitEqually()"
+                        >
+                          Split equally
+                        </button>
+                        <button
+                          type="button"
                           class="tpw-btn tpw-btn--primary"
-                          [disabled]="assignmentSaving() || assignmentTotal() !== 100 || !assignmentDraft().length"
+                          [disabled]="assignmentSaving() || !canSavePayShare()"
                           (click)="saveMilestoneAssignments()"
                         >
                           {{ assignmentSaving() ? 'Saving…' : 'Save pay share' }}
                         </button>
                       </div>
+                      @if (assignmentDraft().length && assignmentTotal() > 100) {
+                        <p class="tpw-split-hint tpw-split-hint--error">
+                          Total is {{ assignmentTotal() }}% — reduce to 100% or less.
+                        </p>
+                      } @else if (assignmentDraft().length && teamWalletRemainder() > 0) {
+                        <p class="tpw-split-hint">
+                          {{ teamWalletRemainder() }}% will stay on the team wallet
+                          @if (assignmentTotal() === 0) {
+                            (full amount).
+                          } @else {
+                            after member shares.
+                          }
+                        </p>
+                      }
                     }
                   </div>
                 </section>
@@ -781,5 +805,54 @@
         }
       </main>
     }
+  }
+
+  @if (removeMemberConfirm(); as pending) {
+    <div
+      class="tpw-confirm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="tpw-remove-title"
+      tabindex="-1"
+      (click)="cancelRemoveProjectMember()"
+      (keydown.escape)="cancelRemoveProjectMember()"
+    >
+      <div class="tpw-confirm__card" (click)="$event.stopPropagation()">
+        <div class="tpw-confirm__icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </div>
+        <h2 id="tpw-remove-title" class="tpw-confirm__title">Remove from project?</h2>
+        <p class="tpw-confirm__body">
+          <strong>{{ pending.name }}</strong> will be removed from this project’s staffing.
+          Their pay share on open milestones will need updating if they were included.
+        </p>
+        <div class="tpw-confirm__actions">
+          <button
+            type="button"
+            class="tpw-btn tpw-btn--soft-outline"
+            [disabled]="memberActionBusy()"
+            (click)="cancelRemoveProjectMember()"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="tpw-btn tpw-btn--danger"
+            [disabled]="memberActionBusy()"
+            (click)="confirmRemoveProjectMember()"
+          >
+            {{ memberActionBusy() ? 'Removing…' : 'Remove member' }}
+          </button>
+        </div>
+      </div>
+    </div>
   }
 </div>

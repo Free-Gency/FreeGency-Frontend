@@ -801,6 +801,22 @@
   background: #3527b8;
 }
 
+.tpw-btn--danger {
+  background: #dc2626;
+  color: #fff;
+}
+
+.tpw-btn--danger:hover {
+  background: #b91c1c;
+}
+
+.tpw-btn--danger:disabled,
+.tpw-btn--primary:disabled,
+.tpw-btn--soft-outline:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .tpw-btn--soft {
   margin-top: 1rem;
   background: #eeecfb;
@@ -1300,6 +1316,11 @@
   color: #16a34a;
 }
 
+.tpw-split-card__meta.is-wallet {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
 .tpw-split-card__ok {
   margin: 0 0 0.65rem;
   font-size: 0.8125rem;
@@ -1361,6 +1382,20 @@
   margin-top: 0.85rem;
   display: flex;
   justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.tpw-split-hint {
+  margin: 0.55rem 0 0;
+  text-align: right;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.tpw-split-hint--error {
+  color: #dc2626;
 }
 
 .tpw-split-step {
@@ -1434,4 +1469,86 @@
 
 .tpw-member--add-inline {
   margin-top: 0.15rem;
+}
+
+/* Remove-member confirm (replaces browser alert) */
+.tpw-confirm {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgba(15, 18, 32, 0.48);
+  backdrop-filter: blur(4px);
+  animation: tpw-confirm-fade 0.18s ease-out;
+}
+
+.tpw-confirm__card {
+  width: min(100%, 26rem);
+  padding: 1.35rem 1.4rem 1.25rem;
+  border-radius: 1.15rem;
+  background: #fff;
+  box-shadow:
+    0 24px 48px rgba(15, 18, 32, 0.18),
+    0 0 0 1px rgba(15, 18, 32, 0.04);
+  animation: tpw-confirm-rise 0.22s ease-out;
+}
+
+.tpw-confirm__icon {
+  width: 2.6rem;
+  height: 2.6rem;
+  display: grid;
+  place-items: center;
+  margin-bottom: 0.85rem;
+  border-radius: 0.85rem;
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.tpw-confirm__title {
+  margin: 0 0 0.4rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #111827;
+  letter-spacing: -0.02em;
+}
+
+.tpw-confirm__body {
+  margin: 0 0 1.15rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #6b7280;
+}
+
+.tpw-confirm__body strong {
+  color: #111827;
+  font-weight: 750;
+}
+
+.tpw-confirm__actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+@keyframes tpw-confirm-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tpw-confirm-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }

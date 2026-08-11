@@ -1,6 +1,7 @@
 import { DecimalPipe } from '@angular/common';
-import { Component, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { ProjectDetail, ProjectStatus } from '../../models/project-detail';
 
 @Component({
@@ -11,12 +12,20 @@ import { ProjectDetail, ProjectStatus } from '../../models/project-detail';
   styleUrl: './project-overview.component.css',
 })
 export class ProjectOverviewComponent {
+  private readonly auth = inject(AuthService);
+
   readonly project = input.required<ProjectDetail>();
   readonly isOwner = input(false);
   readonly proposalsCount = input(0);
 
   readonly edit = output<void>();
   readonly delete = output<void>();
+
+  protected readonly manageWorkLink = computed(() =>
+    this.auth.session()?.activeProfileMode === 'Developer'
+      ? '/developer/manage-work'
+      : '/client/manage-work',
+  );
 
   protected get statusClass(): string {
     const map: Record<ProjectStatus, string> = {

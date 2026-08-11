@@ -11,6 +11,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ProjectDetailsApiService } from '../../data-access/project-details-api.service';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ClientViewNavbarComponent } from '../../../../shared/components/client-view-navbar/client-view-navbar.component';
+import { DeveloperViewNavbarComponent } from '../../../../shared/components/developer-view-navbar/developer-view-navbar.component';
 import { ProjectOverviewComponent } from '../../components/project-overview/project-overview.component';
 import { ProjectProposalsComponent } from '../../components/project-proposals/project-proposals.component';
 import { ProjectMilestonesComponent } from '../../components/project-milestones/project-milestones.component';
@@ -27,6 +28,7 @@ type ProjectTab = 'overview' | 'proposals' | 'milestones' | 'files' | 'activity'
   standalone: true,
   imports: [
     ClientViewNavbarComponent,
+    DeveloperViewNavbarComponent,
     ProjectOverviewComponent,
     ProjectProposalsComponent,
     ProjectMilestonesComponent,
@@ -44,6 +46,10 @@ export class ProjectDetailsComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly projectApi = inject(ProjectDetailsApiService);
   private readonly auth = inject(AuthService);
+
+  protected readonly isDeveloper = computed(
+    () => this.auth.session()?.activeProfileMode === 'Developer',
+  );
 
   protected readonly project = signal<ProjectDetail | null>(null);
   protected readonly loading = signal(true);

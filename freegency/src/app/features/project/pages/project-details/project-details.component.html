@@ -1,5 +1,9 @@
 <div class="project-page min-h-dvh bg-background">
-  <app-client-view-navbar />
+  @if (isDeveloper()) {
+    <app-developer-view-navbar />
+  } @else {
+    <app-client-view-navbar />
+  }
 
   <main class="max-w-content mx-auto px-6 py-8 md:px-16 md:py-10">
     @if (loading()) {

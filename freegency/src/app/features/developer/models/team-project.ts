@@ -1,3 +1,9 @@
+export interface TeamProjectMemberAvatar {
+  userId: string;
+  name: string;
+  imageUrl: string | null;
+}
+
 export interface TeamProjectCard {
   id: string;
   title: string;
@@ -12,6 +18,14 @@ export interface TeamProjectCard {
   completedMilestones: number;
   progressPercent: number;
   isCurrentUserMember: boolean;
+  currentMilestoneTitle: string | null;
+  currentMilestoneAmount: number | null;
+  currentMilestoneWorkStatus: string | null;
+  currentMilestoneDue: string | null;
+  currentMilestoneTasksDone: number;
+  currentMilestoneTasksTotal: number;
+  members: TeamProjectMemberAvatar[];
+  membersTotal: number;
 }
 
 export interface ProjectMemberDto {

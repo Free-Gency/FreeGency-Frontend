@@ -127,6 +127,8 @@ export class TeamProjectWorkspaceComponent implements OnInit {
   protected readonly assignmentSaving = signal(false);
   protected readonly assignmentError = signal<string | null>(null);
   protected readonly assignmentSavedFlash = signal(false);
+  /** Inline confirm for removing a project member (replaces browser confirm). */
+  protected readonly removeMemberConfirm = signal<{ userId: string; name: string } | null>(null);
 
   protected readonly myWork = signal<ProjectMilestone[]>([]);
   protected readonly myWorkLoading = signal(false);
@@ -158,8 +160,21 @@ export class TeamProjectWorkspaceComponent implements OnInit {
   });
 
   protected readonly assignmentTotal = computed(() =>
-    this.assignmentDraft().reduce((sum, row) => sum + (Number(row.percentage) || 0), 0),
+    Math.round(
+      this.assignmentDraft().reduce((sum, row) => sum + (Number(row.percentage) || 0), 0) * 100,
+    ) / 100,
   );
+
+  /** Unallocated % stays on the team wallet at release. */
+  protected readonly teamWalletRemainder = computed(() =>
+    Math.max(0, Math.round((100 - this.assignmentTotal()) * 100) / 100),
+  );
+
+  protected readonly canSavePayShare = computed(() => {
+    if (!this.assignmentDraft().length) return false;
+    const total = this.assignmentTotal();
+    return total >= 0 && total <= 100;
+  });
 
   protected readonly role = computed<TeamRoleLabel | null>(() => {
     const t = this.team();
@@ -372,13 +387,29 @@ export class TeamProjectWorkspaceComponent implements OnInit {
     });
   }
 
-  protected removeProjectMember(userId: string): void {
+  protected askRemoveProjectMember(userId: string, name?: string): void {
+    if (!this.isLeader() || this.memberActionBusy()) return;
+    const resolved =
+      name?.trim() ||
+      this.projectMembers().find((m) => m.userId === userId)?.name ||
+      this.members().find((m) => m.userId === userId)?.name ||
+      'this member';
+    this.memberActionError.set(null);
+    this.removeMemberConfirm.set({ userId, name: resolved });
+  }
+
+  protected cancelRemoveProjectMember(): void {
+    this.removeMemberConfirm.set(null);
+  }
+
+  protected confirmRemoveProjectMember(): void {
+    const pending = this.removeMemberConfirm();
     const projectId = this.projectId();
-    if (!projectId || this.memberActionBusy() || !this.isLeader()) return;
-    if (!confirm('Remove this member from the project?')) return;
+    if (!pending || !projectId || this.memberActionBusy() || !this.isLeader()) return;
+    this.removeMemberConfirm.set(null);
     this.memberActionBusy.set(true);
     this.memberActionError.set(null);
-    this.teamsApi.removeProjectMember(projectId, userId).subscribe({
+    this.teamsApi.removeProjectMember(projectId, pending.userId).subscribe({
       next: () => {
         this.memberActionBusy.set(false);
         this.reloadProjectMembers(projectId);
@@ -393,28 +424,42 @@ export class TeamProjectWorkspaceComponent implements OnInit {
   }
 
   protected setAssignmentPercent(userId: string, raw: string | number): void {
-    const percentage = Math.max(0, Math.min(100, Number(raw) || 0));
+    const percentage = Math.max(0, Math.min(100, Math.round(Number(raw) || 0)));
     this.assignmentDraft.update((rows) =>
       rows.map((r) => (r.userId === userId ? { ...r, percentage } : r)),
     );
     this.assignmentSavedFlash.set(false);
+    this.assignmentError.set(null);
+  }
+
+  protected splitEqually(): void {
+    const rows = this.assignmentDraft();
+    if (!rows.length) return;
+    const n = rows.length;
+    const base = Math.floor(100 / n);
+    let rem = 100 - base * n;
+    this.assignmentDraft.set(
+      rows.map((r, i) => ({
+        ...r,
+        percentage: base + (i < rem ? 1 : 0),
+      })),
+    );
+    this.assignmentSavedFlash.set(false);
+    this.assignmentError.set(null);
   }
 
   protected saveMilestoneAssignments(): void {
     const milestoneId = this.taskMilestoneId();
     if (!milestoneId || this.assignmentSaving()) return;
     const total = this.assignmentTotal();
-    if (total !== 100) {
-      this.assignmentError.set('Pay share must total exactly 100%.');
+    if (total > 100) {
+      this.assignmentError.set(`Pay share is ${total}% — bring it to 100% or less.`);
       return;
     }
     const payload = this.assignmentDraft()
       .filter((r) => r.percentage > 0)
       .map((r) => ({ userId: r.userId, value: r.percentage }));
-    if (!payload.length) {
-      this.assignmentError.set('Add at least one member with a share greater than 0.');
-      return;
-    }
+    // Empty / all-zero clears splits → full amount stays on the team wallet.
     this.assignmentSaving.set(true);
     this.assignmentError.set(null);
     this.teamsApi.putMilestonePayoutSplits(milestoneId, payload).subscribe({

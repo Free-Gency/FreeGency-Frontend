@@ -244,6 +244,19 @@ export class TeamsService {
             completedMilestones: Number(p.completedMilestones ?? 0),
             progressPercent: Number(p.progressPercent ?? 0),
             isCurrentUserMember: !!p.isCurrentUserMember,
+            currentMilestoneTitle: p.currentMilestoneTitle ?? null,
+            currentMilestoneAmount:
+              p.currentMilestoneAmount == null ? null : Number(p.currentMilestoneAmount),
+            currentMilestoneWorkStatus: p.currentMilestoneWorkStatus ?? null,
+            currentMilestoneDue: p.currentMilestoneDue ?? null,
+            currentMilestoneTasksDone: Number(p.currentMilestoneTasksDone ?? 0),
+            currentMilestoneTasksTotal: Number(p.currentMilestoneTasksTotal ?? 0),
+            members: (p.members ?? []).map((m) => ({
+              userId: m.userId,
+              name: m.name ?? 'Member',
+              imageUrl: m.imageUrl ?? null,
+            })),
+            membersTotal: Number(p.membersTotal ?? p.members?.length ?? 0),
           }));
         }),
       );
@@ -330,10 +343,18 @@ export class TeamsService {
       })
       .pipe(
         map((res) => {
-          if (!res.isSuccess || !res.data) {
-            throw new Error(res.message || 'Failed to save milestone payout splits.');
+          if (!res?.isSuccess) {
+            throw new Error(res?.message || 'Failed to save milestone payout splits.');
           }
-          return res.data;
+          return (
+            res.data ?? {
+              teamId: '',
+              projectId: null,
+              milestoneId,
+              splitType: 'Percent',
+              items,
+            }
+          );
         }),
       );
   }

@@ -1354,13 +1354,52 @@ export class TeamDetailComponent implements OnInit {
         return 'STARTING';
       case 'Completed':
         return 'COMPLETED';
+      case 'Cancelled':
+        return 'CANCELLED';
       default:
         return status.toUpperCase();
     }
   }
 
+  protected milestonePhaseLabel(status: string | null | undefined): string {
+    switch (status) {
+      case 'InProgress':
+        return 'Active';
+      case 'Submitted':
+        return 'Review';
+      case 'ChangesRequested':
+        return 'Changes';
+      case 'Approved':
+        return 'Done';
+      case 'NotStarted':
+        return 'Queued';
+      default:
+        return status || 'Active';
+    }
+  }
+
+  protected milestoneSteps(project: TeamProjectCard): { done: boolean; current: boolean }[] {
+    const total = Math.max(0, Math.min(project.totalMilestones || 0, 6));
+    if (!total) return [];
+    const completed = Math.min(project.completedMilestones || 0, total);
+    return Array.from({ length: total }, (_, i) => ({
+      done: i < completed,
+      current: i === completed && completed < total,
+    }));
+  }
+
   protected formatBudget(project: TeamProjectCard): string {
     const amount = project.budgetMax || project.budgetMin || 0;
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: project.currency || 'USD',
+      maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
+    }).format(amount);
+  }
+
+  protected formatMilestoneAmount(project: TeamProjectCard): string {
+    const amount = project.currentMilestoneAmount;
+    if (amount == null) return '—';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: project.currency || 'USD',
