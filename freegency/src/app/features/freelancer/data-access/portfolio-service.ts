@@ -8,6 +8,7 @@ import {
   PortfolioProjectDto,
   ApiResponse,
 } from '../../freelancer/model/portfolio.model';
+import { ProjectDetailDto, ReviewPayload } from '../model/project-detail.model';
 
 @Injectable({
   providedIn: 'root',
@@ -32,5 +33,26 @@ export class PortfolioService {
       .pipe(
         map((res) => res?.data || res || []) 
       );
+  }
+
+  getProjectById(projectId: string): Observable<ProjectDetailDto> {
+    return this.http
+      .get<ApiResponse<ProjectDetailDto>>(`${this.baseUrl}/api/v1/portfolio-projects/${projectId}`)
+      .pipe(map((res) => res.data));
+  }
+
+  addProjectReview(projectId: string, payload: ReviewPayload): Observable<ApiResponse<void>> {
+    return this.http.post<ApiResponse<void>>(
+      `${this.baseUrl}/api/v1/portfolio-projects/${projectId}/reviews`,
+      payload
+    );
+  }
+
+  getRelatedProjects(ownerId: string): Observable<PortfolioProjectDto[]> {
+    return this.http
+      .get<ApiResponse<PortfolioProjectDto[]>>(
+        `${this.baseUrl}/api/v1/profiles/developer/${ownerId}/portfolio-projects`
+      )
+      .pipe(map((res) => res?.data || []));
   }
 }

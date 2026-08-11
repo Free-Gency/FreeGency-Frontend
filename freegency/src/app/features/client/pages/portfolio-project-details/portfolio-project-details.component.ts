@@ -1,4 +1,4 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe, Location } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -40,6 +40,7 @@ import { DeveloperViewNavbarComponent } from '../../../../shared/components/deve
 export class PortfolioProjectDetailsComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly location = inject(Location);
   private readonly portfolioApi = inject(PortfolioApiService);
   private readonly teamsApi = inject(TeamsService);
   private readonly destroyRef = inject(DestroyRef);
@@ -80,7 +81,10 @@ export class PortfolioProjectDetailsComponent implements OnInit {
       .map((part) => part.trim())
       .filter(Boolean)
       .map((part) => {
-        const split = part.split(/\s*[\/·–—-]\s+/).map((s) => s.trim()).filter(Boolean);
+        const split = part
+          .split(/\s*[\/·–—-]\s+/)
+          .map((s) => s.trim())
+          .filter(Boolean);
         if (split.length >= 2) {
           return { name: split[0], role: split.slice(1).join(' / ') };
         }
@@ -112,9 +116,7 @@ export class PortfolioProjectDetailsComponent implements OnInit {
     return ['/assets/client-home/e-learning-dashboard.jpg'];
   });
 
-  protected readonly heroImage = computed(
-    () => this.activeImage() || this.gallery()[0] || null,
-  );
+  protected readonly heroImage = computed(() => this.activeImage() || this.gallery()[0] || null);
 
   protected readonly averageRating = computed(() => {
     const list = this.reviews();
@@ -182,13 +184,19 @@ export class PortfolioProjectDetailsComponent implements OnInit {
   protected goBack(): void {
     const teamId = this.fromTeamId() || this.details()?.ownerTeamId;
     const isDeveloper = this.auth.session()?.activeProfileMode === 'Developer';
+
     if (teamId && isDeveloper) {
       void this.router.navigateByUrl(`/developer/teams/${teamId}`);
       return;
     }
-    void this.router.navigateByUrl(isDeveloper ? '/developer/teams' : '/client/home');
-  }
 
+    if (window.history.length > 1) {
+      this.location.back();
+      return;
+    }
+
+    void this.router.navigateByUrl(isDeveloper ? '/developer/me/portfolio' : '/client/home');
+  }
   protected initials(name: string | null | undefined): string {
     const parts = (name || 'F').trim().split(/\s+/).slice(0, 2);
     return parts.map((p) => p[0]?.toUpperCase() || '').join('') || 'F';
@@ -202,10 +210,7 @@ export class PortfolioProjectDetailsComponent implements OnInit {
     return text;
   }
 
-  protected successLabel(creator: {
-    averageRating: number;
-    ratingCount: number;
-  }): string {
+  protected successLabel(creator: { averageRating: number; ratingCount: number }): string {
     if (!creator.ratingCount || creator.averageRating <= 0) return '—';
     const pct = Math.round((creator.averageRating / 5) * 100);
     return `${pct}%`;

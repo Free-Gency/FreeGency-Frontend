@@ -83,6 +83,22 @@ export const routes: Routes = [
       ).then((m) => m.FreelancerPortfolioComponent),
   },
   {
+    path: 'developer/portfolio/new',
+    canActivate: [authGuard, developerModeGuard],
+    loadComponent: () =>
+      import(
+        './features/developer/pages/portfolio-case-study-wizard/portfolio-case-study-wizard.component'
+      ).then((m) => m.PortfolioCaseStudyWizardComponent),
+  },
+  {
+    path: 'developer/portfolio/:projectId/edit',
+    canActivate: [authGuard, developerModeGuard],
+    loadComponent: () =>
+      import(
+        './features/developer/pages/portfolio-case-study-wizard/portfolio-case-study-wizard.component'
+      ).then((m) => m.PortfolioCaseStudyWizardComponent),
+  },
+  {
     path: 'developer/portfolio/:id',
     canActivate: [authGuard, developerModeGuard],
     loadComponent: () =>
@@ -156,7 +172,6 @@ export const routes: Routes = [
       },
     ],
   },
-
   {
     path: 'developer/home',
     canActivate: [authGuard, developerModeGuard],
@@ -252,7 +267,7 @@ export const routes: Routes = [
         './features/developer/pages/developer-messages/developer-messages.component'
       ).then((m) => m.DeveloperMessagesComponent),
   },
-    {
+  {
     path: 'freelancer/portfolio',
     canActivate: [authGuard, developerModeGuard],
     data: {
@@ -263,6 +278,11 @@ export const routes: Routes = [
       import(
         './features/freelancer/pages/freelancer-portfolio/freelancer-portfolio.component'
       ).then((m) => m.FreelancerPortfolioComponent),
+  },
+  {
+    path: 'freelancer/portfolio/:id',
+    redirectTo: 'developer/portfolio/:id',
+    pathMatch: 'full',
   },
   {
     path: '',
@@ -284,7 +304,6 @@ export const routes: Routes = [
     loadChildren: () =>
       import('./features/project/project.routes').then((m) => m.projectRoutes),
   },
-  
   { path: 'onboarding', redirectTo: 'auth/onboarding', pathMatch: 'full' },
   { path: 'sign-up', redirectTo: 'auth/sign-up', pathMatch: 'full' },
   { path: 'login', redirectTo: 'auth/login', pathMatch: 'full' },
