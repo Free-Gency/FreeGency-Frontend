@@ -1,0 +1,125 @@
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ProposalsService } from '../services/proposal.service';
+import { ProjectDetail, ApplicantType, TeamOption } from '../model/proposal.model';
+
+@Component({
+  selector: 'app-apply-project-page',
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterLink],
+  templateUrl: './apply-proposal.component.component.html',
+})
+export class ApplyProposalModalComponent implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly proposalsService = inject(ProposalsService);
+
+  readonly ApplicantType = ApplicantType;
+  readonly maxAttachments = 10;
+
+  projectId = signal<string>('');
+  project = signal<ProjectDetail | null>(null);
+  isLoadingProject = signal<boolean>(true);
+
+  applicantType = signal<ApplicantType | null>(null);
+  teams = signal<TeamOption[]>([]);
+  selectedTeamId = signal<string>('');
+
+  coverLetter = signal<string>('');
+  approach = signal<string>('');
+  proposedTimeline = signal<string>('');
+  similarLinksUrl = signal<string>('');
+  proposedBudget = signal<number | null>(null);
+
+  attachments = signal<File[]>([]);
+
+  isSubmitting = signal<boolean>(false);
+  errorMessage = signal<string>('');
+  isSubmitted = signal<boolean>(false);
+
+  isValid = computed(() => {
+    const hasType = this.applicantType() !== null;
+    const hasTeamIfNeeded = this.applicantType() !== this.ApplicantType.Team || !!this.selectedTeamId();
+    const hasBudget = !!this.proposedBudget() && this.proposedBudget()! > 0;
+
+    return (
+      hasType &&
+      hasTeamIfNeeded &&
+      hasBudget &&
+      this.coverLetter().trim().length > 0 &&
+      this.approach().trim().length > 0
+    );
+  });
+
+  ngOnInit(): void {
+    const id = this.route.snapshot.paramMap.get('id') ?? '';
+    this.projectId.set(id);
+
+    this.isLoadingProject.set(true);
+    this.proposalsService.getProjectById(id).subscribe((project) => {
+      this.project.set(project);
+      this.isLoadingProject.set(false);
+    });
+
+    this.proposalsService.getMyTeams().subscribe({
+      next: (teams) => this.teams.set(teams || []),
+      error: () => this.teams.set([]),
+    });
+  }
+
+  selectApplicantType(type: ApplicantType): void {
+    this.applicantType.set(type);
+    if (type === ApplicantType.Developer) {
+      this.selectedTeamId.set('');
+    }
+  }
+
+  onFilesSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    const newFiles = Array.from(input.files);
+    const combined = [...this.attachments(), ...newFiles].slice(0, this.maxAttachments);
+    this.attachments.set(combined);
+    input.value = '';
+  }
+
+  removeAttachment(index: number): void {
+    this.attachments.update((files) => files.filter((_, i) => i !== index));
+  }
+
+  onCancel(): void {
+    this.router.navigate(['/developer/home']);
+  }
+
+  onSubmit(): void {
+    if (!this.isValid() || this.isSubmitting()) return;
+
+    this.isSubmitting.set(true);
+    this.errorMessage.set('');
+
+    const dto = {
+      projectId: this.projectId(),
+      applicantType: this.applicantType()!,
+      teamId: this.applicantType() === ApplicantType.Team ? this.selectedTeamId() : undefined,
+      coverLetter: this.coverLetter().trim(),
+      approach: this.approach().trim(),
+      proposedTimeline: this.proposedTimeline().trim() || undefined,
+      similarLinksUrl: this.similarLinksUrl().trim() || undefined,
+      proposedBudget: this.proposedBudget()!,
+    };
+
+    this.proposalsService.submitProposal(dto, this.attachments()).subscribe({
+      next: () => {
+        this.isSubmitting.set(false);
+        this.isSubmitted.set(true);
+      },
+      error: () => {
+        this.isSubmitting.set(false);
+        this.errorMessage.set('Something went wrong while sending your proposal. Please try again.');
+      },
+    });
+  }
+}

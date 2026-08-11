@@ -4,13 +4,15 @@ import { FormsModule } from '@angular/forms';
 import { FreelancerHome } from '../../data-access/freelancer-home';
 import { DeveloperProfileSummary } from '../../../../shared/models/developer-profile.model';
 import { DeveloperViewNavbarComponent } from "../../../../shared/components/developer-view-navbar/developer-view-navbar.component";
+import { ApplyProjectButtonComponent } from "../../../../shared/components/apply-project-button/apply-project-button.component";
+import { RouterLink } from '@angular/router';
 
 export type ActiveTab = 'feed' | 'applications' | 'saved';
 
 @Component({
   selector: 'app-freelancer-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, DeveloperViewNavbarComponent],
+  imports: [CommonModule, RouterLink, FormsModule, DeveloperViewNavbarComponent, ApplyProjectButtonComponent],
   templateUrl: './freelancer-home.component.html',
   styleUrls: ['./freelancer-home.component.css'],
 })
@@ -124,4 +126,8 @@ export class FreelancerHomeComponent implements OnInit {
     this.isFilterOpen.set(false);
     this.onSearch(); 
   }
+
+  onProposalSubmitted(project: any): void {
+  project.proposalCount = (project.proposalCount ?? project.proposalsCount ?? 0) + 1;
+}
 }
