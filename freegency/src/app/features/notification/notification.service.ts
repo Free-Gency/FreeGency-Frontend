@@ -28,6 +28,9 @@ baseUrl=environment.apiBaseUrl;
     }
   );
 }
+markAsSeen(notificationId:string){
+  return this.http.post(`${this.baseUrl}/api/v1/Notification/${notificationId}/seen`,{});
+}
   getUnreadCount() {
     return this.http
       .get<UnreadNotificationCountDto>(

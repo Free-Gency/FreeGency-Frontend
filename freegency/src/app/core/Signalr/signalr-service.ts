@@ -4,6 +4,7 @@ import { HubConnection, HubConnectionBuilder, HubConnectionState } from '@micros
 import { Wallet } from '../../shared/models/Wallet';
 import { NotificationDto } from '../../shared/models/notification';
 import { TokenStorageService } from '../auth/token-storage.service';
+import { MarkAsSeenNotification } from '../../shared/models/MarkAsSeenNotification';
 
 @Injectable({
   providedIn: 'root',
@@ -14,8 +15,8 @@ export class SignalrService {
   hubConnection?: HubConnection;
   WalletSignal = signal<Wallet | null>(null);
   NotificationSignal = signal<NotificationDto | null>(null);
-
-  CreateHubConnection() {
+MarkAsSeenNotificationSignal =
+  signal<MarkAsSeenNotification | null>(null);  CreateHubConnection() {
     if (this.hubConnection && this.hubConnection.state !== HubConnectionState.Disconnected) {
       return;
     }
@@ -32,6 +33,10 @@ export class SignalrService {
     });
     this.hubConnection.on('NotificationCreated', (value: NotificationDto) => {
       this.NotificationSignal.set(value);
+    });
+    this.hubConnection.on("MarkAsSeenNotification",(value: MarkAsSeenNotification)=>{
+      console.log('MARK AS SEEN RECEIVED:', value);
+      this.MarkAsSeenNotificationSignal.set(value);
     });
   }
 
