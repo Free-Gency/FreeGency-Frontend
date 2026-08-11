@@ -1,0 +1,265 @@
+<div class="content-container py-8 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+  <!-- Back link -->
+  <a routerLink="/developer/home" class="link-back text-sm">
+    <span class="material-symbols-outlined text-lg">arrow_back</span>
+    <span>Back to projects</span>
+  </a>
+
+  @if (isLoadingProject()) {
+    <div class="card p-12 text-center text-on-surface-variant bg-white rounded-2xl border border-outline-variant/40">
+      <span class="material-symbols-outlined animate-spin text-3xl text-primary">progress_activity</span>
+      <p class="mt-2 text-sm font-medium">Loading project details...</p>
+    </div>
+  } @else if (project(); as proj) {
+
+    <!-- Project summary -->
+    <article class="bg-white p-6 rounded-2xl border border-outline-variant/50 space-y-4">
+      <div class="flex items-center justify-between text-xs text-on-surface-variant">
+        <div class="flex items-center gap-2">
+          <div
+            class="w-6 h-6 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white font-bold text-[10px]"
+          >
+            {{ (proj.clientName || 'A')[0] }}
+          </div>
+          <span class="font-medium text-on-surface">{{ proj.clientName }}</span>
+        </div>
+        <span>Posted {{ proj.postedAt | date: 'mediumDate' }}</span>
+      </div>
+
+      <div>
+        <h1 class="text-headline-md">{{ proj.title }}</h1>
+        <p class="text-body-sm text-on-surface-variant mt-1.5 leading-relaxed">{{ proj.description }}</p>
+      </div>
+
+      @if (proj.skills.length > 0) {
+        <div class="flex flex-wrap gap-2">
+          @for (skill of proj.skills; track skill) {
+            <span class="px-2.5 py-1 rounded-md bg-surface-container-low text-on-surface-variant text-[11px] font-medium">
+              {{ skill }}
+            </span>
+          }
+        </div>
+      }
+
+      <div class="flex items-center justify-between pt-3 border-t border-gray-100 text-xs text-on-surface-variant">
+        <span class="text-base font-bold text-primary">
+          ${{ proj.budgetMin | number: '1.0-0' }} - ${{ proj.budgetMax | number: '1.0-0' }}
+        </span>
+        <div class="flex items-center gap-4">
+          <span class="flex items-center gap-1">
+            <span class="material-symbols-outlined text-sm text-outline">schedule</span>
+            {{ proj.duration }}
+          </span>
+          <span class="flex items-center gap-1">
+            <span class="material-symbols-outlined text-sm text-outline">group</span>
+            {{ proj.proposalCount }} proposals
+          </span>
+        </div>
+      </div>
+    </article>
+
+    @if (isSubmitted()) {
+      <!-- Success state -->
+      <div class="card p-10 text-center bg-white rounded-2xl border border-outline-variant/40 space-y-3">
+        <span class="material-symbols-outlined text-4xl text-primary">check_circle</span>
+        <h2 class="text-headline-md">Proposal sent</h2>
+        <p class="text-body-sm text-on-surface-variant">
+          Your proposal for "{{ proj.title }}" has been submitted. The client will be able to review it shortly.
+        </p>
+        <a routerLink="/developer/home" class="btn btn-primary w-auto px-6 inline-flex">Back to projects</a>
+      </div>
+    } @else {
+      <!-- Proposal form -->
+      <form class="bg-white p-6 rounded-2xl border border-outline-variant/50 space-y-1" (ngSubmit)="onSubmit()">
+        <h2 class="text-headline-md mb-1">Submit your proposal</h2>
+        <p class="text-body-sm text-on-surface-variant mb-4">
+          Tell the client why you're the right fit for this project.
+        </p>
+
+        <!-- Applicant type -->
+        <div class="mb-2">
+          <label class="field-label">Apply as</label>
+          <div class="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              class="flex flex-col items-center gap-1.5 rounded-xl border-2 py-4 px-3 transition-colors"
+              [class.border-primary]="applicantType() === ApplicantType.Developer"
+              [class.bg-primary-fixed]="applicantType() === ApplicantType.Developer"
+              [class.border-outline-variant]="applicantType() !== ApplicantType.Developer"
+              (click)="selectApplicantType(ApplicantType.Developer)"
+            >
+              <span
+                class="material-symbols-outlined text-2xl"
+                [class.text-primary]="applicantType() === ApplicantType.Developer"
+                [class.text-outline]="applicantType() !== ApplicantType.Developer"
+              >
+                person
+              </span>
+              <span class="text-sm font-semibold text-on-surface">As an individual</span>
+              <span class="text-xs text-on-surface-variant text-center leading-snug">
+                Apply with your own profile
+              </span>
+            </button>
+
+            <button
+              type="button"
+              class="flex flex-col items-center gap-1.5 rounded-xl border-2 py-4 px-3 transition-colors"
+              [class.border-primary]="applicantType() === ApplicantType.Team"
+              [class.bg-primary-fixed]="applicantType() === ApplicantType.Team"
+              [class.border-outline-variant]="applicantType() !== ApplicantType.Team"
+              (click)="selectApplicantType(ApplicantType.Team)"
+            >
+              <span
+                class="material-symbols-outlined text-2xl"
+                [class.text-primary]="applicantType() === ApplicantType.Team"
+                [class.text-outline]="applicantType() !== ApplicantType.Team"
+              >
+                groups
+              </span>
+              <span class="text-sm font-semibold text-on-surface">As a team</span>
+              <span class="text-xs text-on-surface-variant text-center leading-snug">
+                Apply on behalf of one of your teams
+              </span>
+            </button>
+          </div>
+
+          @if (applicantType() === ApplicantType.Team) {
+            <div class="modal-field">
+              <label class="field-label">Select team</label>
+              <select [ngModel]="selectedTeamId()" name="team" (ngModelChange)="selectedTeamId.set($event)">
+                <option value="" disabled>Choose a team</option>
+                @for (team of teams(); track team.id) {
+                  <option [value]="team.id">{{ team.name }}</option>
+                }
+              </select>
+              @if (teams().length === 0) {
+                <p class="text-xs text-on-surface-variant mt-1.5">
+                  You don't have any teams yet. Create one first to apply as a team.
+                </p>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Cover letter -->
+        <div class="modal-field">
+          <label class="field-label">Cover letter</label>
+          <textarea
+            rows="3"
+            name="coverLetter"
+            placeholder="Introduce yourself and explain why you're a good fit..."
+            [ngModel]="coverLetter()"
+            (ngModelChange)="coverLetter.set($event)"
+          ></textarea>
+        </div>
+
+        <!-- Approach -->
+        <div class="modal-field">
+          <label class="field-label">Your approach</label>
+          <textarea
+            rows="3"
+            name="approach"
+            placeholder="Describe how you'd tackle this project..."
+            [ngModel]="approach()"
+            (ngModelChange)="approach.set($event)"
+          ></textarea>
+        </div>
+
+        <!-- Timeline & budget -->
+        <div class="grid grid-cols-2 gap-3">
+          <div class="modal-field">
+            <label class="field-label">Proposed timeline</label>
+            <input
+              type="text"
+              name="proposedTimeline"
+              placeholder="e.g. 3 weeks"
+              [ngModel]="proposedTimeline()"
+              (ngModelChange)="proposedTimeline.set($event)"
+            />
+          </div>
+          <div class="modal-field">
+            <label class="field-label">Proposed budget ($)</label>
+            <input
+              type="number"
+              min="1"
+              name="proposedBudget"
+              placeholder="800"
+              [ngModel]="proposedBudget()"
+              (ngModelChange)="proposedBudget.set($event)"
+            />
+          </div>
+        </div>
+
+        <!-- Similar work link -->
+        <div class="modal-field">
+          <label class="field-label">Link to similar work (optional)</label>
+          <input
+            type="url"
+            name="similarLinksUrl"
+            placeholder="https://..."
+            [ngModel]="similarLinksUrl()"
+            (ngModelChange)="similarLinksUrl.set($event)"
+          />
+        </div>
+
+        <!-- Attachments -->
+        <div class="modal-field">
+          <label class="field-label">Attachments (optional, up to {{ maxAttachments }})</label>
+          <label
+            class="flex items-center justify-center gap-2 border border-dashed border-outline-variant rounded-xl h-11 text-sm text-on-surface-variant cursor-pointer hover:bg-surface-container-low transition-colors"
+          >
+            <span class="material-symbols-outlined text-base">attach_file</span>
+            <span>Add files</span>
+            <input
+              type="file"
+              class="hidden"
+              multiple
+              [disabled]="attachments().length >= maxAttachments"
+              (change)="onFilesSelected($event)"
+            />
+          </label>
+
+          @if (attachments().length > 0) {
+            <ul class="mt-2 space-y-1.5">
+              @for (file of attachments(); track file.name; let i = $index) {
+                <li class="flex items-center justify-between text-xs bg-surface-container-low rounded-lg px-3 py-2">
+                  <span class="truncate pr-2">{{ file.name }}</span>
+                  <button
+                    type="button"
+                    class="text-outline hover:text-tertiary transition-colors shrink-0"
+                    (click)="removeAttachment(i)"
+                  >
+                    <span class="material-symbols-outlined text-sm">close</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+
+        @if (errorMessage()) {
+          <p class="text-xs text-error mt-3">{{ errorMessage() }}</p>
+        }
+
+        <!-- Actions -->
+        <div class="flex gap-3 pt-4">
+          <button type="button" class="btn btn-secondary" [disabled]="isSubmitting()" (click)="onCancel()">
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="btn btn-primary flex items-center justify-center gap-1.5"
+            [disabled]="!isValid() || isSubmitting()"
+          >
+            @if (isSubmitting()) {
+              <span class="material-symbols-outlined animate-spin text-base">progress_activity</span>
+              <span>Sending...</span>
+            } @else {
+              <span>Send proposal</span>
+            }
+          </button>
+        </div>
+      </form>
+    }
+  }
+</div>

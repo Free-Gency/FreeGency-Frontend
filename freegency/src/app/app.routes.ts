@@ -165,6 +165,14 @@ export const routes: Routes = [
         './features/freelancer/pages/freelancer-home/freelancer-home.component'
       ).then((m) => m.FreelancerHomeComponent),
   },
+  {
+    path: 'developer/apply/:id',
+    canActivate: [authGuard, developerModeGuard],
+    loadComponent: () =>
+      import(
+        './features/freelancer/apply-proposal.component/apply-proposal.component.component'
+      ).then((m) => m.ApplyProposalModalComponent),
+  },
   { path: 'developer/explore', redirectTo: 'developer/teams', pathMatch: 'full' },
   {
     path: 'developer/manage-work',
