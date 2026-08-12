@@ -77,10 +77,10 @@
       <!-- FILTER POPUP MODAL -->
       @if (isFilterOpen()) {
       <!-- Backdrop -->
-      <div class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+      <div class="fixed inset-0 z-100 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
         <!-- Modal Container -->
         <div
-          class="bg-white rounded-2xl w-full max-w-lg min-w-[320px] sm:min-w-[480px] shadow-2xl border border-gray-100 p-6 space-y-6 animate-in zoom-in-95 duration-150">
+          class="bg-white rounded-2xl w-full max-w-lg min-w-80 sm:min-w-120 shadow-2xl border border-gray-100 p-6 space-y-6 animate-in zoom-in-95 duration-150">
           <!-- Modal Header -->
           <div class="flex items-center justify-between border-b border-gray-100 pb-4">
             <div class="flex items-center gap-2">
@@ -332,19 +332,36 @@
 
         <!-- PAGINATION -->
         <footer class="flex items-center justify-between pt-4 text-xs text-on-surface-variant">
-          <span>Showing 1-{{ projects().length }} of
-            {{ totalCount() || projects().length }} results</span>
+          <span>Showing {{ startIndex() }}-{{ endIndex() }} of {{ totalCount() }} results</span>
 
           <div class="flex items-center gap-1">
             <button
-              class="w-7 h-7 flex items-center justify-center rounded-full hover:bg-surface-container-low text-outline">
+              (click)="prevPage()"
+              [disabled]="currentPage() === 1"
+              class="w-7 h-7 flex items-center justify-center rounded-full hover:bg-surface-container-low text-outline disabled:opacity-40"
+            >
               <span class="material-symbols-outlined text-sm">chevron_left</span>
             </button>
-            <button class="w-7 h-7 rounded-full bg-primary text-white font-medium flex items-center justify-center">
-              1
-            </button>
+
+            <!-- Page numbers -->
+            @if (totalPages() > 1) {
+              @for (p of pageNumbers(); track p) {
+                <button
+                  (click)="goToPage(p)"
+                  [class.bg-primary]="currentPage() === p"
+                  [class.text-white]="currentPage() === p"
+                  class="w-7 h-7 rounded-full flex items-center justify-center hover:bg-surface-container-low text-outline"
+                >
+                  {{ p }}
+                </button>
+              }
+            }
+
             <button
-              class="w-7 h-7 flex items-center justify-center rounded-full hover:bg-surface-container-low text-outline">
+              (click)="nextPage()"
+              [disabled]="currentPage() === totalPages()"
+              class="w-7 h-7 flex items-center justify-center rounded-full hover:bg-surface-container-low text-outline disabled:opacity-40"
+            >
               <span class="material-symbols-outlined text-sm">chevron_right</span>
             </button>
           </div>

@@ -38,6 +38,45 @@ export class FreelancerHomeComponent implements OnInit {
     this.loadActiveTabData();
   }
 
+  // Pagination helpers
+  totalPages(): number {
+    return Math.max(1, Math.ceil((this.totalCount() ?? 0) / this.pageSize));
+  }
+
+  startIndex(): number {
+    if (this.totalCount() === 0) return 0;
+    return (this.currentPage() - 1) * this.pageSize + 1;
+  }
+
+  endIndex(): number {
+    return Math.min(this.totalCount(), this.currentPage() * this.pageSize);
+  }
+
+  goToPage(page: number): void {
+    const tp = this.totalPages();
+    if (page < 1 || page > tp) return;
+    this.currentPage.set(page);
+    this.loadActiveTabData();
+  }
+
+  prevPage(): void {
+    if (this.currentPage() > 1) {
+      this.currentPage.update((p) => p - 1);
+      this.loadActiveTabData();
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage() < this.totalPages()) {
+      this.currentPage.update((p) => p + 1);
+      this.loadActiveTabData();
+    }
+  }
+
+  pageNumbers(): number[] {
+    return Array.from({ length: this.totalPages() }, (_, i) => i + 1);
+  }
+
   loadProfile(): void {
     this.homeService.getProfileSummary().subscribe((data) => {
       this.profileSummary.set(data);

@@ -138,4 +138,17 @@ export class ProjectsApiService {
         }),
       );
   }
+
+  getDetails(projectId: string): Observable<ProjectDto> {
+    return this.http
+      .get<ApiResponse<ProjectDto>>(`${this.baseUrl}/${projectId}`)
+      .pipe(
+        map((res) => {
+          if (!res.isSuccess || !res.data) {
+            throw new Error(res.message || 'Failed to load project details.');
+          }
+          return res.data;
+        }),
+      );
+  }
 }

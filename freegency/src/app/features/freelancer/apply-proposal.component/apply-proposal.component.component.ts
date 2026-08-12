@@ -66,7 +66,7 @@ export class ApplyProposalModalComponent implements OnInit {
       this.isLoadingProject.set(false);
     });
 
-    this.proposalsService.getMyTeams().subscribe({
+    this.proposalsService.getTeamsIOwn().subscribe({
       next: (teams) => this.teams.set(teams || []),
       error: () => this.teams.set([]),
     });
@@ -74,7 +74,7 @@ export class ApplyProposalModalComponent implements OnInit {
 
   selectApplicantType(type: ApplicantType): void {
     this.applicantType.set(type);
-    if (type === ApplicantType.Developer) {
+    if (type === ApplicantType.User) {
       this.selectedTeamId.set('');
     }
   }
@@ -107,8 +107,16 @@ export class ApplyProposalModalComponent implements OnInit {
     this.isSubmitting.set(true);
     this.errorMessage.set('');
 
+    // ensure we have a valid project id as a GUID string
+    const projectId = this.projectIdSignal();
+    if (!projectId) {
+      this.isSubmitting.set(false);
+      this.errorMessage.set('Project ID is missing. Cannot submit proposal.');
+      return;
+    }
+
     const dto = {
-      projectId: this.projectIdSignal(),
+      projectId: projectId,
       applicantType: this.applicantType()!,
       teamId: this.applicantType() === ApplicantType.Team ? this.selectedTeamId() : undefined,
       coverLetter: this.coverLetter().trim(),
@@ -119,15 +127,17 @@ export class ApplyProposalModalComponent implements OnInit {
     };
 
     this.proposalsService.submitProposal(dto, this.attachments()).subscribe({
-      next: () => {
+      next: (proposalId) => {
         this.isSubmitting.set(false);
         this.isSubmitted.set(true);
         if (this.projectId) {
           this.proposalSubmitted.emit();
         }
       },
-      error: () => {
+      error: (error) => {
         this.isSubmitting.set(false);
+        // Log full error to console for debugging, but show a generic message in the UI
+        console.error('Submit proposal error:', error);
         this.errorMessage.set('Something went wrong while sending your proposal. Please try again.');
       },
     });
