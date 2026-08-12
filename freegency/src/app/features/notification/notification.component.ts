@@ -67,7 +67,29 @@ export class NotificationComponent implements OnInit {
       this.notifications.update((items) => [notification, ...items]);
     }
   });
+ private readonly markAsSeenNotificationEffect = effect(() => {
+  const value =
+    this.signalrService.MarkAsSeenNotificationSignal();
 
+  if (!value) return;
+
+  this.notifications.update(items =>
+    items.map(item =>
+      item.id === value.notificationId
+        ? { ...item, isRead: true }
+        : item
+    )
+  );
+
+  if (value.wasUnread) {
+    this.unreadCount.update(count =>
+      Math.max(0, count - 1)
+    );
+  }
+});
+markAsSeenLocally() {
+  this.unreadCount.update(count => Math.max(0, count - 1));
+}
   ngOnInit(): void {
     this.loadUnreadCount();
   }
@@ -130,7 +152,12 @@ export class NotificationComponent implements OnInit {
     this.notificationOpen.set(false);
 
     if (!target) return;
-
+     if (!notification.isRead) {
+    this.notificationApi
+      .markAsSeen(notification.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe();
+  }
     void this.router.navigateByUrl(target);
   }
 
