@@ -14,6 +14,7 @@ import {
   DashboardSquare01Icon,
   Delete02Icon,
   Folder01Icon,
+  Mail01Icon,
   Message01Icon,
   PencilEdit01Icon,
   StarIcon,
@@ -50,6 +51,7 @@ import { TeamTaskBoardComponent } from '../team-task-board/team-task-board.compo
 import { MyTasksComponent } from '../../components/my-tasks/my-tasks.component';
 import { FinanceComponent } from './finance/finance.component';
 import { MessagesPanelComponent } from '../../../chat/messages-panel/messages-panel.component';
+import { TeamRequestJobComponent } from '../team-request-job/team-request-job.component';
 
 type SidebarKey = TeamDetailTab;
 type ExpertiseFocus = 'categories' | 'specialties' | 'skills';
@@ -74,6 +76,7 @@ interface ChipOption {
     MyTasksComponent,
     FinanceComponent,
     MessagesPanelComponent,
+    TeamRequestJobComponent
   ],
   templateUrl: './team-detail.component.html',
   styleUrl: './team-detail.component.css',
@@ -273,6 +276,7 @@ export class TeamDetailComponent implements OnInit {
       { id: 'finance', label: 'Finance' },
       { id: 'messages', label: 'Messages' },
       { id: 'members', label: 'Members' },
+      { id: 'invitations', label: 'invitations' },
     ];
     if (this.isLeader() && !this.isClientViewer()) {
       items.splice(3, 0, { id: 'invitations', label: 'Invitations' });
@@ -359,7 +363,7 @@ export class TeamDetailComponent implements OnInit {
       imageUrl: m.imageUrl,
     })),
   );
-
+readonly invitationIcon = Mail01Icon;
   protected readonly sidebarItems: {
     key: SidebarKey;
     label: string;
@@ -372,6 +376,11 @@ export class TeamDetailComponent implements OnInit {
     { key: 'finance', label: 'Finance', icon: this.walletIcon },
     { key: 'messages', label: 'Messages', icon: this.messageIcon },
     { key: 'members', label: 'Members', icon: this.groupIcon },
+    {
+  key: 'invitations',
+  label: 'Invitations',
+  icon: this.invitationIcon
+}
   ];
 
   ngOnInit(): void {
@@ -437,10 +446,7 @@ export class TeamDetailComponent implements OnInit {
       const id = this.team()?.id;
       if (id && this.isLeader()) this.loadProjectInvitations(id);
     }
-    if (tab === 'jobs' && this.isLeader() && !this.joinRequestsLoaded()) {
-      const id = this.team()?.id;
-      if (id) this.loadJoinRequests(id);
-    }
+   
     if (tab === 'members' && !this.membersLoaded()) {
       const id = this.team()?.id;
       if (id) this.loadMembers(id);
@@ -813,10 +819,7 @@ export class TeamDetailComponent implements OnInit {
     this.expandedJobLoading.set(true);
     this.expandedJobDetails.set(null);
 
-    if (this.isLeader() && !this.joinRequestsLoaded()) {
-      const teamId = this.team()?.id;
-      if (teamId) this.loadJoinRequests(teamId);
-    }
+
 
     this.teamsApi.getJobDetails(job.id, { skipLoading: true }).subscribe({
       next: (details) => {
@@ -842,10 +845,7 @@ export class TeamDetailComponent implements OnInit {
         this.appsFilterByJob.update((m) => ({ ...m, [jobId]: 'pending' }));
       }
     }
-    if (this.isLeader() && !this.joinRequestsLoaded()) {
-      const teamId = this.team()?.id;
-      if (teamId) this.loadJoinRequests(teamId);
-    }
+   
   }
 
   protected isRequestsOpen(jobId: string): boolean {
@@ -993,42 +993,9 @@ export class TeamDetailComponent implements OnInit {
     return raw;
   }
 
-  protected acceptRequest(req: TeamJoinRequest): void {
-    if (!this.isLeader() || !this.isRequestPending(req.status)) return;
-    this.requestActionId.set(req.id);
-    this.teamsApi.acceptJoinRequest(req.id, { skipLoading: true }).subscribe({
-      next: () => {
-        this.requestActionId.set(null);
-        this.joinRequests.update((list) =>
-          list.map((r) => (r.id === req.id ? { ...r, status: 'Accepted' } : r)),
-        );
-        const teamId = this.team()?.id;
-        if (teamId) this.refreshTeam(teamId);
-      },
-      error: () => {
-        this.requestActionId.set(null);
-        this.joinRequestsError.set('Could not accept this request.');
-      },
-    });
-  }
+ 
 
-  protected rejectRequest(req: TeamJoinRequest): void {
-    if (!this.isLeader() || !this.isRequestPending(req.status)) return;
-    if (!confirm(`Reject application from ${req.fullName}?`)) return;
-    this.requestActionId.set(req.id);
-    this.teamsApi.rejectJoinRequest(req.id, { skipLoading: true }).subscribe({
-      next: () => {
-        this.requestActionId.set(null);
-        this.joinRequests.update((list) =>
-          list.map((r) => (r.id === req.id ? { ...r, status: 'Rejected' } : r)),
-        );
-      },
-      error: () => {
-        this.requestActionId.set(null);
-        this.joinRequestsError.set('Could not reject this request.');
-      },
-    });
-  }
+ 
 
   protected openAddJob(): void {
     if (!this.isLeader()) return;
@@ -1519,16 +1486,11 @@ export class TeamDetailComponent implements OnInit {
           this.loadProjects(id);
           this.loadMembers(id);
         }
-        if (this.activeTab() === 'jobs') {
-          this.loadJobs(id);
-          if (this.isLeader()) this.loadJoinRequests(id);
-        }
-        if (this.activeTab() === 'invitations' && this.isLeader()) {
-          this.loadProjectInvitations(id);
-        }
+      
         if (this.activeTab() === 'members') {
           this.loadMembers(id);
         }
+
       },
       error: () => {
         this.error.set('Could not load this team.');
@@ -1627,9 +1589,7 @@ export class TeamDetailComponent implements OnInit {
         this.jobs.set(items ?? []);
         this.jobsLoaded.set(true);
         this.jobsLoading.set(false);
-        if (this.isLeader() && !this.joinRequestsLoaded()) {
-          this.loadJoinRequests(teamId);
-        }
+   
       },
       error: () => {
         this.jobs.set([]);
@@ -1657,55 +1617,16 @@ export class TeamDetailComponent implements OnInit {
   protected retryJoinRequests(teamId: string, event?: Event): void {
     event?.stopPropagation();
     this.joinRequestsLoaded.set(false);
-    this.loadJoinRequests(teamId, true);
   }
 
   protected loadMoreJoinRequests(event?: Event): void {
     event?.stopPropagation();
     const teamId = this.team()?.id;
-    if (!teamId || !this.joinRequestsHasMore() || this.joinRequestsLoading()) return;
-    this.loadJoinRequests(teamId, false, this.joinRequestsPage() + 1);
+ 
   }
 
-  protected loadJoinRequests(teamId: string, reset = true, page = 1): void {
-    this.joinRequestsLoading.set(true);
-    this.joinRequestsError.set(null);
-    this.teamsApi
-      .getTeamJoinRequests(teamId, { pageNumber: page, pageSize: 40, skipLoading: true })
-      .subscribe({
-        next: (paged) => {
-          const items = paged.items ?? [];
-          if (reset || page <= 1) {
-            this.joinRequests.set(items);
-          } else {
-            const existing = new Set(this.joinRequests().map((r) => r.id));
-            this.joinRequests.update((list) => [
-              ...list,
-              ...items.filter((r) => !existing.has(r.id)),
-            ]);
-          }
-          this.joinRequestsPage.set(paged.pageNumber ?? page);
-          this.joinRequestsTotal.set(paged.totalCount ?? items.length);
-          const totalPages =
-            paged.totalPages ??
-            Math.max(1, Math.ceil((paged.totalCount ?? items.length) / (paged.pageSize || 40)));
-          this.joinRequestsHasMore.set(
-            paged.hasNextPage ?? (paged.pageNumber ?? page) < totalPages,
-          );
-          this.joinRequestsLoaded.set(true);
-          this.joinRequestsLoading.set(false);
-        },
-        error: (err) => {
-          if (reset || page <= 1) this.joinRequests.set([]);
-          this.joinRequestsLoaded.set(true);
-          this.joinRequestsLoading.set(false);
-          this.joinRequestsError.set(
-            extractApiError(err, 'Could not load join requests. Restart the API if this persists.'),
-          );
-        },
-      });
-  }
-
+  
+  
   private loadProjects(teamId: string): void {
     this.projectsLoading.set(true);
     this.teamsApi.getTeamProjects(teamId).subscribe({

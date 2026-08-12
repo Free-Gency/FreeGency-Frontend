@@ -1,0 +1,296 @@
+<div class="join-requests">
+
+  <!-- Header -->
+  <div class="requests-header">
+    <div>
+      <h2>Join Requests</h2>
+      <p>
+        {{ totalCount() }}
+        request{{ totalCount() === 1 ? '' : 's' }}
+      </p>
+    </div>
+
+    <!-- Filters -->
+    <div class="status-filter">
+      <button
+        type="button"
+        [class.active]="selectedStatus() === null"
+        (click)="setStatus(null)"
+      >
+        All
+      </button>
+
+      <button
+        type="button"
+        [class.active]="selectedStatus() === 'Pending'"
+        (click)="setStatus('Pending')"
+      >
+        Pending
+      </button>
+
+      <button
+        type="button"
+        [class.active]="selectedStatus() === 'Accepted'"
+        (click)="setStatus('Accepted')"
+      >
+        Accepted
+      </button>
+
+      <button
+        type="button"
+        [class.active]="selectedStatus() === 'Rejected'"
+        (click)="setStatus('Rejected')"
+      >
+        Rejected
+      </button>
+    </div>
+  </div>
+
+
+  <!-- Loading -->
+  @if (loading()) {
+
+    <div class="loading-state">
+      Loading requests...
+    </div>
+
+  }
+
+
+  <!-- Error -->
+  @else if (error()) {
+
+    <div class="error-state">
+      <p>{{ error() }}</p>
+
+      <button
+        type="button"
+        (click)="loadRequests()"
+      >
+        Try Again
+      </button>
+    </div>
+
+  }
+
+
+  <!-- Requests -->
+  @else {
+
+    @if (requests().length > 0) {
+
+      <div class="requests-list">
+
+        @for (request of requests(); track request.id) {
+
+          <article class="request-item">
+
+            <!-- Avatar -->
+            <div class="request-avatar">
+
+              @if (request.profilePicture) {
+
+                <img
+                  [src]="request.profilePicture"
+                  [alt]="request.fullName"
+                />
+
+              } @else {
+
+                <span>
+                  {{ request.fullName.charAt(0) }}
+                </span>
+
+              }
+
+            </div>
+
+
+            <!-- Content -->
+            <div class="request-content">
+
+              <div class="request-top">
+
+                <div class="request-user">
+
+                  <div class="request-name-row">
+
+                    <h3>
+                      {{ request.fullName }}
+                    </h3>
+
+                    <span
+                      class="status-badge"
+                      [class.pending]="request.status === 'pending'"
+                      [class.accepted]="request.status === 'Accepted'"
+                      [class.rejected]="request.status === 'Rejected'"
+                    >
+                      {{ request.status }}
+                    </span>
+
+                  </div>
+
+
+                  @if (request.userName) {
+
+                    <span class="username">
+                      {{ '@' + request.userName }}
+                    </span>
+
+                  }
+
+                </div>
+
+
+                <span class="request-date">
+                  {{ request.requestedAt | date:'MMM d' }}
+                </span>
+
+              </div>
+
+
+              <!-- Job -->
+              @if (request.teamJobTitle) {
+
+                <p class="request-job">
+                  Applied for
+                  <strong>{{ request.teamJobTitle }}</strong>
+                </p>
+
+              } @else {
+
+                <p class="request-job">
+                  Wants to join the team
+                </p>
+
+              }
+
+
+              <!-- Cover Letter -->
+              @if (request.coverLetter) {
+
+                <p class="request-message">
+                  {{ request.coverLetter }}
+                </p>
+
+              }
+
+
+              <!-- Stats -->
+              <div class="request-meta">
+
+                <span>
+                  <strong>★ {{ request.averageRating }}</strong>
+                  ({{ request.reviewCount }})
+                </span>
+
+                <span class="meta-dot"></span>
+
+                <span>
+                  {{ request.completedProjects }}
+                  projects
+                </span>
+
+              </div>
+
+
+              <!-- Actions -->
+             @if (request.status === 'pending') {
+
+  <div class="request-actions">
+
+    <button
+      type="button"
+      class="accept-btn"
+      (click)="acceptRequest(request.id)"
+    >
+      Accept
+    </button>
+
+    <button
+      type="button"
+      class="reject-btn"
+      (click)="rejectRequest(request.id)"
+    >
+      Reject
+    </button>
+
+  </div>
+
+}
+
+            </div>
+
+          </article>
+
+        }
+
+      </div>
+
+    } @else {
+
+      <div class="empty-state">
+        <h3>No requests found</h3>
+
+        @if (selectedStatus()) {
+          <p>
+            No
+            {{ selectedStatus()?.toLowerCase() }}
+            requests.
+          </p>
+        }
+
+      </div>
+
+    }
+
+  }
+
+
+  <!-- Pagination -->
+  @if (!loading() && !error() && totalPages() > 1) {
+
+    <div class="pagination">
+
+      <button
+        type="button"
+        class="pagination-button"
+        [disabled]="!hasPreviousPage()"
+        (click)="previousPage()"
+      >
+        Previous
+      </button>
+
+
+      <div class="page-numbers">
+
+        @for (page of pages(); track page) {
+
+          <button
+            type="button"
+            class="page-button"
+            [class.active]="pageNumber() === page"
+            (click)="goToPage(page)"
+          >
+            {{ page }}
+          </button>
+
+        }
+
+      </div>
+
+
+      <button
+        type="button"
+        class="pagination-button"
+        [disabled]="!hasNextPage()"
+        (click)="nextPage()"
+      >
+        Next
+      </button>
+
+    </div>
+
+  }
+
+</div>

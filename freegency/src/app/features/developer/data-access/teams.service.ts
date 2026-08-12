@@ -25,6 +25,7 @@ import {
 import { PagedResponse } from '../../../shared/models/PagedResponse';
 import { TeamProjectEarningsDto } from '../../../shared/models/TeamProjectEarningsDto';
 import { WalletTeam } from '../../../shared/models/WalletTeam';
+import { TeamJoinRequestParams } from '../../../shared/models/TeamJoinRequest';
 
 
 export interface TeamPortfolioRoadmapStepInput {
@@ -648,71 +649,39 @@ export class TeamsService {
       .pipe(map(() => undefined));
   }
 
-  getTeamJoinRequests(
-    teamId: string,
-    options?: { status?: string; pageNumber?: number; pageSize?: number; skipLoading?: boolean },
-  ): Observable<PagedTeamJoinRequests> {
-    let params = new HttpParams()
-      .set('teamId', teamId)
-      .set('pageNumber', String(options?.pageNumber ?? 1))
-      .set('pageSize', String(options?.pageSize ?? 20));
+getTeamJoinRequests(
+  params: TeamJoinRequestParams,
+): Observable<PagedResponse<TeamJoinRequest>> {
+  let httpParams = new HttpParams()
+    .set('TeamId', params.teamId)
+    .set('PageNumber', params.pageNumber ?? 1)
+    .set('PageSize', params.pageSize ?? 10);
 
-    if (options?.status?.trim()) {
-      params = params.set('status', options.status.trim().toLowerCase());
-    }
-
-    return this.http
-      .get<unknown>(`${this.joinUrl}/Get-Team-Join-Request`, {
-        params,
-        context: options?.skipLoading ? skipLoadingCtx() : undefined,
-      })
-      .pipe(
-        map((raw) => {
-          const root = (raw ?? {}) as Record<string, unknown>;
-          const page = (
-            root['data'] && typeof root['data'] === 'object'
-              ? (root['data'] as Record<string, unknown>)
-              : root
-          ) as {
-            items?: unknown[];
-            pageNumber?: number;
-            pageSize?: number;
-            totalCount?: number;
-            totalPages?: number;
-            hasPreviousPage?: boolean;
-            hasNextPage?: boolean;
-          };
-          const items = (page.items ?? []).map((item) =>
-            this.normalizeJoinRequest((item ?? {}) as Record<string, unknown>),
-          );
-          return {
-            items,
-            pageNumber: page.pageNumber ?? 1,
-            pageSize: page.pageSize ?? 20,
-            totalCount: page.totalCount ?? items.length,
-            totalPages: page.totalPages,
-            hasPreviousPage: page.hasPreviousPage,
-            hasNextPage: page.hasNextPage,
-          };
-        }),
-      );
+  if (params.status) {
+    httpParams = httpParams.set('Status', params.status);
   }
 
-  acceptJoinRequest(requestId: string, options?: { skipLoading?: boolean }): Observable<void> {
-    return this.http
-      .patch(`${this.joinUrl}/${requestId}/accept`, null, {
-        context: options?.skipLoading ? skipLoadingCtx() : undefined,
-      })
-      .pipe(map(() => undefined));
-  }
+  return this.http.get<PagedResponse<TeamJoinRequest>>(
+    `${this.apiUrl}/TeamJoinRequest/Get-Team-Join-Request`,
+    {
+      params: httpParams,
+    },
+  );
+}
 
-  rejectJoinRequest(requestId: string, options?: { skipLoading?: boolean }): Observable<void> {
-    return this.http
-      .patch(`${this.joinUrl}/${requestId}/reject`, null, {
-        context: options?.skipLoading ? skipLoadingCtx() : undefined,
-      })
-      .pipe(map(() => undefined));
-  }
+  acceptJoinRequest(requestId: string) {
+  return this.http.patch(
+    `${this.apiUrl}/TeamJoinRequest/${requestId}/accept`,
+    {}
+  );
+}
+
+rejectJoinRequest(requestId: string) {
+  return this.http.patch(
+     `${this.apiUrl}/TeamJoinRequest/${requestId}/reject`,
+    {}
+  );
+}
 
   private normalizeJoinRequest(raw: Record<string, unknown>): TeamJoinRequest {
     const statusRaw = raw['status'];
