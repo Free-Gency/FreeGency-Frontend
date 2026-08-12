@@ -3,8 +3,8 @@
  * Keep the numeric values in sync with the C# enum.
  */
 export enum ApplicantType {
-  Developer = 0,
-  Team = 1,
+  Team = 0,
+  User = 1,
 }
 
 export interface TeamOption {

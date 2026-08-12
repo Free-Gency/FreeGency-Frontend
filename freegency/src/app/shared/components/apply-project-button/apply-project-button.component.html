@@ -1,10 +1,14 @@
 <button
   type="button"
   class="btn btn-primary w-auto px-5 h-10 text-sm"
-  (click)="isModalOpen.set(true)"
+  (click)="openModal()"
+  [disabled]="hasApplied()"
 >
-  <span class="material-symbols-outlined text-base">send</span>
-  <span>Apply Now</span>
+  @if (!hasApplied()) {
+    <span>Apply Now</span>
+  } @else {
+    <span>Applied</span>
+  }
 </button>
 
 <!-- <app-apply-proposal-modal
@@ -13,3 +17,25 @@
   (closed)="isModalOpen.set(false)"
   (submitted)="onSubmitted()"
 /> -->
+@if (isModalOpen()) {
+  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+      <div class="p-6 border-b flex justify-between items-center sticky top-0 bg-white">
+        <h2 class="text-lg font-semibold">Submit Your Proposal</h2>
+        <button
+          type="button"
+          class="text-outline hover:text-on-surface transition-colors"
+          (click)="closeModal()"
+        >
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="p-6">
+        <app-apply-project-page
+          [projectId]="projectId"
+          (proposalSubmitted)="onSubmitted()"
+        ></app-apply-project-page>
+      </div>
+    </div>
+  </div>
+}
