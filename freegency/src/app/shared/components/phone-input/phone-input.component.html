@@ -4,8 +4,7 @@
   <intl-tel-input
     class="block h-full w-full"
     containerClass="freegency-phone"
-    [ngModel]="value()"
-    (ngModelChange)="value.set($event)"
+    [initialValue]="value()"
     [initialCountry]="initialCountry()"
     [loadUtils]="loadUtils"
     [dropdownParent]="dropdownParent"
@@ -13,7 +12,9 @@
     [separateDialCode]="true"
     [strictMode]="true"
     [countrySearch]="true"
-    [inputAttributes]="{ id: inputId(), name: inputId(), autocomplete: 'tel' }"
-    (validityChange)="validityChange.emit($event)"
+    [inputAttributes]="inputAttributes()"
+    (numberChange)="onNumberChange($event)"
+    (validityChange)="onValidityChange($event)"
+    (countryChange)="onCountryChange($event)"
   />
 </div>

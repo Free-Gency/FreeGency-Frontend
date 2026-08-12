@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import allCountries from 'intl-tel-input/data';
@@ -24,13 +24,14 @@ export class SignUpComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(AuthService);
   private readonly authApi = inject(AuthApiService);
+  private readonly phoneInput = viewChild(PhoneInputComponent);
 
   protected firstName = '';
   protected lastName = '';
   protected email = '';
   protected phone = '';
   protected password = '';
-  protected country = '';
+  protected country = 'EG';
   protected mode: UserMode = 'Client';
   protected agreedToTerms = false;
   protected phoneValid = false;
@@ -72,6 +73,12 @@ export class SignUpComponent implements OnInit {
     this.phoneValid = valid;
   }
 
+  protected onPhoneCountryChange(iso2: string): void {
+    if (iso2 && !this.country) {
+      this.country = iso2;
+    }
+  }
+
   protected onSubmit(): void {
     this.errorMessage.set(null);
 
@@ -82,12 +89,30 @@ export class SignUpComponent implements OnInit {
       return;
     }
 
-    if (!this.email.trim() || !this.country || !this.phone.trim()) {
-      this.errorMessage.set('Please fill in all required fields.');
+    const phoneState = this.phoneInput()?.syncFromWidget();
+    const phone = (phoneState?.number ?? this.phone).trim();
+    const phoneValid = phoneState?.valid ?? this.phoneValid;
+
+    if (phoneState?.countryIso && !this.country) {
+      this.country = phoneState.countryIso;
+    }
+
+    if (!this.email.trim()) {
+      this.errorMessage.set('Please enter your email address.');
       return;
     }
 
-    if (!this.phoneValid) {
+    if (!this.country) {
+      this.errorMessage.set('Please select your country.');
+      return;
+    }
+
+    if (!phone) {
+      this.errorMessage.set('Please enter your phone number.');
+      return;
+    }
+
+    if (!phoneValid) {
       this.errorMessage.set('Please enter a valid phone number.');
       return;
     }
@@ -97,6 +122,8 @@ export class SignUpComponent implements OnInit {
       return;
     }
 
+    this.phone = phone;
+    this.phoneValid = phoneValid;
     this.loading.set(true);
 
     this.authApi
@@ -106,7 +133,7 @@ export class SignUpComponent implements OnInit {
         email: this.email.trim(),
         password: this.password,
         country: this.country,
-        phoneNumber: this.phone.trim(),
+        phoneNumber: phone,
         mode: this.mode,
       })
       .subscribe({

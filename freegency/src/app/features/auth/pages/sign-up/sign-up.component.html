@@ -129,6 +129,7 @@
             [(value)]="phone"
             inputId="phone"
             (validityChange)="onPhoneValidityChange($event)"
+            (countryIsoChange)="onPhoneCountryChange($event)"
           />
         </div>
 
@@ -175,7 +176,7 @@
               name="country"
               required
             >
-              <option value="" disabled>Select Your Country</option>
+              <option value="" disabled hidden>Select Your Country</option>
               @for (c of countries; track c.code) {
                 <option [value]="c.code">{{ c.name }}</option>
               }
