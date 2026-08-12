@@ -26,9 +26,36 @@ const DURATION_DAYS: Record<string, number> = {
   'More than 6 months': 270,
 };
 
+/** Convert free-text duration (or legacy preset labels) into days for the API. */
 export function durationToDays(duration: string | null | undefined): number {
-  if (!duration) return 90;
-  return DURATION_DAYS[duration] ?? 90;
+  if (!duration?.trim()) return 90;
+
+  const trimmed = duration.trim();
+  const preset = DURATION_DAYS[trimmed];
+  if (preset) return preset;
+
+  const lower = trimmed.toLowerCase();
+  const match = lower.match(/(\d+(?:\.\d+)?)\s*(day|days|week|weeks|month|months|yr|year|years)?/);
+  if (!match) return 90;
+
+  const amount = Number(match[1]);
+  if (!Number.isFinite(amount) || amount <= 0) return 90;
+
+  const unit = match[2] ?? 'days';
+  switch (unit) {
+    case 'week':
+    case 'weeks':
+      return Math.max(1, Math.round(amount * 7));
+    case 'month':
+    case 'months':
+      return Math.max(1, Math.round(amount * 30));
+    case 'yr':
+    case 'year':
+    case 'years':
+      return Math.max(1, Math.round(amount * 365));
+    default:
+      return Math.max(1, Math.round(amount));
+  }
 }
 
 export type ProjectCreateMode = 'ai' | 'manual';
@@ -78,7 +105,7 @@ export class ProjectDraftStateService {
         budgetMin: '',
         budgetMax: '',
         currency: 'USD',
-        duration: '1-3 months',
+        duration: '',
         ...partial,
       });
       return;

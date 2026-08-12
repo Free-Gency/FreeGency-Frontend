@@ -1,19 +1,27 @@
 <div class="invite-backdrop" (click)="close()">
-  <div class="invite-panel" role="dialog" aria-modal="true" aria-labelledby="invite-title" (click)="$event.stopPropagation()">
+  <div
+    class="invite-panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="invite-title"
+    (click)="$event.stopPropagation()"
+  >
     <header class="invite-panel__head">
       <div>
         <p class="invite-panel__eyebrow">Invite to project</p>
         <h2 id="invite-title" class="invite-panel__title">{{ target().displayName }}</h2>
       </div>
-      <button type="button" class="invite-panel__close" (click)="close()" aria-label="Close">×</button>
+      <button type="button" class="invite-panel__close" (click)="close()" aria-label="Close">
+        ×
+      </button>
     </header>
 
     @if (loading()) {
       <p class="invite-panel__hint">Loading your open projects…</p>
     } @else if (!projects().length) {
       <p class="invite-panel__hint">
-        You need an open project before sending an invitation.
-        <a href="/client/create-project">Create a project</a>
+        No open projects without an active discussion. Close a discussion first, or
+        <a href="/client/create-project">create a project</a>.
       </p>
     } @else {
       <label class="invite-field">
@@ -46,10 +54,20 @@
       }
 
       <div class="invite-panel__actions">
-        <button type="button" class="invite-btn invite-btn--ghost" [disabled]="submitting()" (click)="close()">
+        <button
+          type="button"
+          class="invite-btn invite-btn--ghost"
+          [disabled]="submitting()"
+          (click)="close()"
+        >
           Cancel
         </button>
-        <button type="button" class="invite-btn invite-btn--primary" [disabled]="submitting()" (click)="submit()">
+        <button
+          type="button"
+          class="invite-btn invite-btn--primary"
+          [disabled]="submitting()"
+          (click)="submit()"
+        >
           {{ submitting() ? 'Sending…' : 'Send invitation' }}
         </button>
       </div>

@@ -24,7 +24,6 @@ import { CategoriesApiService, type CategoryDto } from '../../data-access/catego
 import { ProjectFilesApiService } from '../../data-access/project-files-api.service';
 import {
   PROJECT_CURRENCIES,
-  PROJECT_DURATIONS,
   ProjectDraftStateService,
   durationToDays,
 } from '../../data-access/project-draft-state.service';
@@ -97,7 +96,6 @@ export class ClientProjectOverviewComponent implements OnInit {
   );
   protected readonly showStepProgress = !isOnboardingCreateFlow(this.router);
   protected readonly currencies = PROJECT_CURRENCIES;
-  protected readonly durations = PROJECT_DURATIONS;
   protected readonly assets = signal<OverviewAsset[]>([]);
   protected readonly submitting = signal(false);
 
@@ -123,7 +121,7 @@ export class ClientProjectOverviewComponent implements OnInit {
   protected readonly availableSpecialties = signal<TaxonomySpecialty[]>([]);
   protected readonly editSpecialtyIds = signal<string[]>([]);
 
-  protected readonly editDuration = signal('1-3 months');
+  protected readonly editDuration = signal('');
 
   protected readonly availableSkills = signal<TaxonomySkill[]>([]);
   protected readonly editSkillIds = signal<string[]>([]);
@@ -313,7 +311,7 @@ export class ClientProjectOverviewComponent implements OnInit {
         this.loadSpecialtiesForCategory(draft.categoryId);
         break;
       case 'timeline':
-        this.editDuration.set(this.scope()?.duration ?? '1-3 months');
+        this.editDuration.set(this.scope()?.duration ?? '');
         break;
       case 'skills':
         this.editSkillIds.set([...(draft.skillIds ?? [])]);

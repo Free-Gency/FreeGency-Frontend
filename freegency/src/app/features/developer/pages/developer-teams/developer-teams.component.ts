@@ -1,4 +1,4 @@
-import { NgClass } from '@angular/common';
+import { DatePipe, NgClass } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HugeiconsIconComponent, type IconSvgObject } from '@hugeicons/angular';
@@ -38,6 +38,7 @@ const DISCOVER_PAGE_SIZE = 9;
   standalone: true,
   imports: [
     DeveloperViewNavbarComponent,
+    DatePipe,
     FormsModule,
     HugeiconsIconComponent,
     NgClass,
@@ -113,6 +114,7 @@ export class DeveloperTeamsComponent {
   protected readonly invitations = signal<ProjectInvitation[]>([]);
   protected readonly loadingInvitations = signal(false);
   protected readonly invitationsError = signal<string | null>(null);
+  protected readonly inviteActionError = signal<string | null>(null);
   protected readonly inviteActionId = signal<string | null>(null);
 
   protected readonly canSubmitJoin = computed(() => this.joinCode().trim().length >= 4);
@@ -196,6 +198,7 @@ export class DeveloperTeamsComponent {
 
   protected acceptInvitation(inv: ProjectInvitation): void {
     if (inv.status !== 'Pending' || this.inviteActionId()) return;
+    this.inviteActionError.set(null);
     this.inviteActionId.set(inv.id);
     this.invitationsApi.accept(inv.id).subscribe({
       next: (roomId) => {
@@ -207,13 +210,14 @@ export class DeveloperTeamsComponent {
       },
       error: (err) => {
         this.inviteActionId.set(null);
-        this.invitationsError.set(extractApiError(err) || 'Could not accept invitation.');
+        this.inviteActionError.set(extractApiError(err) || 'Could not accept invitation.');
       },
     });
   }
 
   protected rejectInvitation(inv: ProjectInvitation): void {
     if (inv.status !== 'Pending' || this.inviteActionId()) return;
+    this.inviteActionError.set(null);
     this.inviteActionId.set(inv.id);
     this.invitationsApi.reject(inv.id).subscribe({
       next: () => {
@@ -222,7 +226,7 @@ export class DeveloperTeamsComponent {
       },
       error: (err) => {
         this.inviteActionId.set(null);
-        this.invitationsError.set(extractApiError(err) || 'Could not reject invitation.');
+        this.inviteActionError.set(extractApiError(err) || 'Could not reject invitation.');
       },
     });
   }

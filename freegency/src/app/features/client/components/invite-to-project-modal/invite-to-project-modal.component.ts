@@ -42,17 +42,15 @@ export class InviteToProjectModalComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((page) => {
-        const open = (page.items ?? []).filter(
-          (p) => (p.status || '').toLowerCase() === 'open',
-        );
-        this.projects.set(open.length ? open : (page.items ?? []));
+        const open = (page.items ?? []).filter((p) => {
+          const isOpen = (p.status || '').toLowerCase() === 'open';
+          return isOpen && !p.hasActiveDiscussion;
+        });
+        this.projects.set(open);
         const preferred = this.preferredProjectId();
-        const initial =
-          (preferred && open.find((p) => p.id === preferred)?.id) ||
-          open[0]?.id ||
-          page.items?.[0]?.id ||
-          '';
-        this.projectId.set(initial);
+        const preferredOk =
+          preferred && open.some((p) => p.id === preferred) ? preferred : '';
+        this.projectId.set(preferredOk || open[0]?.id || '');
         this.loading.set(false);
       });
   }

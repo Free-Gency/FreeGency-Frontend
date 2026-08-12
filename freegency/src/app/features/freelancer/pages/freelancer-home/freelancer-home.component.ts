@@ -1,12 +1,16 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { FreelancerHome } from '../../data-access/freelancer-home';
 import { DeveloperProfileSummary } from '../../../../shared/models/developer-profile.model';
-import { DeveloperViewNavbarComponent } from "../../../../shared/components/developer-view-navbar/developer-view-navbar.component";
-import { ApplyProjectButtonComponent } from "../../../../shared/components/apply-project-button/apply-project-button.component";
+import { DeveloperViewNavbarComponent } from '../../../../shared/components/developer-view-navbar/developer-view-navbar.component';
+import { ApplyProjectButtonComponent } from '../../../../shared/components/apply-project-button/apply-project-button.component';
+import { ProjectInvitationsApiService } from '../../../client/data-access/project-invitations-api.service';
+import type { ProjectInvitation } from '../../../client/models/project-invitation';
+import { extractApiError } from '../../../../core/http/api-error';
 
-export type ActiveTab = 'feed' | 'applications' | 'saved';
+export type ActiveTab = 'feed' | 'applications' | 'saved' | 'invitations';
 
 @Component({
   selector: 'app-freelancer-home',
@@ -17,6 +21,8 @@ export type ActiveTab = 'feed' | 'applications' | 'saved';
 })
 export class FreelancerHomeComponent implements OnInit {
   private readonly homeService = inject(FreelancerHome);
+  private readonly invitationsApi = inject(ProjectInvitationsApiService);
+  private readonly router = inject(Router);
 
   activeTab = signal<ActiveTab>('feed');
   isFilterOpen = signal<boolean>(false);
@@ -27,18 +33,28 @@ export class FreelancerHomeComponent implements OnInit {
   projects = signal<any[]>([]);
   totalCount = signal<number>(0);
 
+  invitations = signal<ProjectInvitation[]>([]);
+  invitationsError = signal<string | null>(null);
+  inviteActionError = signal<string | null>(null);
+  inviteActionId = signal<string | null>(null);
+  confirmDeclineId = signal<string | null>(null);
+
   selectedCategory = signal<string>('ALL');
   searchQuery = signal<string>('');
   currentPage = signal<number>(1);
   readonly pageSize = 6;
 
+  readonly pendingInviteCount = computed(
+    () => this.invitations().filter((i) => i.status === 'Pending').length,
+  );
+
   ngOnInit(): void {
     this.loadProfile();
     this.loadCategories();
+    this.loadInvitations(false);
     this.loadActiveTabData();
   }
 
-  // Pagination helpers
   totalPages(): number {
     return Math.max(1, Math.ceil((this.totalCount() ?? 0) / this.pageSize));
   }
@@ -90,8 +106,13 @@ export class FreelancerHomeComponent implements OnInit {
   }
 
   loadActiveTabData(): void {
-    this.isLoading.set(true);
     const tab = this.activeTab();
+    if (tab === 'invitations') {
+      this.loadInvitations(true);
+      return;
+    }
+
+    this.isLoading.set(true);
 
     if (tab === 'feed') {
       this.homeService
@@ -131,7 +152,6 @@ export class FreelancerHomeComponent implements OnInit {
   }
 
   onCategorySelect(catId: string): void {
-    // Toggle logic: click again to deselect back to ALL
     if (this.selectedCategory() === catId) {
       this.selectedCategory.set('ALL');
     } else {
@@ -162,10 +182,93 @@ export class FreelancerHomeComponent implements OnInit {
 
   onApplyFilters(): void {
     this.isFilterOpen.set(false);
-    this.onSearch(); 
+    this.onSearch();
   }
 
   onProposalSubmitted(project: any): void {
-  project.proposalCount = (project.proposalCount ?? project.proposalsCount ?? 0) + 1;
-}
+    project.proposalCount = (project.proposalCount ?? project.proposalsCount ?? 0) + 1;
+  }
+
+  invitationStatusClass(status: string): string {
+    const key = (status || 'pending').toLowerCase();
+    return `fh-invite-status fh-invite-status--${key}`;
+  }
+
+  clientInitials(name: string | null | undefined): string {
+    const parts = (name || 'C').trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return 'C';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+
+  viewProject(projectId: string): void {
+    if (!projectId) return;
+    void this.router.navigate(['/projects', projectId]);
+  }
+
+  askDecline(id: string): void {
+    this.confirmDeclineId.set(id);
+  }
+
+  cancelDecline(): void {
+    this.confirmDeclineId.set(null);
+  }
+
+  acceptInvitation(inv: ProjectInvitation): void {
+    if (inv.status !== 'Pending' || this.inviteActionId()) return;
+    this.confirmDeclineId.set(null);
+    this.inviteActionError.set(null);
+    this.inviteActionId.set(inv.id);
+    this.invitationsApi.accept(inv.id).subscribe({
+      next: (roomId) => {
+        this.inviteActionId.set(null);
+        this.loadInvitations(false);
+        void this.router.navigate(['/developer/messages'], {
+          queryParams: { room: roomId },
+        });
+      },
+      error: (err) => {
+        this.inviteActionId.set(null);
+        this.inviteActionError.set(extractApiError(err) || 'Could not accept invitation.');
+      },
+    });
+  }
+
+  rejectInvitation(inv: ProjectInvitation): void {
+    if (inv.status !== 'Pending' || this.inviteActionId()) return;
+    this.inviteActionError.set(null);
+    this.inviteActionId.set(inv.id);
+    this.invitationsApi.reject(inv.id).subscribe({
+      next: () => {
+        this.inviteActionId.set(null);
+        this.confirmDeclineId.set(null);
+        this.loadInvitations(false);
+      },
+      error: (err) => {
+        this.inviteActionId.set(null);
+        this.inviteActionError.set(extractApiError(err) || 'Could not reject invitation.');
+      },
+    });
+  }
+
+  openInvitationChat(roomId: string | null): void {
+    if (!roomId) return;
+    void this.router.navigate(['/developer/messages'], { queryParams: { room: roomId } });
+  }
+
+  private loadInvitations(showLoading: boolean): void {
+    if (showLoading) this.isLoading.set(true);
+    this.invitationsError.set(null);
+    this.inviteActionError.set(null);
+    this.invitationsApi.getReceived().subscribe({
+      next: (items) => {
+        this.invitations.set(items);
+        if (showLoading) this.isLoading.set(false);
+      },
+      error: (err) => {
+        if (showLoading) this.isLoading.set(false);
+        this.invitationsError.set(extractApiError(err) || 'Could not load invitations.');
+      },
+    });
+  }
 }

@@ -24,6 +24,18 @@ export function extractApiError(error: unknown, fallback = 'Something went wrong
     return 'Cannot reach the server. Check that the API is running.';
   }
 
+  if (error.status === 401) {
+    return 'Your session expired. Please log in again.';
+  }
+
+  if (error.status === 413) {
+    return 'The upload is too large. Try a smaller image (under 5MB).';
+  }
+
+  if (error.status >= 500) {
+    return 'Server error while saving the portfolio. If you added an image, try JPG/PNG under 5MB, or publish without an image.';
+  }
+
   return fallback;
 }
 
@@ -77,15 +89,16 @@ function messageFromBody(body: Record<string, unknown> | null): string | null {
     }
   }
 
-  const nestedError = body['error'];
+  const nestedError = body['error'] ?? body['Error'];
   if (nestedError && typeof nestedError === 'object' && !Array.isArray(nestedError)) {
-    const nestedMessage = (nestedError as Record<string, unknown>)['message'];
+    const nested = nestedError as Record<string, unknown>;
+    const nestedMessage = nested['message'] ?? nested['Message'];
     if (typeof nestedMessage === 'string' && nestedMessage.trim()) {
       return nestedMessage.trim();
     }
   }
 
-  const message = body['message'];
+  const message = body['message'] ?? body['Message'];
   if (typeof message === 'string' && message.trim()) {
     return message.trim();
   }

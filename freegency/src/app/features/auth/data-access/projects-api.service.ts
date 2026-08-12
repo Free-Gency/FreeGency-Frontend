@@ -35,6 +35,7 @@ export interface ProjectDto {
   specialties: string[];
   skills: string[];
   proposalCount: number;
+  hasActiveDiscussion?: boolean;
 }
 
 export interface MyProjectsSummaryDto {

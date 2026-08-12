@@ -144,7 +144,7 @@ export const authRoutes: Routes = [
           import('./components/developer-onboarding-portfolio/developer-onboarding-portfolio.component').then(
             (m) => m.DeveloperOnboardingPortfolioComponent,
           ),
-        data: { step: 3 },
+        data: { step: 3, center: false },
       },
       {
         path: 'complete',

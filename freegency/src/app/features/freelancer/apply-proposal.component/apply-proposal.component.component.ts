@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProposalsService } from '../services/proposal.service';
 import { ProjectDetail, ApplicantType, TeamOption } from '../model/proposal.model';
+import { extractApiError } from '../../../core/http/api-error';
 
 @Component({
   selector: 'app-apply-project-page',
@@ -136,9 +137,10 @@ export class ApplyProposalModalComponent implements OnInit {
       },
       error: (error) => {
         this.isSubmitting.set(false);
-        // Log full error to console for debugging, but show a generic message in the UI
         console.error('Submit proposal error:', error);
-        this.errorMessage.set('Something went wrong while sending your proposal. Please try again.');
+        this.errorMessage.set(
+          extractApiError(error, 'Something went wrong while sending your proposal. Please try again.'),
+        );
       },
     });
   }

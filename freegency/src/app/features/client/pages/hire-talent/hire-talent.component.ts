@@ -1,4 +1,4 @@
-import { DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -54,6 +54,7 @@ const PAGE_SIZE = 12;
   standalone: true,
   imports: [
     ClientViewNavbarComponent,
+    DatePipe,
     DecimalPipe,
     RouterLink,
     InviteToProjectModalComponent,

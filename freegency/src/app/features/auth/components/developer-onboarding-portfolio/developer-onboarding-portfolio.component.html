@@ -1,162 +1,403 @@
-<section
-  class="relative z-10 mx-auto flex w-full max-w-[560px] flex-col items-stretch gap-8 px-5 pb-12 pt-3 sm:px-10"
->
-  <div class="flex w-full flex-col items-center gap-[7px] text-center">
-    <h1
-      class="font-display text-[32px] leading-[1.1] font-bold tracking-[-0.02em] text-on-surface sm:text-[48px] sm:leading-[52.8px] sm:tracking-[-0.96px]"
-    >
-      Add a portfolio project
-    </h1>
-    <p class="font-body text-base leading-7 text-on-surface-variant sm:text-lg sm:leading-[28.8px]">
-      Optional — showcase one piece of work so clients can see what you build.
+<div class="pw-shell">
+  <header class="pw-header">
+    <h1 class="pw-title">Add a portfolio project</h1>
+    <p class="pw-sub">
+      Optional — build a full case study so clients can see how you work, not just what you shipped.
     </p>
-  </div>
+  </header>
 
-  <form class="flex w-full flex-col gap-6" (ngSubmit)="onContinue()">
-    <div class="flex flex-col items-center">
-      <button
-        type="button"
-        class="flex h-40 w-full cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border-2 border-dashed border-outline-variant bg-surface-container-low transition-[border-color,background-color] duration-150 hover:border-primary-container/50 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/12"
-        (click)="openFilePicker()"
-        aria-label="Upload cover image"
-      >
-        @if (previewUrl(); as url) {
-          <img [src]="url" alt="Cover preview" class="size-full object-cover" />
-        } @else {
-          <hugeicons-icon
-            [icon]="uploadIcon"
-            [size]="28"
-            color="currentColor"
-            [strokeWidth]="1.75"
-            aria-hidden="true"
-          />
-          <span class="font-mono text-sm font-medium tracking-[0.28px] text-outline">
-            COVER IMAGE (OPTIONAL)
-          </span>
-        }
-      </button>
-      <input
-        #coverInput
-        type="file"
-        class="sr-only"
-        accept="image/jpeg,image/png,image/webp"
-        (change)="onFileSelected($event)"
-      />
-      @if (uploadError()) {
-        <p class="mt-2 text-center text-xs text-error" role="alert">{{ uploadError() }}</p>
-      }
+  <nav class="pw-track" aria-label="Portfolio wizard steps">
+    <div class="pw-track__meta">
+      <span class="pw-track__current">{{ stepLabels[step() - 1] }}</span>
+      <span class="pw-track__count">Step {{ step() }} of {{ stepLabels.length }}</span>
     </div>
-
-    <div class="flex w-full flex-col gap-2">
-      <label
-        class="block font-mono text-base leading-4 font-bold text-on-surface"
-        for="portfolioTitle"
-      >
-        Project title
-      </label>
-      <input
-        id="portfolioTitle"
-        type="text"
-        name="title"
-        class="w-full rounded-lg border border-[rgba(229,225,228,0.2)] bg-surface-container-low px-[17px] py-[19px] font-body text-base text-on-surface placeholder:text-outline/50 transition-[background-color,border-color,box-shadow] duration-150 focus:border-primary focus:bg-surface-container-lowest focus:outline-none focus:ring-[3px] focus:ring-primary/12"
-        placeholder="e.g. Freelancer marketplace redesign"
-        [(ngModel)]="title"
-      />
+    <div class="pw-track__bar" aria-hidden="true">
+      <span
+        class="pw-track__fill"
+        [style.width.%]="((step() - 1) / (stepLabels.length - 1)) * 100"
+      ></span>
     </div>
-
-    <div class="flex w-full flex-col gap-2">
-      <div class="flex items-center justify-between px-1">
-        <label
-          class="font-mono text-base leading-4 font-bold text-on-surface"
-          for="portfolioDesc"
+    <ol class="pw-track__list">
+      @for (label of stepLabels; track label; let i = $index; let last = $last) {
+        <li
+          class="pw-track__item"
+          [class.is-active]="step() === i + 1"
+          [class.is-done]="step() > i + 1"
         >
-          Short description
-        </label>
-        <span class="font-mono text-sm font-medium tracking-[0.28px] text-outline">
-          {{ descCount }}/{{ descLimit }}
-        </span>
-      </div>
-      <textarea
-        id="portfolioDesc"
-        name="description"
-        rows="4"
-        class="min-h-[120px] w-full resize-y rounded-lg border border-[rgba(229,225,228,0.2)] bg-surface-container-low px-[17px] py-[17px] font-body text-base leading-6 text-on-surface placeholder:text-outline/50 transition-[background-color,border-color,box-shadow] duration-150 focus:border-primary focus:bg-surface-container-lowest focus:outline-none focus:ring-[3px] focus:ring-primary/12"
-        placeholder="What was the problem, and what did you ship?"
-        [(ngModel)]="description"
-        (ngModelChange)="onDescInput($event)"
-        [attr.maxlength]="descLimit"
-      ></textarea>
-    </div>
-
-    <div class="flex w-full flex-col gap-2">
-      <label
-        class="block font-mono text-base leading-4 font-bold text-on-surface"
-        for="portfolioUrl"
-      >
-        Project URL
-        <span class="font-normal text-outline"> (optional)</span>
-      </label>
-      <input
-        id="portfolioUrl"
-        type="url"
-        name="projectUrl"
-        class="w-full rounded-lg border border-[rgba(229,225,228,0.2)] bg-surface-container-low px-[17px] py-[19px] font-body text-base text-on-surface placeholder:text-outline/50 transition-[background-color,border-color,box-shadow] duration-150 focus:border-primary focus:bg-surface-container-lowest focus:outline-none focus:ring-[3px] focus:ring-primary/12"
-        placeholder="https://"
-        [(ngModel)]="projectUrl"
-      />
-    </div>
-
-    <div class="flex w-full flex-col gap-2">
-      <label
-        class="block font-mono text-base leading-4 font-bold text-on-surface"
-        for="portfolioCategory"
-      >
-        Category
-        <span class="font-normal text-outline"> (optional)</span>
-      </label>
-      <select
-        id="portfolioCategory"
-        name="categoryId"
-        class="w-full appearance-none rounded-lg border border-[rgba(229,225,228,0.2)] bg-surface-container-low px-[17px] py-[19px] font-body text-base text-on-surface transition-[background-color,border-color,box-shadow] duration-150 focus:border-primary focus:bg-surface-container-lowest focus:outline-none focus:ring-[3px] focus:ring-primary/12"
-        [(ngModel)]="categoryId"
-      >
-        <option value="">Select a category</option>
-        @for (cat of categories(); track cat.id) {
-          <option [value]="cat.id">{{ cat.nameEn || cat.name }}</option>
-        }
-      </select>
-    </div>
-
-    <div class="flex w-full flex-col items-center gap-6 pt-4">
-      @if (errorMessage()) {
-        <p class="w-full text-center text-sm text-error" role="alert">{{ errorMessage() }}</p>
+          <button type="button" class="pw-track__btn" (click)="goToStep(i + 1)">
+            <span class="pw-track__dot">
+              @if (step() > i + 1) {
+                <hugeicons-icon
+                  [icon]="tickIcon"
+                  [size]="12"
+                  color="currentColor"
+                  [strokeWidth]="2.5"
+                />
+              } @else {
+                {{ i + 1 }}
+              }
+            </span>
+            <span class="pw-track__label">{{ label }}</span>
+          </button>
+          @if (!last) {
+            <span class="pw-track__line" aria-hidden="true"></span>
+          }
+        </li>
       }
+    </ol>
+  </nav>
 
-      <button
-        type="submit"
-        class="inline-flex h-[50px] w-full cursor-pointer items-center justify-center rounded-full bg-primary-container px-4 font-display text-lg leading-4 font-semibold text-on-primary shadow-[0_1px_1px_rgba(0,0,0,0.05)] transition-[background-color,transform] duration-150 hover:bg-primary active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-        [disabled]="loading()"
-      >
-        {{ loading() ? 'Saving...' : 'Continue' }}
+  <section class="pw-card">
+    @if (step() === 1) {
+      <h2 class="pw-h2">Basics</h2>
+      <label class="pw-field">
+        <span>Title</span>
+        <input
+          [ngModel]="title()"
+          (ngModelChange)="title.set($event)"
+          placeholder="e.g. Freelancer marketplace redesign"
+        />
+      </label>
+      <label class="pw-field">
+        <span>Short description</span>
+        <textarea
+          rows="4"
+          [ngModel]="description()"
+          (ngModelChange)="description.set($event)"
+          placeholder="One or two sentences for the hero"
+        ></textarea>
+      </label>
+      <p class="pw-label">Category</p>
+      <div class="pw-chips">
+        @for (cat of categories(); track cat.id) {
+          <button
+            type="button"
+            class="pw-chip"
+            [class.is-on]="categoryId() === cat.id"
+            (click)="categoryId.set(cat.id)"
+          >
+            {{ cat.label }}
+          </button>
+        } @empty {
+          <p class="pw-muted">No categories available right now.</p>
+        }
+      </div>
+      <label class="pw-field">
+        <span>Cover & gallery images</span>
+        <input type="file" accept="image/*" multiple (change)="onImagesPicked($event)" />
+      </label>
+      @if (imagePreviewUrls().length) {
+        <div class="pw-previews">
+          @for (url of imagePreviewUrls(); track url) {
+            <img [src]="url" alt="" class="pw-cover-preview" />
+          }
+        </div>
+        <p class="pw-muted">{{ imageFiles().length }} file(s) selected</p>
+      }
+    }
+
+    @if (step() === 2) {
+      <h2 class="pw-h2">Story</h2>
+      <label class="pw-field">
+        <span>The Challenge</span>
+        <textarea
+          rows="5"
+          [ngModel]="challenge()"
+          (ngModelChange)="challenge.set($event)"
+          placeholder="What problem were you solving?"
+        ></textarea>
+      </label>
+      <label class="pw-field">
+        <span>The Solution</span>
+        <textarea
+          rows="5"
+          [ngModel]="solution()"
+          (ngModelChange)="solution.set($event)"
+          placeholder="What did you design, build, or ship?"
+        ></textarea>
+      </label>
+    }
+
+    @if (step() === 3) {
+      <h2 class="pw-h2">Details</h2>
+      <div class="pw-grid">
+        <label class="pw-field">
+          <span>Live project URL</span>
+          <input
+            type="text"
+            [ngModel]="projectUrl()"
+            (ngModelChange)="projectUrl.set($event)"
+            placeholder="https://example.com"
+          />
+        </label>
+        <label class="pw-field">
+          <span>Prototype URL</span>
+          <input
+            type="text"
+            [ngModel]="prototypeUrl()"
+            (ngModelChange)="prototypeUrl.set($event)"
+            placeholder="https://figma.com/..."
+          />
+        </label>
+        <label class="pw-field">
+          <span>Budget</span>
+          <input type="number" [ngModel]="budget()" (ngModelChange)="budget.set($event)" />
+        </label>
+        <label class="pw-field">
+          <span>Duration</span>
+          <input
+            [ngModel]="durationLabel()"
+            (ngModelChange)="durationLabel.set($event)"
+            placeholder="12w"
+          />
+        </label>
+        <label class="pw-field">
+          <span>Completion date</span>
+          <input
+            type="date"
+            [ngModel]="completionDate()"
+            (ngModelChange)="completionDate.set($event)"
+          />
+        </label>
+        <label class="pw-field">
+          <span>Industry</span>
+          <input [ngModel]="industry()" (ngModelChange)="industry.set($event)" />
+        </label>
+        <label class="pw-field">
+          <span>Visibility</span>
+          <select [ngModel]="visibility()" (ngModelChange)="visibility.set($event)">
+            <option value="Public">Public</option>
+            <option value="Private">Private</option>
+          </select>
+        </label>
+      </div>
+    }
+
+    @if (step() === 4) {
+      <h2 class="pw-h2">Skills</h2>
+      <p class="pw-hint">Pick the skills you used on this project.</p>
+      @if (loadingSkills()) {
+        <p class="pw-muted">Loading skills…</p>
+      } @else {
+        <div class="pw-chips">
+          @for (skill of allSkills(); track skill.id) {
+            <button
+              type="button"
+              class="pw-chip"
+              [class.is-on]="selectedSkillIds().includes(skill.id)"
+              (click)="toggleSkill(skill.id)"
+            >
+              @if (selectedSkillIds().includes(skill.id)) {
+                <hugeicons-icon
+                  [icon]="tickIcon"
+                  [size]="14"
+                  color="currentColor"
+                  [strokeWidth]="2.5"
+                />
+              }
+              {{ skill.label }}
+            </button>
+          } @empty {
+            <p class="pw-muted">
+              No skills on your profile yet. You can continue and add them later.
+            </p>
+          }
+        </div>
+      }
+    }
+
+    @if (step() === 5) {
+      <h2 class="pw-h2">Outcomes</h2>
+      <p class="pw-label">Roadmap timeline</p>
+      <ol class="pw-timeline">
+        @for (row of roadmap(); track $index; let i = $index; let last = $last) {
+          <li class="pw-timeline__item" [class.is-done]="row.isDone" [class.is-last]="last">
+            <span class="pw-timeline__rail" aria-hidden="true">
+              <span class="pw-timeline__dot">
+                @if (row.isDone) {
+                  <hugeicons-icon
+                    [icon]="tickIcon"
+                    [size]="12"
+                    color="currentColor"
+                    [strokeWidth]="2.5"
+                  />
+                } @else {
+                  {{ i + 1 }}
+                }
+              </span>
+            </span>
+            <div class="pw-timeline__card">
+              <div class="pw-timeline__head">
+                <span class="pw-timeline__step">Step {{ i + 1 }}</span>
+                <div class="pw-timeline__tools">
+                  <button
+                    type="button"
+                    class="pw-mini"
+                    [class.is-on]="row.isDone"
+                    (click)="toggleRoadmapDone(i)"
+                  >
+                    {{ row.isDone ? 'Done' : 'Mark done' }}
+                  </button>
+                  <button
+                    type="button"
+                    class="pw-icon"
+                    (click)="removeRoadmapRow(i)"
+                    aria-label="Remove step"
+                  >
+                    <hugeicons-icon
+                      [icon]="deleteIcon"
+                      [size]="16"
+                      color="currentColor"
+                      [strokeWidth]="1.75"
+                    />
+                  </button>
+                </div>
+              </div>
+              <input
+                class="pw-timeline__input"
+                [ngModel]="row.title"
+                (ngModelChange)="updateRoadmapTitle(i, $event)"
+                placeholder="What happened in this phase?"
+              />
+            </div>
+          </li>
+        }
+      </ol>
+      <button type="button" class="pw-link" (click)="addRoadmapRow()">
+        <hugeicons-icon [icon]="addIcon" [size]="14" color="currentColor" [strokeWidth]="2" />
+        Add step
       </button>
 
+      <p class="pw-label mt">Metrics</p>
+      <div class="pw-list">
+        @for (row of metrics(); track $index; let i = $index) {
+          <div class="pw-list-row pw-list-row--metrics">
+            <input
+              [ngModel]="row.value"
+              (ngModelChange)="updateMetric(i, { value: $event })"
+              placeholder="100%"
+            />
+            <input
+              [ngModel]="row.label"
+              (ngModelChange)="updateMetric(i, { label: $event })"
+              placeholder="Satisfaction"
+            />
+            <button type="button" class="pw-icon" (click)="removeMetricRow(i)" aria-label="Remove metric">
+              <hugeicons-icon
+                [icon]="deleteIcon"
+                [size]="16"
+                color="currentColor"
+                [strokeWidth]="1.75"
+              />
+            </button>
+          </div>
+        }
+      </div>
+      <button type="button" class="pw-link" (click)="addMetricRow()">
+        <hugeicons-icon [icon]="addIcon" [size]="14" color="currentColor" [strokeWidth]="2" />
+        Add metric
+      </button>
+    }
+
+    @if (step() === 6) {
+      <h2 class="pw-h2">Testimonial</h2>
+      <label class="pw-field">
+        <span>Quote</span>
+        <textarea
+          rows="4"
+          [ngModel]="testimonialQuote()"
+          (ngModelChange)="testimonialQuote.set($event)"
+          placeholder="What did the client say?"
+        ></textarea>
+      </label>
+      <div class="pw-grid">
+        <label class="pw-field">
+          <span>Author name</span>
+          <input
+            [ngModel]="testimonialAuthorName()"
+            (ngModelChange)="testimonialAuthorName.set($event)"
+          />
+        </label>
+        <label class="pw-field">
+          <span>Author title</span>
+          <input
+            [ngModel]="testimonialAuthorTitle()"
+            (ngModelChange)="testimonialAuthorTitle.set($event)"
+          />
+        </label>
+      </div>
+    }
+
+    @if (step() === 7) {
+      <h2 class="pw-h2">Review & publish</h2>
+      <dl class="pw-summary">
+        <div>
+          <dt>Title</dt>
+          <dd>{{ title() || '—' }}</dd>
+        </div>
+        <div>
+          <dt>Category</dt>
+          <dd>{{ selectedCategoryLabel() }}</dd>
+        </div>
+        <div>
+          <dt>Skills</dt>
+          <dd>{{ selectedSkillIds().length }}</dd>
+        </div>
+        <div>
+          <dt>Roadmap</dt>
+          <dd>{{ roadmapCount() }} steps</dd>
+        </div>
+        <div>
+          <dt>Metrics</dt>
+          <dd>{{ metricsCount() }}</dd>
+        </div>
+        <div>
+          <dt>Images</dt>
+          <dd>{{ imageFiles().length }}</dd>
+        </div>
+        <div>
+          <dt>Visibility</dt>
+          <dd>{{ visibility() }}</dd>
+        </div>
+      </dl>
+    }
+
+    @if (errorMessage()) {
+      <p class="pw-error" role="alert">{{ errorMessage() }}</p>
+    }
+
+    <div class="pw-actions">
       <button
         type="button"
-        class="cursor-pointer border-none bg-transparent font-display text-base leading-4 font-semibold text-outline transition-colors duration-150 hover:text-on-surface-variant disabled:cursor-not-allowed disabled:opacity-50"
-        [disabled]="loading()"
-        (click)="onSkip()"
+        class="pw-btn pw-btn--ghost"
+        [disabled]="step() === 1 || saving()"
+        (click)="back()"
       >
-        Skip for now
+        Back
       </button>
-
-      <button
-        type="button"
-        class="cursor-pointer border-none bg-transparent font-body text-sm text-on-surface-variant underline-offset-2 hover:underline disabled:opacity-50"
-        [disabled]="loading()"
-        (click)="goBack()"
-      >
-        Back to skills
-      </button>
+      @if (step() < 7) {
+        <button type="button" class="pw-btn pw-btn--primary" [disabled]="saving()" (click)="next()">
+          Continue
+        </button>
+      } @else {
+        <button
+          type="button"
+          class="pw-btn pw-btn--primary"
+          [disabled]="saving()"
+          (click)="onPublish()"
+        >
+          {{ saving() ? 'Saving…' : 'Publish & continue' }}
+        </button>
+      }
     </div>
-  </form>
-</section>
+  </section>
+
+  <div class="pw-footer">
+    <button type="button" class="pw-skip" [disabled]="saving()" (click)="onSkip()">
+      Skip for now
+    </button>
+    <button type="button" class="pw-back-link" [disabled]="saving()" (click)="goBackToSkills()">
+      Back to skills
+    </button>
+  </div>
+</div>

@@ -46,20 +46,20 @@ export class ProposalsApiService {
     });
 
 
-    // Backend returns the created Proposal object in data; map to its id
+    // Backend returns ApiResponse with isSuccess + message (data may be null)
     return this.http
       .post<ApiResponse<any>>(this.baseUrl, formData)
       .pipe(
         map((res) => {
-          if (!res.isSuccess || !res.data) {
+          if (!res.isSuccess) {
             throw new Error(res.message || 'Failed to submit proposal.');
           }
-          // Accept either a string id directly or an object containing an id property
           if (typeof res.data === 'string') return res.data;
-          if (typeof res.data === 'object' && 'id' in res.data && typeof res.data.id === 'string') {
+          if (typeof res.data === 'object' && res.data && 'id' in res.data && typeof (res.data as any).id === 'string') {
             return (res.data as any).id as string;
           }
-          throw new Error('Unexpected response from create proposal endpoint.');
+          // Success payload can be empty; message-only responses are still success
+          return 'ok';
         }),
       );
   }

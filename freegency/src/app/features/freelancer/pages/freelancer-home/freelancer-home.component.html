@@ -16,20 +16,52 @@
 
       <!-- NAVIGATION TABS -->
       <nav class="flex items-center gap-2 p-1 bg-surface-container-low rounded-xl w-fit">
-        <button class="chip-tab py-2 px-4 rounded-lg font-medium text-sm transition-all"
-          [class.bg-white]="activeTab() === 'feed'" [class.shadow-sm]="activeTab() === 'feed'"
-          [class.text-primary]="activeTab() === 'feed'" (click)="onTabChange('feed')">
+        <button
+          class="chip-tab py-2 px-4 rounded-lg font-medium text-sm transition-all"
+          [class.bg-white]="activeTab() === 'feed'"
+          [class.shadow-sm]="activeTab() === 'feed'"
+          [class.text-primary]="activeTab() === 'feed'"
+          [class.text-on-surface-variant]="activeTab() !== 'feed'"
+          (click)="onTabChange('feed')"
+        >
           Recommended for you
         </button>
-        <button class="chip-tab py-2 px-4 rounded-lg font-medium text-sm transition-all text-on-surface-variant"
-          [class.bg-white]="activeTab() === 'applications'" [class.shadow-sm]="activeTab() === 'applications'"
-          [class.text-primary]="activeTab() === 'applications'" (click)="onTabChange('applications')">
+        <button
+          class="chip-tab py-2 px-4 rounded-lg font-medium text-sm transition-all"
+          [class.bg-white]="activeTab() === 'applications'"
+          [class.shadow-sm]="activeTab() === 'applications'"
+          [class.text-primary]="activeTab() === 'applications'"
+          [class.text-on-surface-variant]="activeTab() !== 'applications'"
+          (click)="onTabChange('applications')"
+        >
           My Applications
         </button>
-        <button class="chip-tab py-2 px-4 rounded-lg font-medium text-sm transition-all text-on-surface-variant"
-          [class.bg-white]="activeTab() === 'saved'" [class.shadow-sm]="activeTab() === 'saved'"
-          [class.text-primary]="activeTab() === 'saved'" (click)="onTabChange('saved')">
+        <button
+          class="chip-tab py-2 px-4 rounded-lg font-medium text-sm transition-all"
+          [class.bg-white]="activeTab() === 'saved'"
+          [class.shadow-sm]="activeTab() === 'saved'"
+          [class.text-primary]="activeTab() === 'saved'"
+          [class.text-on-surface-variant]="activeTab() !== 'saved'"
+          (click)="onTabChange('saved')"
+        >
           Saved
+        </button>
+        <button
+          class="chip-tab py-2 px-4 rounded-lg font-medium text-sm transition-all inline-flex items-center gap-1.5"
+          [class.bg-white]="activeTab() === 'invitations'"
+          [class.shadow-sm]="activeTab() === 'invitations'"
+          [class.text-primary]="activeTab() === 'invitations'"
+          [class.text-on-surface-variant]="activeTab() !== 'invitations'"
+          (click)="onTabChange('invitations')"
+        >
+          Invitations
+          @if (pendingInviteCount() > 0) {
+            <span
+              class="inline-flex min-w-5 h-5 items-center justify-center rounded-full bg-on-surface px-1.5 text-[10px] font-bold text-white leading-none"
+            >
+              {{ pendingInviteCount() }}
+            </span>
+          }
         </button>
       </nav>
 
@@ -142,7 +174,180 @@
       </div>
       }
 
+      <!-- INVITATIONS -->
+      @if (activeTab() === 'invitations') {
+        <section class="fh-invites" aria-labelledby="fh-invites-heading">
+          <header class="fh-invites__head">
+            <div>
+              <p class="fh-invites__eyebrow">Client outreach</p>
+              <h2 id="fh-invites-heading">Project invitations</h2>
+              <p>Accept to open a discussion chat, or decline if it’s not a fit.</p>
+            </div>
+          </header>
+
+          @if (isLoading()) {
+            <div class="fh-invite-skeleton" aria-hidden="true"></div>
+            <div class="fh-invite-skeleton" aria-hidden="true"></div>
+          } @else if (invitationsError()) {
+            <div class="fh-invites-empty">
+              <h3>Couldn’t load invitations</h3>
+              <p>{{ invitationsError() }}</p>
+            </div>
+          } @else if (!invitations().length) {
+            <div class="fh-invites-empty">
+              <span class="material-symbols-outlined fh-invites-empty__icon">mail</span>
+              <h3>No invitations yet</h3>
+              <p>When a client invites you to a project, it will show up here.</p>
+            </div>
+          } @else {
+            @if (inviteActionError()) {
+              <div class="fh-invite-action-error" role="alert">
+                {{ inviteActionError() }}
+              </div>
+            }
+            <div class="fh-invite-list">
+              @for (inv of invitations(); track inv.id) {
+                <article class="fh-invite-card">
+                  <header class="fh-invite-card__header">
+                    <div class="fh-invite-card__client">
+                      <div class="fh-invite-card__avatar" aria-hidden="true">
+                        {{ clientInitials(inv.clientName) }}
+                      </div>
+                      <div class="min-w-0">
+                        <p class="fh-invite-card__client-name">{{ inv.clientName || 'Client' }}</p>
+                        <p class="fh-invite-card__client-sub">wants to discuss a project with you</p>
+                      </div>
+                    </div>
+                    <div class="fh-invite-card__meta">
+                      <span [class]="invitationStatusClass(inv.status)">{{ inv.status }}</span>
+                      <time [attr.datetime]="inv.createdAt">
+                        {{ inv.createdAt | date: 'mediumDate' }}
+                      </time>
+                    </div>
+                  </header>
+
+                  <div class="fh-invite-card__project">
+                    <div class="min-w-0 flex-1">
+                      @if (inv.inviteeType === 'Team') {
+                        <span class="fh-invite-chip">For team · {{ inv.inviteeTeamName || 'Team' }}</span>
+                      }
+                      <h3 class="fh-invite-card__title">{{ inv.projectTitle || 'Project' }}</h3>
+                    </div>
+                    <button
+                      type="button"
+                      class="fh-btn fh-btn--outline"
+                      (click)="viewProject(inv.projectId)"
+                    >
+                      <span class="material-symbols-outlined text-base">open_in_new</span>
+                      View project
+                    </button>
+                  </div>
+
+                  @if (inv.message.trim()) {
+                    <div class="fh-invite-card__message">
+                      <p class="fh-invite-card__message-label">Message from client</p>
+                      <p>{{ inv.message }}</p>
+                    </div>
+                  }
+
+                  @if (inv.status === 'Pending') {
+                    <footer class="fh-invite-card__footer">
+                      <p class="fh-invite-card__hint">
+                        <strong>Accept</strong> opens a discussion chat to negotiate.
+                        <strong>Decline</strong> closes this invite permanently.
+                      </p>
+                      <div class="fh-invite-card__actions">
+                        @if (confirmDeclineId() === inv.id) {
+                          <span class="fh-invite-card__confirm">Decline this invitation?</span>
+                          <button
+                            type="button"
+                            class="fh-btn fh-btn--danger"
+                            [disabled]="inviteActionId() === inv.id"
+                            (click)="rejectInvitation(inv)"
+                          >
+                            Yes, decline
+                          </button>
+                          <button
+                            type="button"
+                            class="fh-btn fh-btn--ghost"
+                            [disabled]="inviteActionId() === inv.id"
+                            (click)="cancelDecline()"
+                          >
+                            Keep invite
+                          </button>
+                        } @else {
+                          <button
+                            type="button"
+                            class="fh-btn fh-btn--primary"
+                            [disabled]="inviteActionId() === inv.id"
+                            (click)="acceptInvitation(inv)"
+                          >
+                            @if (inviteActionId() === inv.id) {
+                              <span class="material-symbols-outlined text-base animate-spin">progress_activity</span>
+                              Accepting…
+                            } @else {
+                              <span class="material-symbols-outlined text-base">check_circle</span>
+                              Accept &amp; chat
+                            }
+                          </button>
+                          <button
+                            type="button"
+                            class="fh-btn fh-btn--ghost"
+                            [disabled]="inviteActionId() === inv.id"
+                            (click)="askDecline(inv.id)"
+                          >
+                            <span class="material-symbols-outlined text-base">close</span>
+                            Decline
+                          </button>
+                        }
+                      </div>
+                    </footer>
+                  } @else if (inv.status === 'Accepted') {
+                    <footer class="fh-invite-card__footer fh-invite-card__footer--done">
+                      <p class="fh-invite-card__hint">You accepted this invite. Continue in chat.</p>
+                      <div class="fh-invite-card__actions">
+                        <button
+                          type="button"
+                          class="fh-btn fh-btn--outline"
+                          (click)="viewProject(inv.projectId)"
+                        >
+                          View project
+                        </button>
+                        @if (inv.chatRoomId) {
+                          <button
+                            type="button"
+                            class="fh-btn fh-btn--primary"
+                            (click)="openInvitationChat(inv.chatRoomId)"
+                          >
+                            <span class="material-symbols-outlined text-base">chat</span>
+                            Open chat
+                          </button>
+                        }
+                      </div>
+                    </footer>
+                  } @else {
+                    <footer class="fh-invite-card__footer fh-invite-card__footer--done">
+                      <p class="fh-invite-card__hint">This invitation is {{ inv.status.toLowerCase() }}.</p>
+                      <div class="fh-invite-card__actions">
+                        <button
+                          type="button"
+                          class="fh-btn fh-btn--outline"
+                          (click)="viewProject(inv.projectId)"
+                        >
+                          View project
+                        </button>
+                      </div>
+                    </footer>
+                  }
+                </article>
+              }
+            </div>
+          }
+        </section>
+      }
+
       <!-- CARDS FEED -->
+      @if (activeTab() !== 'invitations') {
       <section class="space-y-4">
         @if (isLoading()) {
         <div
@@ -368,6 +573,7 @@
         </footer>
         }
       </section>
+      }
     </main>
 
     <!-- RIGHT SIDEBAR (4 Cols) -->

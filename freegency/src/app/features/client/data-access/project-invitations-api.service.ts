@@ -66,23 +66,19 @@ export class ProjectInvitationsApiService {
   }
 
   reject(id: string): Observable<void> {
-    return this.http
-      .post<ApiResponse<unknown>>(`${this.baseUrl}/${id}/reject`, {})
-      .pipe(
-        map((res) => {
-          if (!res.isSuccess) throw new Error(res.message || 'Failed to reject invitation.');
-        }),
-      );
+    return this.http.post<ApiResponse<unknown>>(`${this.baseUrl}/${id}/reject`, {}).pipe(
+      map((res) => {
+        if (!res.isSuccess) throw new Error(res.message || 'Failed to reject invitation.');
+      }),
+    );
   }
 
   cancel(id: string): Observable<void> {
-    return this.http
-      .post<ApiResponse<unknown>>(`${this.baseUrl}/${id}/cancel`, {})
-      .pipe(
-        map((res) => {
-          if (!res.isSuccess) throw new Error(res.message || 'Failed to cancel invitation.');
-        }),
-      );
+    return this.http.post<ApiResponse<unknown>>(`${this.baseUrl}/${id}/cancel`, {}).pipe(
+      map((res) => {
+        if (!res.isSuccess) throw new Error(res.message || 'Failed to cancel invitation.');
+      }),
+    );
   }
 
   private unwrap<T>(res: ApiResponse<T>, fallback: string): T {

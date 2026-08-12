@@ -41,15 +41,9 @@ export class ClientProjectScopeComponent {
   protected readonly budgetMin = signal('');
   protected readonly budgetMax = signal('');
   protected readonly currency = signal('USD');
-  protected readonly duration = signal('1-3 months');
+  protected readonly duration = signal('');
 
   protected readonly currencies = ['USD', 'EUR', 'EGP'] as const;
-  protected readonly durations = [
-    'Less than 1 month',
-    '1-3 months',
-    '3-6 months',
-    'More than 6 months',
-  ] as const;
 
   constructor() {
     const existing = this.draftState.scope();

@@ -475,18 +475,16 @@
 
             @case ('timeline') {
               <div class="flex flex-col gap-2">
-                @for (duration of durations; track duration) {
-                  <button
-                    type="button"
-                    class="flex cursor-pointer items-center rounded-xl border px-4 py-3 text-left transition-colors"
-                    [class.border-primary-container]="editDuration() === duration"
-                    [class.bg-primary-container/5]="editDuration() === duration"
-                    [class.border-outline-variant]="editDuration() !== duration"
-                    (click)="editDuration.set(duration)"
-                  >
-                    <span class="font-body text-base text-on-surface">{{ duration }}</span>
-                  </button>
-                }
+                <label class="sr-only" for="edit-timeline">Estimated duration</label>
+                <input
+                  id="edit-timeline"
+                  type="text"
+                  [ngModel]="editDuration()"
+                  (ngModelChange)="editDuration.set($event)"
+                  maxlength="100"
+                  placeholder="e.g. 3 weeks, 2 months, 45 days"
+                  class="h-12 w-full rounded-xl border border-outline-variant bg-white px-4 font-body text-base text-on-surface outline-none placeholder:text-on-surface-variant/60 focus-visible:ring-2 focus-visible:ring-primary/20"
+                />
               </div>
             }
 

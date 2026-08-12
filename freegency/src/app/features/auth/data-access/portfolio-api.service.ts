@@ -68,6 +68,42 @@ export interface PortfolioMetricDto {
   sortOrder: number;
 }
 
+export interface DeveloperPortfolioRoadmapStepInput {
+  title: string;
+  sortOrder?: number;
+  isDone?: boolean;
+}
+
+export interface DeveloperPortfolioMetricInput {
+  value: string;
+  label: string;
+  sortOrder?: number;
+}
+
+export interface DeveloperPortfolioWriteInput {
+  title: string;
+  description?: string | null;
+  budget?: number | string | null;
+  projectUrl?: string | null;
+  prototypeUrl?: string | null;
+  completionDate?: string | null;
+  categoryId?: string | null;
+  visibility?: string;
+  challenge?: string | null;
+  solution?: string | null;
+  durationLabel?: string | null;
+  industry?: string | null;
+  teamLeads?: string | null;
+  testimonialQuote?: string | null;
+  testimonialAuthorName?: string | null;
+  testimonialAuthorTitle?: string | null;
+  testimonialAuthorAvatarUrl?: string | null;
+  skillIds?: string[];
+  roadmapSteps?: DeveloperPortfolioRoadmapStepInput[];
+  metrics?: DeveloperPortfolioMetricInput[];
+  images?: File[];
+}
+
 export interface PortfolioProjectDetailsDto {
   id: string;
   title: string;
@@ -266,41 +302,79 @@ export class PortfolioApiService {
       );
   }
 
-  /** Lightweight create used by developer onboarding (optional step). */
-  createDeveloperPortfolio(input: {
-    title: string;
-    description?: string | null;
-    projectUrl?: string | null;
-    categoryId?: string | null;
-    images?: File[];
-  }): Observable<string> {
-    const form = new FormData();
-    form.append('Title', input.title.trim());
-    form.append(
-      'Description',
-      (input.description ?? '').trim() || input.title.trim(),
-    );
-    form.append('OwnerType', 'User');
-    form.append('Visibility', 'Public');
-    if (input.projectUrl?.trim()) {
-      form.append('ProjectUrl', input.projectUrl.trim());
-    }
-    if (input.categoryId) {
-      form.append('CategoryId', input.categoryId);
-    }
-    for (const file of input.images ?? []) {
-      form.append('Images', file, file.name);
-    }
+  /** Full case-study create used by developer onboarding portfolio wizard. */
+  createDeveloperPortfolio(input: DeveloperPortfolioWriteInput): Observable<string> {
+    const form = this.buildDeveloperPortfolioForm(input);
 
     return this.http
       .post<ApiResponse<string>>(`${this.baseUrl}/developer/me/portfolio-projects`, form)
       .pipe(
         map((res) => {
-          if (!res.isSuccess || !res.data) {
-            throw new Error(res.message || 'Failed to create portfolio project.');
+          const ok = res.isSuccess ?? (res as { IsSuccess?: boolean }).IsSuccess;
+          const data = res.data ?? (res as { Data?: string }).Data;
+          const message =
+            res.message ?? (res as { Message?: string }).Message ?? null;
+          if (!ok || !data) {
+            throw new Error(message || 'Failed to create portfolio project.');
           }
-          return res.data;
+          return String(data);
         }),
       );
+  }
+
+  private buildDeveloperPortfolioForm(input: DeveloperPortfolioWriteInput): FormData {
+    const form = new FormData();
+    form.append('Title', input.title.trim());
+    form.append('Description', (input.description ?? '').trim() || input.title.trim());
+    form.append('OwnerType', 'User');
+    form.append('Visibility', input.visibility ?? 'Public');
+
+    if (input.budget != null && input.budget !== '') {
+      form.append('Budget', String(input.budget));
+    }
+    if (input.projectUrl?.trim()) form.append('ProjectUrl', input.projectUrl.trim());
+    if (input.prototypeUrl?.trim()) form.append('PrototypeUrl', input.prototypeUrl.trim());
+    if (input.completionDate) form.append('CompletionDate', input.completionDate);
+    if (input.categoryId) form.append('CategoryId', input.categoryId);
+
+    const challenge = (input.challenge ?? '').trim();
+    const solution = (input.solution ?? '').trim();
+    const durationLabel = (input.durationLabel ?? '').trim();
+    const industry = (input.industry ?? '').trim();
+    const teamLeads = (input.teamLeads ?? '').trim();
+    const testimonialQuote = (input.testimonialQuote ?? '').trim();
+    const testimonialAuthorName = (input.testimonialAuthorName ?? '').trim();
+    const testimonialAuthorTitle = (input.testimonialAuthorTitle ?? '').trim();
+
+    if (challenge) form.append('Challenge', challenge);
+    if (solution) form.append('Solution', solution);
+    if (durationLabel) form.append('DurationLabel', durationLabel);
+    if (industry) form.append('Industry', industry);
+    if (teamLeads) form.append('TeamLeads', teamLeads);
+    if (testimonialQuote) form.append('TestimonialQuote', testimonialQuote);
+    if (testimonialAuthorName) form.append('TestimonialAuthorName', testimonialAuthorName);
+    if (testimonialAuthorTitle) form.append('TestimonialAuthorTitle', testimonialAuthorTitle);
+
+    for (const id of input.skillIds ?? []) {
+      if (id) form.append('SkillIds', id);
+    }
+
+    (input.roadmapSteps ?? []).forEach((step, index) => {
+      form.append(`RoadmapSteps[${index}].Title`, step.title);
+      form.append(`RoadmapSteps[${index}].SortOrder`, String(step.sortOrder ?? index));
+      form.append(`RoadmapSteps[${index}].IsDone`, step.isDone ? 'true' : 'false');
+    });
+
+    (input.metrics ?? []).forEach((metric, index) => {
+      form.append(`Metrics[${index}].Value`, metric.value.slice(0, 50));
+      form.append(`Metrics[${index}].Label`, metric.label.slice(0, 120));
+      form.append(`Metrics[${index}].SortOrder`, String(metric.sortOrder ?? index));
+    });
+
+    for (const file of input.images ?? []) {
+      form.append('Images', file, file.name);
+    }
+
+    return form;
   }
 }
