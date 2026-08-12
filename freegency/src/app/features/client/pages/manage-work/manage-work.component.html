@@ -1,6 +1,6 @@
 <app-client-view-navbar></app-client-view-navbar>
 
-<div class="max-w-content mx-auto px-6 py-8 md:px-16 md:py-10">
+<div class="max-w-full mx-auto px-6 py-8 md:px-16 md:py-10">
   <header class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-8">
     <div>
       <h1 class="text-3xl md:text-4xl font-extrabold text-on-surface tracking-tight">
@@ -12,6 +12,8 @@
     </div>
     <button
       class="btn btn-primary text-white font-semibold rounded-full px-6 h-12! w-fit shrink-0 self-start sm:self-auto"
+      type="button"
+      (click)="openCreateProject()"
     >
       Post a project
     </button>
@@ -86,29 +88,6 @@
         {{ milestonesNeedsAction() }}
       </span>
     </button>
-
-    <button
-      type="button"
-      class="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-colors shrink-0 cursor-pointer"
-      [ngClass]="
-        activeTab() === 'members'
-          ? 'bg-[#4130D7] text-white'
-          : 'bg-[#F0EDEF] text-on-surface hover:bg-[#E5E1E4]'
-      "
-      (click)="setTab('members')"
-    >
-      <span>Members</span>
-      <span
-        class="text-xs px-2 py-0.5 rounded-full font-bold"
-        [ngClass]="
-          activeTab() === 'members'
-            ? 'bg-white/20 text-white'
-            : 'bg-black/5 text-on-surface-variant'
-        "
-      >
-        7
-      </span>
-    </button>
   </div>
 
   <div class="mt-4">
@@ -120,10 +99,6 @@
       <app-manage-work-milestones
         (needsActionCountChange)="onMilestonesNeedsAction($event)"
       ></app-manage-work-milestones>
-    } @else if (activeTab() === 'members') {
-      <div class="bg-white rounded-3xl p-12 text-center border border-outline-variant/20">
-        <p class="text-base text-on-surface-variant">Members feature coming soon.</p>
-      </div>
     }
   </div>
 </div>

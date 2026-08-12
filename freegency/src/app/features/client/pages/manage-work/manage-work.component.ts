@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ClientViewNavbarComponent } from '../../../../shared/components/client-view-navbar/client-view-navbar.component';
 import { MyProjectsComponent } from './my-projects/my-projects.component';
@@ -6,7 +7,7 @@ import { Proposals } from './proposals/proposals';
 import { ManageWorkMilestonesComponent } from './milestones/milestones.component';
 import { ManageWorkService } from '../../data-access/manage-work.service';
 
-export type ManageWorkTab = 'my-projects' | 'proposals' | 'milestones' | 'members';
+export type ManageWorkTab = 'my-projects' | 'proposals' | 'milestones';
 
 @Component({
   selector: 'app-manage-work',
@@ -29,10 +30,16 @@ export class ManageWorkComponent implements OnInit {
   readonly proposalsTotal = signal(0);
   readonly milestonesNeedsAction = signal(0);
 
+  private readonly router = inject(Router);
+
   ngOnInit(): void {
     this.loadProjectsTotal();
     this.loadProposalsTotal();
     this.loadMilestonesBadge();
+  }
+
+  openCreateProject(): void {
+    this.router.navigate(['/client/create-project']);
   }
 
   loadProjectsTotal(): void {
