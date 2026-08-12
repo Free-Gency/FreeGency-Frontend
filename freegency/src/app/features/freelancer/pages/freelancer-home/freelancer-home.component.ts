@@ -5,14 +5,13 @@ import { FreelancerHome } from '../../data-access/freelancer-home';
 import { DeveloperProfileSummary } from '../../../../shared/models/developer-profile.model';
 import { DeveloperViewNavbarComponent } from "../../../../shared/components/developer-view-navbar/developer-view-navbar.component";
 import { ApplyProjectButtonComponent } from "../../../../shared/components/apply-project-button/apply-project-button.component";
-import { RouterLink } from '@angular/router';
 
 export type ActiveTab = 'feed' | 'applications' | 'saved';
 
 @Component({
   selector: 'app-freelancer-home',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, DeveloperViewNavbarComponent, ApplyProjectButtonComponent],
+  imports: [CommonModule, FormsModule, DeveloperViewNavbarComponent, ApplyProjectButtonComponent],
   templateUrl: './freelancer-home.component.html',
   styleUrls: ['./freelancer-home.component.css'],
 })

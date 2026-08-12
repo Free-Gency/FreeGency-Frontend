@@ -318,14 +318,10 @@
                   </button>
                 </div>
 
-                <!-- <app-apply-project-button
-                        [projectId]="item.id"
-                        (proposalSubmitted)="onProposalSubmitted(item)"
-                      /> -->
-                <a [routerLink]="['/developer/apply', item.id]" class="btn btn-primary w-auto px-5 h-10 text-sm">
-                  <span class="material-symbols-outlined text-base">send</span>
-                  <span>Apply</span>
-                </a>
+                <app-apply-project-button
+                  [projectId]="item.id"
+                  (proposalSubmitted)="onProposalSubmitted(item)"
+                />
 
               </div>
             </div>

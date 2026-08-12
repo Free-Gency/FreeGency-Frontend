@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -12,6 +12,9 @@ import { ProjectDetail, ApplicantType, TeamOption } from '../model/proposal.mode
   templateUrl: './apply-proposal.component.component.html',
 })
 export class ApplyProposalModalComponent implements OnInit {
+  @Input() projectId?: string;
+  @Output() proposalSubmitted = new EventEmitter<void>();
+
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly proposalsService = inject(ProposalsService);
@@ -19,7 +22,7 @@ export class ApplyProposalModalComponent implements OnInit {
   readonly ApplicantType = ApplicantType;
   readonly maxAttachments = 10;
 
-  projectId = signal<string>('');
+  projectIdSignal = signal<string>('');
   project = signal<ProjectDetail | null>(null);
   isLoadingProject = signal<boolean>(true);
 
@@ -54,8 +57,8 @@ export class ApplyProposalModalComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id') ?? '';
-    this.projectId.set(id);
+    const id = this.projectId ?? this.route.snapshot.paramMap.get('id') ?? '';
+    this.projectIdSignal.set(id);
 
     this.isLoadingProject.set(true);
     this.proposalsService.getProjectById(id).subscribe((project) => {
@@ -91,7 +94,11 @@ export class ApplyProposalModalComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.router.navigate(['/developer/home']);
+    if (this.projectId) {
+      this.proposalSubmitted.emit();
+    } else {
+      this.router.navigate(['/developer/home']);
+    }
   }
 
   onSubmit(): void {
@@ -101,7 +108,7 @@ export class ApplyProposalModalComponent implements OnInit {
     this.errorMessage.set('');
 
     const dto = {
-      projectId: this.projectId(),
+      projectId: this.projectIdSignal(),
       applicantType: this.applicantType()!,
       teamId: this.applicantType() === ApplicantType.Team ? this.selectedTeamId() : undefined,
       coverLetter: this.coverLetter().trim(),
@@ -115,6 +122,9 @@ export class ApplyProposalModalComponent implements OnInit {
       next: () => {
         this.isSubmitting.set(false);
         this.isSubmitted.set(true);
+        if (this.projectId) {
+          this.proposalSubmitted.emit();
+        }
       },
       error: () => {
         this.isSubmitting.set(false);
