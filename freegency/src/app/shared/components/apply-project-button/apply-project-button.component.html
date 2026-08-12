@@ -11,6 +11,12 @@
   }
 </button>
 
+<!-- <app-apply-proposal-modal
+  [projectId]="projectId"
+  [isOpen]="isModalOpen()"
+  (closed)="isModalOpen.set(false)"
+  (submitted)="onSubmitted()"
+/> -->
 @if (isModalOpen()) {
   <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
     <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
