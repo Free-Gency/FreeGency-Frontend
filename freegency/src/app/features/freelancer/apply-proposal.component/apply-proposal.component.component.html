@@ -17,7 +17,7 @@
       <div class="flex items-center justify-between text-xs text-on-surface-variant">
         <div class="flex items-center gap-2">
           <div
-            class="w-6 h-6 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white font-bold text-[10px]"
+            class="w-6 h-6 rounded-full bg-linear-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white font-bold text-[10px]"
           >
             {{ (proj.clientName || 'A')[0] }}
           </div>
@@ -78,20 +78,20 @@
 
         <!-- Applicant type -->
         <div class="mb-2">
-          <label class="field-label">Apply as</label>
-          <div class="grid grid-cols-2 gap-3">
+          <label class="field-label mb-2">Apply as</label>
+          <div class="grid grid-cols-2 gap-3 mb-6">
             <button
               type="button"
-              class="flex flex-col items-center gap-1.5 rounded-xl border-2 py-4 px-3 transition-colors"
-              [class.border-primary]="applicantType() === ApplicantType.Developer"
-              [class.bg-primary-fixed]="applicantType() === ApplicantType.Developer"
-              [class.border-outline-variant]="applicantType() !== ApplicantType.Developer"
-              (click)="selectApplicantType(ApplicantType.Developer)"
+              class="flex flex-col items-center gap-1.5 rounded-2xl border-2 py-4 px-3 transition-colors"
+              [class.border-primary]="applicantType() === ApplicantType.User"
+              [class.bg-primary-fixed]="applicantType() === ApplicantType.User"
+              [class.border-outline-variant]="applicantType() !== ApplicantType.User"
+              (click)="selectApplicantType(ApplicantType.User)"
             >
               <span
                 class="material-symbols-outlined text-2xl"
-                [class.text-primary]="applicantType() === ApplicantType.Developer"
-                [class.text-outline]="applicantType() !== ApplicantType.Developer"
+                [class.text-primary]="applicantType() === ApplicantType.User"
+                [class.text-outline]="applicantType() !== ApplicantType.User"
               >
                 person
               </span>
@@ -103,7 +103,7 @@
 
             <button
               type="button"
-              class="flex flex-col items-center gap-1.5 rounded-xl border-2 py-4 px-3 transition-colors"
+              class="flex flex-col items-center gap-1.5 rounded-2xl border-2 py-4 px-3 transition-colors"
               [class.border-primary]="applicantType() === ApplicantType.Team"
               [class.bg-primary-fixed]="applicantType() === ApplicantType.Team"
               [class.border-outline-variant]="applicantType() !== ApplicantType.Team"
@@ -124,7 +124,7 @@
           </div>
 
           @if (applicantType() === ApplicantType.Team) {
-            <div class="modal-field">
+            <div class="modal-field mb-6">
               <label class="field-label">Select team</label>
               <select [ngModel]="selectedTeamId()" name="team" (ngModelChange)="selectedTeamId.set($event)">
                 <option value="" disabled>Choose a team</option>
@@ -142,7 +142,7 @@
         </div>
 
         <!-- Cover letter -->
-        <div class="modal-field">
+        <div class="modal-field mb-4">
           <label class="field-label">Cover letter</label>
           <textarea
             rows="3"
@@ -166,7 +166,7 @@
         </div>
 
         <!-- Timeline & budget -->
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 gap-3 mb-6">
           <div class="modal-field">
             <label class="field-label">Proposed timeline</label>
             <input
@@ -191,7 +191,7 @@
         </div>
 
         <!-- Similar work link -->
-        <div class="modal-field">
+        <div class="modal-field mb-6">
           <label class="field-label">Link to similar work (optional)</label>
           <input
             type="url"
@@ -203,7 +203,7 @@
         </div>
 
         <!-- Attachments -->
-        <div class="modal-field">
+        <div class="modal-field mb-8">
           <label class="field-label">Attachments (optional, up to {{ maxAttachments }})</label>
           <label
             class="flex items-center justify-center gap-2 border border-dashed border-outline-variant rounded-xl h-11 text-sm text-on-surface-variant cursor-pointer hover:bg-surface-container-low transition-colors"

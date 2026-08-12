@@ -2,9 +2,13 @@
   type="button"
   class="btn btn-primary w-auto px-5 h-10 text-sm"
   (click)="openModal()"
+  [disabled]="hasApplied()"
 >
-  <span class="material-symbols-outlined text-base">send</span>
-  <span>Apply Now</span>
+  @if (!hasApplied()) {
+    <span>Apply Now</span>
+  } @else {
+    <span>Applied</span>
+  }
 </button>
 
 @if (isModalOpen()) {

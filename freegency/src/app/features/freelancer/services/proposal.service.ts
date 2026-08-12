@@ -1,41 +1,11 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { delay } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { CreateProposalDto, ProjectDetail, TeamOption } from '../model/proposal.model';
-
-const MOCK_TEAMS: TeamOption[] = [
-  { id: 'team-1', name: 'Pixel Forge Studio' },
-  { id: 'team-2', name: 'North Star Devs' },
-];
-
-const MOCK_PROJECTS: Record<string, ProjectDetail> = {
-  '1': {
-    id: '1',
-    title: 'React Dashboard for Analytics',
-    description:
-      'Build a modern analytics dashboard with charts, filters, and role-based access. Prefer React + TypeScript. Clean, data-dense UI with exportable reports and a dark mode toggle.',
-    clientName: 'Abdulrahman Salah',
-    postedAt: '2026-07-23',
-    budgetMin: 800,
-    budgetMax: 1500,
-    duration: '1 to 3 months',
-    skills: ['React', 'Tailwind CSS', 'TypeScript'],
-    proposalCount: 0,
-  },
-  '2': {
-    id: '2',
-    title: 'Landing Page for Startup Launch',
-    description:
-      'Design and build a single-page marketing site for a new SaaS product launch, including a waitlist form and an animated hero section.',
-    clientName: 'Abdulrahman Salah',
-    postedAt: '2026-07-23',
-    budgetMin: 300,
-    budgetMax: 600,
-    duration: '< 1 month',
-    skills: ['HTML', 'CSS', 'JavaScript'],
-    proposalCount: 4,
-  },
-};
+import { ProjectsApiService } from '../../auth/data-access/projects-api.service';
+import { TeamsService } from '../../developer/data-access/teams.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { ProposalsApiService } from '../data-access/proposals-api.service';
 
 const DEFAULT_PROJECT: ProjectDetail = {
   id: 'unknown',
@@ -52,32 +22,94 @@ const DEFAULT_PROJECT: ProjectDetail = {
 
 @Injectable({ providedIn: 'root' })
 export class ProposalsService {
+  private readonly projectsApiService = inject(ProjectsApiService);
+  private readonly teamsService = inject(TeamsService);
+  private readonly authService = inject(AuthService);
+  private readonly proposalsApiService = inject(ProposalsApiService);
+
   /**
-   * MOCKED — returns a project by id from the in-memory list above.
-   * Swap the `of(...)` for `this.http.get<ProjectDetail>(...)` once the
-   * real endpoint (e.g. GET /api/projects/{id}) is ready.
+   * Fetches project details from the API.
+   * Falls back to DEFAULT_PROJECT if the project is not found.
    */
   getProjectById(projectId: string): Observable<ProjectDetail> {
-    const project = MOCK_PROJECTS[projectId] ?? { ...DEFAULT_PROJECT, id: projectId };
-    return of(project).pipe(delay(400));
-  }
-
-  /** MOCKED — teams the current user belongs to. */
-  getMyTeams(): Observable<TeamOption[]> {
-    return of(MOCK_TEAMS).pipe(delay(300));
+    return this.projectsApiService.getDetails(projectId).pipe(
+      map((dto) => ({
+        id: dto.id,
+        title: dto.title,
+        description: dto.description,
+        clientName: dto.clientName,
+        postedAt: dto.createdAt,
+        budgetMin: dto.budgetMin,
+        budgetMax: dto.budgetMax,
+        duration: dto.estimatedDurationDays
+          ? `${dto.estimatedDurationDays} days`
+          : '—',
+        skills: dto.skills ?? [],
+        proposalCount: dto.proposalCount,
+      })),
+      catchError(() => {
+        console.error(`Failed to load project ${projectId}`);
+        return of({ ...DEFAULT_PROJECT, id: projectId });
+      }),
+    );
   }
 
   /**
-   * MOCKED — logs what would be sent to the API and resolves as success
-   * after a short delay, so the submit flow (loading state, success
-   * screen) can be tested end to end.
+   * Fetches teams the current user is a member of.
+   * Maps Team to TeamOption (id and name only).
    */
-  submitProposal(dto: CreateProposalDto, attachments: File[]): Observable<{ success: true }> {
-    console.log('[MOCK] submitProposal payload:', dto);
-    console.log(
-      '[MOCK] submitProposal attachments:',
-      attachments.map((f) => f.name),
+  getMyTeams(): Observable<TeamOption[]> {
+    return this.teamsService.getMine().pipe(
+      map((teams) =>
+        teams.map((team) => ({
+          id: team.id,
+          name: team.name,
+        })),
+      ),
+      catchError(() => {
+        console.error('Failed to load user teams');
+        return of([]);
+      }),
     );
-    return of({ success: true as const }).pipe(delay(800));
+  }
+
+  /**
+   * Fetches only teams that the current user OWNS (is the creator of).
+   * Only owners can submit proposals on behalf of a team.
+   * Maps Team to TeamOption (id and name only).
+   */
+  getTeamsIOwn(): Observable<TeamOption[]> {
+    const currentUserId = this.authService.session()?.id;
+    if (!currentUserId) {
+      return of([]);
+    }
+
+    return this.teamsService.getMine().pipe(
+      map((teams) =>
+        teams
+          .filter((team) => team.ownerUserId === currentUserId)
+          .map((team) => ({
+            id: team.id,
+            name: team.name,
+          })),
+      ),
+      catchError(() => {
+        console.error('Failed to load owned teams');
+        return of([]);
+      }),
+    );
+  }
+
+  /**
+   * Submits a proposal to the backend API.
+   * Sends the proposal DTO and file attachments via FormData.
+   */
+  submitProposal(dto: CreateProposalDto, attachments: File[]): Observable<string> {
+    return this.proposalsApiService.create(dto, attachments).pipe(
+      catchError((error) => {
+        console.error('Failed to submit proposal:', error);
+        throw error;
+      }),
+    );
   }
 }
