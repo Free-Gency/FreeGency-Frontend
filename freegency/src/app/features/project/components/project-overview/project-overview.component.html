@@ -15,7 +15,13 @@
           class="shrink-0 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
           [class]="statusClass"
         >
-          {{ project().status === 'InProgress' ? 'IN PROGRESS' : project().status }}
+          {{
+            project().status === 'InProgress'
+              ? 'IN PROGRESS'
+              : project().status === 'Completed'
+                ? 'COMPLETED'
+                : project().status
+          }}
         </span>
       </div>
       <p class="text-sm text-on-surface-variant/70 mt-1.5">

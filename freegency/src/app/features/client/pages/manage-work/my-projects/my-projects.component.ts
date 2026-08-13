@@ -1,8 +1,12 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { ManageWorkService, MyProjectsSummary } from '../../../data-access/manage-work.service';
+import {
+  ManageWorkService,
+  MyProjectsSummary,
+  type ClientFinanceSnapshot,
+} from '../../../data-access/manage-work.service';
 import { Project } from '../../../../../shared/models/Project';
 import type { IconSvgObject } from '@hugeicons/angular';
 import { Calendar03Icon, Money01Icon, UserGroupIcon, Clock01Icon } from '@hugeicons/core-free-icons';
@@ -10,6 +14,7 @@ import type { MilestoneProgressSummary } from '../milestones/milestone-progress.
 
 type StatusFilter = 'All' | 'Draft' | 'Open' | 'InProgress' | 'Completed' | 'Cancelled';
 type SortOption = 'newest' | 'oldest' | 'title-asc' | 'title-desc' | 'budget-high' | 'budget-low';
+type ManageWorkTab = 'my-projects' | 'proposals' | 'milestones';
 
 @Component({
   selector: 'app-my-projects',
@@ -22,6 +27,8 @@ export class MyProjectsComponent implements OnInit {
   private readonly router = inject(Router);
   private searchDebounceHandle: ReturnType<typeof setTimeout> | null = null;
 
+  readonly switchTab = output<ManageWorkTab>();
+
   readonly projects = signal<Project[]>([]);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -32,6 +39,10 @@ export class MyProjectsComponent implements OnInit {
   readonly totalPages = signal(1);
   readonly totalCount = signal(0);
   readonly summary = signal<MyProjectsSummary | null>(null);
+
+  readonly finance = signal<ClientFinanceSnapshot | null>(null);
+  readonly proposalsToReview = signal(0);
+  readonly milestonesAwaitingApproval = signal(0);
 
   readonly search = signal('');
   readonly sortOption = signal<SortOption>('newest');
@@ -51,6 +62,8 @@ export class MyProjectsComponent implements OnInit {
   ngOnInit(): void {
     this.loadSummary();
     this.loadProjects();
+    this.loadFinance();
+    this.loadAttention();
   }
 
   loadProjects(): void {
@@ -107,6 +120,33 @@ export class MyProjectsComponent implements OnInit {
     this.manageWorkService.getMyProjectsSummary('as-client').subscribe({
       next: (summary) => this.summary.set(summary),
       error: () => undefined,
+    });
+  }
+
+  private loadFinance(): void {
+    this.manageWorkService.getClientFinanceSnapshot().subscribe({
+      next: (snap) => this.finance.set(snap),
+      error: () =>
+        this.finance.set({
+          availableBalance: 0,
+          totalLockedInEscrow: 0,
+          releasedToDate: 0,
+          activeEscrowProjects: 0,
+          currency: 'USD',
+        }),
+    });
+  }
+
+  private loadAttention(): void {
+    this.manageWorkService.getAttentionSnapshot().subscribe({
+      next: (snap) => {
+        this.proposalsToReview.set(snap.proposalsToReview);
+        this.milestonesAwaitingApproval.set(snap.milestonesAwaitingApproval);
+      },
+      error: () => {
+        this.proposalsToReview.set(0);
+        this.milestonesAwaitingApproval.set(0);
+      },
     });
   }
 
@@ -173,10 +213,17 @@ export class MyProjectsComponent implements OnInit {
   }
 
   getBudgetDisplay(project: Project): string {
+    const currency = (project.currency || 'USD').trim() || 'USD';
     if (project.budgetMin === project.budgetMax) {
-      return `${project.budgetMin} ${project.currency}`;
+      return `${this.formatMoney(project.budgetMin)} ${currency}`;
     }
-    return `${project.budgetMin}–${project.budgetMax} ${project.currency}`;
+    return `${this.formatMoney(project.budgetMin)}–${this.formatMoney(project.budgetMax)} ${currency}`;
+  }
+
+  formatMoney(amount: number | null | undefined): string {
+    return new Intl.NumberFormat('en-US', {
+      maximumFractionDigits: 0,
+    }).format(Number(amount) || 0);
   }
 
   formatEscrowAmount(amount: number): string {
@@ -193,29 +240,33 @@ export class MyProjectsComponent implements OnInit {
   }
 
   getTotalEscrow(): number {
-    return 5100;
+    return this.finance()?.totalLockedInEscrow ?? 0;
   }
   getActiveProjectCount(): number {
-    return this.summary()?.inProgress ?? 0;
+    return this.finance()?.activeEscrowProjects ?? this.summary()?.inProgress ?? 0;
   }
   getReleasedToDate(): number {
-    return 2450;
+    return this.finance()?.releasedToDate ?? 0;
   }
   getAvailableBalance(): number {
-    return 850;
+    return this.finance()?.availableBalance ?? 0;
   }
 
   getProposalsAwaitingReview(): number {
-    return 4;
+    return this.proposalsToReview();
   }
   getMilestonesAwaitingApproval(): number {
-    return 2;
+    return this.milestonesAwaitingApproval();
   }
   goToProposals(): void {
-    /* wire to parent tab switch later */
+    this.switchTab.emit('proposals');
   }
   goToMilestones(): void {
-    /* wire to parent tab switch later */
+    this.switchTab.emit('milestones');
+  }
+
+  openWallet(): void {
+    void this.router.navigate(['/settings']);
   }
 
   getCount(status: string): number {

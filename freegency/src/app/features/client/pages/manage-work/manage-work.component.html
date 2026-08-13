@@ -92,7 +92,7 @@
 
   <div class="mt-4">
     @if (activeTab() === 'my-projects') {
-      <app-my-projects></app-my-projects>
+      <app-my-projects (switchTab)="setTab($event)"></app-my-projects>
     } @else if (activeTab() === 'proposals') {
       <app-proposals></app-proposals>
     } @else if (activeTab() === 'milestones') {

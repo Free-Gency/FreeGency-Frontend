@@ -63,6 +63,8 @@ export interface RoomUpdated {
   lastMessageAt: string;
   lastMessageSender: string;
   senderId: string;
+  status?: string | null;
+  archivedAt?: string | null;
 }
 
 export interface StartDiscussionRequest {

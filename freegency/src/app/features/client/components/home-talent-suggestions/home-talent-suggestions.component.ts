@@ -32,6 +32,7 @@ export class HomeTalentSuggestionsComponent implements OnInit {
   protected readonly openProjects = signal<ProjectDto[]>([]);
   protected readonly selectedProjectId = signal<string | null>(null);
   protected readonly talent = signal<HomeTalentCard[]>([]);
+  private readonly talentCache = new Map<string, HomeTalentCard[]>();
   protected readonly inviteTarget = signal<InviteTarget | null>(null);
   protected readonly inviteProjectId = signal<string | null>(null);
 
@@ -49,10 +50,19 @@ export class HomeTalentSuggestionsComponent implements OnInit {
   protected selectProject(projectId: string): void {
     if (this.selectedProjectId() === projectId) return;
     this.selectedProjectId.set(projectId);
+
+    const cached = this.talentCache.get(projectId);
+    if (cached) {
+      this.talent.set(cached);
+      this.error.set(null);
+      return;
+    }
+
     this.loadCandidatesFor(projectId);
   }
 
   protected retry(): void {
+    this.talentCache.clear();
     this.load();
   }
 
@@ -185,6 +195,7 @@ export class HomeTalentSuggestionsComponent implements OnInit {
         const cards: HomeTalentCard[] = (res.candidates ?? []).map((c) =>
           this.normalizeCard(c, project),
         );
+        this.talentCache.set(project.id, cards);
         this.talent.set(cards);
         this.loadingTalent.set(false);
       }),

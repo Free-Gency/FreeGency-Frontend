@@ -109,6 +109,10 @@ export class FreelancerPortfolioComponent implements OnInit {
     void this.router.navigate(path);
   }
 
+  protected addProject(): void {
+    void this.router.navigate(['/developer/portfolio/new']);
+  }
+
   protected onReviewCommentInput(event: Event): void {
     this.reviewComment.set((event.target as HTMLTextAreaElement).value.slice(0, 500));
   }

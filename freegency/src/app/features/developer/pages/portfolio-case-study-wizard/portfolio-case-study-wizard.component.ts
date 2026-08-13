@@ -14,8 +14,10 @@ import { extractApiError } from '../../../../core/http/api-error';
 import { CategoriesApiService } from '../../../auth/data-access/categories-api.service';
 import {
   PortfolioApiService,
+  type DeveloperPortfolioWriteInput,
   type PortfolioProjectDetailsDto,
 } from '../../../auth/data-access/portfolio-api.service';
+import { ProfileApiService } from '../../../auth/data-access/profile-api.service';
 import { TaxonomyApiService } from '../../../auth/data-access/taxonomy-api.service';
 import {
   TeamsService,
@@ -63,6 +65,7 @@ export class PortfolioCaseStudyWizardComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly teamsApi = inject(TeamsService);
   private readonly portfolioApi = inject(PortfolioApiService);
+  private readonly profileApi = inject(ProfileApiService);
   private readonly categoriesApi = inject(CategoriesApiService);
   private readonly taxonomyApi = inject(TaxonomyApiService);
 
@@ -73,6 +76,7 @@ export class PortfolioCaseStudyWizardComponent implements OnInit {
   protected readonly searchIcon = Search01Icon as IconSvgObject;
 
   protected readonly teamId = signal('');
+  protected readonly isPersonal = computed(() => !this.teamId());
   protected readonly projectId = signal<string | null>(null);
   protected readonly isEdit = computed(() => !!this.projectId());
   protected readonly step = signal<WizardStep>(1);
@@ -172,8 +176,7 @@ export class PortfolioCaseStudyWizardComponent implements OnInit {
     });
 
     if (!teamId) {
-      this.error.set('Team not found.');
-      this.loading.set(false);
+      this.initPersonalMode(projectId);
       return;
     }
 
@@ -236,6 +239,7 @@ export class PortfolioCaseStudyWizardComponent implements OnInit {
             }
           },
           error: () => {
+            this.error.set('Could not load team skills.');
             this.loading.set(false);
           },
         });
@@ -245,6 +249,67 @@ export class PortfolioCaseStudyWizardComponent implements OnInit {
         this.loading.set(false);
       },
     });
+  }
+
+  private initPersonalMode(projectId: string | null): void {
+    this.profileApi
+      .getDeveloperProfile()
+      .pipe(catchError(() => of(null)))
+      .subscribe({
+        next: (profile) => {
+          const interests = profile?.interests ?? [];
+          const specialtyIds = interests
+            .flatMap((i) => i.specialties ?? [])
+            .map((s) => s.id)
+            .filter(Boolean);
+          const existingSkills = interests
+            .flatMap((i) => i.specialties ?? [])
+            .flatMap((s) => s.skills ?? [])
+            .map((sk) => ({
+              id: sk.id,
+              label: (sk.name || '').trim() || 'Skill',
+            }));
+
+          const finishSkills = (skills: ChipOption[]) => {
+            const byId = new Map<string, ChipOption>();
+            for (const s of [...existingSkills, ...skills]) byId.set(s.id, s);
+            this.allSkills.set([...byId.values()].sort((a, b) => a.label.localeCompare(b.label)));
+
+            if (projectId) {
+              this.portfolioApi.getDetails(projectId).subscribe({
+                next: (details) => {
+                  this.applyDetails(details);
+                  this.loading.set(false);
+                },
+                error: () => {
+                  this.error.set('Could not load portfolio project.');
+                  this.loading.set(false);
+                },
+              });
+            } else {
+              this.loading.set(false);
+            }
+          };
+
+          if (specialtyIds.length) {
+            this.taxonomyApi.getSkillsForSpecialties(specialtyIds).subscribe({
+              next: (skills) =>
+                finishSkills(
+                  skills.map((s) => ({
+                    id: s.id,
+                    label: (s.name || '').trim() || 'Skill',
+                  })),
+                ),
+              error: () => finishSkills([]),
+            });
+          } else {
+            finishSkills([]);
+          }
+        },
+        error: () => {
+          this.loading.set(false);
+        },
+      });
   }
 
   protected setStep(step: WizardStep): void {
@@ -362,15 +427,14 @@ export class PortfolioCaseStudyWizardComponent implements OnInit {
   }
 
   protected save(): void {
-    const teamId = this.teamId();
     const title = this.title().trim();
-    if (!teamId || !title) {
+    if (!title) {
       this.error.set('Title is required.');
       this.step.set(1);
       return;
     }
 
-    const payload: TeamPortfolioWriteInput = {
+    const payload: DeveloperPortfolioWriteInput = {
       title,
       description: this.description(),
       budget: this.budget() ? Number(this.budget()) : null,
@@ -408,13 +472,65 @@ export class PortfolioCaseStudyWizardComponent implements OnInit {
     this.saving.set(true);
     this.error.set(null);
     const projectId = this.projectId();
+    const teamId = this.teamId();
+
+    if (this.isPersonal()) {
+      if (projectId) {
+        this.portfolioApi.updateDeveloperPortfolio(projectId, payload).subscribe({
+          next: () => {
+            const extraImages = this.imageFiles();
+            const afterImages = () => {
+              this.portfolioApi
+                .replaceDeveloperPortfolioSkills(projectId, payload.skillIds ?? [])
+                .subscribe({
+                  next: () => this.finish(null, projectId),
+                  error: () => this.finish(null, projectId),
+                });
+            };
+            if (extraImages.length) {
+              this.portfolioApi.uploadDeveloperPortfolioImages(projectId, extraImages).subscribe({
+                next: afterImages,
+                error: afterImages,
+              });
+            } else {
+              afterImages();
+            }
+          },
+          error: (err) => {
+            this.saving.set(false);
+            this.error.set(extractApiError(err, 'Could not save portfolio project.'));
+          },
+        });
+        return;
+      }
+
+      this.portfolioApi.createDeveloperPortfolio(payload).subscribe({
+        next: (id) => this.finish(null, id),
+        error: (err) => {
+          this.saving.set(false);
+          this.error.set(extractApiError(err, 'Could not create portfolio project.'));
+        },
+      });
+      return;
+    }
+
+    if (!teamId) {
+      this.error.set('Team not found.');
+      this.saving.set(false);
+      return;
+    }
+
+    const teamPayload: TeamPortfolioWriteInput = {
+      ...payload,
+      description: payload.description ?? undefined,
+    };
 
     if (projectId) {
-      this.teamsApi.updateTeamPortfolio(teamId, projectId, payload).subscribe({
+      this.teamsApi.updateTeamPortfolio(teamId, projectId, teamPayload).subscribe({
         next: () => {
           const extraImages = this.imageFiles();
           const afterImages = () => {
-            this.teamsApi.replaceTeamPortfolioSkills(teamId, projectId, payload.skillIds ?? []).subscribe({
+            this.teamsApi.replaceTeamPortfolioSkills(teamId, projectId, teamPayload.skillIds ?? []).subscribe({
               next: () => this.finish(teamId, projectId),
               error: () => this.finish(teamId, projectId),
             });
@@ -436,7 +552,7 @@ export class PortfolioCaseStudyWizardComponent implements OnInit {
       return;
     }
 
-    this.teamsApi.createTeamPortfolio(teamId, payload).subscribe({
+    this.teamsApi.createTeamPortfolio(teamId, teamPayload).subscribe({
       next: (id) => this.finish(teamId, id),
       error: (err) => {
         this.saving.set(false);
@@ -474,11 +590,15 @@ export class PortfolioCaseStudyWizardComponent implements OnInit {
       });
   }
 
-  private finish(teamId: string, projectId: string): void {
+  private finish(teamId: string | null, projectId: string): void {
     this.saving.set(false);
-    void this.router.navigateByUrl(`/developer/portfolio/${projectId}`, {
-      state: { fromTeamId: teamId },
-    });
+    if (teamId) {
+      void this.router.navigateByUrl(`/developer/portfolio/${projectId}`, {
+        state: { fromTeamId: teamId },
+      });
+      return;
+    }
+    void this.router.navigateByUrl(`/developer/portfolio/${projectId}`);
   }
 
   private applyDetails(details: PortfolioProjectDetailsDto): void {

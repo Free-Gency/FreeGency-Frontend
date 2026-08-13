@@ -1245,6 +1245,7 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
           this.loadMessages(room.id);
         }
         this.toast.success('Funds released.');
+        this.loadChatRooms(false);
       },
       error: (err: unknown) => {
         this.workActionBusy.set(false);
@@ -1887,12 +1888,16 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
         return rooms;
       }
 
+      const archived = (update.status || '').toLowerCase() === 'archived';
       const room = {
         ...rooms[index],
         lastMessage: update.lastMessage,
         lastMessageType: update.lastMessageType,
         lastMessageAt: update.lastMessageAt,
         lastMessageSender: update.lastMessageSender,
+        status: update.status || rooms[index].status,
+        archivedAt: update.archivedAt ?? rooms[index].archivedAt,
+        canSend: archived ? false : rooms[index].canSend,
         unreadCount:
           this.selectedRoom()?.id === update.roomId
             ? 0
@@ -1906,6 +1911,19 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
       updated.unshift(room);
       return updated;
     });
+
+    if ((update.status || '').toLowerCase() === 'archived') {
+      this.selectedRoom.update((r) =>
+        r && r.id === update.roomId
+          ? {
+              ...r,
+              status: 'Archived',
+              archivedAt: update.archivedAt ?? r.archivedAt ?? new Date().toISOString(),
+              canSend: false,
+            }
+          : r,
+      );
+    }
 
     // Keep the open thread in sync — plan proposes often arrive as RoomUpdated
     // without a reliable ReceiveMessage on the other party.

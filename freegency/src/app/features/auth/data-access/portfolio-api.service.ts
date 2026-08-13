@@ -1,6 +1,6 @@
 import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, map, of } from 'rxjs';
 import { SKIP_LOADING } from '../../../core/http/loading.interceptor';
 import { environment } from '../../../../environments/environment';
 import type { PagedResponse } from '../../../shared/models/PagedResponse';
@@ -304,7 +304,7 @@ export class PortfolioApiService {
 
   /** Full case-study create used by developer onboarding portfolio wizard. */
   createDeveloperPortfolio(input: DeveloperPortfolioWriteInput): Observable<string> {
-    const form = this.buildDeveloperPortfolioForm(input);
+    const form = this.buildDeveloperPortfolioForm(input, false);
 
     return this.http
       .post<ApiResponse<string>>(`${this.baseUrl}/developer/me/portfolio-projects`, form)
@@ -322,7 +322,75 @@ export class PortfolioApiService {
       );
   }
 
-  private buildDeveloperPortfolioForm(input: DeveloperPortfolioWriteInput): FormData {
+  updateDeveloperPortfolio(
+    projectId: string,
+    input: DeveloperPortfolioWriteInput,
+  ): Observable<void> {
+    const form = this.buildDeveloperPortfolioForm(input, true);
+    form.append('Id', projectId);
+
+    return this.http
+      .put<ApiResponse<unknown>>(
+        `${this.baseUrl}/developer/me/portfolio-projects/${projectId}`,
+        form,
+      )
+      .pipe(
+        map((res) => {
+          const ok = res.isSuccess ?? (res as { IsSuccess?: boolean }).IsSuccess;
+          if (!ok) {
+            throw new Error(
+              res.message ??
+                (res as { Message?: string }).Message ??
+                'Failed to update portfolio project.',
+            );
+          }
+        }),
+      );
+  }
+
+  replaceDeveloperPortfolioSkills(projectId: string, skillIds: string[]): Observable<void> {
+    return this.http
+      .put<ApiResponse<unknown>>(
+        `${this.baseUrl}/developer/me/portfolio-projects/${projectId}/skills`,
+        skillIds,
+      )
+      .pipe(
+        map((res) => {
+          const ok = res.isSuccess ?? (res as { IsSuccess?: boolean }).IsSuccess;
+          if (!ok) {
+            throw new Error('Failed to update portfolio skills.');
+          }
+        }),
+      );
+  }
+
+  uploadDeveloperPortfolioImages(projectId: string, images: File[]): Observable<void> {
+    if (!images.length) {
+      return of(undefined);
+    }
+    const form = new FormData();
+    for (const file of images) {
+      form.append('images', file, file.name);
+    }
+    return this.http
+      .post<ApiResponse<unknown>>(
+        `${this.baseUrl}/developer/me/portfolio-projects/${projectId}/images`,
+        form,
+      )
+      .pipe(
+        map((res) => {
+          const ok = res.isSuccess ?? (res as { IsSuccess?: boolean }).IsSuccess;
+          if (!ok) {
+            throw new Error('Failed to upload portfolio images.');
+          }
+        }),
+      );
+  }
+
+  private buildDeveloperPortfolioForm(
+    input: DeveloperPortfolioWriteInput,
+    isUpdate: boolean,
+  ): FormData {
     const form = new FormData();
     form.append('Title', input.title.trim());
     form.append('Description', (input.description ?? '').trim() || input.title.trim());
@@ -371,8 +439,10 @@ export class PortfolioApiService {
       form.append(`Metrics[${index}].SortOrder`, String(metric.sortOrder ?? index));
     });
 
-    for (const file of input.images ?? []) {
-      form.append('Images', file, file.name);
+    if (!isUpdate) {
+      for (const file of input.images ?? []) {
+        form.append('Images', file, file.name);
+      }
     }
 
     return form;

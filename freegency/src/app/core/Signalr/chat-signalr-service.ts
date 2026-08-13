@@ -236,6 +236,8 @@ leaveRoom(roomId: string): Promise<void> {
       LastMessageSender?: string;
       SenderId?: string;
       LastMessageType?: string | null;
+      Status?: string | null;
+      ArchivedAt?: string | null;
     };
     return {
       roomId: String(raw.roomId || r.RoomId || ''),
@@ -244,6 +246,8 @@ leaveRoom(roomId: string): Promise<void> {
       lastMessageAt: raw.lastMessageAt || r.LastMessageAt || new Date().toISOString(),
       lastMessageSender: raw.lastMessageSender || r.LastMessageSender || '',
       senderId: raw.senderId || r.SenderId || '',
+      status: raw.status ?? r.Status ?? null,
+      archivedAt: raw.archivedAt ?? r.ArchivedAt ?? null,
     };
   }
 }

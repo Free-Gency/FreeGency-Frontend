@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, input, OnInit, output, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -29,6 +29,7 @@ export class ProjectMilestonesComponent implements OnInit {
   readonly isOwner = input(false);
   /** Hide outer chrome when nested in Team Project Workspace. */
   readonly embedded = input(false);
+  readonly projectUpdated = output<void>();
 
   protected readonly milestones = signal<ProjectMilestone[]>([]);
   protected readonly escrow = signal<ProjectEscrow | null>(null);
@@ -223,6 +224,7 @@ export class ProjectMilestonesComponent implements OnInit {
       next: () => {
         this.actionBusy.set(false);
         this.loadData();
+        this.projectUpdated.emit();
       },
       error: (err) => {
         this.actionBusy.set(false);

@@ -182,10 +182,7 @@ export class Proposals implements OnInit {
   }
 
   canStartDiscussion(proposal: Proposal): boolean {
-    return (
-      (proposal.status === 'Pending' || proposal.status === 'Viewed') &&
-      !this.hasActiveDiscussionFor(proposal)
-    );
+    return proposal.status === 'Pending' || proposal.status === 'Viewed';
   }
 
   cleanDisplayText(value: string | null | undefined): string {
@@ -471,10 +468,8 @@ export class Proposals implements OnInit {
   }
 
   startDiscussion(proposal: Proposal): void {
-    if (!this.canStartDiscussion(proposal)) {
-      this.toast.error(
-        'Another discussion is already active. Close it before starting a new one.',
-      );
+    if (!(proposal.status === 'Pending' || proposal.status === 'Viewed')) {
+      this.toast.error('Only pending or viewed proposals can start a discussion.');
       return;
     }
 
@@ -498,12 +493,7 @@ export class Proposals implements OnInit {
         error: (err) => {
           this.actionInProgress.set(null);
           this.toast.error(
-            extractApiError(
-              err,
-              err instanceof Error
-                ? err.message
-                : 'Another discussion is already active. Close it before starting a new one.',
-            ),
+            extractApiError(err, 'Could not start discussion. Please try again.'),
           );
           this.refreshDiscussionLock();
           this.proposalsResource.reload();

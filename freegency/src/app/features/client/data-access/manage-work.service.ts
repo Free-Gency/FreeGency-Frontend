@@ -5,6 +5,7 @@ import { environment } from '../../../../environments/environment';
 import { ApiResponse } from '../../../shared/models/ApiResponse';
 import { Project } from '../../../shared/models/Project';
 import { Proposal, PagedResponse, ProposalStatus } from '../../../shared/models/Proposal';
+import { Wallet } from '../../../shared/models/Wallet';
 import { ProjectMilestonesApiService } from '../../project/data-access/project-milestones-api.service';
 import { ProjectMilestone } from '../../project/models/project-milestone';
 import { ProjectEscrow } from '../../project/models/project-escrow';
@@ -17,6 +18,19 @@ export interface MyProjectsSummary {
   inProgress: number;
   completed: number;
   cancelled: number;
+}
+
+export interface ClientFinanceSnapshot {
+  availableBalance: number;
+  totalLockedInEscrow: number;
+  releasedToDate: number;
+  activeEscrowProjects: number;
+  currency: string;
+}
+
+export interface ManageWorkAttentionSnapshot {
+  proposalsToReview: number;
+  milestonesAwaitingApproval: number;
 }
 
 export interface ProposalMatchSummary {
@@ -58,6 +72,172 @@ export class ManageWorkService {
   private readonly milestonesApi = inject(ProjectMilestonesApiService);
   private readonly baseUrl = `${environment.apiBaseUrl}/api/v1/projects`;
   private readonly proposalsUrl = `${environment.apiBaseUrl}/api/v1/proposals`;
+  private readonly walletUrl = `${environment.apiBaseUrl}/api/v1/Wallet`;
+
+  getMyWallet(): Observable<Wallet> {
+    return this.http.get<Wallet>(`${this.walletUrl}/me`).pipe(
+      map((data) => {
+        if (!data) throw new Error('Failed to fetch wallet.');
+        return data;
+      }),
+    );
+  }
+
+  /** Wallet balance + escrow totals across the client's projects. */
+  getClientFinanceSnapshot(): Observable<ClientFinanceSnapshot> {
+    return forkJoin({
+      wallet: this.getMyWallet().pipe(
+        catchError(() =>
+          of({
+            id: '',
+            userId: '',
+            currency: 'USD',
+            available: 0,
+            reserved: 0,
+            pending: 0,
+          } satisfies Wallet),
+        ),
+      ),
+      projects: this.getMyProjects({
+        role: 'as-client',
+        status: 'in-progress',
+        pageNumber: 1,
+        pageSize: 50,
+      }).pipe(
+        catchError(() =>
+          of({
+            items: [],
+            totalCount: 0,
+            pageNumber: 1,
+            pageSize: 50,
+            totalPages: 0,
+            hasPreviousPage: false,
+            hasNextPage: false,
+          } satisfies PagedResponse<Project>),
+        ),
+      ),
+    }).pipe(
+      switchMap(({ wallet, projects }) => {
+        const list = projects.items ?? [];
+        if (list.length === 0) {
+          return of({
+            availableBalance: Number(wallet.available ?? 0),
+            totalLockedInEscrow: 0,
+            releasedToDate: 0,
+            activeEscrowProjects: 0,
+            currency: wallet.currency || 'USD',
+          } satisfies ClientFinanceSnapshot);
+        }
+
+        return forkJoin(
+          list.map((project) =>
+            this.milestonesApi.getEscrow(project.id).pipe(catchError(() => of(null as ProjectEscrow | null))),
+          ),
+        ).pipe(
+          map((escrows) => {
+            let locked = 0;
+            let released = 0;
+            let active = 0;
+            for (const escrow of escrows) {
+              if (!escrow) continue;
+              const remaining = Number(escrow.remaining ?? 0);
+              const totalReleased = Number(escrow.totalReleased ?? 0);
+              locked += remaining;
+              released += totalReleased;
+              if (remaining > 0) active += 1;
+            }
+            return {
+              availableBalance: Number(wallet.available ?? 0),
+              totalLockedInEscrow: locked,
+              releasedToDate: released,
+              activeEscrowProjects: active,
+              currency: wallet.currency || 'USD',
+            } satisfies ClientFinanceSnapshot;
+          }),
+        );
+      }),
+    );
+  }
+
+  getAttentionSnapshot(): Observable<ManageWorkAttentionSnapshot> {
+    return forkJoin({
+      pending: this.getProposals({
+        status: 'Pending',
+        pageNumber: 1,
+        pageSize: 1,
+      }).pipe(
+        catchError(() =>
+          of({
+            items: [],
+            totalCount: 0,
+            pageNumber: 1,
+            pageSize: 1,
+            totalPages: 0,
+            hasPreviousPage: false,
+            hasNextPage: false,
+          } satisfies PagedResponse<Proposal>),
+        ),
+      ),
+      viewed: this.getProposals({
+        status: 'Viewed',
+        pageNumber: 1,
+        pageSize: 1,
+      }).pipe(
+        catchError(() =>
+          of({
+            items: [],
+            totalCount: 0,
+            pageNumber: 1,
+            pageSize: 1,
+            totalPages: 0,
+            hasPreviousPage: false,
+            hasNextPage: false,
+          } satisfies PagedResponse<Proposal>),
+        ),
+      ),
+      milestones: this.getMilestonesAwaitingApprovalCount(),
+    }).pipe(
+      map(({ pending, viewed, milestones }) => ({
+        proposalsToReview: (pending.totalCount ?? 0) + (viewed.totalCount ?? 0),
+        milestonesAwaitingApproval: milestones,
+      })),
+    );
+  }
+
+  /** Count milestones waiting for client approve-release. */
+  getMilestonesAwaitingApprovalCount(): Observable<number> {
+    return this.getMyProjects({
+      role: 'as-client',
+      status: 'in-progress',
+      pageNumber: 1,
+      pageSize: 50,
+    }).pipe(
+      switchMap((page) => {
+        const projects = page.items ?? [];
+        if (projects.length === 0) return of(0);
+
+        return forkJoin(
+          projects.map((project) =>
+            this.milestonesApi
+              .getMilestones(project.id)
+              .pipe(catchError(() => of([] as ProjectMilestone[]))),
+          ),
+        ).pipe(
+          map((lists) =>
+            lists.reduce(
+              (sum, milestones) =>
+                sum +
+                milestones.filter(
+                  (m) => m.workStatus === 'Submitted' && m.releaseStatus === 'Pending',
+                ).length,
+              0,
+            ),
+          ),
+        );
+      }),
+      catchError(() => of(0)),
+    );
+  }
 
   getMyProjects(options?: {
     role?: 'as-client' | 'as-assignee';

@@ -188,129 +188,123 @@
     } @else {
       <!-- Cards List -->
       @for (project of filteredProjects(); track project.id) {
-        <div class="bg-white rounded-[24px] border border-outline-variant/30 overflow-hidden">
-          <div class="p-6">
-            <div class="flex justify-between items-start gap-4">
-              <!-- Left side: Inline Title + Status Pill -->
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-2.5 flex-wrap">
-                  <h2 class="text-lg font-bold text-on-surface truncate max-w-full">
-                    {{ project.title }}
-                  </h2>
-                  <span
-                    class="shrink-0 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
-                    [ngClass]="{
-                      'bg-[#D8F272] text-[#2B3800]': project.status === 'Open',
-                      'bg-[#C4C0FF] text-[#110068]': project.status === 'InProgress',
-                      'bg-surface-container-highest text-on-surface-variant':
-                        project.status === 'Draft',
-                      'bg-[#E5E1E4] text-[#464555]': project.status === 'Completed',
-                      'bg-tertiary-fixed text-on-tertiary-fixed': project.status === 'Cancelled',
-                    }"
-                  >
-                    {{ project.status === 'InProgress' ? 'IN PROGRESS' : project.status }}
-                  </span>
-                </div>
-
-                <p class="text-xs text-on-surface-variant/70 mt-1 font-normal">
-                  {{ project.categoryName }}
-                </p>
+        <div class="bg-white rounded-[24px] border border-outline-variant/30 p-5 sm:p-6 flex flex-col gap-4">
+          <div class="flex justify-between items-start gap-4">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2.5 flex-wrap">
+                <h2 class="text-lg font-bold text-on-surface truncate max-w-full">
+                  {{ project.title }}
+                </h2>
+                <span
+                  class="shrink-0 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                  [ngClass]="{
+                    'bg-[#D8F272] text-[#2B3800]': project.status === 'Open',
+                    'bg-[#C4C0FF] text-[#110068]': project.status === 'InProgress',
+                    'bg-surface-container-highest text-on-surface-variant':
+                      project.status === 'Draft',
+                    'bg-[#E5E1E4] text-[#464555]': project.status === 'Completed',
+                    'bg-tertiary-fixed text-on-tertiary-fixed': project.status === 'Cancelled',
+                  }"
+                >
+                  {{ project.status === 'InProgress' ? 'IN PROGRESS' : project.status }}
+                </span>
               </div>
 
-              <!-- Right side: Budget & Subtext -->
-              <div class="text-right shrink-0">
-                <div class="text-xl font-bold text-on-surface leading-tight">
-                  {{ getBudgetDisplay(project) }}
-                </div>
-                <div class="text-[11px] text-on-surface-variant/60 mt-0.5">
-                  @if (project.status === 'Open') {
-                    Closes in 7 days
-                  } @else if (project.status === 'Completed') {
-                    Closed 3 weeks ago
-                  }
-                </div>
-              </div>
+              <p class="text-xs text-on-surface-variant/70 mt-1 font-normal">
+                {{ project.categoryName }}
+              </p>
             </div>
 
-            <!-- Middle Section Dynamic Visuals -->
-            <div class="mt-5">
-              @if (project.status === 'InProgress') {
-                @if (progressFor(project.id); as progress) {
-                  @if (progress.total > 0) {
-                    <div class="flex flex-col gap-1 max-w-[min(100%,20rem)]">
-                      <p class="text-[15px] font-bold text-on-surface leading-tight">
-                        Milestone
-                        <span class="text-[#4130D7] tabular-nums">{{ progress.percent }}%</span>
-                      </p>
-                      <p class="text-[12px] text-[#8B8798] font-medium leading-snug whitespace-nowrap">
-                        {{ progress.currentIndex }} of {{ progress.total }}
-                        @if (progress.escrowRemaining > 0) {
-                          · {{ formatEscrowAmount(progress.escrowRemaining) }}
-                          {{ project.currency }} in escrow
-                        } @else if (progress.escrowTotal === 0) {
-                          · awaiting fund
-                        } @else {
-                          · escrow released
-                        }
-                      </p>
-                      <div
-                        class="mt-0.5 w-full h-[6px] rounded-full bg-[#E8E6ED] overflow-hidden"
-                        role="progressbar"
-                        [attr.aria-valuenow]="progress.percent"
-                        aria-valuemin="0"
-                        aria-valuemax="100"
-                      >
-                        <div
-                          class="h-full rounded-full bg-[#4130D7] transition-[width] duration-300"
-                          [style.width.%]="progress.percent"
-                        ></div>
-                      </div>
-                    </div>
-                  } @else {
-                    <p class="text-xs text-on-surface-variant/70 font-medium">
-                      Milestone plan pending
-                    </p>
-                  }
-                } @else {
-                  <div class="w-64 max-w-full space-y-2">
-                    <div class="h-3.5 w-28 rounded bg-surface-container-high animate-pulse"></div>
-                    <div class="h-3 w-44 rounded bg-surface-container-high animate-pulse"></div>
-                    <div class="h-[6px] w-full rounded-full bg-surface-container-high animate-pulse"></div>
-                  </div>
+            <div class="text-right shrink-0">
+              <div class="text-base sm:text-lg font-bold text-on-surface leading-tight tabular-nums">
+                {{ getBudgetDisplay(project) }}
+              </div>
+              <div class="text-[11px] text-on-surface-variant/60 mt-0.5">
+                @if (project.status === 'Open') {
+                  Closes in 7 days
+                } @else if (project.status === 'Completed') {
+                  Closed 3 weeks ago
                 }
-              } @else if (project.status === 'Completed') {
-                <!-- Rating Pill -->
-                <div
-                  class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EFF7DF] text-[#3D4C00] text-xs font-semibold"
-                >
-                  <span class="text-amber-500">★</span> Rated 5.0 · Paid in full
-                </div>
-              } @else {
-                <!-- Proposals Count Tag -->
-                <div
-                  class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-low text-on-surface-variant text-xs font-semibold"
-                >
-                  <svg
-                    class="w-3.5 h-3.5 text-on-surface-variant/70"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                    />
-                  </svg>
-                  <span>{{ project.proposalCount || 3 }} proposals received</span>
-                </div>
-              }
+              </div>
             </div>
           </div>
 
-          <!-- Divider & Action Footer -->
-          <div class="border-t border-outline-variant/15 px-6 py-3 flex justify-end bg-white">
+          @if (project.status === 'InProgress') {
+            @if (progressFor(project.id); as progress) {
+              @if (progress.total > 0) {
+                <div class="flex flex-col gap-2">
+                  <div class="flex items-end justify-between gap-3">
+                    <p class="text-sm font-bold text-on-surface leading-tight">
+                      Milestone
+                      <span class="text-[#4130D7] tabular-nums">{{ progress.percent }}%</span>
+                    </p>
+                    <p class="text-[12px] text-[#8B8798] font-medium leading-snug text-right">
+                      {{ progress.releasedCount }} of {{ progress.total }}
+                      @if (progress.escrowRemaining > 0) {
+                        · {{ formatEscrowAmount(progress.escrowRemaining) }}
+                        {{ project.currency }} in escrow
+                      } @else if (progress.escrowTotal === 0) {
+                        · awaiting fund
+                      } @else {
+                        · escrow released
+                      }
+                    </p>
+                  </div>
+                  <div
+                    class="w-full h-2 rounded-full bg-[#E8E6ED] overflow-hidden"
+                    role="progressbar"
+                    [attr.aria-valuenow]="progress.percent"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                  >
+                    <div
+                      class="h-full rounded-full bg-[#4130D7] transition-[width] duration-300"
+                      [style.width.%]="progress.percent"
+                    ></div>
+                  </div>
+                </div>
+              } @else {
+                <p class="text-xs text-on-surface-variant/70 font-medium">
+                  Milestone plan pending
+                </p>
+              }
+            } @else {
+              <div class="w-full space-y-2">
+                <div class="flex justify-between">
+                  <div class="h-3.5 w-28 rounded bg-surface-container-high animate-pulse"></div>
+                  <div class="h-3 w-36 rounded bg-surface-container-high animate-pulse"></div>
+                </div>
+                <div class="h-2 w-full rounded-full bg-surface-container-high animate-pulse"></div>
+              </div>
+            }
+          } @else if (project.status === 'Completed') {
+            <div
+              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EFF7DF] text-[#3D4C00] text-xs font-semibold w-fit"
+            >
+              <span class="text-amber-500">★</span> Rated 5.0 · Paid in full
+            </div>
+          } @else {
+            <div
+              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-low text-on-surface-variant text-xs font-semibold w-fit"
+            >
+              <svg
+                class="w-3.5 h-3.5 text-on-surface-variant/70"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                />
+              </svg>
+              <span>{{ project.proposalCount || 0 }} proposals received</span>
+            </div>
+          }
+
+          <div class="flex justify-end pt-1">
             <button
               type="button"
               class="btn btn-primary !w-auto px-5 !h-9 text-xs font-bold rounded-full flex items-center gap-1.5"
@@ -384,7 +378,9 @@
       </div>
 
       <button
+        type="button"
         class="btn btn-primary !bg-[#4130D7] hover:!bg-[#5B4FF0] text-white w-full rounded-full mt-2 !h-11 text-sm font-semibold"
+        (click)="openWallet()"
       >
         Manage Wallet
       </button>

@@ -1,11 +1,20 @@
 <div class="pw-shell">
   <header class="pw-top">
-    <a [routerLink]="['/developer/teams', teamId()]" class="pw-back">
-      <hugeicons-icon [icon]="backIcon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
-      Back to team
-    </a>
-    <h1 class="pw-title">{{ isEdit() ? 'Edit case study' : 'Add portfolio project' }}</h1>
-    <p class="pw-sub">Build a full case study for your team portfolio.</p>
+    @if (isPersonal()) {
+      <a routerLink="/developer/me/portfolio" class="pw-back">
+        <hugeicons-icon [icon]="backIcon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
+        Back to portfolio
+      </a>
+      <h1 class="pw-title">{{ isEdit() ? 'Edit case study' : 'Add portfolio project' }}</h1>
+      <p class="pw-sub">Build a full case study for your personal portfolio.</p>
+    } @else {
+      <a [routerLink]="['/developer/teams', teamId()]" class="pw-back">
+        <hugeicons-icon [icon]="backIcon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
+        Back to team
+      </a>
+      <h1 class="pw-title">{{ isEdit() ? 'Edit case study' : 'Add portfolio project' }}</h1>
+      <p class="pw-sub">Build a full case study for your team portfolio.</p>
+    }
   </header>
 
   <nav class="pw-track" aria-label="Wizard steps">

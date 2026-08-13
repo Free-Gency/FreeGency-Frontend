@@ -30,6 +30,8 @@ export class FreelancerHome {
       params = params.set('search', paramsData.search.trim());
     }
 
+    params = params.set('status', 'Open');
+
     return this.http.get<any>(`${this.baseUrl}/api/v1/projects`, { params }).pipe(
       map((res) => {
         // Deep unwrap C# ApiResponse<PagedResult<T>> structure

@@ -177,7 +177,11 @@
 
       <!-- Milestones tab -->
       <div [class.hidden]="activeTab() !== 'milestones'">
-        <app-project-milestones [projectId]="p.id" [isOwner]="isOwner()" />
+        <app-project-milestones
+          [projectId]="p.id"
+          [isOwner]="isOwner()"
+          (projectUpdated)="loadProject()"
+        />
       </div>
 
       <!-- Files tab -->

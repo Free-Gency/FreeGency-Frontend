@@ -24,11 +24,25 @@
         <section class="pf-page__portfolio">
           <div class="pf-page__portfolio-head">
             <h2 class="pf-page__portfolio-title">Portfolio</h2>
-            <span class="pf-page__portfolio-count">{{ projects().length }} projects</span>
+            <div class="pf-page__portfolio-actions">
+              <span class="pf-page__portfolio-count">{{ projects().length }} projects</span>
+              @if (canEdit()) {
+                <button type="button" class="pf-page__add-btn" (click)="addProject()">
+                  + Add project
+                </button>
+              }
+            </div>
           </div>
 
           @if (!projects().length) {
-            <div class="pf-page__empty">No public portfolio projects yet.</div>
+            <div class="pf-page__empty">
+              <p>No public portfolio projects yet.</p>
+              @if (canEdit()) {
+                <button type="button" class="pf-page__add-btn pf-page__add-btn--primary" (click)="addProject()">
+                  Add your first project
+                </button>
+              }
+            </div>
           } @else {
             <div class="pf-page__projects">
               @for (project of projects(); track project.id) {
