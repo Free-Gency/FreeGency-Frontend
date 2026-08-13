@@ -43,6 +43,7 @@
                   type="checkbox"
                   class="size-4 rounded border-outline-variant text-primary"
                   [checked]="s.status === 'Done'"
+                  [disabled]="!canEdit()"
                   (change)="toggleSubtaskDone(s.id, s.status === 'Done')"
                 />
                 <span class="flex-1 text-sm text-on-surface" [class.line-through]="s.status === 'Done'" [class.text-outline]="s.status === 'Done'">
@@ -58,19 +59,21 @@
               <p class="text-xs text-outline">No subtasks yet.</p>
             }
           </div>
-          <div class="mt-2 flex items-center gap-2">
-            <input
-              type="text"
-              class="h-9 flex-1 rounded-sm border border-surface-container-high bg-surface-container-lowest px-3 text-sm placeholder:text-outline focus:border-primary focus:outline-none"
-              placeholder="+ Add subtask"
-              [ngModel]="newSubtaskTitle()"
-              (ngModelChange)="newSubtaskTitle.set($event)"
-              (keydown.enter)="addSubtask()"
-            />
-            <button type="button" class="h-9 shrink-0 rounded-sm bg-surface-container-low px-3 text-xs font-semibold text-on-surface hover:bg-surface-container-high" (click)="addSubtask()">
-              Add
-            </button>
-          </div>
+          @if (canEdit()) {
+            <div class="mt-2 flex items-center gap-2">
+              <input
+                type="text"
+                class="h-9 flex-1 rounded-sm border border-surface-container-high bg-surface-container-lowest px-3 text-sm placeholder:text-outline focus:border-primary focus:outline-none"
+                placeholder="+ Add subtask"
+                [ngModel]="newSubtaskTitle()"
+                (ngModelChange)="newSubtaskTitle.set($event)"
+                (keydown.enter)="addSubtask()"
+              />
+              <button type="button" class="h-9 shrink-0 rounded-sm bg-surface-container-low px-3 text-xs font-semibold text-on-surface hover:bg-surface-container-high" (click)="addSubtask()">
+                Add
+              </button>
+            </div>
+          }
         </section>
 
         <!-- Checklist -->
@@ -83,6 +86,7 @@
                   type="checkbox"
                   class="size-4 rounded border-outline-variant text-primary"
                   [checked]="item.isCompleted"
+                  [disabled]="!canEdit()"
                   (change)="toggleChecklistItem(item.id, !item.isCompleted)"
                 />
                 <span class="flex-1 text-sm text-on-surface" [class.line-through]="item.isCompleted" [class.text-outline]="item.isCompleted">
@@ -96,29 +100,33 @@
               <p class="text-xs text-outline">No checklist items yet.</p>
             }
           </div>
-          <div class="mt-2 flex items-center gap-2">
-            <input
-              type="text"
-              class="h-9 flex-1 rounded-sm border border-surface-container-high bg-surface-container-lowest px-3 text-sm placeholder:text-outline focus:border-primary focus:outline-none"
-              placeholder="+ Add checklist item"
-              [ngModel]="newChecklistTitle()"
-              (ngModelChange)="newChecklistTitle.set($event)"
-              (keydown.enter)="addChecklistItem()"
-            />
-            <button type="button" class="h-9 shrink-0 rounded-sm bg-surface-container-low px-3 text-xs font-semibold text-on-surface hover:bg-surface-container-high" (click)="addChecklistItem()">
-              Add
-            </button>
-          </div>
+          @if (canEdit()) {
+            <div class="mt-2 flex items-center gap-2">
+              <input
+                type="text"
+                class="h-9 flex-1 rounded-sm border border-surface-container-high bg-surface-container-lowest px-3 text-sm placeholder:text-outline focus:border-primary focus:outline-none"
+                placeholder="+ Add checklist item"
+                [ngModel]="newChecklistTitle()"
+                (ngModelChange)="newChecklistTitle.set($event)"
+                (keydown.enter)="addChecklistItem()"
+              />
+              <button type="button" class="h-9 shrink-0 rounded-sm bg-surface-container-low px-3 text-xs font-semibold text-on-surface hover:bg-surface-container-high" (click)="addChecklistItem()">
+                Add
+              </button>
+            </div>
+          }
         </section>
 
         <!-- Attachments -->
         <section>
           <div class="mb-2 flex items-center justify-between">
             <p class="tw-mono-label">Attachments</p>
-            <label class="cursor-pointer text-xs font-bold text-primary">
-              {{ uploading() ? 'Uploading…' : 'Upload files' }}
-              <input type="file" multiple class="sr-only" [disabled]="uploading()" (change)="onFilesSelected($event)" />
-            </label>
+            @if (canEdit()) {
+              <label class="cursor-pointer text-xs font-bold text-primary">
+                {{ uploading() ? 'Uploading…' : 'Upload files' }}
+                <input type="file" multiple class="sr-only" [disabled]="uploading()" (change)="onFilesSelected($event)" />
+              </label>
+            }
           </div>
           <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
             @for (a of attachments.value() ?? []; track a.id) {
@@ -246,7 +254,7 @@
           <p class="text-sm font-semibold text-on-surface">
             {{ loggedHours() }}h logged @if (task().estimatedHours) { <span class="text-outline">/ {{ task().estimatedHours }}h est.</span> }
           </p>
-          @if (canManage() || isAssignee()) {
+          @if (canEdit()) {
             <div class="mt-2 flex items-center gap-1.5">
               <input
                 type="number"
