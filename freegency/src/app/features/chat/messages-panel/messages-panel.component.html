@@ -235,9 +235,15 @@
             @if (planForMessage(message); as plan) {
               <div class="msg-plan-card">
                 <div class="msg-plan-card__hd">
-                  <h3>Milestone Plan · v{{ plan.version }}</h3>
+                  <div class="msg-plan-card__brand" aria-hidden="true">
+                    <hugeicons-icon [icon]="checklistIcon" [size]="18" color="currentColor" [strokeWidth]="1.8" />
+                  </div>
+                  <div class="msg-plan-card__titles">
+                    <p>Negotiation</p>
+                    <h3>Milestone plan <span>v{{ plan.version }}</span></h3>
+                  </div>
                   <span
-                    class="msg-plan-status"
+                    class="msg-plan-badge"
                     [class.st-proposed]="plan.status === 'Proposed'"
                     [class.st-changes]="plan.status === 'ChangesRequested'"
                     [class.st-accepted]="plan.status === 'Accepted'"
@@ -261,15 +267,18 @@
                         {{ tag }}
                       </span>
                     }
-                    <h4>#{{ item.sortOrder || i + 1 }} {{ item.title }}</h4>
-                    @if (item.definitionOfDone) {
-                      <p>{{ item.definitionOfDone }}</p>
-                    }
-                    <div class="msg-plan-item__meta">
-                      <span>${{ item.amount | number: '1.0-0' }}</span>
-                      @if (item.dueDate) {
-                        <span>Due {{ item.dueDate | date: 'mediumDate' }}</span>
+                    <span class="msg-plan-item__index">{{ item.sortOrder || i + 1 }}</span>
+                    <div class="msg-plan-item__body">
+                      <h4>{{ item.title }}</h4>
+                      @if (item.definitionOfDone) {
+                        <p>{{ item.definitionOfDone }}</p>
                       }
+                      <div class="msg-plan-item__meta">
+                        <span class="msg-plan-item__amount">${{ item.amount | number: '1.0-0' }}</span>
+                        @if (item.dueDate) {
+                          <span>Due {{ item.dueDate | date: 'mediumDate' }}</span>
+                        }
+                      </div>
                     </div>
                   </div>
                 } @empty {
@@ -279,7 +288,9 @@
                 }
 
                 <div class="msg-plan-card__total">
-                  Total · ${{ planTotal(plan) | number: '1.0-0' }} · Version {{ plan.version }}/{{ maxPlanVersions }}
+                  <span>Total</span>
+                  <strong>${{ planTotal(plan) | number: '1.0-0' }}</strong>
+                  <em>Version {{ plan.version }} of {{ maxPlanVersions }}</em>
                 </div>
 
                 @if (canClientActOnPlan(plan)) {
@@ -592,7 +603,15 @@
             </span>
           </button>
         } @else if (discussionPlanHint(); as hint) {
-          <p class="msg-composer__hint msg-composer__hint--plan">{{ hint }}</p>
+          <div class="msg-plan-banner" [attr.data-tone]="hint.tone" role="status">
+            <span class="msg-plan-banner__icon" aria-hidden="true">
+              <hugeicons-icon [icon]="planHintIcon(hint.tone)" [size]="16" color="currentColor" [strokeWidth]="1.8" />
+            </span>
+            <div class="msg-plan-banner__copy">
+              <strong>{{ hint.title }}</strong>
+              <span>{{ hint.detail }}</span>
+            </div>
+          </div>
         }
         @if (canCompose() && composeHint()) {
           <p class="msg-composer__hint">{{ composeHint() }}</p>
@@ -1082,8 +1101,16 @@
           Add milestone
         </button>
 
-        @if (proposeError()) {
-          <p class="msg-modal__error">{{ proposeError() }}</p>
+        @if (proposeError(); as err) {
+          <div class="msg-alert msg-alert--danger" role="alert">
+            <span class="msg-alert__icon" aria-hidden="true">
+              <hugeicons-icon [icon]="alertIcon" [size]="18" color="currentColor" [strokeWidth]="1.8" />
+            </span>
+            <div class="msg-alert__copy">
+              <strong>Can't send yet</strong>
+              <p>{{ err }}</p>
+            </div>
+          </div>
         }
       </div>
 
@@ -1119,8 +1146,16 @@
           (ngModelChange)="changesComment.set($event)"
         ></textarea>
       </label>
-      @if (changesError()) {
-        <p class="msg-modal__error">{{ changesError() }}</p>
+      @if (changesError(); as err) {
+        <div class="msg-alert msg-alert--danger" role="alert">
+          <span class="msg-alert__icon" aria-hidden="true">
+            <hugeicons-icon [icon]="alertIcon" [size]="18" color="currentColor" [strokeWidth]="1.8" />
+          </span>
+          <div class="msg-alert__copy">
+            <strong>Can't send yet</strong>
+            <p>{{ err }}</p>
+          </div>
+        </div>
       }
       <div class="msg-modal__actions">
         <button type="button" class="msg-modal__ghost" (click)="closeRequestChanges()">Cancel</button>

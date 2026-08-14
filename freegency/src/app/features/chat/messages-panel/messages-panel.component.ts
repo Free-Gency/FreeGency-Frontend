@@ -19,8 +19,11 @@ import { HugeiconsIconComponent, type IconSvgObject } from '@hugeicons/angular';
 import {
   Add01Icon,
   AddCircleIcon,
+  Alert02Icon,
   Cancel01Icon,
   CheckListIcon,
+  CheckmarkCircle02Icon,
+  Clock01Icon,
   Delete02Icon,
   DocumentAttachmentIcon,
   File01Icon,
@@ -78,6 +81,15 @@ interface PlanDraftRow {
   dueDate: string;
 }
 
+type PlanHintTone = 'wait' | 'info' | 'success' | 'warn';
+
+interface DiscussionPlanHint {
+  tone: PlanHintTone;
+  kicker: string;
+  title: string;
+  detail: string;
+}
+
 @Component({
   selector: 'app-messages-panel',
   standalone: true,
@@ -108,6 +120,9 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
   protected readonly checklistIcon = CheckListIcon as IconSvgObject;
   protected readonly deleteIcon = Delete02Icon as IconSvgObject;
   protected readonly closeIcon = Cancel01Icon as IconSvgObject;
+  protected readonly alertIcon = Alert02Icon as IconSvgObject;
+  protected readonly clockIcon = Clock01Icon as IconSvgObject;
+  protected readonly successIcon = CheckmarkCircle02Icon as IconSvgObject;
 
   /** personal = profile inbox; team = team-scoped rooms */
   readonly mode = input<MessagesPanelMode>('personal');
@@ -368,7 +383,7 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
   });
 
   /** Discussion composer strip: propose CTA or waiting / read-only hint. */
-  protected readonly discussionPlanHint = computed(() => {
+  protected readonly discussionPlanHint = computed((): DiscussionPlanHint | null => {
     const room = this.selectedRoom();
     if (!this.isDiscussionRoom(room)) return null;
 
@@ -377,29 +392,61 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     if (this.isClientMode()) {
       if (!this.isProjectClient(room)) return null;
       if (latest?.status === 'Proposed') {
-        return 'Review the milestone plan above — Accept to hire, or Request changes.';
+        return null;
       }
       if (latest?.status === 'ChangesRequested') {
-        return 'Waiting for the developer to send a revised plan.';
+        return {
+          tone: 'wait',
+          kicker: 'Waiting on developer',
+          title: 'Changes requested',
+          detail: 'They’ll send a revised milestone plan.',
+        };
       }
       return null;
     }
 
     if (!this.isDeveloperMode()) return null;
     if (room!.canSend === false) {
-      return 'Only the negotiation speaker can propose a milestone plan.';
+      return {
+        tone: 'info',
+        kicker: 'Read only',
+        title: 'Negotiation speaker only',
+        detail: 'Only the team leader who submitted this proposal can send a plan.',
+      };
     }
     if (!this.hasGuid(room!.projectId) || !this.hasGuid(room!.proposalId)) {
-      return 'This discussion is missing project link data. Re-open the discussion or refresh.';
+      return {
+        tone: 'warn',
+        kicker: 'Missing data',
+        title: 'Discussion is not linked',
+        detail: 'Re-open this discussion or refresh, then try again.',
+      };
     }
     if (latest?.status === 'Proposed') {
-      return `Milestone plan v${latest.version} is awaiting the client (Accept or Request changes).`;
+      return {
+        tone: 'wait',
+        kicker: 'Waiting on client',
+        title: `Milestone plan v${latest.version}`,
+        detail: 'Sent. The client can Accept to hire, or Request changes.',
+      };
     }
     if (latest?.status === 'Accepted') {
-      return 'Plan accepted — this negotiation will archive and a project room opens.';
+      return {
+        tone: 'success',
+        kicker: 'Hired',
+        title: 'Plan accepted',
+        detail: 'This negotiation will archive and a project room opens.',
+      };
     }
     return null;
   });
+
+  protected planHintIcon(tone: PlanHintTone): IconSvgObject {
+    if (tone === 'success') return this.successIcon;
+    if (tone === 'wait') return this.clockIcon;
+    if (tone === 'warn') return this.alertIcon;
+    return this.planIcon;
+  }
 
   protected readonly proposeButtonLabel = computed(() => {
     const latest = this.latestPlan();
