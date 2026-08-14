@@ -392,7 +392,10 @@
 
             <!-- Project Title & Cover Excerpt -->
             <div>
-              <h3 class="text-lg font-bold text-on-surface hover:text-primary transition-colors">
+              <h3
+                class="text-lg font-bold text-on-surface hover:text-primary transition-colors cursor-pointer"
+                (click)="viewProject(resolveProjectId(item))"
+              >
                 {{
                 item.projectTitle ||
                 item.project?.title ||
@@ -437,7 +440,8 @@
               </div>
 
               <button type="button"
-                class="px-4 py-1.5 rounded-lg text-xs font-medium border border-outline-variant/60 hover:bg-surface-container-low transition-colors">
+                class="px-4 py-1.5 rounded-lg text-xs font-medium border border-outline-variant/60 hover:bg-surface-container-low transition-colors"
+                (click)="viewProject(resolveProjectId(item))">
                 View Details
               </button>
             </div>
@@ -447,7 +451,12 @@
           <!-- ==================== TAB 2 & 3: RECOMMENDED FEED / SAVED CARDS ==================== -->
           @else {
           <article
-            class="bg-white p-6 rounded-2xl border border-outline-variant/50 hover:shadow-md transition-all space-y-4">
+            class="bg-white p-6 rounded-2xl border border-outline-variant/50 hover:shadow-md transition-all space-y-4 cursor-pointer"
+            (click)="viewProject(resolveProjectId(item))"
+            (keydown.enter)="viewProject(resolveProjectId(item))"
+            tabindex="0"
+            role="link"
+            [attr.aria-label]="'Open project details: ' + (item.title || 'Project')">
             <!-- Client Info & Post Header -->
             <div class="flex items-center justify-between text-xs text-on-surface-variant">
               <div class="flex items-center gap-2">
@@ -469,7 +478,7 @@
 
             <!-- Title & Description -->
             <div>
-              <h3 class="text-lg font-bold text-on-surface hover:text-primary transition-colors cursor-pointer">
+              <h3 class="text-lg font-bold text-on-surface hover:text-primary transition-colors">
                 {{ item.title }}
               </h3>
               <p class="text-xs text-on-surface-variant line-clamp-2 mt-1.5 leading-relaxed">
@@ -516,17 +525,20 @@
                     {{ item.proposalCount ?? item.proposalsCount ?? 0 }} proposals
                   </span>
                   <button type="button" class="text-outline hover:text-primary transition-colors p-1"
-                    [class.text-primary]="item.isSaved" (click)="onToggleBookmark(item)">
+                    [class.text-primary]="item.isSaved"
+                    (click)="$event.stopPropagation(); onToggleBookmark(item)">
                     <span class="material-symbols-outlined text-base">
                       {{ item.isSaved ? 'bookmark_added' : 'bookmark' }}
                     </span>
                   </button>
                 </div>
 
-                <app-apply-project-button
-                  [projectId]="item.id"
-                  (proposalSubmitted)="onProposalSubmitted(item)"
-                />
+                <div (click)="$event.stopPropagation()">
+                  <app-apply-project-button
+                    [projectId]="item.id"
+                    (proposalSubmitted)="onProposalSubmitted(item)"
+                  />
+                </div>
 
               </div>
             </div>

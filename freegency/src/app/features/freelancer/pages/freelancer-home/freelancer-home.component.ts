@@ -201,7 +201,17 @@ export class FreelancerHomeComponent implements OnInit {
     return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
-  viewProject(projectId: string): void {
+  resolveProjectId(item: {
+    id?: string;
+    projectId?: string;
+    project?: { id?: string };
+  } | null | undefined): string | null {
+    const id = (item?.projectId || item?.project?.id || item?.id || '').trim();
+    return id || null;
+  }
+
+  viewProject(projectId: string | null | undefined, event?: Event): void {
+    event?.stopPropagation();
     if (!projectId) return;
     void this.router.navigate(['/projects', projectId]);
   }

@@ -14,6 +14,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HugeiconsIconComponent, type IconSvgObject } from '@hugeicons/angular';
 import {
   Add01Icon,
@@ -93,6 +94,8 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
   private readonly projectApi = inject(ProjectDetailsApiService);
   private readonly filesApi = inject(ProjectFilesApiService);
   private readonly toast = inject(ToastService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly addIcon = Add01Icon as IconSvgObject;
   protected readonly addCircleIcon = AddCircleIcon as IconSvgObject;
@@ -125,6 +128,10 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
   private shouldStickToBottom = true;
   private destroyListeners = false;
   private scrollRaf = 0;
+  /** Prevents stale ?room= deep-links from reopening after the user switches chats. */
+  private readonly appliedDeepLinkKey = signal<string | null>(null);
+  private openProjectRetry = 0;
+  private openProjectTimer = 0;
   private readonly onReceiveMessage = (message: RoomMessage) => this.handleReceiveMessage(message);
   private readonly onRoomUpdated = (update: RoomUpdated) => this.handleRoomUpdated(update);
   private readonly onOnlineStatus = (online: boolean) => {
@@ -520,38 +527,33 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
       const rooms = this.chatRooms();
       if (!rooms.length) return;
 
+      const deepLinkKey = roomId
+        ? `room:${roomId.toLowerCase()}`
+        : projectId
+          ? `project:${projectId.toLowerCase()}`
+          : null;
+      if (!deepLinkKey) return;
+      if (this.appliedDeepLinkKey() === deepLinkKey) return;
+
       if (roomId) {
         const match = rooms.find(
           (r) => r.id.toLowerCase() === roomId.toLowerCase(),
         );
-        if (match) {
-          const selected = this.selectedRoom();
-          if (selected?.id.toLowerCase() === match.id.toLowerCase()) return;
+        if (!match) return;
 
-          untracked(() => {
-            if (match.roomType === 'Proposal') this.listFilter.set('discussions');
-            else if (match.roomType === 'Project') this.listFilter.set('projects');
-            else if (match.status === 'Archived') this.listFilter.set('archived');
-            void this.openChat(match);
-          });
-          return;
-        }
+        untracked(() => {
+          this.appliedDeepLinkKey.set(deepLinkKey);
+          this.applyInboxFilterForRoom(match);
+          void this.openChat(match);
+        });
+        return;
       }
 
-      if (!projectId) return;
-
-      const projectRoom = rooms.find(
-        (r) =>
-          r.roomType === 'Project' &&
-          r.projectId?.toLowerCase() === projectId.toLowerCase() &&
-          r.status !== 'Archived',
-      );
+      const projectRoom = this.findActiveProjectRoom(rooms, projectId!);
       if (!projectRoom) return;
 
-      const selected = this.selectedRoom();
-      if (selected?.id.toLowerCase() === projectRoom.id.toLowerCase()) return;
-
       untracked(() => {
+        this.appliedDeepLinkKey.set(deepLinkKey);
         this.listFilter.set('projects');
         void this.openChat(projectRoom);
       });
@@ -569,6 +571,7 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     this.joinedRoomId = null;
   }
     this.destroyListeners = true;
+    if (this.openProjectTimer) clearTimeout(this.openProjectTimer);
     if (this.scrollRaf) cancelAnimationFrame(this.scrollRaf);
     this.setSelectedFile(null);
     this.chatSignalr.unlistenReceiveMessage(this.onReceiveMessage);
@@ -641,6 +644,84 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     this.plansById.set({});
     this.latestPlan.set(null);
     this.planActionError.set(null);
+  }
+
+  private applyInboxFilterForRoom(room: ChatRoom): void {
+    if (room.status === 'Archived') this.listFilter.set('archived');
+    else if (room.roomType === 'Proposal') this.listFilter.set('discussions');
+    else if (room.roomType === 'Project') this.listFilter.set('projects');
+    else if (room.roomType === 'TeamGroup' || room.roomType === 'TeamMain') this.listFilter.set('groups');
+  }
+
+  private findActiveProjectRoom(rooms: ChatRoom[], projectId: string): ChatRoom | undefined {
+    const id = projectId.toLowerCase();
+    return rooms.find(
+      (r) =>
+        r.roomType === 'Project' &&
+        r.projectId?.toLowerCase() === id &&
+        r.status !== 'Archived',
+    );
+  }
+
+  private syncInboxQuery(room: ChatRoom): void {
+    if (this.embedded()) return;
+    this.appliedDeepLinkKey.set(`room:${room.id.toLowerCase()}`);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        room: room.id,
+        project:
+          room.roomType === 'Project' && this.hasGuid(room.projectId)
+            ? room.projectId
+            : null,
+      },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  private releaseInboxDeepLink(projectId?: string | null): void {
+    const key = this.hasGuid(projectId)
+      ? `project:${projectId!.toLowerCase()}`
+      : 'post-hire';
+    this.appliedDeepLinkKey.set(key);
+    this.openProjectRetry = 0;
+    if (this.openProjectTimer) {
+      clearTimeout(this.openProjectTimer);
+      this.openProjectTimer = 0;
+    }
+    if (this.embedded()) return;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        room: null,
+        project: this.hasGuid(projectId) ? projectId : null,
+      },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  private scheduleOpenProjectRoom(projectId: string): void {
+    if (this.destroyListeners) return;
+    if (this.openProjectRetry >= 5) {
+      this.openProjectRetry = 0;
+      return;
+    }
+    this.openProjectRetry += 1;
+    if (this.openProjectTimer) clearTimeout(this.openProjectTimer);
+    this.openProjectTimer = window.setTimeout(() => {
+      this.openProjectTimer = 0;
+      if (this.destroyListeners) return;
+      const existing = this.findActiveProjectRoom(this.chatRooms(), projectId);
+      if (existing) {
+        this.openProjectRetry = 0;
+        this.listFilter.set('projects');
+        void this.openChat(existing);
+        return;
+      }
+      this.loadChatRooms(false, { openProjectId: projectId });
+    }, 700);
   }
 
   private hasGuid(value: string | null | undefined): boolean {
@@ -917,6 +998,7 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     this.shouldStickToBottom = true;
     this.closeAttachMenu();
     this.selectedRoom.set(room);
+    this.syncInboxQuery(room);
     this.messages.set([]);
     this.messageText.set('');
     this.setSelectedFile(null);
@@ -1726,7 +1808,8 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
       next: () => {
         this.planActionBusy.set(false);
         this.closeAcceptPlan();
-        // Close negotiation thread; open the new Project room after refresh.
+        // Drop stale ?room=<discussion> so the deep-link effect cannot snap back.
+        this.releaseInboxDeepLink(projectId);
         this.clearSelection();
         this.listFilter.set('projects');
         this.loadChatRooms(false, projectId ? { openProjectId: projectId } : undefined);
@@ -2022,20 +2105,16 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
           this.loading.set(false);
 
           if (options?.openProjectId) {
-            const projectRoom = items.find(
-              (r) =>
-                r.roomType === 'Project' &&
-                r.projectId === options.openProjectId &&
-                r.status !== 'Archived',
-            );
+            const projectRoom = this.findActiveProjectRoom(items, options.openProjectId);
             if (projectRoom) {
-              this.openChat(projectRoom);
+              this.openProjectRetry = 0;
+              this.listFilter.set('projects');
+              void this.openChat(projectRoom);
               return;
             }
-            this.listFilter.set('active');
+            this.listFilter.set('projects');
+            this.scheduleOpenProjectRoom(options.openProjectId);
           }
-
-          // Deep-link open is handled by the initialRoomId effect.
         },
         error: () => {
           this.error.set('Failed to load conversations');

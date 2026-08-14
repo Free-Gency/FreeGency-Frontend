@@ -266,7 +266,7 @@ export class MyProjectsComponent implements OnInit {
   }
 
   openWallet(): void {
-    void this.router.navigate(['/settings']);
+    void this.router.navigate(['/settings/payments']);
   }
 
   getCount(status: string): number {
