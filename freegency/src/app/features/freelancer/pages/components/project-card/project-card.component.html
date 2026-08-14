@@ -7,6 +7,27 @@
         <span class="material-symbols-outlined">image</span>
       </div>
     }
+
+    @if (canEdit()) {
+      <div class="pf-project__actions" (click)="$event.stopPropagation()">
+        <button
+          type="button"
+          class="pf-project__action-btn"
+          aria-label="Edit project"
+          (click)="edit.emit(project())"
+        >
+          <span class="material-symbols-outlined">edit</span>
+        </button>
+        <button
+          type="button"
+          class="pf-project__action-btn pf-project__action-btn--danger"
+          aria-label="Delete project"
+          (click)="remove.emit(project())"
+        >
+          <span class="material-symbols-outlined">delete</span>
+        </button>
+      </div>
+    }
   </div>
 
   <div class="pf-project__body">

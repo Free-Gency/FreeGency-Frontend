@@ -11,10 +11,10 @@
             </div>
           }
         </div>
-        <span
+        <!-- <span
           class="pf-header__status"
           [class.pf-header__status--off]="!(profile().isAvailable ?? true)"
-        ></span>
+        ></span> -->
       </div>
 
       <div class="pf-header__who">
@@ -22,9 +22,9 @@
 
         <div class="pf-header__badges">
           <span class="pf-badge pf-badge--dev">Developer</span>
-          @if (profile().isAvailable ?? true) {
+          <!-- @if (profile().isAvailable ?? true) {
             <span class="pf-badge pf-badge--best">Available</span>
-          }
+          } -->
           @if (displayCategories()[0]; as cat) {
             <span class="pf-badge pf-badge--soft">{{ cat }}</span>
           }

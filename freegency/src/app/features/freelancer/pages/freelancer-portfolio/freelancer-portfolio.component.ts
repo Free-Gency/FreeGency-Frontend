@@ -150,7 +150,7 @@ export class FreelancerPortfolioComponent implements OnInit {
                 ...p,
                 ratingCount: nextCount,
                 averageRating: Math.round(nextAvg * 100) / 100,
-                jobSuccessRate: Math.round(Math.min(5, Math.max(0, nextAvg)) / 5 * 100),
+                jobSuccessRate: Math.round((Math.min(5, Math.max(0, nextAvg)) / 5) * 100),
               });
             }
           }
@@ -159,10 +159,7 @@ export class FreelancerPortfolioComponent implements OnInit {
           this.reviewSubmitting.set(false);
           if (review.moderationWarning) {
             this.reviewError.set(review.moderationWarning);
-            this.toast.warning(
-              review.moderationWarning,
-              'Your review broke FreeGency rules',
-            );
+            this.toast.warning(review.moderationWarning, 'Your review broke FreeGency rules');
           }
         },
         error: (err) => {
@@ -223,6 +220,29 @@ export class FreelancerPortfolioComponent implements OnInit {
         this.reviews.set(res.reviews);
         if (res.profile?.userId) this.userId.set(res.profile.userId);
         this.loading.set(false);
+      });
+  }
+
+  protected editProject(project: PortfolioProjectDto): void {
+    void this.router.navigate(['/developer/portfolio', project.id, 'edit']);
+  }
+
+  protected deleteProject(project: PortfolioProjectDto): void {
+    const confirmed = confirm(`Delete "${project.title}"? This can't be undone.`);
+    if (!confirmed) return;
+
+    this.api
+      .deletePortfolioProject(project.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.projects.set(this.projects().filter((p) => p.id !== project.id));
+          this.toast.success('Project removed.');
+        },
+        error: (err) => {
+          const msg = extractApiError(err, 'Could not delete project.');
+          this.toast.warning(msg, 'Delete failed');
+        },
       });
   }
 }
