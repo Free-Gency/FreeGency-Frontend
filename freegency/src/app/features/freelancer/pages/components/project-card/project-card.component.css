@@ -94,3 +94,44 @@
   padding: 0.28rem 0.6rem;
   border-radius: 8px;
 }
+
+
+.pf-project__media {
+  position: relative;
+}
+
+.pf-project__actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 6px;
+  z-index: 2;
+}
+
+.pf-project__action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.9);
+  color: #1f2937;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.pf-project__action-btn:hover {
+  background: #ffffff;
+}
+
+.pf-project__action-btn .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.pf-project__action-btn--danger:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}

@@ -38,7 +38,11 @@
             <div class="pf-page__empty">
               <p>No public portfolio projects yet.</p>
               @if (canEdit()) {
-                <button type="button" class="pf-page__add-btn pf-page__add-btn--primary" (click)="addProject()">
+                <button
+                  type="button"
+                  class="pf-page__add-btn pf-page__add-btn--primary"
+                  (click)="addProject()"
+                >
                   Add your first project
                 </button>
               }
@@ -52,7 +56,12 @@
                   (click)="openProject(project)"
                   (keydown.enter)="openProject(project)"
                 >
-                  <app-project-card [project]="project" />
+                  <app-project-card
+                    [project]="project"
+                    [canEdit]="canEdit()"
+                    (edit)="editProject($event)"
+                    (remove)="deleteProject($event)"
+                  />
                 </div>
               }
             </div>
@@ -135,7 +144,7 @@
       </div>
 
       <aside class="pf-page__aside">
-        <app-portfolio-availability [profile]="p" [canEdit]="canEdit()" />
+        <!-- <app-portfolio-availability [profile]="p" [canEdit]="canEdit()" /> -->
         @if (canEdit()) {
           <app-profile-strength [profile]="p" [projects]="projects()" />
         }

@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, EventEmitter, input, Output } from '@angular/core';
 import { PortfolioProjectDto } from '../../../model/portfolio.model';
 
 @Component({
@@ -9,4 +9,8 @@ import { PortfolioProjectDto } from '../../../model/portfolio.model';
 })
 export class ProjectCardComponent {
   project = input.required<PortfolioProjectDto>();
+  canEdit = input(false);
+
+  @Output() edit = new EventEmitter<PortfolioProjectDto>();
+  @Output() remove = new EventEmitter<PortfolioProjectDto>();
 }
