@@ -35,7 +35,6 @@ MarkAsSeenNotificationSignal =
       this.NotificationSignal.set(value);
     });
     this.hubConnection.on("MarkAsSeenNotification",(value: MarkAsSeenNotification)=>{
-      console.log('MARK AS SEEN RECEIVED:', value);
       this.MarkAsSeenNotificationSignal.set(value);
     });
   }

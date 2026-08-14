@@ -15,14 +15,14 @@ export class NotificationService {
 baseUrl=environment.apiBaseUrl;
   readonly unreadCount = signal(0);
   getNotifications(
-  pageIndex = 1,
+  PageNumber = 1,
   pageSize = 10
 ) {
   return this.http.get<PagedResponse<NotificationDto>>(
     `${this.baseUrl}/api/v1/Notification/me`,
     {
       params: {
-        pageIndex,
+        PageNumber,
         pageSize,
       },
     }

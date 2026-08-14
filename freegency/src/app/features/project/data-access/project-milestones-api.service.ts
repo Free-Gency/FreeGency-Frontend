@@ -76,25 +76,23 @@ export class ProjectMilestonesApiService {
   }
 
   proposePlan(payload: ProposeMilestonePlanPayload): Observable<MilestonePlanVersion> {
-    return this.http
-      .post<Record<string, unknown>>(
-        `${this.baseUrl}/milestone-plans`,
-        payload,
-      )
-      .pipe(
-        map((res) => {
-          const isSuccess = !!(res['isSuccess'] ?? res['IsSuccess']);
-          const data = (res['data'] ?? res['Data']) as MilestonePlanVersion | undefined;
-          const message = String(res['message'] ?? res['Message'] ?? '').trim();
-          const nestedError = (res['error'] ?? res['Error']) as { message?: string; Message?: string } | null;
-          const errorMessage = String(nestedError?.message ?? nestedError?.Message ?? '').trim();
+    return this.http.post<Record<string, unknown>>(`${this.baseUrl}/milestone-plans`, payload).pipe(
+      map((res) => {
+        const isSuccess = !!(res['isSuccess'] ?? res['IsSuccess']);
+        const data = (res['data'] ?? res['Data']) as MilestonePlanVersion | undefined;
+        const message = String(res['message'] ?? res['Message'] ?? '').trim();
+        const nestedError = (res['error'] ?? res['Error']) as {
+          message?: string;
+          Message?: string;
+        } | null;
+        const errorMessage = String(nestedError?.message ?? nestedError?.Message ?? '').trim();
 
-          if (!isSuccess || !data) {
-            throw new Error(errorMessage || message || 'Failed to propose plan.');
-          }
-          return data;
-        }),
-      );
+        if (!isSuccess || !data) {
+          throw new Error(errorMessage || message || 'Failed to propose plan.');
+        }
+        return data;
+      }),
+    );
   }
 
   requestPlanChanges(payload: RequestPlanChangesPayload): Observable<void> {
@@ -127,24 +125,15 @@ export class ProjectMilestonesApiService {
       );
   }
 
-  fundNext(projectId: string): Observable<void> {
-    return this.http
-      .post<{ isSuccess: boolean; message?: string | null }>(
-        `${this.baseUrl}/projects/${projectId}/milestones/fund-next`,
-        null,
-      )
-      .pipe(
-        map((res) => {
-          if (!res.isSuccess) {
-            throw new Error(res.message || 'Failed to fund milestone.');
-          }
-        }),
-      );
+  fundNext(projectId: string): Observable<{ isSuccess: boolean; message?: string | null }> {
+    return this.http.post<{ isSuccess: boolean; message?: string | null }>(
+      `${this.baseUrl}/projects/${projectId}/milestones/fund-next`,
+      null,
+    );
   }
 
   submitMilestone(milestoneId: string, note?: string | null): Observable<void> {
-    const body =
-      note && note.trim() ? { note: note.trim() } : {};
+    const body = note && note.trim() ? { note: note.trim() } : {};
     return this.http
       .post<{ isSuccess: boolean; message?: string | null }>(
         `${this.baseUrl}/milestones/${milestoneId}/submit`,

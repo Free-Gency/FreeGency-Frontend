@@ -20,27 +20,29 @@ export class FreelancerPortfolioService {
   private readonly profilesUrl = `${environment.apiBaseUrl}/api/v1/profiles`;
 
   getPublicProfile(userId: string): Observable<DeveloperProfile> {
-    return this.http.get<ApiResponse<DeveloperProfile> | DeveloperProfile>(
-      `${this.profilesUrl}/developers/${userId}`,
-    ).pipe(
-      map((res) => {
-        const raw = (res as ApiResponse<DeveloperProfile>)?.data ?? (res as DeveloperProfile);
-        if (!raw) throw new Error('Developer profile not found.');
-        return this.normalizeProfile(raw);
-      }),
-    );
+    return this.http
+      .get<ApiResponse<DeveloperProfile> | DeveloperProfile>(
+        `${this.profilesUrl}/developers/${userId}`,
+      )
+      .pipe(
+        map((res) => {
+          const raw = (res as ApiResponse<DeveloperProfile>)?.data ?? (res as DeveloperProfile);
+          if (!raw) throw new Error('Developer profile not found.');
+          return this.normalizeProfile(raw);
+        }),
+      );
   }
 
   getMyProfile(): Observable<DeveloperProfile> {
-    return this.http.get<ApiResponse<DeveloperProfile> | DeveloperProfile>(
-      `${this.profilesUrl}/developer/me`,
-    ).pipe(
-      map((res) => {
-        const raw = (res as ApiResponse<DeveloperProfile>)?.data ?? (res as DeveloperProfile);
-        if (!raw) throw new Error('Developer profile not found.');
-        return this.normalizeProfile(raw);
-      }),
-    );
+    return this.http
+      .get<ApiResponse<DeveloperProfile> | DeveloperProfile>(`${this.profilesUrl}/developer/me`)
+      .pipe(
+        map((res) => {
+          const raw = (res as ApiResponse<DeveloperProfile>)?.data ?? (res as DeveloperProfile);
+          if (!raw) throw new Error('Developer profile not found.');
+          return this.normalizeProfile(raw);
+        }),
+      );
   }
 
   getPublicProjects(userId: string): Observable<PortfolioProjectDto[]> {
@@ -51,8 +53,7 @@ export class FreelancerPortfolioService {
       .pipe(
         map((res) => {
           const raw =
-            (res as ApiResponse<PortfolioProjectDto[]>)?.data ??
-            (res as PortfolioProjectDto[]);
+            (res as ApiResponse<PortfolioProjectDto[]>)?.data ?? (res as PortfolioProjectDto[]);
           return Array.isArray(raw) ? raw : [];
         }),
       );
@@ -66,8 +67,7 @@ export class FreelancerPortfolioService {
       .pipe(
         map((res) => {
           const raw =
-            (res as ApiResponse<PortfolioProjectDto[]>)?.data ??
-            (res as PortfolioProjectDto[]);
+            (res as ApiResponse<PortfolioProjectDto[]>)?.data ?? (res as PortfolioProjectDto[]);
           return Array.isArray(raw) ? raw : [];
         }),
       );
@@ -80,8 +80,7 @@ export class FreelancerPortfolioService {
       : `${environment.apiBaseUrl}/api/v1/social-links/me`;
     return this.http.get<ApiResponse<SocialLinkDto[]> | SocialLinkDto[]>(url).pipe(
       map((res) => {
-        const raw =
-          (res as ApiResponse<SocialLinkDto[]>)?.data ?? (res as SocialLinkDto[]);
+        const raw = (res as ApiResponse<SocialLinkDto[]>)?.data ?? (res as SocialLinkDto[]);
         return Array.isArray(raw) ? raw : [];
       }),
     );
@@ -114,9 +113,7 @@ export class FreelancerPortfolioService {
       )
       .pipe(
         map((res) => {
-          const raw =
-            (res as ApiResponse<PortfolioReviewDto>)?.data ??
-            (res as PortfolioReviewDto);
+          const raw = (res as ApiResponse<PortfolioReviewDto>)?.data ?? (res as PortfolioReviewDto);
           const [normalized] = this.normalizeReviews([raw]);
           return normalized;
         }),
@@ -126,9 +123,7 @@ export class FreelancerPortfolioService {
   private normalizeReviews(
     res: ApiResponse<PortfolioReviewDto[]> | PortfolioReviewDto[],
   ): PortfolioReviewDto[] {
-    const raw =
-      (res as ApiResponse<PortfolioReviewDto[]>)?.data ??
-      (res as PortfolioReviewDto[]);
+    const raw = (res as ApiResponse<PortfolioReviewDto[]>)?.data ?? (res as PortfolioReviewDto[]);
     if (!Array.isArray(raw)) return [];
 
     return raw.map((r) => {
@@ -172,7 +167,7 @@ export class FreelancerPortfolioService {
       raw.jobSuccessRate != null && Number(raw.jobSuccessRate) > 0
         ? Math.round(Number(raw.jobSuccessRate))
         : rating > 0
-          ? Math.round(Math.min(5, Math.max(0, rating)) / 5 * 100)
+          ? Math.round((Math.min(5, Math.max(0, rating)) / 5) * 100)
           : 0;
 
     return {
@@ -190,5 +185,46 @@ export class FreelancerPortfolioService {
       totalJobs: Number(raw.totalJobs ?? 0),
       isAvailable: raw.isAvailable ?? true,
     };
+  }
+
+  createPortfolioProject(body: Partial<PortfolioProjectDto>): Observable<PortfolioProjectDto> {
+    return this.http
+      .post<ApiResponse<PortfolioProjectDto> | PortfolioProjectDto>(
+        `${this.profilesUrl}/developer/me/portfolio-projects`,
+        body,
+      )
+      .pipe(
+        map((res) => {
+          const raw =
+            (res as ApiResponse<PortfolioProjectDto>)?.data ?? (res as PortfolioProjectDto);
+          if (!raw) throw new Error('Failed to create project.');
+          return raw;
+        }),
+      );
+  }
+
+  updatePortfolioProject(
+    projectId: string,
+    body: Partial<PortfolioProjectDto>,
+  ): Observable<PortfolioProjectDto> {
+    return this.http
+      .put<ApiResponse<PortfolioProjectDto> | PortfolioProjectDto>(
+        `${this.profilesUrl}/developer/me/portfolio-projects/${projectId}`,
+        body,
+      )
+      .pipe(
+        map((res) => {
+          const raw =
+            (res as ApiResponse<PortfolioProjectDto>)?.data ?? (res as PortfolioProjectDto);
+          if (!raw) throw new Error('Failed to update project.');
+          return raw;
+        }),
+      );
+  }
+
+  deletePortfolioProject(projectId: string): Observable<void> {
+    return this.http
+      .delete<ApiResponse<void>>(`${this.profilesUrl}/developer/me/portfolio-projects/${projectId}`)
+      .pipe(map(() => undefined));
   }
 }

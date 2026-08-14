@@ -37,6 +37,10 @@ export class TaskDetailPanelComponent {
   private readonly taskId = computed(() => this.task().id);
 
   protected readonly isAssignee = computed(() => this.task().assigneeUserId === this.currentUserId());
+  /** Assignees may only edit the task while it is in progress; managers can always edit. */
+  protected readonly canEdit = computed(
+    () => this.canManage() || (this.isAssignee() && this.task().status === 'InProgress'),
+  );
   protected readonly transitions = computed(() => allowedTransitions(this.task(), this.isAssignee()));
   protected readonly statuses = TASK_STATUSES;
   protected readonly labels = TASK_STATUS_LABELS;
