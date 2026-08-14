@@ -2057,10 +2057,18 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     const normalized = this.normalizeIncomingMessage(message, room.id);
     if (normalized.chatRoomId && normalized.chatRoomId !== room.id) return;
 
+    const mine = normalized.isMine || normalized.senderId === this.auth.session()?.profileId;
     this.appendMessage({
       ...normalized,
-      isMine: normalized.isMine || normalized.senderId === this.auth.session()?.profileId,
+      isMine: mine,
     });
+
+    if (mine && normalized.moderationWarning) {
+      this.toast.warning(
+        normalized.moderationWarning,
+        'Your message broke FreeGency rules',
+      );
+    }
 
     if (
       this.isPlan(normalized) ||
@@ -2140,7 +2148,12 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
   private appendMessage(message: RoomMessage): void {
     if (!message.id) return;
     this.messages.update((old) => {
-      if (old.some((m) => m.id === message.id)) return old;
+      const existing = old.findIndex((m) => m.id === message.id);
+      if (existing >= 0) {
+        const next = [...old];
+        next[existing] = { ...old[existing], ...message };
+        return next;
+      }
       let next = old;
       const planId = (message.planVersionId || '').trim().toLowerCase();
       if (planId) {
