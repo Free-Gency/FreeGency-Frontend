@@ -50,10 +50,24 @@
 }
 
 .toast-item--error {
-  border-color: rgba(186, 26, 26, 0.16);
+  border-color: #fecdca;
+  background: #fef3f2;
   box-shadow:
     0 1px 2px rgba(186, 26, 26, 0.04),
     0 16px 40px rgba(186, 26, 26, 0.1);
+}
+
+.toast-item--error .toast-icon {
+  color: #fff;
+  background: linear-gradient(135deg, #f97066, #d92d20);
+}
+
+.toast-item--error .toast-title {
+  color: #912018;
+}
+
+.toast-item--error .toast-text {
+  color: #b42318;
 }
 
 .toast-icon {
@@ -77,11 +91,6 @@
 .toast-item--success .toast-icon {
   color: var(--color-secondary);
   background: color-mix(in srgb, var(--color-secondary-container) 70%, white);
-}
-
-.toast-item--error .toast-icon {
-  color: var(--color-error);
-  background: color-mix(in srgb, var(--color-error-container) 80%, white);
 }
 
 .toast-copy {

@@ -5,8 +5,22 @@
         <div class="h-8 w-8 animate-spin rounded-full border-2 border-[#4130D7] border-t-transparent"></div>
       </div>
     } @else {
-      @if (actionError()) {
-        <p class="text-sm text-error px-1">{{ actionError() }}</p>
+      @if (actionError(); as err) {
+        <div class="ms-alert" role="alert">
+          <span class="ms-alert__icon" aria-hidden="true">!</span>
+          <div class="ms-alert__copy">
+            <strong>{{ walletTopUpNeeded() ? 'Not enough wallet balance' : "Can't complete this action" }}</strong>
+            <p>{{ err }}</p>
+            @if (walletTopUpNeeded()) {
+              <button type="button" class="ms-alert__cta" (click)="goToWalletTopUp()">
+                Top up wallet
+              </button>
+            }
+          </div>
+          <button type="button" class="ms-alert__dismiss" (click)="dismissActionError()">
+            Dismiss
+          </button>
+        </div>
       }
 
       @if (!embedded()) {
@@ -388,7 +402,7 @@
                 <span class="text-[10px] font-bold text-white/60 uppercase tracking-wider"
                   >Plan Status</span
                 >
-                <span class="text-sm font-semibold">{{ e.planStatus }}</span>
+                <span class="text-sm font-semibold">{{ formatPlanStatus(e.planStatus) }}</span>
               </div>
               @if (canFundNext()) {
                 <button

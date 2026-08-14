@@ -125,11 +125,20 @@ export class ProjectMilestonesApiService {
       );
   }
 
-  fundNext(projectId: string): Observable<{ isSuccess: boolean; message?: string | null }> {
-    return this.http.post<{ isSuccess: boolean; message?: string | null }>(
-      `${this.baseUrl}/projects/${projectId}/milestones/fund-next`,
-      null,
-    );
+  fundNext(projectId: string): Observable<void> {
+    return this.http
+      .post<{
+        isSuccess: boolean;
+        message?: string | null;
+        error?: { message?: string; code?: string };
+      }>(`${this.baseUrl}/projects/${projectId}/milestones/fund-next`, null)
+      .pipe(
+        map((res) => {
+          if (!res.isSuccess) {
+            throw new Error(res.error?.message || res.message || 'Failed to fund milestone.');
+          }
+        }),
+      );
   }
 
   submitMilestone(milestoneId: string, note?: string | null): Observable<void> {

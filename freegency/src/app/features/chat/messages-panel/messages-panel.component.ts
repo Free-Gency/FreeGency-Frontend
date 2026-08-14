@@ -35,7 +35,7 @@ import {
 import { ChatApiService } from '../chat-api.service';
 import { ChatSignalrService } from '../../../core/Signalr/chat-signalr-service';
 import { AuthService } from '../../../core/auth/auth.service';
-import { extractApiError } from '../../../core/http/api-error';
+import { extractApiError, isInsufficientWalletError } from '../../../core/http/api-error';
 import { TeamsService } from '../../developer/data-access/teams.service';
 import { TeamMemberRow } from '../../developer/models/team';
 import { ProjectMilestonesApiService } from '../../project/data-access/project-milestones-api.service';
@@ -260,6 +260,9 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
   protected readonly plansLoading = signal(false);
   protected readonly planActionBusy = signal(false);
   protected readonly planActionError = signal<string | null>(null);
+  protected readonly walletTopUpNeeded = computed(() =>
+    isInsufficientWalletError(undefined, this.planActionError()),
+  );
 
   protected readonly proposeOpen = signal(false);
   protected readonly proposeBudget = signal<ProjectBudgetInfo | null>(null);
@@ -1936,6 +1939,10 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
 
   protected dismissPlanActionError(): void {
     this.planActionError.set(null);
+  }
+
+  protected goToWalletTopUp(): void {
+    void this.router.navigate(['/settings/payments']);
   }
 
   protected acceptPlan(plan: MilestonePlanVersion): void {

@@ -147,12 +147,34 @@
       </div>
     </header>
 
-    @if (actionError()) {
-      <p
-        class="text-sm font-semibold text-[#93000A] bg-[#FFDAD6] rounded-2xl px-4 py-3 m-0"
+    @if (actionError(); as err) {
+      <div
+        class="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#FECDCA] bg-[#FEF3F2] px-4 py-3"
+        role="alert"
       >
-        {{ actionError() }}
-      </p>
+        <div class="min-w-0 flex-1">
+          <p class="m-0 text-sm font-bold text-[#912018]">
+            {{ walletTopUpNeeded() ? 'Not enough wallet balance' : "Can't complete this action" }}
+          </p>
+          <p class="mt-1 mb-0 text-sm font-medium text-[#B42318]">{{ err }}</p>
+          @if (walletTopUpNeeded()) {
+            <button
+              type="button"
+              class="mt-3 inline-flex h-8 items-center rounded-full bg-[#D92D20] px-3.5 text-xs font-bold text-white hover:bg-[#B42318]"
+              (click)="goToWalletTopUp()"
+            >
+              Top up wallet
+            </button>
+          }
+        </div>
+        <button
+          type="button"
+          class="shrink-0 border-0 bg-transparent text-xs font-bold text-[#912018] hover:underline"
+          (click)="actionError.set(null)"
+        >
+          Dismiss
+        </button>
+      </div>
     }
 
     @if (loading()) {

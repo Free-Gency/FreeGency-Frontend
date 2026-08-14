@@ -3,7 +3,7 @@ import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
-import { extractApiError } from '../../../../../core/http/api-error';
+import { extractApiError, isInsufficientWalletError } from '../../../../../core/http/api-error';
 import { ManageWorkService } from '../../../data-access/manage-work.service';
 import { ProjectMilestonesApiService } from '../../../../project/data-access/project-milestones-api.service';
 import { Project } from '../../../../../shared/models/Project';
@@ -53,6 +53,9 @@ export class ManageWorkMilestonesComponent implements OnInit {
   readonly selectedProjectId = signal<string | null>(null);
   readonly actionBusy = signal(false);
   readonly actionError = signal<string | null>(null);
+  readonly walletTopUpNeeded = computed(() =>
+    isInsufficientWalletError(undefined, this.actionError()),
+  );
   readonly changeCommentByMilestone = signal<Record<string, string>>({});
   readonly openChangeFormId = signal<string | null>(null);
 
@@ -308,6 +311,10 @@ export class ManageWorkMilestonesComponent implements OnInit {
         this.actionError.set(extractApiError(err, 'Failed to request work changes.'));
       },
     });
+  }
+
+  goToWalletTopUp(): void {
+    void this.router.navigate(['/settings/payments']);
   }
 
   isStepDone(card: ProjectMilestoneCard, index: number): boolean {

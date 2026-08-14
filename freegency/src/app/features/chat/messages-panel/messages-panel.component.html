@@ -469,6 +469,12 @@
                     Fund Next Milestone
                   </button>
                 </div>
+                @if (walletTopUpNeeded()) {
+                  <div class="msg-wallet-nudge" role="alert">
+                    <p>{{ planActionError() }}</p>
+                    <button type="button" (click)="goToWalletTopUp()">Top up wallet</button>
+                  </div>
+                }
               }
 
               @if (kind === 'changes' && canSubmitCurrentFromChat() && ms) {
@@ -584,9 +590,19 @@
             </button>
           </div>
         }
-        @if (planActionError()) {
+        @if (planActionError(); as err) {
           <div class="msg-composer__error" role="alert">
-            <p>{{ planActionError() }}</p>
+            <div class="msg-composer__error-copy">
+              @if (walletTopUpNeeded()) {
+                <strong>Not enough wallet balance</strong>
+              }
+              <p>{{ err }}</p>
+              @if (walletTopUpNeeded()) {
+                <button type="button" class="msg-composer__error-cta" (click)="goToWalletTopUp()">
+                  Top up wallet
+                </button>
+              }
+            </div>
             <button type="button" class="msg-composer__error-dismiss" (click)="dismissPlanActionError()">
               Dismiss
             </button>
@@ -824,6 +840,12 @@
                 >
                   Fund next milestone
                 </button>
+                @if (walletTopUpNeeded()) {
+                  <div class="msg-wallet-nudge" role="alert">
+                    <p>{{ planActionError() }}</p>
+                    <button type="button" (click)="goToWalletTopUp()">Top up wallet</button>
+                  </div>
+                }
               }
             }
           </aside>

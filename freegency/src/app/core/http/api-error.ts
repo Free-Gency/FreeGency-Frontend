@@ -39,6 +39,37 @@ export function extractApiError(error: unknown, fallback = 'Something went wrong
   return fallback;
 }
 
+export function extractApiErrorCode(error: unknown): string | null {
+  if (!(error instanceof HttpErrorResponse)) {
+    return null;
+  }
+
+  const body = parseErrorBody(error.error);
+  if (!body) {
+    return null;
+  }
+
+  const nestedError = body['error'] ?? body['Error'];
+  if (nestedError && typeof nestedError === 'object' && !Array.isArray(nestedError)) {
+    const code = (nestedError as Record<string, unknown>)['code'] ?? (nestedError as Record<string, unknown>)['Code'];
+    if (typeof code === 'string' && code.trim()) {
+      return code.trim();
+    }
+  }
+
+  return null;
+}
+
+/** True when funding failed because the wallet cannot cover the milestone. */
+export function isInsufficientWalletError(error?: unknown, message?: string | null): boolean {
+  if (extractApiErrorCode(error) === 'Wallet.InsufficientBalance') {
+    return true;
+  }
+
+  const text = (message ?? (error ? extractApiError(error, '') : '')).toLowerCase();
+  return text.includes('insufficient') && (text.includes('wallet') || text.includes('balance'));
+}
+
 function parseErrorBody(raw: unknown): Record<string, unknown> | null {
   if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
     return raw as Record<string, unknown>;

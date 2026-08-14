@@ -17,6 +17,7 @@ import {
   buildMilestoneProgressSummary,
   getPrimaryMilestone,
 } from '../../../client/pages/manage-work/milestones/milestone-progress.util';
+import { extractApiError, isInsufficientWalletError } from '../../../../core/http/api-error';
 
 @Component({
   selector: 'app-project-milestones',
@@ -68,6 +69,10 @@ export class ProjectMilestonesComponent implements OnInit {
 
   protected readonly nextUnfunded = computed(() => this.summary().nextUnfunded);
 
+  protected readonly walletTopUpNeeded = computed(() =>
+    isInsufficientWalletError(undefined, this.actionError()),
+  );
+
   protected readonly submitOptions = computed<SubmitWorkMilestoneOption[]>(() => {
     const current = this.currentMilestone();
     if (!current) return [];
@@ -111,8 +116,9 @@ export class ProjectMilestonesComponent implements OnInit {
         this.files.set(result.files);
         this.loading.set(false);
       },
-      error: () => {
+      error: (err) => {
         this.loading.set(false);
+        this.actionError.set(extractApiError(err, 'Could not load milestones for this project.'));
       },
     });
   }
@@ -178,7 +184,7 @@ export class ProjectMilestonesComponent implements OnInit {
       },
       error: (err) => {
         this.actionBusy.set(false);
-        this.actionError.set(err.message || 'Failed to accept plan.');
+        this.actionError.set(extractApiError(err, 'Failed to accept plan.'));
       },
     });
   }
@@ -199,13 +205,14 @@ export class ProjectMilestonesComponent implements OnInit {
       },
       error: (err) => {
         this.actionBusy.set(false);
-        this.actionError.set(err.message || 'Failed to request changes.');
+        this.actionError.set(extractApiError(err, 'Failed to request changes.'));
       },
     });
   }
 
   protected fundNext() {
     this.actionBusy.set(true);
+    this.actionError.set(null);
     this.milestonesApi.fundNext(this.projectId()).subscribe({
       next: () => {
         this.actionBusy.set(false);
@@ -213,7 +220,7 @@ export class ProjectMilestonesComponent implements OnInit {
       },
       error: (err) => {
         this.actionBusy.set(false);
-        this.actionError.set(err.message || 'Failed to fund milestone.');
+        this.actionError.set(extractApiError(err, 'Failed to fund milestone.'));
       },
     });
   }
@@ -228,7 +235,7 @@ export class ProjectMilestonesComponent implements OnInit {
       },
       error: (err) => {
         this.actionBusy.set(false);
-        this.actionError.set(err.message || 'Failed to release funds.');
+        this.actionError.set(extractApiError(err, 'Failed to release funds.'));
       },
     });
   }
@@ -250,7 +257,7 @@ export class ProjectMilestonesComponent implements OnInit {
       },
       error: (err) => {
         this.actionBusy.set(false);
-        this.actionError.set(err.message || 'Failed to request work changes.');
+        this.actionError.set(extractApiError(err, 'Failed to request work changes.'));
       },
     });
   }
@@ -264,5 +271,25 @@ export class ProjectMilestonesComponent implements OnInit {
       style: 'currency',
       currency: 'USD',
     }).format(amount);
+  }
+
+  protected formatPlanStatus(status: string | null | undefined): string {
+    if (!status) return '—';
+    const labels: Record<string, string> = {
+      None: 'Not started',
+      Proposed: 'Proposed',
+      ChangesRequested: 'Changes requested',
+      PlanAgreed: 'Plan agreed',
+      Accepted: 'Plan agreed',
+    };
+    return labels[status] ?? status.replace(/([a-z])([A-Z])/g, '$1 $2');
+  }
+
+  protected dismissActionError(): void {
+    this.actionError.set(null);
+  }
+
+  protected goToWalletTopUp(): void {
+    void this.router.navigate(['/settings/payments']);
   }
 }
