@@ -418,10 +418,41 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     if (!budget) return null;
     if (budget.isFixedPrice) {
       const fixed = budget.budgetMax > 0 ? budget.budgetMax : budget.budgetMin;
-      return `Fixed budget: $${fixed.toLocaleString()} — milestone total must match exactly.`;
+      return `Fixed budget: $${fixed.toLocaleString()} — milestone total can be equal or less.`;
     }
     return `Budget range: $${budget.budgetMin.toLocaleString()} – $${budget.budgetMax.toLocaleString()}.`;
   });
+
+  protected readonly proposeBudgetFitLabel = computed(() => {
+    const budget = this.proposeBudget();
+    if (!budget) return null;
+
+    const round2 = (n: number) => Math.round(n * 100) / 100;
+    const total = round2(this.proposeTotal());
+    if (total <= 0) return null;
+
+    if (budget.isFixedPrice) {
+      const fixed = round2(budget.budgetMax > 0 ? budget.budgetMax : budget.budgetMin);
+      if (fixed > 0 && total <= fixed) return 'Within budget';
+      if (fixed > 0 && total > fixed) return 'Over budget';
+      return null;
+    }
+
+    const min = round2(budget.budgetMin);
+    const max = round2(budget.budgetMax);
+    if (total >= min && total <= max) return 'In range';
+    return 'Out of range';
+  });
+
+  protected readonly proposeBudgetFitOk = computed(() => {
+    const label = this.proposeBudgetFitLabel();
+    return label === 'In range' || label === 'Within budget';
+  });
+
+  protected readonly proposeMinDueDate = this.toLocalYmd(new Date());
+  protected readonly proposeMaxDueDate = this.toLocalYmd(
+    new Date(new Date().getFullYear() + 10, new Date().getMonth(), new Date().getDate()),
+  );
 
   protected readonly filteredRooms = computed(() => {
     const q = this.search().trim().toLowerCase();
@@ -1691,6 +1722,26 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     );
   }
 
+  protected updateProposeDueDate(index: number, value: string): void {
+    const dueDate = (value ?? '').trim();
+    if (!dueDate) {
+      this.updateProposeRow(index, { dueDate: '' });
+      return;
+    }
+
+    const error = this.dueDateError(dueDate);
+    if (error) {
+      this.proposeError.set(error);
+      this.updateProposeRow(index, { dueDate: '' });
+      return;
+    }
+
+    if (this.proposeError()?.toLowerCase().includes('due date')) {
+      this.proposeError.set(null);
+    }
+    this.updateProposeRow(index, { dueDate });
+  }
+
   protected submitProposePlan(): void {
     const room = this.selectedRoom();
     if (!room?.projectId || !room.proposalId || this.proposeSaving()) return;
@@ -1700,7 +1751,7 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
         title: row.title.trim(),
         definitionOfDone: row.definitionOfDone.trim(),
         amount: Number(row.amount) || 0,
-        dueDate: row.dueDate ? new Date(row.dueDate).toISOString() : null,
+        dueDate: row.dueDate,
       }))
       .filter((m) => m.title && m.amount > 0);
 
@@ -1708,6 +1759,20 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
       this.proposeError.set('Add at least one milestone with a title and amount.');
       return;
     }
+
+    for (const row of this.proposeRows()) {
+      if (!row.dueDate) continue;
+      const dateError = this.dueDateError(row.dueDate);
+      if (dateError) {
+        this.proposeError.set(dateError);
+        return;
+      }
+    }
+
+    const payload = milestones.map((m) => ({
+      ...m,
+      dueDate: m.dueDate ? `${m.dueDate}T12:00:00.000Z` : null,
+    }));
 
     const budgetError = this.validateProposeBudget(milestones);
     if (budgetError) {
@@ -1721,7 +1786,7 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
       .proposePlan({
         projectId: room.projectId,
         proposalId: room.proposalId,
-        milestones,
+        milestones: payload,
       })
       .subscribe({
         next: (plan) => {
@@ -2123,6 +2188,39 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
       });
   }
 
+  private dueDateError(value: string): string | null {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return 'Enter a valid due date.';
+    }
+
+    const [year, month, day] = value.split('-').map(Number);
+    const parsed = new Date(year, month - 1, day);
+    if (
+      parsed.getFullYear() !== year ||
+      parsed.getMonth() !== month - 1 ||
+      parsed.getDate() !== day
+    ) {
+      return 'Enter a valid due date.';
+    }
+
+    if (value < this.proposeMinDueDate) {
+      return 'Due date cannot be earlier than today.';
+    }
+
+    if (value > this.proposeMaxDueDate) {
+      return 'Due date cannot be more than 10 years from today.';
+    }
+
+    return null;
+  }
+
+  private toLocalYmd(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
   private validateProposeBudget(
     milestones: { amount: number }[],
   ): string | null {
@@ -2134,8 +2232,8 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
 
     if (budget.isFixedPrice) {
       const fixed = round2(budget.budgetMax > 0 ? budget.budgetMax : budget.budgetMin);
-      if (fixed > 0 && total !== fixed) {
-        return `Fixed-price project: milestone total must equal $${fixed.toLocaleString()} (current: $${total.toLocaleString()}).`;
+      if (fixed > 0 && total > fixed) {
+        return `Fixed-price project: milestone total must be $${fixed.toLocaleString()} or less (current: $${total.toLocaleString()}).`;
       }
       return null;
     }

@@ -1847,6 +1847,33 @@
   color: #6b7280;
 }
 
+.msg-plan-modal__total {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.msg-plan-modal__fit {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.msg-plan-modal__fit--ok {
+  background: #ecfdf3;
+  color: #067647;
+}
+
+.msg-plan-modal__fit--bad {
+  background: #fef3f2;
+  color: #b42318;
+}
+
 .msg-plan-modal__close {
   width: 32px;
   height: 32px;
@@ -1978,6 +2005,10 @@
   border-color: #c7d2fe;
   background: #fff;
   box-shadow: 0 0 0 3px rgba(65, 48, 215, 0.1);
+}
+
+.msg-modal--plan .msg-modal__field input[type="date"]:invalid {
+  border-color: #f97066;
 }
 
 .msg-modal__field textarea {

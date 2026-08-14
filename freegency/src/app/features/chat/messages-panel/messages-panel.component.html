@@ -1000,6 +1000,15 @@
           }
           <p class="msg-modal__hint msg-plan-modal__total">
             Plan total: <strong>${{ proposeTotal() | number: '1.0-2' }}</strong>
+            @if (proposeBudgetFitLabel()) {
+              <span
+                class="msg-plan-modal__fit"
+                [class.msg-plan-modal__fit--ok]="proposeBudgetFitOk()"
+                [class.msg-plan-modal__fit--bad]="!proposeBudgetFitOk()"
+              >
+                {{ proposeBudgetFitLabel() }}
+              </span>
+            }
           </p>
         </div>
         <button type="button" class="msg-plan-modal__close" (click)="closeProposePlan()" aria-label="Close">
@@ -1057,8 +1066,10 @@
                   <span>Due date</span>
                   <input
                     type="date"
+                    [min]="proposeMinDueDate"
+                    [max]="proposeMaxDueDate"
                     [ngModel]="row.dueDate"
-                    (ngModelChange)="updateProposeRow(i, { dueDate: $event })"
+                    (ngModelChange)="updateProposeDueDate(i, $event)"
                   />
                 </label>
               </div>
