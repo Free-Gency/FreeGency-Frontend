@@ -1145,123 +1145,270 @@
   }
 }
 
-.hire-invite-list {
-  display: grid;
-  gap: 0.85rem;
+.hire-invites {
+  gap: 1.15rem;
 }
 
-.hire-invite-card {
+.hire-invites__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+}
+
+.hire-invites__eyebrow {
+  margin: 0;
+  font-family: var(--font-body, 'DM Sans', system-ui, sans-serif);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #4036e0;
+}
+
+.hire-invites__head h2 {
+  margin: 0.4rem 0 0;
+  font-family: var(--font-display, 'Syne', sans-serif);
+  font-size: clamp(1.35rem, 2.2vw, 1.7rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  color: #151c27;
+}
+
+.hire-invites__head p {
+  margin: 0.45rem 0 0;
+  max-width: 34rem;
+  color: #667085;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.hire-invites__count {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0 0.8rem;
+  border-radius: 999px;
+  background: #eceafc;
+  color: #4036e0;
+  font-family: var(--font-display, 'Syne', sans-serif);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.hire-invite-grid {
   display: grid;
-  grid-template-columns: 4px 1fr;
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 22.5rem));
+  gap: 1.15rem;
+  justify-content: start;
+}
+
+.hire-invite-tile {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 22.5rem;
   overflow: hidden;
-  border-radius: 1.15rem;
-  border: 1px solid #e6e9f0;
+  border-radius: 1.4rem;
+  border: 1px solid #e8ebf2;
   background: #fff;
+  box-shadow: 0 8px 24px rgba(21, 28, 39, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.hire-invite-card__rail {
-  background: linear-gradient(180deg, #1f8a70 0%, #1c2430 100%);
+.hire-invite-tile:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 36px rgba(21, 28, 39, 0.09);
 }
 
-.hire-invite-card__main {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 0.9rem 1rem;
-  align-items: start;
-  padding: 1.1rem 1.15rem;
+.hire-invite-tile__cover {
+  height: 3.35rem;
+  background:
+    linear-gradient(135deg, rgba(64, 54, 224, 0.18), transparent 52%),
+    linear-gradient(160deg, #e4e7ff, #f3efff 58%, #f8f5ff);
 }
 
-.hire-invite-card__avatar {
-  width: 2.85rem;
-  height: 2.85rem;
-  border-radius: 0.85rem;
-  background: #1c2430;
+.hire-invite-tile[data-status='accepted'] .hire-invite-tile__cover {
+  background:
+    linear-gradient(135deg, rgba(16, 185, 129, 0.16), transparent 52%),
+    linear-gradient(160deg, #dcfce7, #f0fdf4 62%, #f8fffb);
+}
+
+.hire-invite-tile[data-status='pending'] .hire-invite-tile__cover {
+  background:
+    linear-gradient(135deg, rgba(249, 115, 22, 0.16), transparent 52%),
+    linear-gradient(160deg, #ffedd5, #fff7ed 62%, #fffbeb);
+}
+
+.hire-invite-tile[data-status='rejected'] .hire-invite-tile__cover,
+.hire-invite-tile[data-status='cancelled'] .hire-invite-tile__cover,
+.hire-invite-tile[data-status='expired'] .hire-invite-tile__cover {
+  background: linear-gradient(160deg, #eceff3, #f6f7f9);
+}
+
+.hire-invite-tile__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0 1.15rem 1.15rem;
+  flex: 1;
+}
+
+.hire-invite-tile__head {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  margin-top: -1.2rem;
+}
+
+.hire-invite-tile__avatar {
+  width: 3.15rem;
+  height: 3.15rem;
+  border-radius: 1rem;
+  border: 3px solid #fff;
+  background: #27253f;
   color: #fff;
   display: grid;
   place-items: center;
-  font-size: 0.75rem;
+  font-family: var(--font-display, 'Syne', sans-serif);
+  font-size: 0.78rem;
   font-weight: 700;
   flex-shrink: 0;
 }
 
-.hire-invite-card__content {
-  min-width: 0;
-  display: grid;
-  gap: 0.35rem;
+.hire-invite-tile__avatar--team {
+  background: #4036e0;
 }
 
-.hire-invite-card__topline {
+.hire-invite-tile__who {
+  min-width: 0;
+  flex: 1;
+  padding-bottom: 0.05rem;
+}
+
+.hire-invite-tile__name-row {
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  flex-wrap: wrap;
+  min-width: 0;
 }
 
-.hire-invite-card__topline h3 {
+.hire-invite-tile__who h3 {
   margin: 0;
+  min-width: 0;
   font-family: var(--font-display, 'Syne', sans-serif);
   font-size: 1.02rem;
   font-weight: 700;
+  letter-spacing: -0.02em;
   color: #151c27;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.hire-invite-card__project {
-  margin: 0;
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: #1c2430;
+.hire-invite-tile__name-row .hire-status {
+  flex-shrink: 0;
 }
 
-.hire-invite-card__message {
-  margin: 0.25rem 0 0;
-  padding: 0.7rem 0.85rem;
-  border-left: 2px solid #d7dbe5;
-  background: #f7f8fb;
-  border-radius: 0 0.7rem 0.7rem 0;
-  color: #4b5563;
-  font-size: 0.875rem;
-  line-height: 1.45;
-}
-
-.hire-invite-card__date {
-  margin-top: 0.15rem;
+.hire-invite-tile__kind {
+  margin: 0.2rem 0 0;
   font-size: 0.75rem;
+  font-weight: 600;
   color: #8a93a3;
 }
 
-.hire-invite-card__actions {
-  display: flex;
-  gap: 0.45rem;
-  align-items: flex-start;
+.hire-invite-tile__project {
+  margin: 0.15rem 0 0;
+  font-family: var(--font-display, 'Syne', sans-serif);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+  color: #151c27;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.hire-invite-chip {
+.hire-invite-tile__message {
+  margin: 0;
+  padding: 0 0 0 0.75rem;
+  border-left: 2px solid #dcdfea;
+  color: #667085;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  font-style: italic;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.hire-invite-tile__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  margin-top: auto;
+  padding-top: 0.85rem;
+  border-top: 1px solid #eef0f4;
+}
+
+.hire-invite-tile__date {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #9ca3af;
+}
+
+.hire-invite-tile__btn {
   display: inline-flex;
   align-items: center;
-  padding: 0.15rem 0.55rem;
+  justify-content: center;
+  min-height: 2.15rem;
+  padding: 0 0.95rem;
+  border: 0;
   border-radius: 999px;
-  background: #f1f3f6;
-  color: #374151;
-  font-size: 0.68rem;
+  font-family: var(--font-display, 'Syne', sans-serif);
+  font-size: 0.78rem;
   font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.hire-invite-tile__btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.hire-invite-tile__btn--ghost {
+  background: #f0f0f5;
+  color: #151c27;
+}
+
+.hire-invite-tile__btn--ghost:hover:not(:disabled) {
+  background: #e7eefe;
+}
+
+.hire-invite-tile__btn--primary {
+  background: #4036e0;
+  color: #fff;
+}
+
+.hire-invite-tile__btn--primary:hover:not(:disabled) {
+  opacity: 0.92;
 }
 
 .hire-invite-skeleton {
-  height: 7.25rem;
-  border-radius: 1.15rem;
+  width: 100%;
+  max-width: 22.5rem;
+  height: 14.5rem;
+  border-radius: 1.4rem;
   background: linear-gradient(90deg, #f1f3f6 25%, #e8ebf0 37%, #f1f3f6 63%);
   background-size: 400% 100%;
   animation: hire-shimmer 1.2s ease infinite;
-}
-
-@media (max-width: 720px) {
-  .hire-invite-card__main {
-    grid-template-columns: auto 1fr;
-  }
-
-  .hire-invite-card__actions {
-    grid-column: 1 / -1;
-  }
 }
 
 /* legacy row classes kept for safety */
@@ -1327,12 +1474,21 @@
 .hire-status {
   display: inline-flex;
   align-items: center;
-  padding: 0.2rem 0.55rem;
+  gap: 0.35rem;
+  padding: 0.22rem 0.6rem;
   border-radius: 999px;
   font-size: 0.68rem;
   font-weight: 750;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+}
+
+.hire-status::before {
+  content: '';
+  width: 0.38rem;
+  height: 0.38rem;
+  border-radius: 999px;
+  background: currentColor;
 }
 
 .hire-status--pending {

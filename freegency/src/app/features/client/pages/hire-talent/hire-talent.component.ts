@@ -367,6 +367,16 @@ export class HireTalentComponent implements OnInit {
     return `hire-status hire-status--${(status || 'pending').toLowerCase()}`;
   }
 
+  protected inviteeName(inv: ProjectInvitation): string {
+    return inv.inviteeType === 'Team'
+      ? inv.inviteeTeamName || 'Team'
+      : inv.inviteeUserName || 'Developer';
+  }
+
+  protected inviteStatusKey(status: string): string {
+    return (status || 'pending').toLowerCase();
+  }
+
   protected cancelInvitation(id: string): void {
     this.actionBusyId.set(id);
     this.invitationsApi.cancel(id).subscribe({

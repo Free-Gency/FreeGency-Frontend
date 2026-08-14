@@ -538,18 +538,24 @@
 
     <!-- INVITATIONS -->
     @if (tab() === 'invitations') {
-      <section class="hire-section">
-        <div class="hire-section__head">
+      <section class="hire-section hire-invites">
+        <div class="hire-invites__head">
           <div>
-            <p class="hire-section__eyebrow">Outreach</p>
+            <p class="hire-invites__eyebrow">Outreach</p>
             <h2>Sent invitations</h2>
             <p>Track every invite and jump into chat when talent accepts.</p>
           </div>
+          @if (invitations().length) {
+            <span class="hire-invites__count">{{ invitations().length }} sent</span>
+          }
         </div>
 
         @if (invitationsLoading()) {
-          <div class="hire-invite-skeleton" aria-hidden="true"></div>
-          <div class="hire-invite-skeleton" aria-hidden="true"></div>
+          <div class="hire-invite-grid">
+            <div class="hire-invite-skeleton" aria-hidden="true"></div>
+            <div class="hire-invite-skeleton" aria-hidden="true"></div>
+            <div class="hire-invite-skeleton" aria-hidden="true"></div>
+          </div>
         } @else if (invitationsError()) {
           <div class="hire-empty">
             <h2>Couldn’t load invitations</h2>
@@ -564,52 +570,46 @@
             </button>
           </div>
         } @else {
-          <div class="hire-invite-list">
+          <div class="hire-invite-grid">
             @for (inv of invitations(); track inv.id) {
-              <article class="hire-invite-card">
-                <div class="hire-invite-card__rail" aria-hidden="true"></div>
-                <div class="hire-invite-card__main">
-                  <div class="hire-invite-card__avatar" aria-hidden="true">
-                    {{
-                      initials(
-                        inv.inviteeType === 'Team'
-                          ? inv.inviteeTeamName || 'Team'
-                          : inv.inviteeUserName || 'Dev'
-                      )
-                    }}
-                  </div>
-
-                  <div class="hire-invite-card__content">
-                    <div class="hire-invite-card__topline">
-                      <h3>
-                        {{
-                          inv.inviteeType === 'Team'
-                            ? inv.inviteeTeamName || 'Team'
-                            : inv.inviteeUserName || 'Developer'
-                        }}
-                      </h3>
-                      <span [class]="statusClass(inv.status)">{{ inv.status }}</span>
-                      <span class="hire-invite-chip">
-                        {{ inv.inviteeType === 'Team' ? 'Team' : 'Developer' }}
-                      </span>
+              <article class="hire-invite-tile" [attr.data-status]="inviteStatusKey(inv.status)">
+                <div class="hire-invite-tile__cover" aria-hidden="true"></div>
+                <div class="hire-invite-tile__inner">
+                  <header class="hire-invite-tile__head">
+                    <div
+                      class="hire-invite-tile__avatar"
+                      [class.hire-invite-tile__avatar--team]="inv.inviteeType === 'Team'"
+                      aria-hidden="true"
+                    >
+                      {{ initials(inviteeName(inv)) }}
                     </div>
+                    <div class="hire-invite-tile__who">
+                      <div class="hire-invite-tile__name-row">
+                        <h3>{{ inviteeName(inv) }}</h3>
+                        <span [class]="statusClass(inv.status)">{{ inv.status }}</span>
+                      </div>
+                      <p class="hire-invite-tile__kind">
+                        {{ inv.inviteeType === 'Team' ? 'Team invite' : 'Developer invite' }}
+                      </p>
+                    </div>
+                  </header>
 
-                    <p class="hire-invite-card__project">{{ inv.projectTitle }}</p>
+                  <h4 class="hire-invite-tile__project" [title]="inv.projectTitle">
+                    {{ inv.projectTitle }}
+                  </h4>
 
-                    @if (inv.message.trim()) {
-                      <blockquote class="hire-invite-card__message">{{ inv.message }}</blockquote>
-                    }
+                  @if (inv.message.trim()) {
+                    <p class="hire-invite-tile__message">{{ inv.message }}</p>
+                  }
 
-                    <time class="hire-invite-card__date" [attr.datetime]="inv.createdAt">
-                      Sent {{ inv.createdAt | date: 'mediumDate' }}
+                  <footer class="hire-invite-tile__foot">
+                    <time class="hire-invite-tile__date" [attr.datetime]="inv.createdAt">
+                      {{ inv.createdAt | date: 'mediumDate' }}
                     </time>
-                  </div>
-
-                  <div class="hire-invite-card__actions">
                     @if (inv.status === 'Pending') {
                       <button
                         type="button"
-                        class="hire-btn hire-btn--ghost"
+                        class="hire-invite-tile__btn hire-invite-tile__btn--ghost"
                         [disabled]="actionBusyId() === inv.id"
                         (click)="cancelInvitation(inv.id)"
                       >
@@ -617,11 +617,15 @@
                       </button>
                     }
                     @if (inv.status === 'Accepted' && inv.chatRoomId) {
-                      <button type="button" class="hire-btn hire-btn--primary" (click)="openChat(inv.chatRoomId)">
+                      <button
+                        type="button"
+                        class="hire-invite-tile__btn hire-invite-tile__btn--primary"
+                        (click)="openChat(inv.chatRoomId)"
+                      >
                         Open chat
                       </button>
                     }
-                  </div>
+                  </footer>
                 </div>
               </article>
             }
