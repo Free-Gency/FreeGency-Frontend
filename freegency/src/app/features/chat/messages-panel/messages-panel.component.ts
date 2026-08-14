@@ -2055,7 +2055,11 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     const room = this.selectedRoom();
     if (!room) return;
     const normalized = this.normalizeIncomingMessage(message, room.id);
-    if (normalized.chatRoomId && normalized.chatRoomId !== room.id) return;
+    if (
+      normalized.chatRoomId &&
+      normalized.chatRoomId.toLowerCase() !== room.id.toLowerCase()
+    )
+      return;
 
     const mine = normalized.isMine || normalized.senderId === this.auth.session()?.profileId;
     this.appendMessage({

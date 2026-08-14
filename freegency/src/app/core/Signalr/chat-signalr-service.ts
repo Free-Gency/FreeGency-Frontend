@@ -205,10 +205,12 @@ leaveRoom(roomId: string): Promise<void> {
       FileUrl?: string | null;
       SenderProfileType?: string | null;
       PlanVersionId?: string | null;
+      MilestoneId?: string | null;
       ModerationStatus?: string | null;
       ModerationWarning?: string | null;
     };
     const planRaw = raw.planVersionId ?? r.PlanVersionId ?? null;
+    const milestoneRaw = raw.milestoneId ?? r.MilestoneId ?? null;
     return {
       id: String(raw.id || r.Id || ''),
       chatRoomId: raw.chatRoomId ?? r.ChatRoomId ?? null,
@@ -219,6 +221,7 @@ leaveRoom(roomId: string): Promise<void> {
       fileName: raw.fileName ?? r.FileName ?? null,
       fileUrl: raw.fileUrl ?? r.FileUrl ?? null,
       planVersionId: planRaw == null || planRaw === '' ? null : String(planRaw),
+      milestoneId: milestoneRaw == null || milestoneRaw === '' ? null : String(milestoneRaw),
       isMine: raw.isMine ?? !!r.IsMine,
       createdAt: raw.createdAt || r.CreatedAt || new Date().toISOString(),
       messageType: raw.messageType || r.MessageType || 'Text',
