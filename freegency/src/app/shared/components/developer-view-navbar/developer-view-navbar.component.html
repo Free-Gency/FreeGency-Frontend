@@ -50,96 +50,99 @@
 
   <!-- Right: search + notification + avatar -->
   <div class="flex shrink-0 items-center gap-3 sm:gap-4">
-  <div
-    class="relative hidden h-10 w-[min(100%,280px)] items-center gap-1 rounded-[14px] bg-[#fbfbfb] px-3 py-1 md:flex lg:w-[340px] xl:w-[400px]"
-    [class.z-50]="searchScopeOpen()"
-    role="search"
-    data-search-scope-dropdown
-    (click)="$event.stopPropagation()"
-  >
-    <label class="flex min-w-0 flex-1 items-center">
-      <span class="sr-only">Search</span>
-      <span
-        class="inline-flex size-5 shrink-0 items-center justify-center overflow-hidden text-on-surface-variant"
-      >
-        <hugeicons-icon
-          [icon]="searchIcon"
-          [size]="20"
-          color="currentColor"
-          [strokeWidth]="1.5"
-          aria-hidden="true"
-        />
-      </span>
-      <input
-        type="search"
-        [placeholder]="searchPlaceholder()"
-        class="min-w-0 flex-1 border-0 bg-transparent px-2.5 py-px font-body text-sm text-on-surface outline-none placeholder:text-on-surface-variant"
-      />
-    </label>
-
-    <div class="relative shrink-0">
-      <button
-        type="button"
-        class="inline-flex h-8 min-w-[7rem] cursor-pointer items-center justify-between gap-2 rounded-[10px] bg-white px-3 font-body text-sm text-on-surface shadow-[0_1px_2px_rgba(39,37,63,0.06)] transition-colors hover:bg-[#f4f3ff]"
-        [class.bg-[#f4f3ff]]="searchScopeOpen()"
-        [attr.aria-expanded]="searchScopeOpen()"
-        aria-haspopup="listbox"
-        aria-controls="search-scope-listbox"
-        (click)="toggleSearchScope($event)"
-      >
-        <span class="truncate">{{ searchScope() }}</span>
+    <div
+      class="relative hidden h-10 w-[min(100%,280px)] items-center gap-1 rounded-[14px] bg-[#fbfbfb] px-3 py-1 md:flex lg:w-[340px] xl:w-[400px]"
+      [class.z-50]="searchScopeOpen()"
+      role="search"
+      data-search-scope-dropdown
+      (click)="$event.stopPropagation()"
+    >
+      <label class="flex min-w-0 flex-1 items-center">
+        <span class="sr-only">Search</span>
         <span
-          class="inline-flex size-4 shrink-0 items-center justify-center text-on-surface-variant transition-transform duration-200"
-          [class.rotate-180]="searchScopeOpen()"
-          aria-hidden="true"
+          class="inline-flex size-5 shrink-0 items-center justify-center overflow-hidden text-on-surface-variant"
         >
           <hugeicons-icon
-            [icon]="arrowDownIcon"
-            [size]="16"
+            [icon]="searchIcon"
+            [size]="20"
             color="currentColor"
-            [strokeWidth]="2"
+            [strokeWidth]="1.5"
+            aria-hidden="true"
           />
         </span>
-      </button>
+        <input
+          type="search"
+          [placeholder]="searchPlaceholder()"
+          class="min-w-0 flex-1 border-0 bg-transparent px-2.5 py-px font-body text-sm text-on-surface outline-none placeholder:text-on-surface-variant"
+        />
+      </label>
 
-      @if (searchScopeOpen()) {
-        <ul
-          id="search-scope-listbox"
-          role="listbox"
-          class="absolute top-[calc(100%+8px)] right-0 z-[60] w-[168px] overflow-hidden rounded-2xl border border-outline-variant/40 bg-white py-1.5 shadow-[0_12px_40px_rgba(39,37,63,0.14)]"
+      <div class="relative shrink-0">
+        <button
+          type="button"
+          class="inline-flex h-8 min-w-[7rem] cursor-pointer items-center justify-between gap-2 rounded-[10px] bg-white px-3 font-body text-sm text-on-surface shadow-[0_1px_2px_rgba(39,37,63,0.06)] transition-colors hover:bg-[#f4f3ff]"
+          [class.bg-[#f4f3ff]]="searchScopeOpen()"
+          [attr.aria-expanded]="searchScopeOpen()"
+          aria-haspopup="listbox"
+          aria-controls="search-scope-listbox"
+          (click)="toggleSearchScope($event)"
         >
-          @for (scope of searchScopes; track scope) {
-            <li role="option" [attr.aria-selected]="searchScope() === scope">
-              <button
-                type="button"
-                class="flex w-full items-center justify-between gap-3 px-3.5 py-2.5 text-left font-body text-sm text-on-surface transition-colors hover:bg-[#f4f3ff]"
-                [class.bg-[#f4f3ff]]="searchScope() === scope"
-                [class.font-medium]="searchScope() === scope"
-                [class.text-primary]="searchScope() === scope"
-                (click)="selectSearchScope(scope, $event)"
-              >
-                <span>{{ scope }}</span>
-                @if (searchScope() === scope) {
-                  <span class="inline-flex size-4 items-center justify-center text-primary" aria-hidden="true">
-                    <hugeicons-icon
-                      [icon]="checkIcon"
-                      [size]="16"
-                      color="currentColor"
-                      [strokeWidth]="2"
-                    />
-                  </span>
-                }
-              </button>
-            </li>
-          }
-        </ul>
-      }
+          <span class="truncate">{{ searchScope() }}</span>
+          <span
+            class="inline-flex size-4 shrink-0 items-center justify-center text-on-surface-variant transition-transform duration-200"
+            [class.rotate-180]="searchScopeOpen()"
+            aria-hidden="true"
+          >
+            <hugeicons-icon
+              [icon]="arrowDownIcon"
+              [size]="16"
+              color="currentColor"
+              [strokeWidth]="2"
+            />
+          </span>
+        </button>
+
+        @if (searchScopeOpen()) {
+          <ul
+            id="search-scope-listbox"
+            role="listbox"
+            class="absolute top-[calc(100%+8px)] right-0 z-[60] w-[168px] overflow-hidden rounded-2xl border border-outline-variant/40 bg-white py-1.5 shadow-[0_12px_40px_rgba(39,37,63,0.14)]"
+          >
+            @for (scope of searchScopes; track scope) {
+              <li role="option" [attr.aria-selected]="searchScope() === scope">
+                <button
+                  type="button"
+                  class="flex w-full items-center justify-between gap-3 px-3.5 py-2.5 text-left font-body text-sm text-on-surface transition-colors hover:bg-[#f4f3ff]"
+                  [class.bg-[#f4f3ff]]="searchScope() === scope"
+                  [class.font-medium]="searchScope() === scope"
+                  [class.text-primary]="searchScope() === scope"
+                  (click)="selectSearchScope(scope, $event)"
+                >
+                  <span>{{ scope }}</span>
+                  @if (searchScope() === scope) {
+                    <span
+                      class="inline-flex size-4 items-center justify-center text-primary"
+                      aria-hidden="true"
+                    >
+                      <hugeicons-icon
+                        [icon]="checkIcon"
+                        [size]="16"
+                        color="currentColor"
+                        [strokeWidth]="2"
+                      />
+                    </span>
+                  }
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
     </div>
-  </div>
 
     <div class="relative shrink-0">
-  <app-notification />
-</div>
+      <app-notification />
+    </div>
 
     <div class="relative shrink-0" (click)="$event.stopPropagation()">
       <button
@@ -198,7 +201,9 @@
           <!-- Account switcher: only when both profiles exist -->
           @if (canSwitchProfiles()) {
             <div class="py-2" role="group" aria-label="Your accounts">
-              <p class="px-4 pb-1 pt-1 font-body text-xs font-semibold tracking-wide text-[#98a2b3] uppercase">
+              <p
+                class="px-4 pb-1 pt-1 font-body text-xs font-semibold tracking-wide text-[#98a2b3] uppercase"
+              >
                 Online for
               </p>
               @for (mode of profileModes; track mode) {
@@ -253,8 +258,16 @@
               class="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 font-body text-sm text-[#151c27] transition-colors hover:bg-[#f4f3ff]"
               (click)="goToPortfolio($event)"
             >
-              <span class="inline-flex size-5 items-center justify-center text-[#667085]" aria-hidden="true">
-                <hugeicons-icon [icon]="portfolioIcon" [size]="18" color="currentColor" [strokeWidth]="1.5" />
+              <span
+                class="inline-flex size-5 items-center justify-center text-[#667085]"
+                aria-hidden="true"
+              >
+                <hugeicons-icon
+                  [icon]="portfolioIcon"
+                  [size]="18"
+                  color="currentColor"
+                  [strokeWidth]="1.5"
+                />
               </span>
               <span>Portfolio</span>
             </button>
@@ -266,8 +279,16 @@
               class="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 font-body text-sm text-[#151c27] transition-colors hover:bg-[#f4f3ff]"
               (click)="closeAccountMenu()"
             >
-              <span class="inline-flex size-5 items-center justify-center text-[#667085]" aria-hidden="true">
-                <hugeicons-icon [icon]="settingsIcon" [size]="18" color="currentColor" [strokeWidth]="1.5" />
+              <span
+                class="inline-flex size-5 items-center justify-center text-[#667085]"
+                aria-hidden="true"
+              >
+                <hugeicons-icon
+                  [icon]="settingsIcon"
+                  [size]="18"
+                  color="currentColor"
+                  [strokeWidth]="1.5"
+                />
               </span>
               <span>Settings</span>
             </button>
@@ -279,8 +300,16 @@
               class="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 font-body text-sm text-[#151c27] transition-colors hover:bg-[#f4f3ff]"
               (click)="closeAccountMenu()"
             >
-              <span class="inline-flex size-5 items-center justify-center text-[#667085]" aria-hidden="true">
-                <hugeicons-icon [icon]="walletIcon" [size]="18" color="currentColor" [strokeWidth]="1.5" />
+              <span
+                class="inline-flex size-5 items-center justify-center text-[#667085]"
+                aria-hidden="true"
+              >
+                <hugeicons-icon
+                  [icon]="walletIcon"
+                  [size]="18"
+                  color="currentColor"
+                  [strokeWidth]="1.5"
+                />
               </span>
               <span>Wallet</span>
             </button>
@@ -291,8 +320,16 @@
               class="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 font-body text-sm text-[#151c27] transition-colors hover:bg-[#f4f3ff]"
               (click)="closeAccountMenu()"
             >
-              <span class="inline-flex size-5 items-center justify-center text-[#667085]" aria-hidden="true">
-                <hugeicons-icon [icon]="helpIcon" [size]="18" color="currentColor" [strokeWidth]="1.5" />
+              <span
+                class="inline-flex size-5 items-center justify-center text-[#667085]"
+                aria-hidden="true"
+              >
+                <hugeicons-icon
+                  [icon]="helpIcon"
+                  [size]="18"
+                  color="currentColor"
+                  [strokeWidth]="1.5"
+                />
               </span>
               <span>Help &amp; support</span>
             </button>
@@ -307,8 +344,16 @@
               class="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 font-body text-sm text-[#151c27] transition-colors hover:bg-[#f4f3ff]"
               (click)="onLogout()"
             >
-              <span class="inline-flex size-5 items-center justify-center text-[#667085]" aria-hidden="true">
-                <hugeicons-icon [icon]="logoutIcon" [size]="18" color="currentColor" [strokeWidth]="1.5" />
+              <span
+                class="inline-flex size-5 items-center justify-center text-[#667085]"
+                aria-hidden="true"
+              >
+                <hugeicons-icon
+                  [icon]="logoutIcon"
+                  [size]="18"
+                  color="currentColor"
+                  [strokeWidth]="1.5"
+                />
               </span>
               <span>Log out</span>
             </button>
