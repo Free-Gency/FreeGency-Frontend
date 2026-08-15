@@ -1,10 +1,7 @@
 import { Routes } from '@angular/router';
 import { Setting } from './features/setting/setting';
 import { authGuard } from './core/auth/auth.guard';
-import {
-  clientModeGuard,
-  developerModeGuard,
-} from './core/auth/profile-mode.guard';
+import { clientModeGuard, developerModeGuard } from './core/auth/profile-mode.guard';
 import { ChatComponent } from './features/chat/chat.component';
 
 export const routes: Routes = [
@@ -45,9 +42,9 @@ export const routes: Routes = [
     path: 'client/inspiration/:id',
     canActivate: [authGuard],
     loadComponent: () =>
-      import(
-        './features/client/pages/portfolio-project-details/portfolio-project-details.component'
-      ).then((m) => m.PortfolioProjectDetailsComponent),
+      import('./features/client/pages/portfolio-project-details/portfolio-project-details.component').then(
+        (m) => m.PortfolioProjectDetailsComponent,
+      ),
   },
   {
     path: 'client/teams/:teamId',
@@ -61,114 +58,114 @@ export const routes: Routes = [
     path: 'client/developers/:userId',
     canActivate: [authGuard, clientModeGuard],
     loadComponent: () =>
-      import(
-        './features/freelancer/pages/freelancer-portfolio/freelancer-portfolio.component'
-      ).then((m) => m.FreelancerPortfolioComponent),
+      import('./features/freelancer/pages/freelancer-portfolio/freelancer-portfolio.component').then(
+        (m) => m.FreelancerPortfolioComponent,
+      ),
   },
   {
     path: 'client/talent/:kind/:id',
     canActivate: [authGuard, clientModeGuard],
     loadComponent: () =>
-      import(
-        './features/client/pages/client-talent-profile/client-talent-profile.component'
-      ).then((m) => m.ClientTalentProfileComponent),
+      import('./features/client/pages/client-talent-profile/client-talent-profile.component').then(
+        (m) => m.ClientTalentProfileComponent,
+      ),
   },
   {
     path: 'developer/me/portfolio',
     canActivate: [authGuard, developerModeGuard],
     data: { me: true },
     loadComponent: () =>
-      import(
-        './features/freelancer/pages/freelancer-portfolio/freelancer-portfolio.component'
-      ).then((m) => m.FreelancerPortfolioComponent),
+      import('./features/freelancer/pages/freelancer-portfolio/freelancer-portfolio.component').then(
+        (m) => m.FreelancerPortfolioComponent,
+      ),
   },
   {
     path: 'developer/portfolio/new',
     canActivate: [authGuard, developerModeGuard],
     loadComponent: () =>
-      import(
-        './features/developer/pages/portfolio-case-study-wizard/portfolio-case-study-wizard.component'
-      ).then((m) => m.PortfolioCaseStudyWizardComponent),
+      import('./features/developer/pages/portfolio-case-study-wizard/portfolio-case-study-wizard.component').then(
+        (m) => m.PortfolioCaseStudyWizardComponent,
+      ),
   },
   {
     path: 'developer/portfolio/:projectId/edit',
     canActivate: [authGuard, developerModeGuard],
     loadComponent: () =>
-      import(
-        './features/developer/pages/portfolio-case-study-wizard/portfolio-case-study-wizard.component'
-      ).then((m) => m.PortfolioCaseStudyWizardComponent),
+      import('./features/developer/pages/portfolio-case-study-wizard/portfolio-case-study-wizard.component').then(
+        (m) => m.PortfolioCaseStudyWizardComponent,
+      ),
   },
   {
     path: 'developer/portfolio/:id',
     canActivate: [authGuard, developerModeGuard],
     loadComponent: () =>
-      import(
-        './features/client/pages/portfolio-project-details/portfolio-project-details.component'
-      ).then((m) => m.PortfolioProjectDetailsComponent),
+      import('./features/client/pages/portfolio-project-details/portfolio-project-details.component').then(
+        (m) => m.PortfolioProjectDetailsComponent,
+      ),
   },
   {
     path: 'client/create-project',
     canActivate: [authGuard, clientModeGuard],
     loadComponent: () =>
-      import(
-        './features/client/pages/client-create-project-layout/client-create-project-layout.component'
-      ).then((m) => m.ClientCreateProjectLayoutComponent),
+      import('./features/client/pages/client-create-project-layout/client-create-project-layout.component').then(
+        (m) => m.ClientCreateProjectLayoutComponent,
+      ),
     children: [
       {
         path: '',
         loadComponent: () =>
-          import(
-            './features/client/pages/client-create-project-choice/client-create-project-choice.component'
-          ).then((m) => m.ClientCreateProjectChoiceComponent),
+          import('./features/client/pages/client-create-project-choice/client-create-project-choice.component').then(
+            (m) => m.ClientCreateProjectChoiceComponent,
+          ),
       },
       {
         path: 'with-ai',
         loadComponent: () =>
-          import(
-            './features/auth/components/client-create-project-with-ai/client-create-project-with-ai.component'
-          ).then((m) => m.ClientCreateProjectWithAiComponent),
+          import('./features/auth/components/client-create-project-with-ai/client-create-project-with-ai.component').then(
+            (m) => m.ClientCreateProjectWithAiComponent,
+          ),
       },
       {
         path: 'with-ai/scope',
         loadComponent: () =>
-          import(
-            './features/auth/components/client-project-scope/client-project-scope.component'
-          ).then((m) => m.ClientProjectScopeComponent),
+          import('./features/auth/components/client-project-scope/client-project-scope.component').then(
+            (m) => m.ClientProjectScopeComponent,
+          ),
       },
       {
         path: 'with-ai/overview',
         loadComponent: () =>
-          import(
-            './features/auth/components/client-project-overview/client-project-overview.component'
-          ).then((m) => m.ClientProjectOverviewComponent),
+          import('./features/auth/components/client-project-overview/client-project-overview.component').then(
+            (m) => m.ClientProjectOverviewComponent,
+          ),
       },
       {
         path: 'manual',
         loadComponent: () =>
-          import(
-            './features/auth/components/client-create-project-manual/client-create-project-manual.component'
-          ).then((m) => m.ClientCreateProjectManualComponent),
+          import('./features/auth/components/client-create-project-manual/client-create-project-manual.component').then(
+            (m) => m.ClientCreateProjectManualComponent,
+          ),
       },
       {
         path: 'manual/taxonomy',
         loadComponent: () =>
-          import(
-            './features/auth/components/client-create-project-manual-taxonomy/client-create-project-manual-taxonomy.component'
-          ).then((m) => m.ClientCreateProjectManualTaxonomyComponent),
+          import('./features/auth/components/client-create-project-manual-taxonomy/client-create-project-manual-taxonomy.component').then(
+            (m) => m.ClientCreateProjectManualTaxonomyComponent,
+          ),
       },
       {
         path: 'manual/scope',
         loadComponent: () =>
-          import(
-            './features/auth/components/client-project-scope/client-project-scope.component'
-          ).then((m) => m.ClientProjectScopeComponent),
+          import('./features/auth/components/client-project-scope/client-project-scope.component').then(
+            (m) => m.ClientProjectScopeComponent,
+          ),
       },
       {
         path: 'manual/overview',
         loadComponent: () =>
-          import(
-            './features/auth/components/client-project-overview/client-project-overview.component'
-          ).then((m) => m.ClientProjectOverviewComponent),
+          import('./features/auth/components/client-project-overview/client-project-overview.component').then(
+            (m) => m.ClientProjectOverviewComponent,
+          ),
       },
     ],
   },
@@ -176,26 +173,26 @@ export const routes: Routes = [
     path: 'developer/home',
     canActivate: [authGuard, developerModeGuard],
     loadComponent: () =>
-      import(
-        './features/freelancer/pages/freelancer-home/freelancer-home.component'
-      ).then((m) => m.FreelancerHomeComponent),
+      import('./features/freelancer/pages/freelancer-home/freelancer-home.component').then(
+        (m) => m.FreelancerHomeComponent,
+      ),
   },
   {
     path: 'developer/apply/:id',
     canActivate: [authGuard, developerModeGuard],
     loadComponent: () =>
-      import(
-        './features/freelancer/apply-proposal.component/apply-proposal.component.component'
-      ).then((m) => m.ApplyProposalModalComponent),
+      import('./features/freelancer/apply-proposal.component/apply-proposal.component.component').then(
+        (m) => m.ApplyProposalModalComponent,
+      ),
   },
   { path: 'developer/explore', redirectTo: 'developer/teams', pathMatch: 'full' },
   {
     path: 'developer/manage-work',
     canActivate: [authGuard, developerModeGuard],
     loadComponent: () =>
-      import(
-        './features/developer/pages/developer-manage-work/developer-manage-work.component'
-      ).then((m) => m.DeveloperManageWorkComponent),
+      import('./features/developer/pages/developer-manage-work/developer-manage-work.component').then(
+        (m) => m.DeveloperManageWorkComponent,
+      ),
   },
   {
     path: 'developer/teams/create',
@@ -217,25 +214,25 @@ export const routes: Routes = [
     path: 'developer/teams/:teamId/portfolio/new',
     canActivate: [authGuard, developerModeGuard],
     loadComponent: () =>
-      import(
-        './features/developer/pages/portfolio-case-study-wizard/portfolio-case-study-wizard.component'
-      ).then((m) => m.PortfolioCaseStudyWizardComponent),
+      import('./features/developer/pages/portfolio-case-study-wizard/portfolio-case-study-wizard.component').then(
+        (m) => m.PortfolioCaseStudyWizardComponent,
+      ),
   },
   {
     path: 'developer/teams/:teamId/portfolio/:projectId/edit',
     canActivate: [authGuard, developerModeGuard],
     loadComponent: () =>
-      import(
-        './features/developer/pages/portfolio-case-study-wizard/portfolio-case-study-wizard.component'
-      ).then((m) => m.PortfolioCaseStudyWizardComponent),
+      import('./features/developer/pages/portfolio-case-study-wizard/portfolio-case-study-wizard.component').then(
+        (m) => m.PortfolioCaseStudyWizardComponent,
+      ),
   },
   {
     path: 'developer/teams/:teamId/projects/:projectId',
     canActivate: [authGuard, developerModeGuard],
     loadComponent: () =>
-      import(
-        './features/developer/pages/team-project-workspace/team-project-workspace.component'
-      ).then((m) => m.TeamProjectWorkspaceComponent),
+      import('./features/developer/pages/team-project-workspace/team-project-workspace.component').then(
+        (m) => m.TeamProjectWorkspaceComponent,
+      ),
   },
   {
     path: 'developer/teams/:teamId',
@@ -259,9 +256,9 @@ export const routes: Routes = [
       description: 'Browse open jobs and apply to projects that match your skills.',
     },
     loadComponent: () =>
-      import(
-        './features/developer/pages/developer-placeholder/developer-placeholder.component'
-      ).then((m) => m.DeveloperPlaceholderComponent),
+      import('./features/developer/pages/developer-placeholder/developer-placeholder.component').then(
+        (m) => m.DeveloperPlaceholderComponent,
+      ),
   },
   {
     path: 'developer/messages',
@@ -271,9 +268,9 @@ export const routes: Routes = [
       description: 'Chat with clients and teammates about proposals and projects.',
     },
     loadComponent: () =>
-      import(
-        './features/developer/pages/developer-messages/developer-messages.component'
-      ).then((m) => m.DeveloperMessagesComponent),
+      import('./features/developer/pages/developer-messages/developer-messages.component').then(
+        (m) => m.DeveloperMessagesComponent,
+      ),
   },
   {
     path: 'freelancer/portfolio',
@@ -283,9 +280,9 @@ export const routes: Routes = [
       description: 'View and manage your portfolio.',
     },
     loadComponent: () =>
-      import(
-        './features/freelancer/pages/freelancer-portfolio/freelancer-portfolio.component'
-      ).then((m) => m.FreelancerPortfolioComponent),
+      import('./features/freelancer/pages/freelancer-portfolio/freelancer-portfolio.component').then(
+        (m) => m.FreelancerPortfolioComponent,
+      ),
   },
   {
     path: 'freelancer/portfolio/:id',
@@ -294,8 +291,7 @@ export const routes: Routes = [
   },
   {
     path: '',
-    loadChildren: () =>
-      import('./features/landing/landing.routes').then((m) => m.landingRoutes),
+    loadChildren: () => import('./features/landing/landing.routes').then((m) => m.landingRoutes),
   },
   {
     path: 'auth',
@@ -303,14 +299,12 @@ export const routes: Routes = [
   },
   {
     path: 'settings',
-    loadChildren: () =>
-      import('./features/setting/setting.routes').then((m) => m.settingRoutes),
+    loadChildren: () => import('./features/setting/setting.routes').then((m) => m.settingRoutes),
   },
   {
     path: 'projects',
     canActivate: [authGuard],
-    loadChildren: () =>
-      import('./features/project/project.routes').then((m) => m.projectRoutes),
+    loadChildren: () => import('./features/project/project.routes').then((m) => m.projectRoutes),
   },
   { path: 'onboarding', redirectTo: 'auth/onboarding', pathMatch: 'full' },
   { path: 'sign-up', redirectTo: 'auth/sign-up', pathMatch: 'full' },
@@ -319,8 +313,14 @@ export const routes: Routes = [
     path: 'demo/proposal-flow',
     data: { demoFile: 'proposal-milestone-flow.html' },
     loadComponent: () =>
-      import('./features/demo/static-demo-redirect').then(
-        (m) => m.StaticDemoRedirect,
+      import('./features/demo/static-demo-redirect').then((m) => m.StaticDemoRedirect),
+  },
+  {
+    path: 'developer/developers/:userId',
+    canActivate: [authGuard, developerModeGuard],
+    loadComponent: () =>
+      import('./features/freelancer/pages/freelancer-portfolio/freelancer-portfolio.component').then(
+        (m) => m.FreelancerPortfolioComponent,
       ),
   },
   { path: '**', redirectTo: '' },
