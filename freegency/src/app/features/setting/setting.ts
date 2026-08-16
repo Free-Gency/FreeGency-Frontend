@@ -9,6 +9,7 @@ import {
   LockPasswordIcon,
   Notification02Icon,
   Plug01Icon,
+  Rocket01Icon,
   SecurityLockIcon,
   UserAccountIcon,
   UserGroupIcon,
@@ -74,6 +75,11 @@ export class Setting implements OnInit {
       label: 'Payments',
       route: 'payments',
       icon: CreditCardIcon as IconSvgObject,
+    },
+    {
+      label: 'Subscription',
+      route: 'subscription',
+      icon: Rocket01Icon as IconSvgObject,
     },
     {
       label: 'Privacy',
