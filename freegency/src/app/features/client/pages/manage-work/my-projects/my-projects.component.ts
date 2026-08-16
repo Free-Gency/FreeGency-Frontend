@@ -13,7 +13,15 @@ import { Calendar03Icon, Money01Icon, UserGroupIcon, Clock01Icon } from '@hugeic
 import type { MilestoneProgressSummary } from '../milestones/milestone-progress.util';
 
 type StatusFilter = 'All' | 'Draft' | 'Open' | 'InProgress' | 'Completed' | 'Cancelled';
-type SortOption = 'newest' | 'oldest' | 'title-asc' | 'title-desc' | 'budget-high' | 'budget-low';
+type SortOption =
+  | 'newest'
+  | 'oldest'
+  | 'title-asc'
+  | 'title-desc'
+  | 'budget-high'
+  | 'budget-low'
+  | 'proposals-high'
+  | 'proposals-low';
 type ManageWorkTab = 'my-projects' | 'proposals' | 'milestones';
 
 @Component({
@@ -46,7 +54,7 @@ export class MyProjectsComponent implements OnInit {
 
   readonly search = signal('');
   readonly sortOption = signal<SortOption>('newest');
-  readonly sortBy = signal<'CreatedAt' | 'Title' | 'Budget'>('CreatedAt');
+  readonly sortBy = signal<'CreatedAt' | 'Title' | 'Budget' | 'ProposalCount'>('CreatedAt');
   readonly sortDirection = signal<'asc' | 'desc'>('desc');
 
   protected readonly calendarIcon = Calendar03Icon as IconSvgObject;
@@ -188,6 +196,14 @@ export class MyProjectsComponent implements OnInit {
         break;
       case 'budget-low':
         this.sortBy.set('Budget');
+        this.sortDirection.set('asc');
+        break;
+      case 'proposals-high':
+        this.sortBy.set('ProposalCount');
+        this.sortDirection.set('desc');
+        break;
+      case 'proposals-low':
+        this.sortBy.set('ProposalCount');
         this.sortDirection.set('asc');
         break;
       case 'newest':

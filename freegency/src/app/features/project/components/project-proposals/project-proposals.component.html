@@ -48,7 +48,7 @@
       }
     </div>
 
-    @if (isOwner() && !isHired()) {
+    @if (isOwner() && !isHired() && !scoutActive()) {
       <div class="flex items-start gap-3 rounded-[20px] bg-[#EAE5FF] text-[#3323A5] px-4 py-3">
         <div class="mt-0.5 w-7 h-7 rounded-full bg-[#4130D7] text-white flex items-center justify-center shrink-0">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -58,6 +58,17 @@
         <div class="min-w-0">
           <p class="text-sm font-bold">You can discuss multiple proposals</p>
           <p class="text-xs mt-0.5 opacity-80">Start a discussion with more than one applicant. Hire happens when you accept a milestone plan — not when you open discussion.</p>
+        </div>
+      </div>
+    }
+
+    @if (isOwner() && !isHired() && scoutActive()) {
+      <div class="flex items-start gap-3 rounded-[20px] bg-[#EAE5FF] text-[#3323A5] px-4 py-3">
+        <div class="min-w-0">
+          <p class="text-sm font-bold">Scout is running</p>
+          <p class="text-xs mt-0.5 opacity-80">
+            Manual Start discussion is paused. Track invites and chats from the Scout badge or Reports.
+          </p>
         </div>
       </div>
     }
@@ -120,6 +131,21 @@
                     <span class="text-xs text-on-surface-variant/70 font-normal">
                       ({{ p.applicantType === 'Team' ? 'Team' : 'Individual' }})
                     </span>
+                    @if (scoutBadgeFor(p); as scout) {
+                      @if (scout.alreadyApplied && scout.aiRecommended) {
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-[#E6F6EC] text-[#1B7A3D] font-bold">
+                          AI recommended · Applied
+                        </span>
+                      } @else if (scout.aiRecommended) {
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-[#EAE5FF] text-[#3323A5] font-bold">
+                          Scout pick
+                        </span>
+                      } @else if (scout.sourceGroup === 'existing-discussion') {
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-[#FFF4E5] text-[#8A5A00] font-bold">
+                          In Scout run
+                        </span>
+                      }
+                    }
                   </div>
 
                   <div class="flex items-center gap-2 text-xs text-on-surface-variant mt-1">

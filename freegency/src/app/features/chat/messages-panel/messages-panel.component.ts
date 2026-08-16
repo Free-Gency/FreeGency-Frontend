@@ -44,6 +44,7 @@ import { TeamMemberRow } from '../../developer/models/team';
 import { ProjectMilestonesApiService } from '../../project/data-access/project-milestones-api.service';
 import { ProjectDetailsApiService } from '../../project/data-access/project-details-api.service';
 import { ProjectFilesApiService } from '../../project/data-access/project-files-api.service';
+import { ProjectProposalsApiService } from '../../project/data-access/project-proposals-api.service';
 import {
   MilestonePlanAiAssistMode,
   MilestonePlanAiDraftItem,
@@ -120,6 +121,7 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
   private readonly milestonesApi = inject(ProjectMilestonesApiService);
   private readonly projectApi = inject(ProjectDetailsApiService);
   private readonly filesApi = inject(ProjectFilesApiService);
+  private readonly proposalsApi = inject(ProjectProposalsApiService);
   private readonly toast = inject(ToastService);
   private readonly entitlementsApi = inject(EntitlementsApiService);
   private readonly router = inject(Router);
@@ -198,6 +200,7 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
   protected readonly messagesLoading = signal(false);
   protected readonly sending = signal(false);
   protected readonly archivingRoom = signal(false);
+  protected readonly closingDiscussion = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly search = signal('');
   protected readonly isOtherOnline = signal(false);
@@ -230,12 +233,82 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     return !!room && (room.roomType === 'TeamMain' || room.roomType === 'TeamGroup');
   });
 
+  protected readonly canCloseDiscussion = computed(() => {
+    const room = this.selectedRoom();
+    if (!room || room.status === 'Archived') return false;
+    if (!this.isClientMode() || !this.isProjectClient(room)) return false;
+    return room.roomType === 'Proposal' && this.hasGuid(room.proposalId);
+  });
+
   protected readonly canArchiveSelectedRoom = computed(() => {
     const room = this.selectedRoom();
     if (!room || room.status === 'Archived') return false;
     if (!this.isClientMode()) return false;
+    // Prefer Close discussion when we can update proposal status.
+    if (this.canCloseDiscussion()) return false;
     return this.isProjectClient(room) && room.roomType === 'Proposal';
   });
+
+  protected closeSelectedDiscussion(): void {
+    const room = this.selectedRoom();
+    const proposalId = room?.proposalId;
+    if (!room || !proposalId || !this.canCloseDiscussion() || this.closingDiscussion()) return;
+
+    this.closingDiscussion.set(true);
+    this.proposalsApi.closeDiscussion(proposalId).subscribe({
+      next: () => {
+        this.toast.success('Discussion closed. You can start it again anytime from proposals.');
+        this.finishCloseDiscussion(room);
+      },
+      error: (err) => {
+        const message = extractApiError(err) || 'Could not close this discussion.';
+        // Proposal already closed but room left Active — archive it anyway.
+        if (/not in discussion|already closed/i.test(message)) {
+          this.toast.success('Discussion closed.');
+          this.finishCloseDiscussion(room);
+          return;
+        }
+        this.closingDiscussion.set(false);
+        this.error.set(message);
+        this.toast.error(message);
+      },
+    });
+  }
+
+  private finishCloseDiscussion(room: ChatRoom): void {
+    const markArchivedLocally = () => {
+      this.chatRooms.update((rooms) =>
+        rooms.map((r) =>
+          r.id === room.id
+            ? {
+                ...r,
+                status: 'Archived',
+                archivedAt: new Date().toISOString(),
+                canSend: false,
+              }
+            : r,
+        ),
+      );
+      this.selectedRoom.update((r) =>
+        r && r.id === room.id
+          ? {
+              ...r,
+              status: 'Archived',
+              archivedAt: new Date().toISOString(),
+              canSend: false,
+            }
+          : r,
+      );
+      this.listFilter.set('archived');
+      this.closingDiscussion.set(false);
+      this.loadChatRooms(false);
+    };
+
+    this.chatApi.archiveRoom(room.id).subscribe({
+      next: () => markArchivedLocally(),
+      error: () => markArchivedLocally(),
+    });
+  }
 
   protected archiveSelectedRoom(): void {
     const room = this.selectedRoom();
@@ -2664,7 +2737,9 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     this.plansLoading.set(true);
     this.milestonesApi.getPlanVersions(projectId).subscribe({
       next: (versions) => {
-        const map: Record<string, MilestonePlanVersion> = {};
+        // Discussion rooms must only show plans for THIS proposal.
+        // Multiple concurrent discussions share a projectId — without this filter,
+        // plans from other applicants leak into the wrong chat.
         const normalizedList = (versions ?? [])
           .map((v) => this.normalizePlanVersion(v))
           .filter((v): v is MilestonePlanVersion => !!v?.id)
@@ -2674,6 +2749,8 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
             if (!scopeToProposal) return true;
             return (v.proposalId || '').toLowerCase() === proposalId!.toLowerCase();
           });
+
+        const map: Record<string, MilestonePlanVersion> = {};
         for (const v of normalizedList) {
           map[v.id] = {
             ...v,

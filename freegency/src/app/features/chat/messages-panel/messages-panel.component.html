@@ -191,6 +191,16 @@
               Manage
             </button>
           }
+          @if (canCloseDiscussion()) {
+            <button
+              type="button"
+              class="msg-manage-btn msg-manage-btn--danger"
+              [disabled]="closingDiscussion()"
+              (click)="closeSelectedDiscussion()"
+            >
+              {{ closingDiscussion() ? 'Closing…' : 'Close discussion' }}
+            </button>
+          }
           @if (canArchiveSelectedRoom()) {
             <button
               type="button"

@@ -1,4 +1,4 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -34,7 +34,7 @@ type ProcessPhase = 'Matching' | 'Waiting' | 'Discussing' | 'Ranking' | 'Ready';
 @Component({
   selector: 'app-hiring-agent-report',
   standalone: true,
-  imports: [ClientViewNavbarComponent, RouterLink, DatePipe, DecimalPipe],
+  imports: [ClientViewNavbarComponent, RouterLink, DatePipe, DecimalPipe, NgTemplateOutlet],
   templateUrl: './hiring-agent-report.component.html',
   styleUrl: './hiring-agent-report.component.css',
 })
@@ -77,6 +77,21 @@ export class HiringAgentReportComponent implements OnInit {
       return (b.discussionScore ?? b.suggestionScore) - (a.discussionScore ?? a.suggestionScore);
     });
   });
+
+  /** Discussions that were already open when Scout started (no invite sent). */
+  protected readonly existingDiscussionCandidates = computed(() =>
+    this.sortedCandidates().filter((c) => this.isExistingDiscussion(c)),
+  );
+
+  /** Applicants Scout attached without inviting (applied + AI match, not yet discussing). */
+  protected readonly appliedRecommendedCandidates = computed(() =>
+    this.sortedCandidates().filter((c) => this.isAppliedRecommended(c)),
+  );
+
+  /** Fresh Scout invites only. */
+  protected readonly scoutInviteCandidates = computed(() =>
+    this.sortedCandidates().filter((c) => this.isScoutInvite(c)),
+  );
 
   protected readonly responseSummary = computed(() => {
     const candidates = this.run()?.candidates ?? [];
@@ -685,6 +700,16 @@ export class HiringAgentReportComponent implements OnInit {
   }
 
   protected activityLine(candidate: HiringAgentCandidate): string {
+    if (this.isExistingDiscussion(candidate)) {
+      return candidate.agentMessageCount > 0
+        ? 'Scout continues this discussion'
+        : 'Discussion already open';
+    }
+    if (this.isAppliedRecommended(candidate)) {
+      return candidate.chatRoomId
+        ? 'Applied + AI match — discussion available'
+        : 'Applied + AI match — no invite sent';
+    }
     switch (candidate.status) {
       case 'Discussing':
         return candidate.agentMessageCount > 0
@@ -791,6 +816,31 @@ export class HiringAgentReportComponent implements OnInit {
     if (!parts.length) return '?';
     if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
     return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
+
+  protected isExistingDiscussion(c: HiringAgentCandidate): boolean {
+    if (c.sourceGroup === 'existing-discussion') return true;
+    if (c.invitationId) return false;
+    return (
+      !!c.proposalId &&
+      (c.status === 'Discussing' || c.status === 'PlanProposed' || c.status === 'Ranked')
+    );
+  }
+
+  protected isAppliedRecommended(c: HiringAgentCandidate): boolean {
+    if (this.isExistingDiscussion(c)) return false;
+    if (c.sourceGroup === 'applied-and-recommended') return true;
+    return !!c.proposalId && !c.invitationId && c.status === 'Accepted';
+  }
+
+  protected isScoutInvite(c: HiringAgentCandidate): boolean {
+    return !this.isExistingDiscussion(c) && !this.isAppliedRecommended(c);
+  }
+
+  protected rosterStatusLabel(candidate: HiringAgentCandidate): string {
+    if (this.isExistingDiscussion(candidate)) return 'In discussion';
+    if (this.isAppliedRecommended(candidate)) return 'Applied + AI';
+    return this.statusLabel(candidate.status);
   }
 
   protected statusLabel(status: HiringAgentRunStatus | HiringAgentCandidateStatus): string {

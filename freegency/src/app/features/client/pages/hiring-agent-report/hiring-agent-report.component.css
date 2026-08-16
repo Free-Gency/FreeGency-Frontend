@@ -545,6 +545,34 @@
   }
 }
 
+.ha-roster__group {
+  margin-top: 1.35rem;
+}
+
+.ha-roster__group:first-of-type {
+  margin-top: 0.85rem;
+}
+
+.ha-roster__group-head {
+  margin-bottom: 0.75rem;
+}
+
+.ha-roster__group-title {
+  margin: 0;
+  font-family: var(--font-display, 'Syne', sans-serif);
+  font-size: 1rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  color: #161411;
+}
+
+.ha-roster__group-sub {
+  margin: 0.25rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #6b6458;
+}
+
 .ha-grid {
   display: grid;
   gap: 0.85rem;

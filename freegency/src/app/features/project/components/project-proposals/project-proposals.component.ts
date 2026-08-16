@@ -9,6 +9,11 @@ import { ProjectProposal, ProposalStatus } from '../../models/project-proposal';
 import { ProposalDetailDrawerComponent } from '../proposal-detail-drawer/proposal-detail-drawer.component';
 import { ToastService } from '../../../../shared/services/toast.service';
 import { extractApiError } from '../../../../core/http/api-error';
+import {
+  HiringAgentApiService,
+  HiringAgentCandidate,
+  HiringAgentRun,
+} from '../../../client/data-access/hiring-agent-api.service';
 
 type SortOption = 'newest' | 'budget-high' | 'budget-low';
 type StatusFilter = 'All' | ProposalStatus;
@@ -21,6 +26,7 @@ type StatusFilter = 'All' | ProposalStatus;
 })
 export class ProjectProposalsComponent implements OnInit, OnDestroy {
   private readonly proposalsApi = inject(ProjectProposalsApiService);
+  private readonly hiringAgentApi = inject(HiringAgentApiService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
   readonly projectId = input.required<string>();
@@ -38,6 +44,12 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
   protected readonly selectedProposal = signal<ProjectProposal | null>(null);
   protected readonly detailOpen = signal(false);
   protected readonly isHired = computed(() => this.projectStatus() === 'InProgress');
+
+  protected readonly scoutRun = signal<HiringAgentRun | null>(null);
+  protected readonly scoutLoading = signal(false);
+  protected readonly scoutActive = computed(() =>
+    this.hiringAgentApi.isActive(this.scoutRun()?.status),
+  );
 
   protected readonly searchTerm = signal('');
   protected readonly statusFilter = signal<StatusFilter>('All');
@@ -65,7 +77,11 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
   private readonly search$ = new Subject<string>();
 
   protected readonly canManageDiscussion = computed(
-    () => this.isOwner() && this.projectStatus() === 'Open' && !this.isHired(),
+    () =>
+      this.isOwner() &&
+      this.projectStatus() === 'Open' &&
+      !this.isHired() &&
+      !this.scoutActive(),
   );
 
   protected readonly selectedCanStart = computed(() => {
@@ -85,6 +101,7 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loadProposals();
+    this.loadScoutRun();
     this.search$.pipe(debounceTime(350), distinctUntilChanged()).subscribe((term) => {
       this.searchTerm.set(term);
       this.page.set(1);
@@ -173,6 +190,36 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
       this.canManageDiscussion() &&
       (p.status === 'Pending' || p.status === 'Viewed')
     );
+  }
+
+  protected scoutBadgeFor(p: ProjectProposal): HiringAgentCandidate | null {
+    const candidates = this.scoutRun()?.candidates ?? [];
+    return (
+      candidates.find((c) => {
+        if (p.applicantType === 'Team' && p.teamId) {
+          return c.inviteeTeamId?.toLowerCase() === p.teamId.toLowerCase();
+        }
+        if (p.userId) {
+          return c.inviteeUserId?.toLowerCase() === p.userId.toLowerCase();
+        }
+        return false;
+      }) ?? null
+    );
+  }
+
+  protected loadScoutRun(): void {
+    if (!this.isOwner()) return;
+    this.scoutLoading.set(true);
+    this.hiringAgentApi.getByProject(this.projectId()).subscribe({
+      next: (run) => {
+        this.scoutRun.set(run);
+        this.scoutLoading.set(false);
+      },
+      error: () => {
+        this.scoutRun.set(null);
+        this.scoutLoading.set(false);
+      },
+    });
   }
 
   protected cleanDisplayText(value: string | null | undefined): string {
@@ -291,6 +338,12 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
 
   protected startDiscussion(id: string) {
     const target = this.proposals().find((p) => p.id === id) ?? this.selectedProposal();
+    if (this.scoutActive()) {
+      this.toast.error(
+        "Scout is running. You can't open a new discussion until the agent finishes or is cancelled.",
+      );
+      return;
+    }
     if (!target || !this.canShowStartDiscussion(target)) {
       this.toast.error('This proposal cannot start a discussion right now.');
       return;

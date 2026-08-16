@@ -73,6 +73,29 @@
             }
           </button>
         }
+
+        @if (canStartScout()) {
+          <button
+            type="button"
+            class="ml-auto flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold shrink-0 transition-colors cursor-pointer"
+            [class]="
+              scoutActive()
+                ? 'bg-[#D8F272] text-[#1A1A1A] hover:brightness-105'
+                : 'bg-[#4130D7] text-white hover:bg-[#3323A5]'
+            "
+            [disabled]="scoutStarting()"
+            (click)="onScoutBadgeClick()"
+          >
+            <span aria-hidden="true">✨</span>
+            @if (scoutStarting()) {
+              <span>Starting…</span>
+            } @else if (scoutActive()) {
+              <span>Scout · {{ scoutRun()?.status }}</span>
+            } @else {
+              <span>Start Scout</span>
+            }
+          </button>
+        }
       </div>
 
       <!-- Overview tab -->
@@ -210,6 +233,105 @@
       />
 
       <app-project-delete-dialog [projectId]="p.id" [isOpen]="showDelete()" (closed)="showDelete.set(false)" />
+
+      @if (scoutTimingOpen()) {
+        <div class="scout-timing-backdrop" (click)="closeScoutTiming()" role="presentation">
+          <div
+            class="gency-modal"
+            (click)="$event.stopPropagation()"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="scout-timing-title"
+          >
+            <button
+              type="button"
+              class="gency-modal__close"
+              (click)="closeScoutTiming()"
+              aria-label="Close"
+            >
+              ×
+            </button>
+
+            <div class="gency-modal__brand">
+              <img
+                class="gency-modal__logo"
+                src="/assets/brand/scout-mark.svg"
+                width="44"
+                height="44"
+                alt="Scout"
+              />
+              <div>
+                <p class="gency-modal__eyebrow">FreeGency AI hiring scout</p>
+                <h3 id="scout-timing-title" class="gency-modal__title">Scout timing</h3>
+              </div>
+            </div>
+
+            <p class="gency-modal__lead">
+              Choose how long Scout waits for invite replies, then how long discussions can run. Scout
+              continues with whoever accepts — not everyone must reply.
+            </p>
+
+            <div class="gency-modal__field">
+              <p class="gency-modal__label">Invite window</p>
+              <div class="gency-modal__pills">
+                @for (hours of invitePresets; track hours) {
+                  <button
+                    type="button"
+                    class="gency-pill"
+                    [class.is-active]="inviteWindowHours() === hours"
+                    (click)="inviteWindowHours.set(hours)"
+                  >
+                    {{ hours }}h
+                  </button>
+                }
+              </div>
+            </div>
+
+            <div class="gency-modal__field">
+              <p class="gency-modal__label">Discussion window</p>
+              <div class="gency-modal__pills">
+                @for (hours of discussionPresets; track hours) {
+                  <button
+                    type="button"
+                    class="gency-pill"
+                    [class.is-active]="discussionWindowHours() === hours"
+                    (click)="discussionWindowHours.set(hours)"
+                  >
+                    {{ hours }}h
+                  </button>
+                }
+              </div>
+            </div>
+
+            <div class="gency-modal__preview">
+              <span class="gency-modal__preview-ico" aria-hidden="true">◷</span>
+              <p>
+                <strong>Preview:</strong>
+                Invites close around <strong>{{ expectedInviteClose() }}</strong>. Report expected by
+                <strong>{{ expectedReportBy() }}</strong>.
+              </p>
+            </div>
+
+            <div class="gency-modal__actions">
+              <button type="button" class="gency-btn gency-btn--ghost" (click)="closeScoutTiming()">
+                Cancel
+              </button>
+              <button
+                type="button"
+                class="gency-btn gency-btn--solid"
+                [disabled]="scoutStarting()"
+                (click)="confirmStartScout()"
+              >
+                @if (scoutStarting()) {
+                  Starting Scout…
+                } @else {
+                  Start Scout
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      }
     }
   </main>
 </div>

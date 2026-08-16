@@ -77,6 +77,21 @@ export class Proposals implements OnInit {
     return this.projects().find((p) => p.id === id) ?? null;
   });
 
+  /** True when hire already happened — AI ranking would waste tokens. */
+  readonly rankingBlockedByAccepted = computed(() => {
+    const project = this.selectedProject();
+    if (
+      project?.status === 'InProgress' ||
+      project?.status === 'Completed' ||
+      !!project?.assignedTeamId
+    ) {
+      return true;
+    }
+    return this.proposals().some((p) => p.status === 'Accepted');
+  });
+
+  readonly rankingBlockedMessage = 'One proposal already accepted.';
+
   readonly proposalsResource = rxResource<
     PagedResponse<Proposal>,
     {
@@ -131,6 +146,15 @@ export class Proposals implements OnInit {
     effect(() => {
       const enabled = this.aiRankingEnabled();
       const projectId = this.activeProjectId();
+      const blocked = this.rankingBlockedByAccepted();
+      if (blocked) {
+        if (enabled) this.aiRankingEnabled.set(false);
+        this.rankingById.set({});
+        this.aiSummary.set(null);
+        this.rankingLoading.set(false);
+        if (projectId) this.rankingError.set(this.rankingBlockedMessage);
+        return;
+      }
       if (enabled && projectId) {
         this.loadRanking(projectId);
       } else if (!enabled) {
@@ -329,11 +353,27 @@ export class Proposals implements OnInit {
       this.rankingError.set('Select a project first to enable AI ranking.');
       return;
     }
+    if (!this.aiRankingEnabled() && this.rankingBlockedByAccepted()) {
+      this.aiRankingEnabled.set(false);
+      this.rankingById.set({});
+      this.aiSummary.set(null);
+      this.rankingError.set(this.rankingBlockedMessage);
+      return;
+    }
     this.rankingError.set(null);
     this.aiRankingEnabled.update((v) => !v);
   }
 
   loadRanking(projectId: string): void {
+    if (this.rankingBlockedByAccepted()) {
+      this.aiRankingEnabled.set(false);
+      this.rankingById.set({});
+      this.aiSummary.set(null);
+      this.rankingLoading.set(false);
+      this.rankingError.set(this.rankingBlockedMessage);
+      return;
+    }
+
     const requestId = ++this.rankingRequestId;
     this.rankingLoading.set(true);
     this.rankingError.set(null);
@@ -361,6 +401,7 @@ export class Proposals implements OnInit {
       error: (err) => {
         if (requestId !== this.rankingRequestId) return;
         this.rankingById.set({});
+        this.aiSummary.set(null);
         const apiMsg =
           err?.error?.message ||
           err?.error?.errors?.[0] ||
@@ -368,6 +409,9 @@ export class Proposals implements OnInit {
           'Failed to load AI ranking.';
         this.rankingError.set(apiMsg);
         this.rankingLoading.set(false);
+        if (/already accepted/i.test(apiMsg)) {
+          this.aiRankingEnabled.set(false);
+        }
       },
     });
   }

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, catchError, map, of } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { ApiResponse } from '../../../shared/models/ApiResponse';
 
@@ -15,6 +15,14 @@ export type HiringAgentRunStatus =
   | 'Cancelled'
   | 'Failed'
   | 'Dismissed';
+
+const ACTIVE_RUN_STATUSES: HiringAgentRunStatus[] = [
+  'Queued',
+  'Inviting',
+  'WaitingAccepts',
+  'Discussing',
+  'Ranking',
+];
 
 export type HiringAgentCandidateStatus =
   | 'Suggested'
@@ -53,6 +61,12 @@ export interface HiringAgentCandidate {
   discussionScore: number | null;
   discussionNotes: string | null;
   agentMessageCount: number;
+  /** True when candidate already had a proposal (no Scout invite). */
+  alreadyApplied?: boolean;
+  /** True when Scout's matcher recommended this candidate. */
+  aiRecommended?: boolean;
+  /** scout-invite | applied-and-recommended | existing-discussion */
+  sourceGroup?: string;
 }
 
 export interface HiringAgentRun {
@@ -123,10 +137,20 @@ export class HiringAgentApiService {
       .pipe(map((res) => this.unwrap(res, 'Failed to load hiring agent run.')));
   }
 
-  getByProject(projectId: string): Observable<HiringAgentRun> {
+  getByProject(projectId: string): Observable<HiringAgentRun | null> {
     return this.http
       .get<ApiResponse<HiringAgentRun>>(`${this.baseUrl}/runs/by-project/${projectId}`)
-      .pipe(map((res) => this.unwrap(res, 'Failed to load hiring agent run for project.')));
+      .pipe(
+        map((res) => {
+          if (!res.isSuccess || res.data == null) return null;
+          return res.data;
+        }),
+        catchError(() => of(null)),
+      );
+  }
+
+  isActive(status: HiringAgentRunStatus | null | undefined): boolean {
+    return !!status && ACTIVE_RUN_STATUSES.includes(status);
   }
 
   getReport(id: string): Observable<HiringAgentReport> {

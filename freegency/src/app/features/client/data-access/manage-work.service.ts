@@ -245,7 +245,7 @@ export class ManageWorkService {
     pageSize?: number;
     status?: string | null;
     search?: string | null;
-    sortBy?: 'CreatedAt' | 'Title' | 'Budget';
+    sortBy?: 'CreatedAt' | 'Title' | 'Budget' | 'ProposalCount';
     sortDirection?: 'asc' | 'desc';
   }): Observable<PagedResponse<Project>> {
     let params = new HttpParams()
@@ -415,7 +415,7 @@ export class ManageWorkService {
       .pipe(
         map((res) => {
           if (!res.isSuccess || !res.data) {
-            throw new Error('Failed to rank proposals.');
+            throw new Error(res.message || 'Failed to rank proposals.');
           }
           return {
             ...res.data,

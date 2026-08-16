@@ -546,6 +546,23 @@
   color: #4130d7;
 }
 
+.msg-manage-btn--danger {
+  border-color: #f0d0d0;
+  color: #b42318;
+  background: #fff8f7;
+}
+
+.msg-manage-btn--danger:hover:not(:disabled) {
+  border-color: #b42318;
+  color: #912018;
+  background: #fef3f2;
+}
+
+.msg-manage-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .msg-propose-btn--header {
   width: auto;
   margin: 0;

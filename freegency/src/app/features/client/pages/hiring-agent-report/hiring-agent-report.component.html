@@ -115,15 +115,15 @@
         <section class="ha-roster">
           <div class="ha-roster__head">
             <div>
-              <p class="ha-roster__eyebrow">Scout invite board</p>
-              <h2 class="ha-roster__title">Who Scout invited</h2>
+              <p class="ha-roster__eyebrow">Scout board</p>
+              <h2 class="ha-roster__title">Candidates in this run</h2>
               <p class="ha-roster__sub">
                 @if (
                   current.status === 'Queued' ||
                   current.status === 'Inviting' ||
                   !sortedCandidates().length
                 ) {
-                  Scout is matching talent and sending invites now…
+                  Scout is matching talent, attaching open discussions, and sending invites…
                 } @else if (hasPendingInvites()) {
                   Waiting for replies · invites close
                   {{ current.inviteDeadlineUtc | date: "MMM d, h:mm a" }}
@@ -161,18 +161,18 @@
               <div class="ha-invite-loading__copy">
                 <p class="ha-invite-loading__title">
                   @if (sortedCandidates().length === 0) {
-                    Matching &amp; sending invites
+                    Matching &amp; attaching discussions
                   } @else {
                     Finishing invite delivery
                   }
                 </p>
                 <p class="ha-invite-loading__body">
-                  Scout is finding strong matches for your brief, then pinging them one by one.
+                  Scout keeps chats you already opened, then invites new matches who haven’t applied.
                   This board updates as each invite lands.
                 </p>
                 <ul class="ha-invite-loading__steps" aria-hidden="true">
                   <li class="is-on">Scan matches</li>
-                  <li [class.is-on]="sortedCandidates().length > 0">Send invites</li>
+                  <li [class.is-on]="sortedCandidates().length > 0">Attach &amp; invite</li>
                   <li>Wait for replies</li>
                 </ul>
               </div>
@@ -180,99 +180,152 @@
           }
 
           @if (sortedCandidates().length) {
-            <ul class="ha-grid">
-              @for (candidate of sortedCandidates(); track candidate.id) {
-                <li class="ha-card">
-                  <div class="ha-card__top">
-                    @if (candidate.avatarUrl) {
-                      <div
-                        class="ha-avatar"
-                        [class.ha-avatar--wait]="
-                          candidate.status === 'Invited' || candidate.status === 'Suggested'
-                        "
-                        [class.ha-avatar--bad]="
-                          candidate.status === 'Rejected' ||
-                          candidate.status === 'Expired' ||
-                          candidate.status === 'InviteFailed'
-                        "
-                      >
-                        <img [src]="candidate.avatarUrl" [alt]="candidate.displayName" />
-                      </div>
-                    } @else {
-                      <div
-                        class="ha-avatar"
-                        [class.ha-avatar--wait]="
-                          candidate.status === 'Invited' || candidate.status === 'Suggested'
-                        "
-                        [class.ha-avatar--bad]="
-                          candidate.status === 'Rejected' ||
-                          candidate.status === 'Expired' ||
-                          candidate.status === 'InviteFailed'
-                        "
-                      >
-                        {{ candidateInitials(candidate) }}
-                      </div>
-                    }
-                    <span [class]="rosterBadgeClass(candidate.status)">
-                      {{ statusLabel(candidate.status) }}
-                    </span>
-                  </div>
+            @if (existingDiscussionCandidates().length) {
+              <div class="ha-roster__group">
+                <div class="ha-roster__group-head">
+                  <h3 class="ha-roster__group-title">Already in discussion</h3>
+                  <p class="ha-roster__group-sub">
+                    Chats you opened before Scout — continued here, no invite sent.
+                  </p>
+                </div>
+                <ul class="ha-grid">
+                  @for (candidate of existingDiscussionCandidates(); track candidate.id) {
+                    <ng-container
+                      *ngTemplateOutlet="candidateCard; context: { $implicit: candidate }"
+                    />
+                  }
+                </ul>
+              </div>
+            }
 
-                  <div>
-                    <p class="ha-card__name">{{ candidate.displayName }}</p>
-                    <p class="ha-card__meta">
-                      {{ candidate.inviteeType === 'Team' ? 'Team' : 'Developer' }}
-                      @if (candidate.suggestionScore) {
-                        · Match {{ candidate.suggestionScore | number: '1.0-2' }}
-                      }
-                    </p>
-                  </div>
+            @if (appliedRecommendedCandidates().length) {
+              <div class="ha-roster__group">
+                <div class="ha-roster__group-head">
+                  <h3 class="ha-roster__group-title">Applied + AI match</h3>
+                  <p class="ha-roster__group-sub">
+                    Already applied and recommended — Scout attached them without inviting.
+                  </p>
+                </div>
+                <ul class="ha-grid">
+                  @for (candidate of appliedRecommendedCandidates(); track candidate.id) {
+                    <ng-container
+                      *ngTemplateOutlet="candidateCard; context: { $implicit: candidate }"
+                    />
+                  }
+                </ul>
+              </div>
+            }
 
-                  <div class="ha-card__foot">
-                    <span class="ha-activity">
-                      <span
-                        class="ha-activity__dot"
-                        [class.is-ok]="
-                          candidate.status === 'Discussing' ||
-                          candidate.status === 'PlanProposed' ||
-                          candidate.status === 'Accepted' ||
-                          candidate.status === 'Ranked'
-                        "
-                        [class.is-wait]="
-                          candidate.status === 'Invited' || candidate.status === 'Suggested'
-                        "
-                        [class.is-bad]="
-                          candidate.status === 'Rejected' ||
-                          candidate.status === 'Expired' ||
-                          candidate.status === 'InviteFailed'
-                        "
-                      ></span>
-                      {{ activityLine(candidate) }}
-                    </span>
-                    <button
-                      type="button"
-                      class="ha-chat-btn"
-                      [disabled]="!candidate.chatRoomId"
-                      title="Open chat"
-                      aria-label="Open chat"
-                      (click)="openChat(candidate.chatRoomId)"
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path
-                          d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16H9l-4 3.5V6.5Z"
-                          stroke="currentColor"
-                          stroke-width="1.8"
-                          stroke-linejoin="round"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </li>
-              }
-            </ul>
+            @if (scoutInviteCandidates().length) {
+              <div class="ha-roster__group">
+                <div class="ha-roster__group-head">
+                  <h3 class="ha-roster__group-title">Who Scout invited</h3>
+                  <p class="ha-roster__group-sub">
+                    New matches who hadn’t applied — waiting on invite replies.
+                  </p>
+                </div>
+                <ul class="ha-grid">
+                  @for (candidate of scoutInviteCandidates(); track candidate.id) {
+                    <ng-container
+                      *ngTemplateOutlet="candidateCard; context: { $implicit: candidate }"
+                    />
+                  }
+                </ul>
+              </div>
+            }
           }
         </section>
       }
+
+      <ng-template #candidateCard let-candidate>
+        <li class="ha-card">
+          <div class="ha-card__top">
+            @if (candidate.avatarUrl) {
+              <div
+                class="ha-avatar"
+                [class.ha-avatar--wait]="
+                  candidate.status === 'Invited' || candidate.status === 'Suggested'
+                "
+                [class.ha-avatar--bad]="
+                  candidate.status === 'Rejected' ||
+                  candidate.status === 'Expired' ||
+                  candidate.status === 'InviteFailed'
+                "
+              >
+                <img [src]="candidate.avatarUrl" [alt]="candidate.displayName" />
+              </div>
+            } @else {
+              <div
+                class="ha-avatar"
+                [class.ha-avatar--wait]="
+                  candidate.status === 'Invited' || candidate.status === 'Suggested'
+                "
+                [class.ha-avatar--bad]="
+                  candidate.status === 'Rejected' ||
+                  candidate.status === 'Expired' ||
+                  candidate.status === 'InviteFailed'
+                "
+              >
+                {{ candidateInitials(candidate) }}
+              </div>
+            }
+            <span [class]="rosterBadgeClass(candidate.status)">
+              {{ rosterStatusLabel(candidate) }}
+            </span>
+          </div>
+
+          <div>
+            <p class="ha-card__name">{{ candidate.displayName }}</p>
+            <p class="ha-card__meta">
+              {{ candidate.inviteeType === 'Team' ? 'Team' : 'Developer' }}
+              @if (candidate.suggestionScore) {
+                · Match {{ candidate.suggestionScore | number: '1.0-2' }}
+              }
+            </p>
+          </div>
+
+          <div class="ha-card__foot">
+            <span class="ha-activity">
+              <span
+                class="ha-activity__dot"
+                [class.is-ok]="
+                  candidate.status === 'Discussing' ||
+                  candidate.status === 'PlanProposed' ||
+                  candidate.status === 'Accepted' ||
+                  candidate.status === 'Ranked' ||
+                  isExistingDiscussion(candidate)
+                "
+                [class.is-wait]="
+                  candidate.status === 'Invited' || candidate.status === 'Suggested'
+                "
+                [class.is-bad]="
+                  candidate.status === 'Rejected' ||
+                  candidate.status === 'Expired' ||
+                  candidate.status === 'InviteFailed'
+                "
+              ></span>
+              {{ activityLine(candidate) }}
+            </span>
+            <button
+              type="button"
+              class="ha-chat-btn"
+              [disabled]="!candidate.chatRoomId"
+              title="Open chat"
+              aria-label="Open chat"
+              (click)="openChat(candidate.chatRoomId)"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16H9l-4 3.5V6.5Z"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+          </div>
+        </li>
+      </ng-template>
 
       <!-- ========== FINAL ANALYSIS ========== -->
       @if (isReportReady() && report(); as reportData) {
