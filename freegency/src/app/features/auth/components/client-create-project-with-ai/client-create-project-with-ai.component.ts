@@ -7,6 +7,7 @@ import { firstValueFrom } from 'rxjs';
 import { extractApiError } from '../../../../core/http/api-error';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { StepFooterActionsComponent } from '../../../../shared/components/step-footer-actions/step-footer-actions.component';
+import { EntitlementsApiService } from '../../../client/data-access/entitlements-api.service';
 import { ProjectDraftApiService } from '../../data-access/project-draft-api.service';
 import { ProjectDraftStateService } from '../../data-access/project-draft-state.service';
 import { createProjectBasePath, isOnboardingCreateFlow } from '../../utils/create-project-paths';
@@ -26,6 +27,7 @@ export class ClientCreateProjectWithAiComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly draftApi = inject(ProjectDraftApiService);
   private readonly draftState = inject(ProjectDraftStateService);
+  private readonly entitlementsApi = inject(EntitlementsApiService);
 
   protected readonly sparklesIcon = SparklesIcon as IconSvgObject;
   protected readonly maxChars = MAX_CHARS;
@@ -70,6 +72,18 @@ export class ClientCreateProjectWithAiComponent implements OnInit {
     this.draftState.setUserInput(userInput);
 
     try {
+      // Soft gate before calling the LLM — avoids burning tokens when quota is exhausted.
+      const draftQuota = await firstValueFrom(
+        this.entitlementsApi.canConsume('GenerateProjectDraft'),
+      );
+      if (!draftQuota.isAllowed) {
+        this.errorMessage.set(
+          draftQuota.message?.trim() ||
+            'Your plan does not allow AI project drafting, or your quota is used up. Upgrade to continue.',
+        );
+        return;
+      }
+
       const draft = await firstValueFrom(this.draftApi.generate(userInput));
       this.draftState.setDraft(draft);
       await this.router.navigate([`${createProjectBasePath(this.router)}/with-ai/scope`]);

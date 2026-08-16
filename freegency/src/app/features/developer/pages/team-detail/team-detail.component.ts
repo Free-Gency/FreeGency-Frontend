@@ -1,5 +1,6 @@
 import { DecimalPipe, DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HugeiconsIconComponent, type IconSvgObject } from '@hugeicons/angular';
@@ -22,7 +23,7 @@ import {
   UserGroupIcon,
   Wallet01Icon,
 } from '@hugeicons/core-free-icons';
-import { catchError, forkJoin, of } from 'rxjs';
+import { catchError, forkJoin, map, of } from 'rxjs';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { extractApiError } from '../../../../core/http/api-error';
 import { ToastService } from '../../../../shared/services/toast.service';
@@ -91,6 +92,12 @@ export class TeamDetailComponent implements OnInit {
   private readonly categoriesApi = inject(CategoriesApiService);
   private readonly taxonomyApi = inject(TaxonomyApiService);
   protected readonly auth = inject(AuthService);
+
+  /** Deep-link into Team → Messages (`?tab=messages&room=…`). */
+  protected readonly messagesRoomId = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get('room'))),
+    { initialValue: this.route.snapshot.queryParamMap.get('room') },
+  );
 
   protected readonly backIcon = ArrowLeft01Icon as IconSvgObject;
   protected readonly starIcon = StarIcon as IconSvgObject;
@@ -276,10 +283,9 @@ export class TeamDetailComponent implements OnInit {
       { id: 'finance', label: 'Finance' },
       { id: 'messages', label: 'Messages' },
       { id: 'members', label: 'Members' },
-      { id: 'invitations', label: 'invitations' },
     ];
     if (this.isLeader() && !this.isClientViewer()) {
-      items.splice(3, 0, { id: 'invitations', label: 'Invitations' });
+      items.push({ id: 'invitations', label: 'Invitations' });
     }
     return items;
   });
@@ -290,6 +296,10 @@ export class TeamDetailComponent implements OnInit {
 
   protected readonly pendingRequestsCount = computed(
     () => this.joinRequests().filter((r) => this.isRequestPending(r.status)).length,
+  );
+
+  protected readonly pendingProjectInvitationsCount = computed(
+    () => this.projectInvitations().filter((i) => i.status === 'Pending').length,
   );
 
   protected readonly jobsTotalPages = computed(() =>
@@ -363,25 +373,27 @@ export class TeamDetailComponent implements OnInit {
       imageUrl: m.imageUrl,
     })),
   );
-readonly invitationIcon = Mail01Icon;
-  protected readonly sidebarItems: {
-    key: SidebarKey;
-    label: string;
-    icon: IconSvgObject;
-  }[] = [
-    { key: 'overview', label: 'Overview', icon: this.dashIcon },
-    { key: 'projects', label: 'Projects', icon: this.folderIcon },
-    { key: 'jobs', label: 'Jobs', icon: this.briefcaseIcon },
-    { key: 'tasks', label: 'Task Management', icon: this.chartIcon },
-    { key: 'finance', label: 'Finance', icon: this.walletIcon },
-    { key: 'messages', label: 'Messages', icon: this.messageIcon },
-    { key: 'members', label: 'Members', icon: this.groupIcon },
-    {
-  key: 'invitations',
-  label: 'Invitations',
-  icon: this.invitationIcon
-}
-  ];
+  protected readonly invitationIcon = Mail01Icon as IconSvgObject;
+
+  protected readonly sidebarItems = computed(() => {
+    const items: { key: SidebarKey; label: string; icon: IconSvgObject }[] = [
+      { key: 'overview', label: 'Overview', icon: this.dashIcon },
+      { key: 'projects', label: 'Projects', icon: this.folderIcon },
+      { key: 'jobs', label: 'Jobs', icon: this.briefcaseIcon },
+      { key: 'tasks', label: 'Task Management', icon: this.chartIcon },
+      { key: 'finance', label: 'Finance', icon: this.walletIcon },
+      { key: 'messages', label: 'Messages', icon: this.messageIcon },
+      { key: 'members', label: 'Members', icon: this.groupIcon },
+    ];
+    if (this.isLeader() && !this.isClientViewer()) {
+      items.push({
+        key: 'invitations',
+        label: 'Invitations',
+        icon: this.invitationIcon,
+      });
+    }
+    return items;
+  });
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('teamId');
@@ -402,7 +414,7 @@ readonly invitationIcon = Mail01Icon;
     return this.activeTab() === key;
   }
 
-  protected onSidebar(item: (typeof this.sidebarItems)[number]): void {
+  protected onSidebar(item: { key: SidebarKey; label: string; icon: IconSvgObject }): void {
     this.mobileNavOpen.set(false);
     this.setTab(item.key);
   }
@@ -1391,8 +1403,8 @@ readonly invitationIcon = Mail01Icon;
     return 'overview';
   }
 
-  private loadProjectInvitations(teamId: string): void {
-    this.projectInvitationsLoading.set(true);
+  private loadProjectInvitations(teamId: string, opts?: { silent?: boolean }): void {
+    if (!opts?.silent) this.projectInvitationsLoading.set(true);
     this.projectInvitationsError.set(null);
     this.invitationsApi.getForTeam(teamId).subscribe({
       next: (items) => {
@@ -1416,8 +1428,10 @@ readonly invitationIcon = Mail01Icon;
         this.projectInviteActionId.set(null);
         const teamId = this.team()?.id;
         if (teamId) this.loadProjectInvitations(teamId);
-        void this.router.navigate(['/developer/messages'], {
-          queryParams: { room: roomId },
+        if (!teamId) return;
+        this.activeTab.set('messages');
+        void this.router.navigate(['/developer/teams', teamId], {
+          queryParams: { tab: 'messages', room: roomId },
         });
       },
       error: (err) => {
@@ -1449,7 +1463,12 @@ readonly invitationIcon = Mail01Icon;
 
   protected openProjectInvitationChat(roomId: string | null): void {
     if (!roomId) return;
-    void this.router.navigate(['/developer/messages'], { queryParams: { room: roomId } });
+    const teamId = this.team()?.id;
+    if (!teamId) return;
+    this.activeTab.set('messages');
+    void this.router.navigate(['/developer/teams', teamId], {
+      queryParams: { tab: 'messages', room: roomId },
+    });
   }
 
   private loadTeamReviews(teamId: string): void {
@@ -1490,7 +1509,11 @@ readonly invitationIcon = Mail01Icon;
         if (this.activeTab() === 'members') {
           this.loadMembers(id);
         }
-
+        if (this.isLeader()) {
+          this.loadProjectInvitations(id, {
+            silent: this.activeTab() !== 'invitations',
+          });
+        }
       },
       error: () => {
         this.error.set('Could not load this team.');

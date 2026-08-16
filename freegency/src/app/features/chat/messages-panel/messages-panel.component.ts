@@ -16,6 +16,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HugeiconsIconComponent, type IconSvgObject } from '@hugeicons/angular';
+import { firstValueFrom } from 'rxjs';
 import {
   Add01Icon,
   AddCircleIcon,
@@ -29,6 +30,7 @@ import {
   File01Icon,
   Image01Icon,
   SentIcon,
+  SparklesIcon,
   Task01Icon,
   Video01Icon,
 } from '@hugeicons/core-free-icons';
@@ -37,11 +39,14 @@ import { ChatSignalrService } from '../../../core/Signalr/chat-signalr-service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { extractApiError, isInsufficientWalletError } from '../../../core/http/api-error';
 import { TeamsService } from '../../developer/data-access/teams.service';
+import { EntitlementsApiService } from '../../client/data-access/entitlements-api.service';
 import { TeamMemberRow } from '../../developer/models/team';
 import { ProjectMilestonesApiService } from '../../project/data-access/project-milestones-api.service';
 import { ProjectDetailsApiService } from '../../project/data-access/project-details-api.service';
 import { ProjectFilesApiService } from '../../project/data-access/project-files-api.service';
 import {
+  MilestonePlanAiAssistMode,
+  MilestonePlanAiDraftItem,
   MilestonePlanItem,
   MilestonePlanVersion,
 } from '../../project/models/milestone-plan';
@@ -81,6 +86,16 @@ interface PlanDraftRow {
   dueDate: string;
 }
 
+interface PlanDraftPersist {
+  proposalId: string;
+  projectId?: string;
+  rows: PlanDraftRow[];
+  note: string;
+  updatedAt: string;
+}
+
+const PLAN_DRAFT_PREFIX = 'freegency.planDraft.';
+
 type PlanHintTone = 'wait' | 'info' | 'success' | 'warn';
 
 interface DiscussionPlanHint {
@@ -106,6 +121,7 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
   private readonly projectApi = inject(ProjectDetailsApiService);
   private readonly filesApi = inject(ProjectFilesApiService);
   private readonly toast = inject(ToastService);
+  private readonly entitlementsApi = inject(EntitlementsApiService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
@@ -123,6 +139,7 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
   protected readonly alertIcon = Alert02Icon as IconSvgObject;
   protected readonly clockIcon = Clock01Icon as IconSvgObject;
   protected readonly successIcon = CheckmarkCircle02Icon as IconSvgObject;
+  protected readonly sparklesIcon = SparklesIcon as IconSvgObject;
 
   /** personal = profile inbox; team = team-scoped rooms */
   readonly mode = input<MessagesPanelMode>('personal');
@@ -143,10 +160,14 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
   private shouldStickToBottom = true;
   private destroyListeners = false;
   private scrollRaf = 0;
+  /** Ignore scroll events while we programmatically jump to the latest message. */
+  private programmaticScrollUntil = 0;
   /** Prevents stale ?room= deep-links from reopening after the user switches chats. */
   private readonly appliedDeepLinkKey = signal<string | null>(null);
   private openProjectRetry = 0;
   private openProjectTimer = 0;
+  /** Avoid repeating post-hire redirect for the same project. */
+  private postHireRedirectKey: string | null = null;
   private readonly onReceiveMessage = (message: RoomMessage) => this.handleReceiveMessage(message);
   private readonly onRoomUpdated = (update: RoomUpdated) => this.handleRoomUpdated(update);
   private readonly onOnlineStatus = (online: boolean) => {
@@ -265,11 +286,33 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
   );
 
   protected readonly proposeOpen = signal(false);
+  protected readonly proposeDraftRestored = signal(false);
   protected readonly proposeBudget = signal<ProjectBudgetInfo | null>(null);
   protected readonly proposeSaving = signal(false);
   protected readonly proposeError = signal<string | null>(null);
   protected readonly proposeRows = signal<PlanDraftRow[]>([]);
   protected readonly proposeNote = signal('');
+  /** e.g. full | apply | milestone:0 | field:0:title */
+  protected readonly proposeAiBusyKey = signal<string | null>(null);
+  protected readonly proposeReplaceConfirmOpen = signal(false);
+  /** Live status while AI thinks / writes into fields */
+  protected readonly proposeAiStatus = signal<string | null>(null);
+  /** Which field the magical writer is currently filling */
+  protected readonly proposeAiFocus = signal<{
+    index: number;
+    field: 'title' | 'definitionOfDone' | 'amount' | 'dueDate' | 'row';
+  } | null>(null);
+  private proposeAiAnimToken = 0;
+  private proposeAiThinkTimer = 0;
+
+  protected readonly canApplyHiringAgentEdits = computed(() => {
+    const latest = this.latestPlan();
+    return (
+      !!latest &&
+      latest.status === 'ChangesRequested' &&
+      !!(latest.changeComment || '').trim()
+    );
+  });
 
   protected readonly changesOpen = signal(false);
   protected readonly changesPlanId = signal<string | null>(null);
@@ -428,17 +471,20 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     if (latest?.status === 'Proposed') {
       return {
         tone: 'wait',
-        kicker: 'Waiting on client',
+        kicker: 'Waiting on review',
         title: `Milestone plan v${latest.version}`,
-        detail: 'Sent. The client can Accept to hire, or Request changes.',
+        detail: 'Sent. Scout (or the client) will Accept or Request changes.',
       };
     }
     if (latest?.status === 'Accepted') {
+      const archived = room?.status === 'Archived';
       return {
         tone: 'success',
         kicker: 'Hired',
         title: 'Plan accepted',
-        detail: 'This negotiation will archive and a project room opens.',
+        detail: archived
+          ? 'Hire locked. Open the project chat when you want.'
+          : 'Hire locked. Use Open project chat when you are ready.',
       };
     }
     return null;
@@ -598,7 +644,7 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     effect(() => {
       const msgs = this.messages();
       if (msgs.length && this.shouldStickToBottom) {
-        untracked(() => this.queueScrollToBottom('smooth'));
+        untracked(() => this.forceScrollToBottom('smooth'));
       }
     });
 
@@ -652,6 +698,7 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     this.joinedRoomId = null;
   }
     this.destroyListeners = true;
+    this.cancelProposeAiAnimation();
     if (this.openProjectTimer) clearTimeout(this.openProjectTimer);
     if (this.scrollRaf) cancelAnimationFrame(this.scrollRaf);
     this.setSelectedFile(null);
@@ -785,8 +832,9 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
 
   private scheduleOpenProjectRoom(projectId: string): void {
     if (this.destroyListeners) return;
-    if (this.openProjectRetry >= 5) {
+    if (this.openProjectRetry >= 8) {
       this.openProjectRetry = 0;
+      this.toast.success('Project chat is ready — open it from Projects in the inbox.');
       return;
     }
     this.openProjectRetry += 1;
@@ -802,7 +850,47 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
         return;
       }
       this.loadChatRooms(false, { openProjectId: projectId });
-    }, 700);
+    }, 600);
+  }
+
+  /**
+   * After a plan is accepted, leave the archived negotiation and open the project room.
+   * Used for developers (client already redirects on Accept click).
+   */
+  private redirectToProjectAfterHire(
+    projectId: string | null | undefined,
+    source: 'plan' | 'message' | 'archive' = 'plan',
+  ): void {
+    if (!this.hasGuid(projectId)) return;
+    const id = projectId!.toLowerCase();
+    const key = `${id}:${source}`;
+    if (this.postHireRedirectKey === key || this.postHireRedirectKey === `project:${id}`) {
+      return;
+    }
+
+    const room = this.selectedRoom();
+    // Only auto-jump away from the negotiation discussion (not if already in project chat).
+    if (room && room.roomType === 'Project' && room.projectId?.toLowerCase() === id) {
+      return;
+    }
+    if (room && room.roomType !== 'Proposal' && source !== 'archive') {
+      return;
+    }
+
+    this.postHireRedirectKey = `project:${id}`;
+    this.toast.success('Plan accepted — opening project chat.');
+    this.releaseInboxDeepLink(projectId);
+    this.clearSelection();
+    this.listFilter.set('projects');
+    this.openProjectRetry = 0;
+    this.loadChatRooms(false, { openProjectId: projectId! });
+  }
+
+  protected openHiredProjectChat(): void {
+    const projectId =
+      this.latestPlan()?.projectId || this.resolveRoomProjectId(this.selectedRoom());
+    this.postHireRedirectKey = null;
+    this.redirectToProjectAfterHire(projectId, 'plan');
   }
 
   private hasGuid(value: string | null | undefined): boolean {
@@ -815,6 +903,7 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     const raw = room as ChatRoom & {
       ProjectId?: string | null;
       ProposalId?: string | null;
+      TeamId?: string | null;
       projectID?: string | null;
       proposalID?: string | null;
     };
@@ -832,7 +921,12 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
         : this.hasGuid(raw.proposalID)
           ? raw.proposalID
           : null;
-    return { ...room, projectId, proposalId };
+    const teamId = this.hasGuid(raw.teamId)
+      ? raw.teamId
+      : this.hasGuid(raw.TeamId)
+        ? raw.TeamId
+        : null;
+    return { ...room, projectId, proposalId, teamId };
   }
 
   protected openCreateGroup(): void {
@@ -1078,12 +1172,17 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
   this.joinedRoomId = room.id;
     this.shouldStickToBottom = true;
     this.closeAttachMenu();
+    this.resetProposeStateForRoomSwitch();
+    this.postHireRedirectKey = null;
     this.selectedRoom.set(room);
     this.syncInboxQuery(room);
     this.messages.set([]);
     this.messageText.set('');
     this.setSelectedFile(null);
     this.planActionError.set(null);
+    this.plansById.set({});
+    this.latestPlan.set(null);
+    this.plansLoading.set(false);
     this.isOtherOnline.set(false);
     this.watchedPeerId.set(null);
     this.loadMessages(room.id);
@@ -1100,11 +1199,28 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Prevent draft / latest-plan bleed when jumping between team & personal rooms. */
+  private resetProposeStateForRoomSwitch(): void {
+    if (this.proposeOpen()) {
+      this.persistPlanDraft();
+    }
+    this.proposeOpen.set(false);
+    this.proposeRows.set([]);
+    this.proposeNote.set('');
+    this.proposeError.set(null);
+    this.proposeBudget.set(null);
+    this.proposeDraftRestored.set(false);
+    this.proposeAiBusyKey.set(null);
+    this.proposeReplaceConfirmOpen.set(false);
+    this.cancelProposeAiAnimation();
+  }
+
   protected onMessagesScroll(): void {
+    if (Date.now() < this.programmaticScrollUntil) return;
     const el = this.messagesScroll()?.nativeElement;
     if (!el) return;
     const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
-    this.shouldStickToBottom = distance < 96;
+    this.shouldStickToBottom = distance < 120;
   }
 
   protected toggleAttachMenu(event: MouseEvent): void {
@@ -1200,6 +1316,7 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
           messageType: msg.messageType || (file ? 'Attachment' : 'Text'),
           otherProfileId: msg.otherProfileId ?? null,
         });
+        this.forceScrollToBottom('smooth');
         const previewText = this.isModerationHidden(msg)
           ? 'Message removed by FreeGency for a policy violation.'
           : msg.text || msg.fileName || text || 'Attachment';
@@ -1240,6 +1357,10 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
 
   protected isSystem(message: RoomMessage): boolean {
     return message.messageType === 'System';
+  }
+
+  protected isAgentMessage(message: RoomMessage): boolean {
+    return !!message.isAgentGenerated;
   }
 
   protected isModerationHidden(message: RoomMessage): boolean {
@@ -1710,29 +1831,53 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     if (!room || !this.canProposePlan()) return;
 
     const latest = this.latestPlan();
-    const rows: PlanDraftRow[] =
-      seedFromLatest && latest?.items?.length
-        ? latest.items
-            .slice()
-            .sort((a, b) => a.sortOrder - b.sortOrder)
-            .map((item) => ({
-              title: item.title,
-              definitionOfDone: item.definitionOfDone,
-              amount: item.amount,
-              dueDate: item.dueDate ? item.dueDate.slice(0, 10) : '',
-            }))
-        : [
-            { title: '', definitionOfDone: '', amount: null, dueDate: '' },
-            { title: '', definitionOfDone: '', amount: null, dueDate: '' },
-          ];
+    const proposalId = this.hasGuid(room.proposalId) ? room.proposalId! : null;
+    const projectId = this.resolveRoomProjectId(room);
+    const savedDraft =
+      proposalId && projectId ? this.readPlanDraft(proposalId, projectId) : null;
+
+    let rows: PlanDraftRow[];
+    let note = '';
+
+    if (savedDraft?.rows?.length && this.planDraftHasContent(savedDraft.rows)) {
+      rows = savedDraft.rows.map((row) => ({
+        title: row.title ?? '',
+        definitionOfDone: row.definitionOfDone ?? '',
+        amount:
+          row.amount == null || Number.isNaN(Number(row.amount)) ? null : Number(row.amount),
+        dueDate: row.dueDate ?? '',
+      }));
+      note = savedDraft.note ?? '';
+      this.proposeDraftRestored.set(true);
+    } else if (
+      seedFromLatest &&
+      latest?.items?.length &&
+      this.latestPlanMatchesRoom(latest, room)
+    ) {
+      rows = latest.items
+        .slice()
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map((item) => ({
+          title: item.title,
+          definitionOfDone: item.definitionOfDone,
+          amount: item.amount,
+          dueDate: item.dueDate ? item.dueDate.slice(0, 10) : '',
+        }));
+      this.proposeDraftRestored.set(false);
+    } else {
+      rows = [
+        { title: '', definitionOfDone: '', amount: null, dueDate: '' },
+        { title: '', definitionOfDone: '', amount: null, dueDate: '' },
+      ];
+      this.proposeDraftRestored.set(false);
+    }
 
     this.proposeRows.set(rows);
-    this.proposeNote.set('');
+    this.proposeNote.set(note);
     this.proposeError.set(null);
     this.proposeBudget.set(null);
     this.proposeOpen.set(true);
 
-    const projectId = this.resolveRoomProjectId(room);
     if (projectId) {
       this.projectApi.getById(projectId).subscribe({
         next: (project) => {
@@ -1749,10 +1894,36 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     }
   }
 
+  private latestPlanMatchesRoom(
+    plan: MilestonePlanVersion,
+    room: ChatRoom,
+  ): boolean {
+    const roomProposalId = this.hasGuid(room.proposalId) ? room.proposalId!.toLowerCase() : null;
+    const roomProjectId = this.resolveRoomProjectId(room)?.toLowerCase() ?? null;
+    const planProposalId = (plan.proposalId || '').toLowerCase();
+    const planProjectId = (plan.projectId || '').toLowerCase();
+
+    if (roomProposalId && planProposalId && planProposalId !== roomProposalId) {
+      return false;
+    }
+    if (roomProjectId && planProjectId && planProjectId !== roomProjectId) {
+      return false;
+    }
+    // Proposal rooms must always match proposal id when the plan has one.
+    if (room.roomType === 'Proposal' && roomProposalId && planProposalId !== roomProposalId) {
+      return false;
+    }
+    return true;
+  }
+
   protected closeProposePlan(): void {
+    this.persistPlanDraft();
     this.proposeOpen.set(false);
     this.proposeError.set(null);
     this.proposeBudget.set(null);
+    this.proposeAiBusyKey.set(null);
+    this.proposeReplaceConfirmOpen.set(false);
+    this.cancelProposeAiAnimation();
   }
 
   protected addProposeRow(): void {
@@ -1760,16 +1931,19 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
       ...rows,
       { title: '', definitionOfDone: '', amount: null, dueDate: '' },
     ]);
+    this.persistPlanDraft();
   }
 
   protected removeProposeRow(index: number): void {
     this.proposeRows.update((rows) => (rows.length <= 1 ? rows : rows.filter((_, i) => i !== index)));
+    this.persistPlanDraft();
   }
 
   protected updateProposeRow(index: number, patch: Partial<PlanDraftRow>): void {
     this.proposeRows.update((rows) =>
       rows.map((row, i) => (i === index ? { ...row, ...patch } : row)),
     );
+    this.persistPlanDraft();
   }
 
   protected updateProposeDueDate(index: number, value: string): void {
@@ -1790,6 +1964,518 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
       this.proposeError.set(null);
     }
     this.updateProposeRow(index, { dueDate });
+  }
+
+  protected isProposeAiBusy(key?: string | null): boolean {
+    const busy = this.proposeAiBusyKey();
+    if (!busy) return false;
+    if (!key) return true;
+    return busy === key;
+  }
+
+  protected isProposeAiFocus(
+    index: number,
+    field: 'title' | 'definitionOfDone' | 'amount' | 'dueDate' | 'row',
+  ): boolean {
+    const focus = this.proposeAiFocus();
+    return !!focus && focus.index === index && focus.field === field;
+  }
+
+  protected isProposeAiRowActive(index: number): boolean {
+    const focus = this.proposeAiFocus();
+    return !!focus && focus.index === index;
+  }
+
+  protected async generateFullPlanAi(): Promise<void> {
+    if (this.planDraftHasContent(this.proposeRows())) {
+      this.proposeReplaceConfirmOpen.set(true);
+      return;
+    }
+    await this.runProposeAiAssist('full', 'FullPlan');
+  }
+
+  protected cancelReplacePlanConfirm(): void {
+    this.proposeReplaceConfirmOpen.set(false);
+  }
+
+  protected async confirmReplacePlanAi(): Promise<void> {
+    this.proposeReplaceConfirmOpen.set(false);
+    await this.runProposeAiAssist('full', 'FullPlan');
+  }
+
+  protected async applyHiringAgentEditsAi(): Promise<void> {
+    const comment = (this.latestPlan()?.changeComment || '').trim();
+    if (!comment) {
+      this.toast.error('No Scout change request to apply.');
+      return;
+    }
+    await this.runProposeAiAssist('apply', 'ApplyChangeRequest', { changeComment: comment });
+  }
+
+  protected async generateMilestoneAi(index: number): Promise<void> {
+    await this.runProposeAiAssist(`milestone:${index}`, 'Milestone', { milestoneIndex: index });
+  }
+
+  protected async generateFieldAi(
+    index: number,
+    field: 'title' | 'definitionOfDone',
+  ): Promise<void> {
+    await this.runProposeAiAssist(`field:${index}:${field}`, 'Field', {
+      milestoneIndex: index,
+      field,
+    });
+  }
+
+  private async runProposeAiAssist(
+    busyKey: string,
+    mode: MilestonePlanAiAssistMode,
+    extras?: {
+      milestoneIndex?: number;
+      field?: 'title' | 'definitionOfDone';
+      changeComment?: string;
+    },
+  ): Promise<void> {
+    const room = this.selectedRoom();
+    const projectId = this.resolveRoomProjectId(room);
+    const proposalId = this.hasGuid(room?.proposalId) ? room!.proposalId! : null;
+    if (!projectId || !proposalId || this.proposeAiBusyKey() || this.proposeSaving()) return;
+
+    try {
+      const check = await firstValueFrom(this.entitlementsApi.canConsume('AIChat'));
+      if (!check.isAllowed) {
+        this.toast.error(check.message || 'AI chat quota exceeded for your plan.');
+        return;
+      }
+    } catch (err) {
+      this.toast.error(extractApiError(err, 'Could not check AI entitlement.'));
+      return;
+    }
+
+    this.proposeAiBusyKey.set(busyKey);
+    this.proposeError.set(null);
+    this.startProposeAiThinking(mode, extras?.milestoneIndex ?? null, extras?.field ?? null);
+
+    const currentMilestones: MilestonePlanAiDraftItem[] = this.proposeRows().map((row) => ({
+      title: row.title || '',
+      definitionOfDone: row.definitionOfDone || '',
+      amount: Number(row.amount) || 0,
+      dueDate: row.dueDate || null,
+    }));
+
+    this.milestonesApi
+      .aiAssistPlan(projectId, {
+        proposalId,
+        mode,
+        currentMilestones,
+        milestoneIndex: extras?.milestoneIndex ?? null,
+        field: extras?.field ?? null,
+        changeComment: extras?.changeComment ?? null,
+      })
+      .subscribe({
+        next: (result) => {
+          void this.playProposeAiReveal(result.milestones ?? [], mode, extras);
+        },
+        error: (err) => {
+          this.cancelProposeAiAnimation();
+          this.proposeAiBusyKey.set(null);
+          this.toast.error(extractApiError(err, 'AI assist failed.'));
+        },
+      });
+  }
+
+  private cancelProposeAiAnimation(): void {
+    this.proposeAiAnimToken++;
+    if (this.proposeAiThinkTimer) {
+      clearInterval(this.proposeAiThinkTimer);
+      this.proposeAiThinkTimer = 0;
+    }
+    this.proposeAiFocus.set(null);
+    this.proposeAiStatus.set(null);
+  }
+
+  private startProposeAiThinking(
+    mode: MilestonePlanAiAssistMode,
+    milestoneIndex: number | null,
+    field: string | null,
+  ): void {
+    this.cancelProposeAiAnimation();
+    const token = this.proposeAiAnimToken;
+
+    const thinkingLines =
+      mode === 'Field'
+        ? field === 'definitionOfDone'
+          ? ['Reading this definition…', 'Sharpening acceptance criteria…', 'Polishing the wording…']
+          : ['Reading this title…', 'Tightening the phrasing…', 'Making it clearer…']
+        : mode === 'Milestone'
+          ? [
+              `Sketching milestone ${(milestoneIndex ?? 0) + 1}…`,
+              'Drafting title & definition…',
+              'Balancing amount and due date…',
+            ]
+          : mode === 'ApplyChangeRequest'
+            ? ['Reading hiring-agent notes…', 'Adjusting milestones…', 'Rewriting the draft…']
+            : [
+                'Reading the project brief…',
+                'Sketching milestone structure…',
+                'Drafting titles…',
+                'Writing definitions of done…',
+                'Balancing budget & dates…',
+              ];
+
+    let step = 0;
+    this.proposeAiStatus.set(thinkingLines[0]);
+    this.sweepProposeAiFocus(mode, milestoneIndex, field, step);
+
+    this.proposeAiThinkTimer = window.setInterval(() => {
+      if (token !== this.proposeAiAnimToken || this.destroyListeners) {
+        clearInterval(this.proposeAiThinkTimer);
+        this.proposeAiThinkTimer = 0;
+        return;
+      }
+      step += 1;
+      this.proposeAiStatus.set(thinkingLines[step % thinkingLines.length]);
+      this.sweepProposeAiFocus(mode, milestoneIndex, field, step);
+    }, 900);
+  }
+
+  private sweepProposeAiFocus(
+    mode: MilestonePlanAiAssistMode,
+    milestoneIndex: number | null,
+    field: string | null,
+    step: number,
+  ): void {
+    const rows = this.proposeRows();
+    if (!rows.length) {
+      this.proposeAiFocus.set(null);
+      return;
+    }
+
+    if (mode === 'Field' && milestoneIndex != null) {
+      this.proposeAiFocus.set({
+        index: milestoneIndex,
+        field: field === 'definitionOfDone' ? 'definitionOfDone' : 'title',
+      });
+      return;
+    }
+
+    if (mode === 'Milestone' && milestoneIndex != null) {
+      const fields: Array<'title' | 'definitionOfDone' | 'amount' | 'dueDate'> = [
+        'title',
+        'definitionOfDone',
+        'amount',
+        'dueDate',
+      ];
+      this.proposeAiFocus.set({
+        index: milestoneIndex,
+        field: fields[step % fields.length],
+      });
+      return;
+    }
+
+    const fields: Array<'title' | 'definitionOfDone' | 'amount' | 'dueDate'> = [
+      'title',
+      'definitionOfDone',
+      'amount',
+      'dueDate',
+    ];
+    const index = Math.floor(step / fields.length) % rows.length;
+    this.proposeAiFocus.set({
+      index,
+      field: fields[step % fields.length],
+    });
+  }
+
+  private async playProposeAiReveal(
+    items: MilestonePlanAiDraftItem[],
+    mode: MilestonePlanAiAssistMode,
+    extras?: {
+      milestoneIndex?: number;
+      field?: 'title' | 'definitionOfDone';
+      changeComment?: string;
+    },
+  ): Promise<void> {
+    if (this.proposeAiThinkTimer) {
+      clearInterval(this.proposeAiThinkTimer);
+      this.proposeAiThinkTimer = 0;
+    }
+
+    if (!items.length) {
+      this.cancelProposeAiAnimation();
+      this.proposeAiBusyKey.set(null);
+      this.toast.error('AI returned an empty plan. Try again.');
+      return;
+    }
+
+    const token = ++this.proposeAiAnimToken;
+
+    try {
+      if (mode === 'Field') {
+        const index = extras?.milestoneIndex ?? 0;
+        const field = extras?.field;
+        const item = items[0];
+        if (field === 'title') {
+          await this.typeProposeField(token, index, 'title', item.title?.trim() || '');
+        } else if (field === 'definitionOfDone') {
+          await this.typeProposeField(
+            token,
+            index,
+            'definitionOfDone',
+            item.definitionOfDone?.trim() || '',
+          );
+        }
+      } else if (mode === 'Milestone') {
+        const index = extras?.milestoneIndex ?? 0;
+        await this.revealProposeMilestone(token, index, items[0]);
+      } else {
+        // FullPlan / ApplyChangeRequest — wipe then write field by field
+        this.proposeAiStatus.set('Preparing blank canvas…');
+        this.proposeRows.set(
+          items.map(() => ({
+            title: '',
+            definitionOfDone: '',
+            amount: null,
+            dueDate: '',
+          })),
+        );
+        await this.sleepProposeAi(token, 180);
+
+        for (let i = 0; i < items.length; i++) {
+          if (token !== this.proposeAiAnimToken || this.destroyListeners) return;
+          this.proposeAiStatus.set(`Writing milestone ${i + 1} of ${items.length}…`);
+          await this.revealProposeMilestone(token, i, items[i]);
+          await this.sleepProposeAi(token, 120);
+        }
+      }
+
+      if (token !== this.proposeAiAnimToken || this.destroyListeners) return;
+
+      this.proposeAiFocus.set(null);
+      this.proposeAiStatus.set(null);
+      this.proposeAiBusyKey.set(null);
+      this.proposeDraftRestored.set(false);
+      this.persistPlanDraft();
+      this.toast.success(
+        mode === 'ApplyChangeRequest'
+          ? 'Hiring agent edits applied to your draft.'
+          : mode === 'Field'
+            ? 'Improved with AI — review the wording.'
+            : 'AI draft ready — review before sending.',
+      );
+    } catch {
+      if (token === this.proposeAiAnimToken) {
+        this.cancelProposeAiAnimation();
+        this.proposeAiBusyKey.set(null);
+      }
+    }
+  }
+
+  private async revealProposeMilestone(
+    token: number,
+    index: number,
+    item: MilestonePlanAiDraftItem,
+  ): Promise<void> {
+    if (token !== this.proposeAiAnimToken || this.destroyListeners) return;
+
+    this.proposeRows.update((rows) =>
+      rows.map((row, i) =>
+        i === index ? { title: '', definitionOfDone: '', amount: null, dueDate: '' } : row,
+      ),
+    );
+
+    await this.typeProposeField(token, index, 'title', item.title?.trim() || '');
+    await this.typeProposeField(
+      token,
+      index,
+      'definitionOfDone',
+      item.definitionOfDone?.trim() || '',
+    );
+
+    if (token !== this.proposeAiAnimToken || this.destroyListeners) return;
+    this.proposeAiFocus.set({ index, field: 'amount' });
+    this.proposeAiStatus.set(`Setting amount for milestone ${index + 1}…`);
+    const amount =
+      item.amount == null || Number.isNaN(Number(item.amount)) ? null : Number(item.amount);
+    this.proposeRows.update((rows) =>
+      rows.map((row, i) => (i === index ? { ...row, amount } : row)),
+    );
+    await this.sleepProposeAi(token, 220);
+
+    if (token !== this.proposeAiAnimToken || this.destroyListeners) return;
+    this.proposeAiFocus.set({ index, field: 'dueDate' });
+    this.proposeAiStatus.set(`Setting due date for milestone ${index + 1}…`);
+    const dueDate = (item.dueDate || '').slice(0, 10);
+    this.proposeRows.update((rows) =>
+      rows.map((row, i) => (i === index ? { ...row, dueDate } : row)),
+    );
+    await this.sleepProposeAi(token, 220);
+  }
+
+  private async typeProposeField(
+    token: number,
+    index: number,
+    field: 'title' | 'definitionOfDone',
+    fullText: string,
+  ): Promise<void> {
+    if (token !== this.proposeAiAnimToken || this.destroyListeners) return;
+
+    this.proposeAiFocus.set({ index, field });
+    this.proposeAiStatus.set(
+      field === 'title'
+        ? `Writing title for milestone ${index + 1}…`
+        : `Writing definition for milestone ${index + 1}…`,
+    );
+    this.scrollProposeAiRowIntoView(index);
+
+    this.proposeRows.update((rows) =>
+      rows.map((row, i) =>
+        i === index
+          ? field === 'title'
+            ? { ...row, title: '' }
+            : { ...row, definitionOfDone: '' }
+          : row,
+      ),
+    );
+
+    if (!fullText) {
+      await this.sleepProposeAi(token, 120);
+      return;
+    }
+
+    const chunk = field === 'title' ? 2 : 4;
+    const delay = field === 'title' ? 28 : 16;
+
+    for (let i = chunk; i <= fullText.length; i += chunk) {
+      if (token !== this.proposeAiAnimToken || this.destroyListeners) return;
+      const slice = fullText.slice(0, Math.min(i, fullText.length));
+      this.proposeRows.update((rows) =>
+        rows.map((row, ri) =>
+          ri === index
+            ? field === 'title'
+              ? { ...row, title: slice }
+              : { ...row, definitionOfDone: slice }
+            : row,
+        ),
+      );
+      await this.sleepProposeAi(token, delay);
+    }
+
+    // Ensure final exact value
+    if (token !== this.proposeAiAnimToken || this.destroyListeners) return;
+    this.proposeRows.update((rows) =>
+      rows.map((row, ri) =>
+        ri === index
+          ? field === 'title'
+            ? { ...row, title: fullText }
+            : { ...row, definitionOfDone: fullText }
+          : row,
+      ),
+    );
+    await this.sleepProposeAi(token, 90);
+  }
+
+  private sleepProposeAi(token: number, ms: number): Promise<void> {
+    return new Promise((resolve) => {
+      window.setTimeout(() => {
+        if (token !== this.proposeAiAnimToken || this.destroyListeners) {
+          resolve();
+          return;
+        }
+        resolve();
+      }, ms);
+    });
+  }
+
+  private scrollProposeAiRowIntoView(index: number): void {
+    queueMicrotask(() => {
+      const root = document.querySelector('.msg-modal--plan .msg-plan-modal__body');
+      const row = root?.querySelectorAll('.msg-plan-form__row')?.[index] as HTMLElement | undefined;
+      row?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  }
+
+  private planDraftStorageKey(proposalId: string, projectId?: string | null): string {
+    const proposal = proposalId.toLowerCase();
+    const project = this.hasGuid(projectId) ? projectId!.toLowerCase() : 'unknown';
+    return `${PLAN_DRAFT_PREFIX}${project}.${proposal}`;
+  }
+
+  private planDraftHasContent(rows: PlanDraftRow[]): boolean {
+    return rows.some(
+      (row) =>
+        !!(row.title || '').trim() ||
+        !!(row.definitionOfDone || '').trim() ||
+        (row.amount != null && Number(row.amount) > 0) ||
+        !!(row.dueDate || '').trim(),
+    );
+  }
+
+  private readPlanDraft(proposalId: string, projectId: string): PlanDraftPersist | null {
+    try {
+      const primary = localStorage.getItem(this.planDraftStorageKey(proposalId, projectId));
+      const legacy = localStorage.getItem(`${PLAN_DRAFT_PREFIX}${proposalId.toLowerCase()}`);
+      const raw = primary || legacy;
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as PlanDraftPersist;
+      if (!parsed || !Array.isArray(parsed.rows)) return null;
+      // Reject drafts that belong to another project (legacy keys / stale data).
+      if (
+        this.hasGuid(parsed.projectId) &&
+        parsed.projectId!.toLowerCase() !== projectId.toLowerCase()
+      ) {
+        return null;
+      }
+      if (
+        this.hasGuid(parsed.proposalId) &&
+        parsed.proposalId.toLowerCase() !== proposalId.toLowerCase()
+      ) {
+        return null;
+      }
+      return parsed;
+    } catch {
+      return null;
+    }
+  }
+
+  private persistPlanDraft(): void {
+    const room = this.selectedRoom();
+    const proposalId = this.hasGuid(room?.proposalId) ? room!.proposalId! : null;
+    const projectId = this.resolveRoomProjectId(room);
+    if (!proposalId || !projectId) return;
+
+    const rows = this.proposeRows();
+    if (!this.planDraftHasContent(rows)) {
+      this.clearPlanDraft(proposalId, projectId);
+      return;
+    }
+
+    const payload: PlanDraftPersist = {
+      proposalId,
+      projectId,
+      rows,
+      note: this.proposeNote(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    try {
+      localStorage.setItem(this.planDraftStorageKey(proposalId, projectId), JSON.stringify(payload));
+      // Drop legacy proposal-only key so it can't leak across projects.
+      localStorage.removeItem(`${PLAN_DRAFT_PREFIX}${proposalId.toLowerCase()}`);
+    } catch {
+      // Ignore quota / private mode failures.
+    }
+  }
+
+  private clearPlanDraft(
+    proposalId: string | null | undefined,
+    projectId?: string | null,
+  ): void {
+    if (!this.hasGuid(proposalId)) return;
+    try {
+      localStorage.removeItem(this.planDraftStorageKey(proposalId!, projectId));
+      localStorage.removeItem(`${PLAN_DRAFT_PREFIX}${proposalId!.toLowerCase()}`);
+    } catch {
+      // ignore
+    }
   }
 
   protected submitProposePlan(): void {
@@ -1843,6 +2529,10 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
           const normalized = this.normalizePlanVersion(plan);
           this.proposeSaving.set(false);
           this.proposeOpen.set(false);
+          this.proposeRows.set([]);
+          this.proposeNote.set('');
+          this.proposeDraftRestored.set(false);
+          this.clearPlanDraft(room.proposalId, room.projectId);
           this.shouldStickToBottom = true;
           if (normalized?.id) {
             this.plansById.update((map) => ({ ...map, [normalized.id]: normalized }));
@@ -1966,13 +2656,24 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
       );
     }
 
+    const proposalId = this.hasGuid(room?.proposalId) ? room!.proposalId! : null;
+    const scopeToProposal = room!.roomType === 'Proposal' && !!proposalId;
+
+    this.plansById.set({});
+    this.latestPlan.set(null);
     this.plansLoading.set(true);
     this.milestonesApi.getPlanVersions(projectId).subscribe({
       next: (versions) => {
         const map: Record<string, MilestonePlanVersion> = {};
         const normalizedList = (versions ?? [])
           .map((v) => this.normalizePlanVersion(v))
-          .filter((v): v is MilestonePlanVersion => !!v?.id);
+          .filter((v): v is MilestonePlanVersion => !!v?.id)
+          .filter((v) => {
+            // Proposal discussions must only see their own plan versions.
+            // Project rooms (post-hire) keep project-wide plans.
+            if (!scopeToProposal) return true;
+            return (v.proposalId || '').toLowerCase() === proposalId!.toLowerCase();
+          });
         for (const v of normalizedList) {
           map[v.id] = {
             ...v,
@@ -1991,6 +2692,8 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
             : null,
         );
         this.plansLoading.set(false);
+        // Do NOT auto-redirect when loading an already-accepted plan (e.g. opening
+        // Archived). Jump only on live hire events (SignalR message / archive).
         if (this.shouldStickToBottom) {
           this.queueScrollToBottom('smooth');
         }
@@ -2069,10 +2772,17 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
       return;
 
     const mine = normalized.isMine || normalized.senderId === this.auth.session()?.profileId;
+    // Always follow agent / peer messages in the open thread.
+    if (!mine || normalized.isAgentGenerated) {
+      this.shouldStickToBottom = true;
+    }
     this.appendMessage({
       ...normalized,
       isMine: mine,
     });
+    if (!mine || normalized.isAgentGenerated) {
+      this.forceScrollToBottom('smooth');
+    }
 
     if (mine && normalized.moderationWarning) {
       this.toast.warning(
@@ -2086,6 +2796,19 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
       (normalized.text || '').toLowerCase().includes('request changes on plan')
     ) {
       this.loadPlansForRoom(room);
+    }
+
+    const hireText = (normalized.text || '').toLowerCase();
+    if (
+      room.roomType === 'Proposal' &&
+      (hireText.includes('hire locked') ||
+        (hireText.includes('accepted') && hireText.includes('archived')))
+    ) {
+      const projectId =
+        this.latestPlan()?.projectId ||
+        this.resolveRoomProjectId(room) ||
+        (this.hasGuid(room.projectId) ? room.projectId : null);
+      this.redirectToProjectAfterHire(projectId, 'message');
     }
 
     if (this.isWorkCard(normalized)) {
@@ -2127,6 +2850,12 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
     });
 
     if ((update.status || '').toLowerCase() === 'archived') {
+      const selectedBefore = this.selectedRoom();
+      const wasLiveNegotiation =
+        selectedBefore?.id === update.roomId &&
+        selectedBefore.roomType === 'Proposal' &&
+        selectedBefore.status !== 'Archived';
+
       this.selectedRoom.update((r) =>
         r && r.id === update.roomId
           ? {
@@ -2137,6 +2866,14 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
             }
           : r,
       );
+
+      // Only jump at the moment hire archives the discussion — not when reopening Archive.
+      if (wasLiveNegotiation) {
+        const selected = this.selectedRoom();
+        const projectId =
+          this.latestPlan()?.projectId || this.resolveRoomProjectId(selected);
+        this.redirectToProjectAfterHire(projectId, 'archive');
+      }
     }
 
     // Keep the open thread in sync — plan proposes often arrive as RoomUpdated
@@ -2146,6 +2883,7 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
       this.shouldStickToBottom = true;
       this.loadMessages(update.roomId);
       this.loadPlansForRoom(selected);
+      this.forceScrollToBottom('auto');
       if (
         String(update.lastMessageType || '')
           .toLowerCase()
@@ -2189,6 +2927,9 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
       return [...next, message];
     });
     this.shouldStickToBottom = true;
+    if (message.isAgentGenerated || !message.isMine) {
+      this.forceScrollToBottom('smooth');
+    }
   }
 
   private patchRoomPreview(
@@ -2237,11 +2978,30 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
                   : r.title,
             });
           });
-          this.chatRooms.set(items);
+          // Developers: team Proposal/Project chats live under Team → Messages.
+          // Exception: when opening a just-hired project room, always include it.
+          const openProjectId = options?.openProjectId?.toLowerCase() ?? null;
+          const scoped =
+            this.mode() === 'personal' && this.isDeveloperMode()
+              ? items.filter((r) => {
+                  if (r.roomType === 'Proposal' || r.roomType === 'Project') {
+                    if (
+                      openProjectId &&
+                      r.roomType === 'Project' &&
+                      r.projectId?.toLowerCase() === openProjectId
+                    ) {
+                      return true;
+                    }
+                    return !this.hasGuid(r.teamId ?? null);
+                  }
+                  return true;
+                })
+              : items;
+          this.chatRooms.set(scoped);
           this.loading.set(false);
 
           if (options?.openProjectId) {
-            const projectRoom = this.findActiveProjectRoom(items, options.openProjectId);
+            const projectRoom = this.findActiveProjectRoom(scoped, options.openProjectId);
             if (projectRoom) {
               this.openProjectRetry = 0;
               this.listFilter.set('projects');
@@ -2326,7 +3086,7 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
         this.messages.set(items);
         this.messagesLoading.set(false);
         this.shouldStickToBottom = true;
-        this.queueScrollToBottom('auto');
+        this.forceScrollToBottom('auto');
 
         const otherProfileId =
           items.find((m) => m.otherProfileId)?.otherProfileId ||
@@ -2390,18 +3150,25 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
       IsMine?: boolean;
       ModerationStatus?: string | null;
       ModerationWarning?: string | null;
+      IsAgentGenerated?: boolean;
     };
     const planRaw = raw.planVersionId ?? r.PlanVersionId ?? null;
     const milestoneRaw =
       raw.milestoneId ??
       (r as { MilestoneId?: string | null }).MilestoneId ??
       null;
+    const isAgent = !!(raw.isAgentGenerated ?? r.IsAgentGenerated);
     return {
       ...raw,
       id: String(raw.id || r.Id || ''),
       chatRoomId: raw.chatRoomId || r.ChatRoomId || fallbackRoomId,
       senderId: raw.senderId ?? r.SenderId ?? null,
-      senderName: raw.senderName ?? r.SenderName ?? null,
+      senderName: isAgent
+        ? 'Scout'
+        : (raw.senderName ?? r.SenderName ?? null),
+      senderProfileType: isAgent
+        ? 'AI'
+        : (raw.senderProfileType ?? null),
       messageType: String(raw.messageType || r.MessageType || 'Text'),
       text: raw.text ?? r.Text ?? null,
       planVersionId: planRaw == null || planRaw === '' ? null : String(planRaw),
@@ -2412,7 +3179,17 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
       otherProfileId: raw.otherProfileId ?? null,
       moderationStatus: raw.moderationStatus ?? r.ModerationStatus ?? null,
       moderationWarning: raw.moderationWarning ?? r.ModerationWarning ?? null,
+      isAgentGenerated: isAgent,
     };
+  }
+
+  private forceScrollToBottom(behavior: ScrollBehavior = 'smooth'): void {
+    this.shouldStickToBottom = true;
+    this.programmaticScrollUntil = Date.now() + 600;
+    this.queueScrollToBottom(behavior);
+    // Agent bubbles can grow after first paint (icon/fonts) — nudge again.
+    window.setTimeout(() => this.queueScrollToBottom(behavior === 'smooth' ? 'auto' : behavior), 50);
+    window.setTimeout(() => this.queueScrollToBottom('auto'), 180);
   }
 
   private queueScrollToBottom(behavior: ScrollBehavior): void {
@@ -2427,7 +3204,9 @@ export class MessagesPanelComponent implements OnInit, OnDestroy {
   private scrollToBottom(behavior: ScrollBehavior): void {
     const el = this.messagesScroll()?.nativeElement;
     if (!el) return;
-    if (!this.shouldStickToBottom && behavior !== 'auto') return;
+    if (!this.shouldStickToBottom && behavior !== 'auto' && Date.now() >= this.programmaticScrollUntil) {
+      return;
+    }
     const top = el.scrollHeight;
     if (typeof el.scrollTo === 'function') {
       el.scrollTo({ top, behavior });

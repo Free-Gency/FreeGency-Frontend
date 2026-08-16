@@ -1,0 +1,731 @@
+<div class="ha-page" [class.ha-page--final]="isReportReady()">
+  <app-client-view-navbar />
+
+  <main class="ha-main">
+    @if (loading()) {
+      <p class="ha-empty">Loading report…</p>
+    } @else if (error()) {
+      <p class="ha-empty" style="color: #b42318">{{ error() }}</p>
+    } @else if (run(); as current) {
+      <nav class="ha-crumb" aria-label="Breadcrumb">
+        <a routerLink="/client/reports">Reports</a>
+        <span class="ha-crumb__sep" aria-hidden="true">›</span>
+        <span class="ha-crumb__current">Scout run</span>
+        @if (isActive()) {
+          <span class="ha-live-pill">
+            <span class="ha-live-pill__dot" aria-hidden="true"></span>
+            Scout is live
+          </span>
+        }
+      </nav>
+
+      @if (current.failureReason) {
+        <p class="ha-empty" style="color: #b42318; text-align: left; padding-top: 0">
+          {{ current.failureReason }}
+        </p>
+      }
+
+      <!-- ========== LIVE PROCESS ========== -->
+      @if (isActive()) {
+        <section class="ha-band" aria-live="polite">
+          <div class="ha-band__glow" aria-hidden="true"></div>
+
+          <div class="ha-band__top">
+            <div>
+              <p class="ha-band__eyebrow">Live process</p>
+              <h1 class="ha-band__title">
+                {{ current.projectTitle || 'Hiring agent run' }}
+              </h1>
+
+              @if (countdownLabel(); as clock) {
+                <p class="ha-band__clock-label">{{ clock.title }}</p>
+                <p class="ha-band__clock" [class.is-expired]="clock.expired">
+                  {{ clock.expired ? 'Closing…' : clock.remaining }}
+                </p>
+                <div class="ha-band__bar" aria-hidden="true">
+                  <span [style.width.%]="clock.ratio * 100"></span>
+                </div>
+              } @else {
+                <p class="ha-band__clock-label">Status</p>
+                <p class="ha-band__clock">Working…</p>
+              }
+            </div>
+
+            @if (responseSummary(); as summary) {
+              <div class="ha-stats">
+                <div class="ha-stat">
+                  <span class="ha-stat__n">{{ summary.accepted }}</span>
+                  <span class="ha-stat__l">Accepted</span>
+                </div>
+                <div class="ha-stat ha-stat--muted">
+                  <span class="ha-stat__n">{{ summary.pending }}</span>
+                  <span class="ha-stat__l">Pending</span>
+                </div>
+                <div class="ha-stat ha-stat--dim">
+                  <span class="ha-stat__n">{{ summary.declined }}</span>
+                  <span class="ha-stat__l">Declined</span>
+                </div>
+              </div>
+            }
+
+            <div class="ha-band__actions">
+              @if (canCloseInvites()) {
+                <button
+                  type="button"
+                  class="ha-btn ha-btn--lime"
+                  [disabled]="actionLoading()"
+                  (click)="closeInvites()"
+                >
+                  Finish early &amp; rank →
+                </button>
+              }
+              @if (canCancel()) {
+                <button
+                  type="button"
+                  class="ha-btn ha-btn--ghost-dark"
+                  [disabled]="actionLoading()"
+                  (click)="cancelRun()"
+                >
+                  Cancel run
+                </button>
+              }
+            </div>
+          </div>
+
+          <ol class="ha-steps">
+            @for (phase of phases(); track phase.label) {
+              <li
+                class="ha-step"
+                [class.is-done]="phase.state === 'done'"
+                [class.is-current]="phase.state === 'current'"
+              >
+                <span class="ha-step__n">
+                  @if (phase.state === 'done') {
+                    ✓
+                  } @else {
+                    {{ phase.index }}
+                  }
+                </span>
+                {{ phase.label }}
+              </li>
+            }
+          </ol>
+        </section>
+
+        <section class="ha-roster">
+          <div class="ha-roster__head">
+            <div>
+              <p class="ha-roster__eyebrow">Scout invite board</p>
+              <h2 class="ha-roster__title">Who Scout invited</h2>
+              <p class="ha-roster__sub">
+                @if (
+                  current.status === 'Queued' ||
+                  current.status === 'Inviting' ||
+                  !sortedCandidates().length
+                ) {
+                  Scout is matching talent and sending invites now…
+                } @else if (hasPendingInvites()) {
+                  Waiting for replies · invites close
+                  {{ current.inviteDeadlineUtc | date: "MMM d, h:mm a" }}
+                } @else {
+                  Started {{ current.createdAt | date: 'MMM d' }} · discussion until
+                  {{ current.discussionDeadlineUtc | date: "MMM d, h:mm a" }}
+                }
+              </p>
+            </div>
+            @if (responseSummary(); as summary) {
+              <div class="ha-roster__chips">
+                <span class="ha-roster__chip ha-roster__chip--ok"
+                  >{{ summary.accepted }} accepted</span
+                >
+                <span class="ha-roster__chip ha-roster__chip--wait"
+                  >{{ summary.pending }} pending</span
+                >
+                <span class="ha-roster__chip ha-roster__chip--bad"
+                  >{{ summary.declined }} declined</span
+                >
+              </div>
+            }
+          </div>
+
+          @if (
+            sortedCandidates().length === 0 ||
+            current.status === 'Queued' ||
+            current.status === 'Inviting'
+          ) {
+            <div class="ha-invite-loading" aria-live="polite">
+              <div class="ha-invite-loading__mark" aria-hidden="true">
+                <span>G</span>
+                <i></i>
+              </div>
+              <div class="ha-invite-loading__copy">
+                <p class="ha-invite-loading__title">
+                  @if (sortedCandidates().length === 0) {
+                    Matching &amp; sending invites
+                  } @else {
+                    Finishing invite delivery
+                  }
+                </p>
+                <p class="ha-invite-loading__body">
+                  Scout is finding strong matches for your brief, then pinging them one by one.
+                  This board updates as each invite lands.
+                </p>
+                <ul class="ha-invite-loading__steps" aria-hidden="true">
+                  <li class="is-on">Scan matches</li>
+                  <li [class.is-on]="sortedCandidates().length > 0">Send invites</li>
+                  <li>Wait for replies</li>
+                </ul>
+              </div>
+            </div>
+          }
+
+          @if (sortedCandidates().length) {
+            <ul class="ha-grid">
+              @for (candidate of sortedCandidates(); track candidate.id) {
+                <li class="ha-card">
+                  <div class="ha-card__top">
+                    @if (candidate.avatarUrl) {
+                      <div
+                        class="ha-avatar"
+                        [class.ha-avatar--wait]="
+                          candidate.status === 'Invited' || candidate.status === 'Suggested'
+                        "
+                        [class.ha-avatar--bad]="
+                          candidate.status === 'Rejected' ||
+                          candidate.status === 'Expired' ||
+                          candidate.status === 'InviteFailed'
+                        "
+                      >
+                        <img [src]="candidate.avatarUrl" [alt]="candidate.displayName" />
+                      </div>
+                    } @else {
+                      <div
+                        class="ha-avatar"
+                        [class.ha-avatar--wait]="
+                          candidate.status === 'Invited' || candidate.status === 'Suggested'
+                        "
+                        [class.ha-avatar--bad]="
+                          candidate.status === 'Rejected' ||
+                          candidate.status === 'Expired' ||
+                          candidate.status === 'InviteFailed'
+                        "
+                      >
+                        {{ candidateInitials(candidate) }}
+                      </div>
+                    }
+                    <span [class]="rosterBadgeClass(candidate.status)">
+                      {{ statusLabel(candidate.status) }}
+                    </span>
+                  </div>
+
+                  <div>
+                    <p class="ha-card__name">{{ candidate.displayName }}</p>
+                    <p class="ha-card__meta">
+                      {{ candidate.inviteeType === 'Team' ? 'Team' : 'Developer' }}
+                      @if (candidate.suggestionScore) {
+                        · Match {{ candidate.suggestionScore | number: '1.0-2' }}
+                      }
+                    </p>
+                  </div>
+
+                  <div class="ha-card__foot">
+                    <span class="ha-activity">
+                      <span
+                        class="ha-activity__dot"
+                        [class.is-ok]="
+                          candidate.status === 'Discussing' ||
+                          candidate.status === 'PlanProposed' ||
+                          candidate.status === 'Accepted' ||
+                          candidate.status === 'Ranked'
+                        "
+                        [class.is-wait]="
+                          candidate.status === 'Invited' || candidate.status === 'Suggested'
+                        "
+                        [class.is-bad]="
+                          candidate.status === 'Rejected' ||
+                          candidate.status === 'Expired' ||
+                          candidate.status === 'InviteFailed'
+                        "
+                      ></span>
+                      {{ activityLine(candidate) }}
+                    </span>
+                    <button
+                      type="button"
+                      class="ha-chat-btn"
+                      [disabled]="!candidate.chatRoomId"
+                      title="Open chat"
+                      aria-label="Open chat"
+                      (click)="openChat(candidate.chatRoomId)"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path
+                          d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16H9l-4 3.5V6.5Z"
+                          stroke="currentColor"
+                          stroke-width="1.8"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      }
+
+      <!-- ========== FINAL ANALYSIS ========== -->
+      @if (isReportReady() && report(); as reportData) {
+        <header class="ha-final-head">
+          <div class="ha-final-head__copy">
+            <p class="ha-final-eyebrow">Final analysis</p>
+            <h1 class="ha-final-title">
+              {{ current.projectTitle || 'Hiring agent report' }}
+            </h1>
+            <p class="ha-final-pulse">
+              <span>Started {{ current.createdAt | date: 'MMM d' }}</span>
+              <span aria-hidden="true">·</span>
+              <span
+                >{{ responseSummary().total || sortedCandidates().length }} candidates analyzed</span
+              >
+              @if (current.reportReadyAt) {
+                <span aria-hidden="true">·</span>
+                <span>Ready {{ current.reportReadyAt | date: 'MMM d, h:mm a' }}</span>
+              }
+            </p>
+          </div>
+          @if (canHire()) {
+            <button
+              type="button"
+              class="ha-btn ha-btn--ink"
+              [disabled]="actionLoading() || !winnerCard()"
+              (click)="confirmHire(winnerCard()?.item?.candidateId)"
+            >
+              Hire recommended
+            </button>
+          } @else if (isAgentRefiningPlan()) {
+            <div class="ha-refining">
+              <span class="ha-refining__dot" aria-hidden="true"></span>
+              Agent is refining the plan with the developer
+            </div>
+          } @else if (run()?.status === 'Hired') {
+            <div class="ha-refining ha-refining--done">Hire complete</div>
+          }
+        </header>
+
+        @if (winnerCard(); as winner) {
+          <section class="ha-spotlight" aria-label="Recommended talent">
+            <div class="ha-spotlight__label">AI recommendation</div>
+            <div class="ha-spotlight__grid">
+              <div class="ha-spotlight__main">
+                <span class="ha-pill ha-pill--ok">Winner · #{{ winner.item.rank }}</span>
+                <div class="ha-spotlight__person">
+                  @if (winner.avatarUrl) {
+                    <div class="ha-avatar ha-avatar--spot">
+                      <img [src]="winner.avatarUrl" [alt]="winner.displayName" />
+                    </div>
+                  } @else {
+                    <div class="ha-avatar ha-avatar--spot">
+                      {{ candidateInitials({ displayName: winner.displayName }) }}
+                    </div>
+                  }
+                  <div class="min-w-0">
+                    <h2 class="ha-spotlight__name">{{ winner.displayName }}</h2>
+                    <p class="ha-spotlight__role">
+                      {{ winner.inviteeType === 'Team' ? 'Team' : 'Developer' }}
+                      ·
+                      {{ winner.hasPlan ? 'Plan submitted' : 'No plan yet' }}
+                      · {{ scoreOutOfTen(winner.item.score) }}
+                    </p>
+                  </div>
+                </div>
+
+                @if (winner.item.strengths.length) {
+                  <ul class="ha-spotlight__strengths">
+                    @for (s of winner.item.strengths.slice(0, 3); track s) {
+                      <li>{{ s }}</li>
+                    }
+                  </ul>
+                }
+
+                @if (winner.item.summary) {
+                  <p class="ha-spotlight__verdict">{{ winner.item.summary }}</p>
+                }
+              </div>
+
+              <div class="ha-spotlight__side">
+                <p class="ha-spotlight__side-title">Ranking criteria</p>
+                <div class="ha-spot-crit">
+                  @for (c of winner.criteria; track c.key) {
+                    <div
+                      class="ha-crit"
+                      [class.is-strong]="c.pct >= 70"
+                      [class.is-fair]="c.pct >= 45 && c.pct < 70"
+                      [class.is-weak]="c.pct < 45"
+                    >
+                      <div class="ha-crit__row">
+                        <span>{{ c.label }}</span>
+                        <strong>{{ c.pct }}%</strong>
+                      </div>
+                      <div class="ha-crit__bar" aria-hidden="true">
+                        <span [style.width.%]="c.pct"></span>
+                      </div>
+                      <p class="ha-crit__note">{{ c.note }}</p>
+                    </div>
+                  }
+                </div>
+                <div class="ha-spotlight__actions">
+                  @if (winner.chatRoomId) {
+                    <button
+                      type="button"
+                      class="ha-btn ha-btn--ghost-warm"
+                      (click)="openChat(winner.chatRoomId)"
+                    >
+                      Open AI chat
+                    </button>
+                  }
+                  @if (canHire()) {
+                    <button
+                      type="button"
+                      class="ha-btn ha-btn--ink"
+                      [disabled]="actionLoading()"
+                      (click)="confirmHire(winner.item.candidateId)"
+                    >
+                      Hire {{ winner.displayName.split(' ')[0] }}
+                    </button>
+                  }
+                </div>
+              </div>
+            </div>
+          </section>
+        }
+
+        <div class="ha-final-grid">
+          <div class="ha-summary-col">
+            <div class="ha-summary-block">
+              <h2>Executive summary</h2>
+              <p>{{ reportData.summary }}</p>
+            </div>
+
+            @if (inviteOutcomes().total) {
+              <section class="ha-invites" aria-label="Invitation outcomes">
+                <div class="ha-invites__head">
+                  <h2>Invitations</h2>
+                  <p>{{ inviteOutcomes().total }} sent — who accepted, declined, or stayed silent.</p>
+                </div>
+                <div class="ha-invites__grid">
+                  <article class="ha-invite-group ha-invite-group--ok">
+                    <header>
+                      <span>Accepted</span>
+                      <strong>{{ inviteOutcomes().accepted.length }}</strong>
+                    </header>
+                    @if (inviteOutcomes().accepted.length) {
+                      <ul>
+                        @for (c of inviteOutcomes().accepted; track c.id) {
+                          <li>{{ c.displayName }}</li>
+                        }
+                      </ul>
+                    } @else {
+                      <p class="ha-invite-group__empty">Nobody accepted yet.</p>
+                    }
+                  </article>
+
+                  <article class="ha-invite-group ha-invite-group--bad">
+                    <header>
+                      <span>Declined</span>
+                      <strong>{{ inviteOutcomes().rejected.length }}</strong>
+                    </header>
+                    @if (inviteOutcomes().rejected.length) {
+                      <ul>
+                        @for (c of inviteOutcomes().rejected; track c.id) {
+                          <li>{{ c.displayName }}</li>
+                        }
+                      </ul>
+                    } @else {
+                      <p class="ha-invite-group__empty">No declines.</p>
+                    }
+                  </article>
+
+                  <article class="ha-invite-group ha-invite-group--mute">
+                    <header>
+                      <span>No reply</span>
+                      <strong>{{ inviteOutcomes().noReply.length }}</strong>
+                    </header>
+                    @if (inviteOutcomes().noReply.length) {
+                      <ul>
+                        @for (c of inviteOutcomes().noReply; track c.id) {
+                          <li>
+                            {{ c.displayName }}
+                            <em>{{ c.status === 'Expired' ? 'expired' : 'silent' }}</em>
+                          </li>
+                        }
+                      </ul>
+                    } @else {
+                      <p class="ha-invite-group__empty">Everyone responded.</p>
+                    }
+                  </article>
+
+                  @if (inviteOutcomes().failed.length) {
+                    <article class="ha-invite-group ha-invite-group--fail">
+                      <header>
+                        <span>Failed</span>
+                        <strong>{{ inviteOutcomes().failed.length }}</strong>
+                      </header>
+                      <ul>
+                        @for (c of inviteOutcomes().failed; track c.id) {
+                          <li>{{ c.displayName }}</li>
+                        }
+                      </ul>
+                    </article>
+                  }
+                </div>
+              </section>
+            }
+
+            @if (aiTimeline().length) {
+              <section class="ha-timeline" aria-label="AI activity timeline">
+                <div class="ha-timeline__head">
+                  <h2>What the AI did</h2>
+                  <p>Step-by-step from invites to ranking{{ run()?.status === 'Hired' ? ' and hire' : '' }}.</p>
+                </div>
+                <ol class="ha-timeline__list">
+                  @for (event of aiTimeline(); track event.id; let last = $last) {
+                    <li
+                      class="ha-timeline__item"
+                      [class.is-ai]="event.tone === 'ai'"
+                      [class.is-hire]="event.tone === 'hire'"
+                      [class.is-talent]="event.tone === 'talent'"
+                      [class.is-warn]="event.tone === 'warn'"
+                      [class.is-last]="last"
+                    >
+                      <span class="ha-timeline__dot" aria-hidden="true"></span>
+                      <div class="ha-timeline__card">
+                        <div class="ha-timeline__top">
+                          <strong>{{ event.title }}</strong>
+                          @if (event.at) {
+                            <time>{{ event.at | date: 'MMM d, h:mm a' }}</time>
+                          }
+                        </div>
+                        <p>{{ event.detail }}</p>
+                      </div>
+                    </li>
+                  }
+                </ol>
+              </section>
+            }
+          </div>
+
+          <aside class="ha-side-stack">
+            <div class="ha-rubric ha-rubric--stack" aria-label="How we ranked">
+              <h3 class="ha-rubric__title">How we ranked</h3>
+              @for (rubric of rankingRubric; track rubric.key) {
+                <article class="ha-rubric__item">
+                  <h4>{{ rubric.label }}</h4>
+                  <p>{{ rubric.detail }}</p>
+                </article>
+              }
+            </div>
+
+            @if (reportData.risks.length) {
+              <div class="ha-panel ha-panel--risk">
+                <div class="ha-panel__title-row">
+                  <span class="ha-panel__warn" aria-hidden="true">!</span>
+                  <h3>Risk assessment</h3>
+                </div>
+                <ul>
+                  @for (risk of reportData.risks; track risk) {
+                    <li>{{ risk }}</li>
+                  }
+                </ul>
+              </div>
+            }
+
+            @if (isAgentRefiningPlan()) {
+              <div class="ha-panel ha-panel--next-warm">
+                <h3>Plan refinement</h3>
+                <p class="ha-panel__hint ha-panel__hint--warm">
+                  You already approved this hire. Scout is reviewing milestone plan
+                  revisions with the developer and will accept automatically when ready.
+                </p>
+                @if (selectedRanked()?.chatRoomId; as roomId) {
+                  <button
+                    type="button"
+                    class="ha-btn ha-btn--ink"
+                    style="width: 100%; margin-top: 0.75rem"
+                    (click)="openChat(roomId)"
+                  >
+                    Open chat
+                  </button>
+                }
+              </div>
+            } @else if (canHire() && selectedRanked(); as pick) {
+              <div class="ha-panel ha-panel--next-warm">
+                <h3>Next steps</h3>
+                <p class="ha-panel__hint ha-panel__hint--warm">
+                  AI recommended
+                  {{ reportData.recommended?.displayName || pick.displayName }}. You can still hire
+                  any ranked candidate.
+                </p>
+                <button
+                  type="button"
+                  class="ha-btn ha-btn--lime"
+                  style="width: 100%; margin-top: 0.75rem"
+                  [disabled]="actionLoading()"
+                  (click)="confirmHire()"
+                >
+                  Hire {{ pick.displayName.split(' ')[0] }}
+                </button>
+                @if (pick.chatRoomId) {
+                  <button
+                    type="button"
+                    class="ha-btn ha-btn--ghost-warm"
+                    style="width: 100%; margin-top: 0.5rem"
+                    (click)="openChat(pick.chatRoomId)"
+                  >
+                    Open chat
+                  </button>
+                }
+              </div>
+            }
+          </aside>
+        </div>
+
+        @if (runnerUpCards().length) {
+          <section class="ha-ranked">
+            <div class="ha-ranked__head">
+              <div>
+                <h2>Ranked discussions</h2>
+                <p class="ha-ranked__sub">
+                  Compare runner-ups by work, budget, communication, and timeline.
+                </p>
+              </div>
+              <span class="ha-ranked__count">{{ runnerUpCards().length }} more</span>
+            </div>
+
+            <ul class="ha-pick-grid">
+              @for (card of runnerUpCards(); track card.item.candidateId) {
+                <li>
+                  <article
+                    class="ha-pick"
+                    [class.is-selected]="
+                      selectedRanked()?.item?.candidateId === card.item.candidateId
+                    "
+                    [class.is-interactive]="canHire()"
+                    (click)="selectCandidate(card.item.candidateId)"
+                  >
+                    <div class="ha-pick__top">
+                      <div class="ha-pick__identity">
+                        @if (card.avatarUrl) {
+                          <div class="ha-avatar ha-avatar--pick">
+                            <img [src]="card.avatarUrl" [alt]="card.displayName" />
+                          </div>
+                        } @else {
+                          <div class="ha-avatar ha-avatar--pick">
+                            {{ candidateInitials({ displayName: card.displayName }) }}
+                          </div>
+                        }
+                        <div class="min-w-0">
+                          <p class="ha-pick__name">{{ card.displayName }}</p>
+                          <p class="ha-pick__meta">Rank #{{ card.item.rank }}</p>
+                        </div>
+                      </div>
+                      <span class="ha-pick__score">{{ scoreOutOfTen(card.item.score) }}</span>
+                    </div>
+
+                    @if (card.item.summary) {
+                      <p class="ha-pick__summary">{{ card.item.summary }}</p>
+                    }
+
+                    <div class="ha-pick__criteria ha-pick__criteria--compact">
+                      @for (c of card.criteria; track c.key) {
+                        <div
+                          class="ha-crit"
+                          [class.is-strong]="c.pct >= 70"
+                          [class.is-fair]="c.pct >= 45 && c.pct < 70"
+                          [class.is-weak]="c.pct < 45"
+                        >
+                          <div class="ha-crit__row">
+                            <span>{{ c.label }}</span>
+                            <strong>{{ c.pct }}%</strong>
+                          </div>
+                          <div class="ha-crit__bar" aria-hidden="true">
+                            <span [style.width.%]="c.pct"></span>
+                          </div>
+                        </div>
+                      }
+                    </div>
+
+                    <div class="ha-pick__tags">
+                      @for (tag of criterionTags(card); track tag) {
+                        <span>{{ tag }}</span>
+                      }
+                    </div>
+
+                    <div class="ha-pick__actions" (click)="$event.stopPropagation()">
+                      @if (card.chatRoomId) {
+                        <button
+                          type="button"
+                          class="ha-btn ha-btn--ghost-warm"
+                          (click)="openChat(card.chatRoomId)"
+                        >
+                          Open chat
+                        </button>
+                      }
+                      @if (canHire()) {
+                        <button
+                          type="button"
+                          class="ha-btn ha-btn--ink"
+                          [disabled]="actionLoading()"
+                          (click)="selectCandidate(card.item.candidateId); confirmHire()"
+                        >
+                          Hire
+                        </button>
+                      }
+                    </div>
+                  </article>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+
+        @if (canHire() && selectedRanked(); as pick) {
+          <div class="ha-sticky">
+            <div class="ha-sticky__left">
+              <strong>{{ pick.displayName }}</strong>
+              selected
+              · Match score:
+              {{ scoreOutOfTen(pick.item.score) }}
+              @if (pick.hasPlan) {
+                <span>· Plan ready</span>
+              }
+              @if (pick.isRecommended) {
+                <span class="ha-sticky__tag">AI pick</span>
+              }
+            </div>
+            <div class="ha-sticky__actions">
+              <button
+                type="button"
+                class="ha-btn ha-btn--ink"
+                [disabled]="actionLoading()"
+                (click)="confirmHire()"
+              >
+                Hire {{ pick.displayName.split(' ')[0] }}
+              </button>
+              <button
+                type="button"
+                class="ha-btn ha-btn--ghost"
+                [disabled]="actionLoading()"
+                (click)="dismiss()"
+              >
+                Dismiss report
+              </button>
+            </div>
+          </div>
+        }
+      } @else if (isReportReady() && !report()) {
+        <p class="ha-empty">Report is ready, but details could not be loaded.</p>
+      }
+    }
+  </main>
+</div>

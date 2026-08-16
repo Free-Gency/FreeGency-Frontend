@@ -204,15 +204,28 @@ export class DeveloperTeamsComponent {
       next: (roomId) => {
         this.inviteActionId.set(null);
         this.loadInvitations();
-        void this.router.navigate(['/developer/messages'], {
-          queryParams: { room: roomId },
-        });
+        this.openInvitationDiscussion(inv, roomId);
       },
       error: (err) => {
         this.inviteActionId.set(null);
         this.inviteActionError.set(extractApiError(err) || 'Could not accept invitation.');
       },
     });
+  }
+
+  protected openInvitationChat(inv: ProjectInvitation): void {
+    if (!inv.chatRoomId) return;
+    this.openInvitationDiscussion(inv, inv.chatRoomId);
+  }
+
+  private openInvitationDiscussion(inv: ProjectInvitation, roomId: string): void {
+    if (inv.inviteeType === 'Team' && inv.inviteeTeamId) {
+      void this.router.navigate(['/developer/teams', inv.inviteeTeamId], {
+        queryParams: { tab: 'messages', room: roomId },
+      });
+      return;
+    }
+    void this.router.navigate(['/developer/messages'], { queryParams: { room: roomId } });
   }
 
   protected rejectInvitation(inv: ProjectInvitation): void {
@@ -229,11 +242,6 @@ export class DeveloperTeamsComponent {
         this.inviteActionError.set(extractApiError(err) || 'Could not reject invitation.');
       },
     });
-  }
-
-  protected openInvitationChat(roomId: string | null): void {
-    if (!roomId) return;
-    void this.router.navigate(['/developer/messages'], { queryParams: { room: roomId } });
   }
 
   private loadInvitations(): void {

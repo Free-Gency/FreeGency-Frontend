@@ -15,7 +15,6 @@ import {
   SocialLinkDto,
 } from '../../model/portfolio.model';
 import { PortfolioAboutComponent } from '../components/portfolio-about/portfolio-about.component';
-import { PortfolioAvailabilityComponent } from '../components/portfolio-availability/portfolio-availability.component';
 import { PortfolioHeaderComponent } from '../components/portfolio-header/portfolio-header.component';
 import { ProfileStrengthComponent } from '../components/profile-strength/profile-strength.component';
 import { ProjectCardComponent } from '../components/project-card/project-card.component';
@@ -30,7 +29,6 @@ import { ReviewCardComponent } from '../components/review-card/review-card.compo
     DeveloperViewNavbarComponent,
     PortfolioHeaderComponent,
     PortfolioAboutComponent,
-    PortfolioAvailabilityComponent,
     ProfileStrengthComponent,
     ProjectCardComponent,
     ReviewCardComponent,

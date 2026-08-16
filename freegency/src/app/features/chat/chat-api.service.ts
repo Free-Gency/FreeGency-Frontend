@@ -88,13 +88,17 @@ export class ChatApiService {
     const r = raw as RoomMessage & {
       ModerationStatus?: string | null;
       ModerationWarning?: string | null;
+      IsAgentGenerated?: boolean;
     };
+    const isAgent = !!(raw.isAgentGenerated ?? r.IsAgentGenerated);
     return {
       id: String(raw.id || ''),
       chatRoomId: raw.chatRoomId ?? fallbackRoomId,
       senderId: raw.senderId ?? null,
-      senderName: raw.senderName ?? null,
-      senderProfileType: raw.senderProfileType ?? null,
+      senderName: isAgent
+        ? 'Scout'
+        : (raw.senderName ?? null),
+      senderProfileType: isAgent ? 'AI' : (raw.senderProfileType ?? null),
       text: raw.text ?? null,
       fileName: raw.fileName ?? null,
       fileUrl: raw.fileUrl ?? null,
@@ -109,6 +113,7 @@ export class ChatApiService {
       otherProfileId: raw.otherProfileId ?? null,
       moderationStatus: raw.moderationStatus ?? r.ModerationStatus ?? null,
       moderationWarning: raw.moderationWarning ?? r.ModerationWarning ?? null,
+      isAgentGenerated: isAgent,
     };
   }
 
@@ -124,6 +129,7 @@ export class ChatApiService {
       ...raw,
       projectId: pick(raw.projectId),
       proposalId: pick(raw.proposalId),
+      teamId: pick(raw.teamId, (raw as unknown as { TeamId?: string | null }).TeamId),
       otherProfileId: pick(
         raw.otherProfileId,
         (raw as unknown as { OtherProfileId?: string | null }).OtherProfileId,

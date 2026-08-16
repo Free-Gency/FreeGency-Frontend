@@ -1,10 +1,13 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
+import { SKIP_LOADING } from '../../../core/http/loading.interceptor';
 import { ProjectMilestone } from '../models/project-milestone';
 import { ProjectEscrow } from '../models/project-escrow';
 import {
+  MilestonePlanAiAssistPayload,
+  MilestonePlanAiAssistResult,
   MilestonePlanVersion,
   ProposeMilestonePlanPayload,
   RequestPlanChangesPayload,
@@ -69,6 +72,31 @@ export class ProjectMilestonesApiService {
         map((res) => {
           if (!res.isSuccess || !res.data) {
             throw new Error(res.message || 'Failed to load latest plan.');
+          }
+          return res.data;
+        }),
+      );
+  }
+
+  aiAssistPlan(
+    projectId: string,
+    payload: MilestonePlanAiAssistPayload,
+  ): Observable<MilestonePlanAiAssistResult> {
+    return this.http
+      .post<{
+        isSuccess: boolean;
+        data?: MilestonePlanAiAssistResult;
+        message?: string | null;
+        error?: { message?: string };
+      }>(`${this.baseUrl}/projects/${projectId}/milestone-plans/ai-assist`, payload, {
+        context: new HttpContext().set(SKIP_LOADING, true),
+      })
+      .pipe(
+        map((res) => {
+          if (!res.isSuccess || !res.data) {
+            throw new Error(
+              res.error?.message || res.message || 'Failed to generate milestone plan with AI.',
+            );
           }
           return res.data;
         }),
