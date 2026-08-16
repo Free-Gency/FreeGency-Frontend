@@ -10,6 +10,7 @@ import { DangerZone } from '../setting/dangerzone/dangerzone';
 import { SecurityComponent } from './security/security.component';
 import { ProfileModePage } from './profile-mode/profile-mode';
 import { CommunityGuidelines } from './community-guidelines/community-guidelines';
+import { SubscriptionPage } from './subscription/subscription.component';
 
 export const settingRoutes: Routes = [
   {
@@ -37,6 +38,7 @@ export const settingRoutes: Routes = [
       { path: 'verification', component: Verification },
       { path: 'integrations', component: Integrations },
       { path: 'danger-zone', component: DangerZone },
+      { path: 'subscription', component: SubscriptionPage },
     ],
   },
 ];
