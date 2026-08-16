@@ -36,10 +36,8 @@ import {
   type TaxonomySkill,
   type TaxonomySpecialty,
 } from '../../data-access/taxonomy-api.service';
-import {
-  createProjectBasePath,
-  isOnboardingCreateFlow,
-} from '../../utils/create-project-paths';
+import { HiringAgentApiService } from '../../../client/data-access/hiring-agent-api.service';
+import { createProjectBasePath, isOnboardingCreateFlow } from '../../utils/create-project-paths';
 import { firstValueFrom } from 'rxjs';
 
 const MAX_ASSET_BYTES = 50 * 1024 * 1024;
@@ -79,6 +77,7 @@ export class ClientProjectOverviewComponent implements OnInit {
   private readonly taxonomyApi = inject(TaxonomyApiService);
   private readonly projectsApi = inject(ProjectsApiService);
   private readonly projectFilesApi = inject(ProjectFilesApiService);
+  private readonly hiringAgentApi = inject(HiringAgentApiService);
   private readonly toast = inject(ToastService);
 
   protected readonly sparklesIcon = SparklesIcon as IconSvgObject;
@@ -98,6 +97,32 @@ export class ClientProjectOverviewComponent implements OnInit {
   protected readonly currencies = PROJECT_CURRENCIES;
   protected readonly assets = signal<OverviewAsset[]>([]);
   protected readonly submitting = signal(false);
+  protected readonly hireDurationOpen = signal(false);
+  protected readonly inviteWindowHours = signal(24);
+  protected readonly discussionWindowHours = signal(48);
+
+  protected readonly invitePresets = [6, 12, 24, 48] as const;
+  protected readonly discussionPresets = [24, 48, 72, 96] as const;
+
+  protected readonly expectedInviteClose = computed(() => {
+    const at = new Date(Date.now() + this.inviteWindowHours() * 3600_000);
+    return at.toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  });
+
+  protected readonly expectedReportBy = computed(() => {
+    const at = new Date(Date.now() + this.discussionWindowHours() * 3600_000);
+    return at.toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  });
 
   protected readonly draft = this.draftState.draft;
   protected readonly scope = this.draftState.scope;
@@ -399,9 +424,7 @@ export class ClientProjectOverviewComponent implements OnInit {
   protected onBack(): void {
     const base = createProjectBasePath(this.router);
     const scope =
-      this.draftState.mode() === 'manual'
-        ? `${base}/manual/scope`
-        : `${base}/with-ai/scope`;
+      this.draftState.mode() === 'manual' ? `${base}/manual/scope` : `${base}/with-ai/scope`;
     void this.router.navigate([scope]);
   }
 
@@ -413,6 +436,24 @@ export class ClientProjectOverviewComponent implements OnInit {
     void this.submitProject(true);
   }
 
+  protected onHireByAi(): void {
+    this.hireDurationOpen.set(true);
+  }
+
+  protected closeHireDuration(): void {
+    if (this.submitting()) return;
+    this.hireDurationOpen.set(false);
+  }
+
+  protected confirmHireByAi(): void {
+    if (this.discussionWindowHours() < this.inviteWindowHours()) {
+      this.toast.error('Discussion time must be at least as long as the invite window.');
+      return;
+    }
+    this.hireDurationOpen.set(false);
+    void this.submitHireByAi();
+  }
+
   private async submitProject(publish: boolean): Promise<void> {
     if (this.submitting()) return;
 
@@ -422,19 +463,8 @@ export class ClientProjectOverviewComponent implements OnInit {
     this.submitting.set(true);
 
     try {
-      const projectId = await firstValueFrom(this.projectsApi.create(request));
-
-      const files = this.assets().map((asset) => asset.file);
-      if (files.length) {
-        await firstValueFrom(this.projectFilesApi.upload(projectId, files));
-      }
-
-      if (publish) {
-        await firstValueFrom(this.projectsApi.publish(projectId));
-      }
-
-      this.draftState.clear();
-      this.assets.set([]);
+      await this.createAndPublishProject(request, publish);
+      this.clearDraftState();
 
       this.toast.success(
         publish
@@ -458,6 +488,63 @@ export class ClientProjectOverviewComponent implements OnInit {
     } finally {
       this.submitting.set(false);
     }
+  }
+
+  private async submitHireByAi(): Promise<void> {
+    if (this.submitting()) return;
+
+    const request = this.buildCreateRequest();
+    if (!request) return;
+
+    this.submitting.set(true);
+
+    try {
+      const projectId = await this.createAndPublishProject(request, true);
+      const run = await firstValueFrom(
+        this.hiringAgentApi.start({
+          projectId,
+          inviteWindowHours: this.inviteWindowHours(),
+          discussionWindowHours: this.discussionWindowHours(),
+        }),
+      );
+      this.clearDraftState();
+
+      this.toast.success('Scout is on it — matching talent for your project.');
+      await this.router.navigateByUrl(`/client/reports/hiring-agent/${run.id}`);
+    } catch (err) {
+      this.toast.error(
+        extractApiError(
+          err,
+          'Could not start Scout. Please review the details and try again.',
+        ),
+      );
+    } finally {
+      this.submitting.set(false);
+    }
+  }
+
+  /** Creates the project, uploads assets, and optionally publishes. Does not clear draft. */
+  private async createAndPublishProject(
+    request: CreateProjectRequest,
+    publish: boolean,
+  ): Promise<string> {
+    const projectId = await firstValueFrom(this.projectsApi.create(request));
+
+    const files = this.assets().map((asset) => asset.file);
+    if (files.length) {
+      await firstValueFrom(this.projectFilesApi.upload(projectId, files));
+    }
+
+    if (publish) {
+      await firstValueFrom(this.projectsApi.publish(projectId));
+    }
+
+    return projectId;
+  }
+
+  private clearDraftState(): void {
+    this.draftState.clear();
+    this.assets.set([]);
   }
 
   private buildCreateRequest(): CreateProjectRequest | null {

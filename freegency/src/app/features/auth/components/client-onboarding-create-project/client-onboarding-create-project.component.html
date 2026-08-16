@@ -2,7 +2,9 @@
   class="relative z-10 mx-auto flex w-full max-w-[986px] flex-1 flex-col items-center justify-center px-5 py-8 sm:px-10 sm:py-12"
 >
   <div class="flex w-full flex-col items-center">
-    <div class="mb-10 flex w-full max-w-[720px] flex-col items-center gap-4 text-center sm:mb-12 sm:gap-4">
+    <div
+      class="mb-10 flex w-full max-w-[720px] flex-col items-center gap-4 text-center sm:mb-12 sm:gap-4"
+    >
       <h1
         class="font-display text-[28px] leading-9 font-bold tracking-[-0.02em] text-on-surface sm:text-[40px] sm:leading-[48px] sm:tracking-[-1.2px] lg:text-[48px] lg:leading-[57.6px]"
       >
@@ -18,7 +20,8 @@
     <div class="flex w-full max-w-[560px] flex-col items-center gap-6">
       <button
         type="button"
-        class="inline-flex h-[50px] w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-primary-container px-4 font-display text-lg leading-4 font-semibold text-on-primary shadow-[0_1px_1px_rgba(0,0,0,0.05)] transition-[background-color,transform] duration-150 hover:bg-primary active:scale-[0.98] sm:h-[55px]"
+        class="inline-flex h-[50px] w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-primary-container px-4 font-display text-lg leading-4 font-semibold text-on-primary shadow-[0_1px_1px_rgba(0,0,0,0.05)] transition-[background-color,transform] duration-150 hover:bg-primary active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:h-[55px]"
+        [disabled]="checkingAi()"
         (click)="onGenerateWithAi()"
       >
         <hugeicons-icon
@@ -28,15 +31,16 @@
           [strokeWidth]="1.5"
           aria-hidden="true"
         />
-        Generate with AI
+        {{ checkingAi() ? 'Checking plan…' : 'Generate with AI' }}
       </button>
 
       <button
         type="button"
-        class="cursor-pointer font-display text-base font-semibold text-on-surface-variant underline underline-offset-2 transition-colors hover:text-on-surface"
+        class="cursor-pointer font-display text-base font-semibold text-on-surface-variant underline underline-offset-2 transition-colors hover:text-on-surface disabled:cursor-not-allowed disabled:opacity-60"
+        [disabled]="checkingManual()"
         (click)="onWithoutAi()"
       >
-        I'll do it without AI
+        {{ checkingManual() ? 'Checking plan…' : "I'll do it without AI" }}
       </button>
     </div>
   </div>

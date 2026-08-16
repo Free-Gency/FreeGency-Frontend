@@ -136,8 +136,8 @@
                   Budget
                   {{ project.totalBudget | currency: project.currency || currency() : 'symbol' : '1.0-0' }}
                   ·
-                  {{ project.members?.length || 0 }}
-                  split{{ (project.members?.length || 0) === 1 ? '' : 's' }}
+                  {{ project.members.length || 0 }}
+                  split{{ (project.members.length || 0) === 1 ? '' : 's' }}
                 </p>
               </div>
               <div class="tf-project__right">
@@ -163,7 +163,7 @@
 
             @if (expandedProject() === project.projectId) {
               <div class="tf-project__body">
-                @if (!(project.members?.length)) {
+                @if (!(project.members.length)) {
                   <p class="tf-empty-inline">
                     No payout splits on this project yet. Set pay share on a milestone in the
                     workspace — otherwise releases credit the team wallet at 100%.

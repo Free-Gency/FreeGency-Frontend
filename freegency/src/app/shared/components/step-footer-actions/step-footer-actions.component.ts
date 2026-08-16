@@ -23,7 +23,12 @@ export class StepFooterActionsComponent {
   readonly secondaryLabel = input<string | null>(null);
   readonly secondaryDisabled = input(false);
 
+  /** Optional tertiary CTA (e.g. Hire by AI). Hidden when empty. */
+  readonly tertiaryLabel = input<string | null>(null);
+  readonly tertiaryDisabled = input(false);
+
   readonly back = output<void>();
   readonly continue = output<void>();
   readonly secondary = output<void>();
+  readonly tertiary = output<void>();
 }

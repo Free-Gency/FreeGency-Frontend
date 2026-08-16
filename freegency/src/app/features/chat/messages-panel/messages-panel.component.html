@@ -491,6 +491,62 @@
 
               <time class="msg-work-card__time">{{ message.createdAt | date: 'shortTime' }}</time>
             </div>
+          } @else if (isAgentMessage(message)) {
+            <div
+              class="msg-agent-row"
+              [class.is-mine]="message.isMine"
+            >
+              <span class="msg-agent-avatar" aria-hidden="true">
+                <hugeicons-icon
+                  [icon]="sparklesIcon"
+                  [size]="14"
+                  color="currentColor"
+                  [strokeWidth]="1.9"
+                />
+              </span>
+              <div class="msg-agent-card" [class.is-mine]="message.isMine">
+                <p class="msg-agent-card__name">
+                  Scout
+                  <span class="msg-agent-card__badge">AI</span>
+                </p>
+                @if (isModerationHidden(message) && !message.isMine) {
+                  <p class="msg-bubble__text msg-bubble__text--moderated">
+                    Message removed by FreeGency for a policy violation.
+                  </p>
+                } @else if (message.text) {
+                  <p class="msg-agent-card__text">{{ message.text }}</p>
+                }
+                @if (message.fileUrl) {
+                  @if (isImageAttachment(message.fileName, message.fileUrl)) {
+                    <a
+                      class="msg-attach msg-attach--image"
+                      [href]="message.fileUrl"
+                      target="_blank"
+                      rel="noopener"
+                    >
+                      <img [src]="message.fileUrl" [alt]="message.fileName || 'Image'" loading="lazy" />
+                      <span class="msg-attach__caption">{{ message.fileName || 'Image' }}</span>
+                    </a>
+                  } @else {
+                    <a
+                      class="msg-attach msg-attach--file"
+                      [href]="message.fileUrl"
+                      target="_blank"
+                      rel="noopener"
+                    >
+                      <span class="msg-attach__icon" aria-hidden="true">{{ fileExtLabel(message.fileName) }}</span>
+                      <span class="msg-attach__meta">
+                        <strong>{{ message.fileName || 'Attachment' }}</strong>
+                        <em>Open file</em>
+                      </span>
+                    </a>
+                  }
+                }
+                <div class="msg-agent-card__foot">
+                  <time>{{ message.createdAt | date: 'shortTime' }}</time>
+                </div>
+              </div>
+            </div>
           } @else {
             <div class="msg-bubble-row" [class.is-mine]="message.isMine">
               @if (!message.isMine) {
@@ -627,6 +683,15 @@
               <strong>{{ hint.title }}</strong>
               <span>{{ hint.detail }}</span>
             </div>
+            @if (hint.tone === 'success' && latestPlan()?.status === 'Accepted') {
+              <button
+                type="button"
+                class="msg-plan-banner__action"
+                (click)="openHiredProjectChat()"
+              >
+                Open project chat
+              </button>
+            }
           </div>
         }
         @if (canCompose() && composeHint()) {
@@ -1036,6 +1101,9 @@
           <p class="msg-modal__hint">
             Send a full plan — new or changed milestones are tagged automatically.
           </p>
+          @if (proposeDraftRestored()) {
+            <p class="msg-modal__hint msg-plan-modal__draft">Your unsaved draft was restored.</p>
+          }
           @if (proposeBudgetHint()) {
             <p class="msg-modal__hint msg-plan-modal__budget">{{ proposeBudgetHint() }}</p>
           }
@@ -1051,6 +1119,34 @@
               </span>
             }
           </p>
+          <div class="msg-plan-modal__ai-actions">
+            <button
+              type="button"
+              class="msg-plan-ai-btn"
+              (click)="generateFullPlanAi()"
+              [disabled]="!!proposeAiBusyKey() || proposeSaving()"
+            >
+              <hugeicons-icon [icon]="sparklesIcon" [size]="14" color="currentColor" [strokeWidth]="1.8" />
+              {{ isProposeAiBusy('full') ? 'Writing…' : 'Generate plan' }}
+            </button>
+            @if (canApplyHiringAgentEdits()) {
+              <button
+                type="button"
+                class="msg-plan-ai-btn msg-plan-ai-btn--accent"
+                (click)="applyHiringAgentEditsAi()"
+                [disabled]="!!proposeAiBusyKey() || proposeSaving()"
+              >
+                <hugeicons-icon [icon]="sparklesIcon" [size]="14" color="currentColor" [strokeWidth]="1.8" />
+                {{ isProposeAiBusy('apply') ? 'Writing…' : 'Apply Scout edits' }}
+              </button>
+            }
+          </div>
+          @if (proposeAiStatus()) {
+            <p class="msg-plan-modal__ai-status" aria-live="polite">
+              <span class="msg-plan-modal__ai-status-dot" aria-hidden="true"></span>
+              {{ proposeAiStatus() }}
+            </p>
+          }
         </div>
         <button type="button" class="msg-plan-modal__close" (click)="closeProposePlan()" aria-label="Close">
           <hugeicons-icon [icon]="closeIcon" [size]="18" color="currentColor" [strokeWidth]="2" />
@@ -1060,65 +1156,133 @@
       <div class="msg-plan-modal__body">
         <div class="msg-plan-form">
           @for (row of proposeRows(); track $index; let i = $index) {
-            <div class="msg-plan-form__row">
+            <div
+              class="msg-plan-form__row"
+              [class.is-ai-active]="isProposeAiRowActive(i)"
+            >
               <div class="msg-plan-form__head">
                 <span class="msg-plan-form__badge">{{ i + 1 }}</span>
                 <strong>Milestone {{ i + 1 }}</strong>
-                <button
-                  type="button"
-                  class="msg-plan-form__remove"
-                  (click)="removeProposeRow(i)"
-                  [disabled]="proposeRows().length <= 1"
-                  aria-label="Remove milestone"
-                >
-                  <hugeicons-icon [icon]="deleteIcon" [size]="16" color="currentColor" [strokeWidth]="1.8" />
-                </button>
+                <div class="msg-plan-form__head-actions">
+                  <button
+                    type="button"
+                    class="msg-plan-ai-btn msg-plan-ai-btn--sm"
+                    (click)="generateMilestoneAi(i)"
+                    [disabled]="!!proposeAiBusyKey() || proposeSaving()"
+                    title="Generate this milestone"
+                  >
+                    <hugeicons-icon [icon]="sparklesIcon" [size]="13" color="currentColor" [strokeWidth]="1.8" />
+                    {{ isProposeAiBusy('milestone:' + i) ? '…' : 'Generate' }}
+                  </button>
+                  <button
+                    type="button"
+                    class="msg-plan-form__remove"
+                    (click)="removeProposeRow(i)"
+                    [disabled]="proposeRows().length <= 1 || !!proposeAiBusyKey()"
+                    aria-label="Remove milestone"
+                  >
+                    <hugeicons-icon [icon]="deleteIcon" [size]="16" color="currentColor" [strokeWidth]="1.8" />
+                  </button>
+                </div>
               </div>
               <label class="msg-modal__field">
                 <span>Title</span>
-                <input
-                  type="text"
-                  [ngModel]="row.title"
-                  (ngModelChange)="updateProposeRow(i, { title: $event })"
-                  placeholder="UI Design & Styleguide"
-                />
+                <div
+                  class="msg-plan-field__control"
+                  [class.is-ai-busy]="isProposeAiBusy('field:' + i + ':title') || isProposeAiFocus(i, 'title')"
+                  [class.is-ai-writing]="isProposeAiFocus(i, 'title')"
+                >
+                  <input
+                    type="text"
+                    [ngModel]="row.title"
+                    (ngModelChange)="updateProposeRow(i, { title: $event })"
+                    placeholder="UI Design & Styleguide"
+                    [disabled]="!!proposeAiBusyKey()"
+                  />
+                  <button
+                    type="button"
+                    class="msg-plan-field__ai"
+                    (click)="generateFieldAi(i, 'title')"
+                    [disabled]="!!proposeAiBusyKey() || proposeSaving()"
+                    [attr.aria-label]="'Improve title with AI'"
+                    title="Improve with AI"
+                  >
+                    <hugeicons-icon [icon]="sparklesIcon" [size]="14" color="currentColor" [strokeWidth]="1.8" />
+                  </button>
+                </div>
               </label>
               <label class="msg-modal__field">
                 <span>Definition of done</span>
-                <textarea
-                  rows="2"
-                  [ngModel]="row.definitionOfDone"
-                  (ngModelChange)="updateProposeRow(i, { definitionOfDone: $event })"
-                  placeholder="Deliverables and acceptance criteria"
-                ></textarea>
+                <div
+                  class="msg-plan-field__control"
+                  [class.is-ai-busy]="
+                    isProposeAiBusy('field:' + i + ':definitionOfDone') || isProposeAiFocus(i, 'definitionOfDone')
+                  "
+                  [class.is-ai-writing]="isProposeAiFocus(i, 'definitionOfDone')"
+                >
+                  <textarea
+                    rows="2"
+                    [ngModel]="row.definitionOfDone"
+                    (ngModelChange)="updateProposeRow(i, { definitionOfDone: $event })"
+                    placeholder="Deliverables and acceptance criteria"
+                    [disabled]="!!proposeAiBusyKey()"
+                  ></textarea>
+                  <button
+                    type="button"
+                    class="msg-plan-field__ai"
+                    (click)="generateFieldAi(i, 'definitionOfDone')"
+                    [disabled]="!!proposeAiBusyKey() || proposeSaving()"
+                    [attr.aria-label]="'Improve definition of done with AI'"
+                    title="Improve with AI"
+                  >
+                    <hugeicons-icon [icon]="sparklesIcon" [size]="14" color="currentColor" [strokeWidth]="1.8" />
+                  </button>
+                </div>
               </label>
               <div class="msg-plan-form__grid">
                 <label class="msg-modal__field">
                   <span>Amount (USD)</span>
-                  <input
-                    type="number"
-                    min="1"
-                    [ngModel]="row.amount"
-                    (ngModelChange)="updateProposeRow(i, { amount: $event === '' || $event == null ? null : +$event })"
-                    placeholder="1500"
-                  />
+                  <div
+                    class="msg-plan-field__control msg-plan-field__control--plain"
+                    [class.is-ai-writing]="isProposeAiFocus(i, 'amount')"
+                  >
+                    <input
+                      type="number"
+                      min="1"
+                      [ngModel]="row.amount"
+                      (ngModelChange)="updateProposeRow(i, { amount: $event === '' || $event == null ? null : +$event })"
+                      placeholder="1500"
+                      [disabled]="!!proposeAiBusyKey()"
+                    />
+                  </div>
                 </label>
                 <label class="msg-modal__field">
                   <span>Due date</span>
-                  <input
-                    type="date"
-                    [min]="proposeMinDueDate"
-                    [max]="proposeMaxDueDate"
-                    [ngModel]="row.dueDate"
-                    (ngModelChange)="updateProposeDueDate(i, $event)"
-                  />
+                  <div
+                    class="msg-plan-field__control msg-plan-field__control--plain"
+                    [class.is-ai-writing]="isProposeAiFocus(i, 'dueDate')"
+                  >
+                    <input
+                      type="date"
+                      [min]="proposeMinDueDate"
+                      [max]="proposeMaxDueDate"
+                      [ngModel]="row.dueDate"
+                      (ngModelChange)="updateProposeDueDate(i, $event)"
+                      [disabled]="!!proposeAiBusyKey()"
+                    />
+                  </div>
                 </label>
               </div>
             </div>
           }
         </div>
 
-        <button type="button" class="msg-plan-modal__add" (click)="addProposeRow()">
+        <button
+          type="button"
+          class="msg-plan-modal__add"
+          (click)="addProposeRow()"
+          [disabled]="!!proposeAiBusyKey() || proposeSaving()"
+        >
           <hugeicons-icon [icon]="addCircleIcon" [size]="18" color="currentColor" [strokeWidth]="1.8" aria-hidden="true" />
           Add milestone
         </button>
@@ -1141,13 +1305,35 @@
         <button
           type="button"
           class="msg-modal__primary msg-plan-modal__submit"
-          [disabled]="proposeSaving()"
+          [disabled]="proposeSaving() || !!proposeAiBusyKey()"
           (click)="submitProposePlan()"
         >
           <hugeicons-icon [icon]="sendIcon" [size]="16" color="currentColor" [strokeWidth]="2" aria-hidden="true" />
           {{ proposeSaving() ? 'Sending…' : 'Send plan' }}
         </button>
       </footer>
+
+      @if (proposeReplaceConfirmOpen()) {
+        <div class="msg-plan-confirm" role="dialog" aria-modal="true" aria-labelledby="msg-plan-confirm-title">
+          <div class="msg-plan-confirm__card" (click)="$event.stopPropagation()">
+            <div class="msg-plan-confirm__icon" aria-hidden="true">
+              <hugeicons-icon [icon]="sparklesIcon" [size]="20" color="currentColor" [strokeWidth]="1.8" />
+            </div>
+            <h4 id="msg-plan-confirm-title">Replace draft with AI plan?</h4>
+            <p>
+              This will overwrite your current milestone titles, definitions, amounts, and dates with a new AI-generated
+              plan.
+            </p>
+            <div class="msg-plan-confirm__actions">
+              <button type="button" class="msg-modal__ghost" (click)="cancelReplacePlanConfirm()">Keep draft</button>
+              <button type="button" class="msg-modal__primary" (click)="confirmReplacePlanAi()">
+                <hugeicons-icon [icon]="sparklesIcon" [size]="14" color="currentColor" [strokeWidth]="1.8" />
+                Replace &amp; generate
+              </button>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   </div>
 }

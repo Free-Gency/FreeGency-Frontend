@@ -24,7 +24,7 @@
       <span></span>
     }
 
-    <div class="flex shrink-0 items-center gap-2 sm:gap-3">
+    <div class="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
       @if (secondaryLabel(); as secondaryText) {
         <button
           type="button"
@@ -33,6 +33,17 @@
           (click)="secondary.emit()"
         >
           {{ secondaryText }}
+        </button>
+      }
+
+      @if (tertiaryLabel(); as tertiaryText) {
+        <button
+          type="button"
+          class="inline-flex h-11 min-w-[120px] cursor-pointer items-center justify-center rounded-full border border-primary-container bg-white px-5 font-display text-sm leading-4 font-semibold text-primary-container transition-[background-color,transform] duration-150 hover:bg-primary-container/5 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:h-12 sm:min-w-[140px] sm:text-base"
+          [disabled]="tertiaryDisabled()"
+          (click)="tertiary.emit()"
+        >
+          {{ tertiaryText }}
         </button>
       }
 

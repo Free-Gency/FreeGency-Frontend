@@ -54,6 +54,7 @@ export interface RoomMessage {
   otherProfileId: string | null;
   moderationStatus?: string | null;
   moderationWarning?: string | null;
+  isAgentGenerated?: boolean;
 }
 
 export interface RoomUpdated {
@@ -78,8 +79,13 @@ export function chatRoomDisplayTitle(room: ChatRoom): string {
   }
   const title = (room.title || '').trim() || 'Conversation';
   const client = (room.clientName || '').trim();
+  const team = (room.teamName || '').trim();
   if (client && (room.roomType === 'Proposal' || room.roomType === 'Project')) {
     return `${title} · ${client}`;
+  }
+  // Client inbox: show applicant team name on team proposal/project rooms.
+  if (team && (room.roomType === 'Proposal' || room.roomType === 'Project')) {
+    return `${title} · ${team}`;
   }
   return title;
 }

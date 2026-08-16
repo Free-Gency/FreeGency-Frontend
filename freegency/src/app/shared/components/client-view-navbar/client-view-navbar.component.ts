@@ -69,7 +69,7 @@ export class ClientViewNavbarComponent implements OnInit {
   protected readonly navItems = [
     { label: 'Hire Talent', dropdown: false, route: '/client/hire-talent' },
     { label: 'Manage Work', dropdown: false, route: '/client/manage-work' },
-    { label: 'Reports', dropdown: true, route: null },
+    { label: 'Reports', dropdown: false, route: '/client/reports' },
     { label: 'Messages', dropdown: false, route: '/client/messages' },
   ] as const;
   

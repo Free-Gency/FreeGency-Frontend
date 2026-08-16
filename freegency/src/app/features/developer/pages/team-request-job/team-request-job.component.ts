@@ -4,11 +4,10 @@ import { TeamsService } from '../../data-access/teams.service';
 import { TeamJoinRequest } from '../../models/team';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
-import { HugeiconsIconComponent } from "@hugeicons/angular";
 
 @Component({
   selector: 'app-team-request-job',
-  imports: [DatePipe, HugeiconsIconComponent],
+  imports: [DatePipe],
   templateUrl: './team-request-job.component.html',
   styleUrl: './team-request-job.component.css',
 })

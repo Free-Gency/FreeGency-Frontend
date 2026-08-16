@@ -1,0 +1,259 @@
+<div class="cr-page">
+  <app-client-view-navbar />
+
+  <main class="cr-main">
+    <header class="cr-top">
+      <div>
+        <p class="cr-eyebrow">Scout</p>
+        <h1 class="cr-title">Reports</h1>
+      </div>
+      @if (!loading() && snapshot(); as snap) {
+        <p class="cr-top__pulse">
+          <span>{{ snap.activeCount }} live</span>
+          <span aria-hidden="true">·</span>
+          <span>{{ snap.pastCount }} finished</span>
+          <span aria-hidden="true">·</span>
+          <span>{{ snap.accepted }} accepted now</span>
+        </p>
+      }
+    </header>
+
+    @if (loading()) {
+      <p class="cr-loading">Loading reports…</p>
+    } @else if (runs().length === 0) {
+      <div class="cr-empty">
+        <h2>No hiring reports yet</h2>
+        <p>
+          Start Scout from a project overview to track invites, discussions, and the final
+          recommendation here.
+        </p>
+        <a routerLink="/client/create-project">Create a project</a>
+      </div>
+    } @else {
+      @if (featuredPast(); as featured) {
+        @if (aiActivity(featured); as activity) {
+          <section class="cr-spotlight" aria-label="Latest outcome">
+            <div class="cr-spotlight__label">Latest outcome</div>
+            <div class="cr-spotlight__grid">
+              <div class="cr-spotlight__main">
+                <span
+                  class="cr-pill"
+                  [class.cr-pill--ok]="statusTone(featured.status) === 'ok'"
+                  [class.cr-pill--bad]="statusTone(featured.status) === 'bad'"
+                  [class.cr-pill--ready]="statusTone(featured.status) === 'ready'"
+                >
+                  {{ statusLabel(featured.status) }}
+                </span>
+                <h2>{{ featured.projectTitle || 'Untitled project' }}</h2>
+                <p class="cr-spotlight__meta">
+                  {{ featured.createdAt | date: 'MMM d, y' }} · {{ pastResult(featured) }}
+                </p>
+
+                <div class="cr-spotlight__person">
+                  @if (activity.candidate.avatarUrl) {
+                    <div class="cr-avatar cr-avatar--lg">
+                      <img
+                        [src]="activity.candidate.avatarUrl"
+                        [alt]="activity.candidate.displayName"
+                      />
+                    </div>
+                  } @else {
+                    <div class="cr-avatar cr-avatar--lg">
+                      {{ candidateInitials(activity.candidate.displayName) }}
+                    </div>
+                  }
+                  <div>
+                    <p class="cr-spotlight__name">{{ activity.candidate.displayName }}</p>
+                    <p class="cr-spotlight__role">
+                      {{
+                        featured.status === 'Hired' ? 'Hired after AI discussion' : 'Top AI pick'
+                      }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="cr-spotlight__side">
+                <dl class="cr-metrics">
+                  <div>
+                    <dt>AI messages</dt>
+                    <dd>{{ activity.messages }}</dd>
+                  </div>
+                  <div>
+                    <dt>Match score</dt>
+                    <dd>{{ activity.scoreLabel }}</dd>
+                  </div>
+                  <div>
+                    <dt>Plan</dt>
+                    <dd>{{ activity.hasPlan ? 'Submitted' : 'None' }}</dd>
+                  </div>
+                </dl>
+                @if (activity.note) {
+                  <p class="cr-spotlight__note">{{ activity.note }}</p>
+                }
+                <div class="cr-spotlight__actions">
+                  @if (activity.candidate.chatRoomId) {
+                    <button
+                      type="button"
+                      class="cr-btn cr-btn--ghost"
+                      (click)="openChat(activity.candidate.chatRoomId, $event)"
+                    >
+                      Open AI chat
+                    </button>
+                  }
+                  <button type="button" class="cr-btn cr-btn--ink" (click)="openRun(featured)">
+                    Open full report
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+        }
+      }
+
+      <div class="cr-board">
+        <div class="cr-tabs" role="tablist" aria-label="Report board">
+          <button
+            type="button"
+            role="tab"
+            class="cr-tabs__btn"
+            [class.is-active]="boardTab() === 'live'"
+            [attr.aria-selected]="boardTab() === 'live'"
+            (click)="setBoardTab('live')"
+          >
+            Live
+            <span class="cr-tabs__count">{{ activeRuns().length }}</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            class="cr-tabs__btn"
+            [class.is-active]="boardTab() === 'history'"
+            [attr.aria-selected]="boardTab() === 'history'"
+            (click)="setBoardTab('history')"
+          >
+            History
+            <span class="cr-tabs__count">{{ pastRuns().length }}</span>
+          </button>
+        </div>
+
+        @if (boardTab() === 'live') {
+          <section class="cr-panel" role="tabpanel">
+            @if (activeRuns().length) {
+              <ul class="cr-rows">
+                @for (run of activeRuns(); track run.id; let i = $index) {
+                  <li>
+                    <button type="button" class="cr-row" (click)="openRun(run)">
+                      <span
+                        class="cr-dot"
+                        [class.cr-dot--lime]="tileTone(i) === 'lime'"
+                        [class.cr-dot--ink]="tileTone(i) === 'ink'"
+                        [class.cr-dot--sand]="tileTone(i) === 'sand'"
+                        aria-hidden="true"
+                      ></span>
+                      <span class="cr-row__copy">
+                        <strong>{{ run.projectTitle || 'Untitled project' }}</strong>
+                        <small>Started {{ run.createdAt | date: 'MMM d, y' }}</small>
+                      </span>
+                      <span class="cr-row__status">{{ statusLabel(run.status) }}</span>
+                      <span class="cr-row__metric">
+                        <em>{{ timerValue(run) }}</em>
+                        <small>timer</small>
+                      </span>
+                      <span class="cr-row__metric">
+                        <em>{{ acceptFraction(run) }}</em>
+                        <small>accepted</small>
+                      </span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <div class="cr-blank">
+                <p>No live runs</p>
+                <span>When Scout is running, timers appear in this tab.</span>
+              </div>
+            }
+          </section>
+        } @else {
+          <section class="cr-panel" role="tabpanel">
+            @if (pastRuns().length) {
+              <ul class="cr-rows">
+                @for (run of pastRuns(); track run.id) {
+                  <li>
+                    <article class="cr-row cr-row--history" (click)="openRun(run)">
+                      @if (aiActivity(run); as activity) {
+                        <div class="cr-avatar">
+                          @if (activity.candidate.avatarUrl) {
+                            <img
+                              [src]="activity.candidate.avatarUrl"
+                              [alt]="activity.candidate.displayName"
+                            />
+                          } @else {
+                            {{ candidateInitials(activity.candidate.displayName) }}
+                          }
+                        </div>
+                        <span class="cr-row__copy">
+                          <strong>{{ run.projectTitle || 'Untitled project' }}</strong>
+                          <small>
+                            {{ activity.candidate.displayName }} ·
+                            {{ activity.messages }} AI msgs ·
+                            {{ activity.scoreLabel }}
+                            @if (activity.hasPlan) {
+                              · Plan in
+                            }
+                          </small>
+                        </span>
+                      } @else {
+                        <span class="cr-row__copy">
+                          <strong>{{ run.projectTitle || 'Untitled project' }}</strong>
+                          <small>{{ pastResult(run) }}</small>
+                        </span>
+                      }
+                      <span
+                        class="cr-pill cr-pill--sm"
+                        [class.cr-pill--ok]="statusTone(run.status) === 'ok'"
+                        [class.cr-pill--bad]="statusTone(run.status) === 'bad'"
+                        [class.cr-pill--ready]="statusTone(run.status) === 'ready'"
+                      >
+                        {{ statusLabel(run.status) }}
+                      </span>
+                      <span class="cr-row__date">{{ run.createdAt | date: 'MMM d' }}</span>
+                      <div class="cr-row__actions" (click)="$event.stopPropagation()">
+                        @if (aiActivity(run)?.candidate?.chatRoomId; as roomId) {
+                          <button
+                            type="button"
+                            class="cr-link"
+                            (click)="openChat(roomId, $event)"
+                          >
+                            Chat
+                          </button>
+                        }
+                        <button type="button" class="cr-link cr-link--strong" (click)="openRun(run)">
+                          Report
+                        </button>
+                      </div>
+                    </article>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <div class="cr-blank">
+                <p>No finished reports</p>
+                <span>Hires and closed runs will list here with AI activity.</span>
+              </div>
+            }
+          </section>
+        }
+      </div>
+
+      <footer class="cr-foot">
+        <p>
+          Scout invites talent, discusses milestone plans, then ranks acceptances — you confirm
+          the hire.
+        </p>
+        <a routerLink="/client/create-project">New project</a>
+      </footer>
+    }
+  </main>
+</div>

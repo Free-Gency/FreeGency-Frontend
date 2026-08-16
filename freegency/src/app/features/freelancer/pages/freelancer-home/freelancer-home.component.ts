@@ -233,9 +233,7 @@ export class FreelancerHomeComponent implements OnInit {
       next: (roomId) => {
         this.inviteActionId.set(null);
         this.loadInvitations(false);
-        void this.router.navigate(['/developer/messages'], {
-          queryParams: { room: roomId },
-        });
+        this.openInvitationDiscussion(inv, roomId);
       },
       error: (err) => {
         this.inviteActionId.set(null);
@@ -261,8 +259,18 @@ export class FreelancerHomeComponent implements OnInit {
     });
   }
 
-  openInvitationChat(roomId: string | null): void {
-    if (!roomId) return;
+  openInvitationChat(inv: ProjectInvitation): void {
+    if (!inv.chatRoomId) return;
+    this.openInvitationDiscussion(inv, inv.chatRoomId);
+  }
+
+  private openInvitationDiscussion(inv: ProjectInvitation, roomId: string): void {
+    if (inv.inviteeType === 'Team' && inv.inviteeTeamId) {
+      void this.router.navigate(['/developer/teams', inv.inviteeTeamId], {
+        queryParams: { tab: 'messages', room: roomId },
+      });
+      return;
+    }
     void this.router.navigate(['/developer/messages'], { queryParams: { room: roomId } });
   }
 

@@ -29,6 +29,22 @@ export const routes: Routes = [
         (m) => m.ManageWorkComponent,
       ),
   },
+  {
+    path: 'client/reports/hiring-agent/:runId',
+    canActivate: [authGuard, clientModeGuard],
+    loadComponent: () =>
+      import('./features/client/pages/hiring-agent-report/hiring-agent-report.component').then(
+        (m) => m.HiringAgentReportComponent,
+      ),
+  },
+  {
+    path: 'client/reports',
+    canActivate: [authGuard, clientModeGuard],
+    loadComponent: () =>
+      import('./features/client/pages/client-reports/client-reports.component').then(
+        (m) => m.ClientReportsComponent,
+      ),
+  },
   { path: 'chat', component: ChatComponent },
   {
     path: 'client/messages',

@@ -8,86 +8,109 @@
 
 <div class="tw-shell" [class.tw-shell--public]="!!team() && !isTeamMember()">
   @if (isTeamMember()) {
-  <aside class="tw-sidebar" aria-label="Team workspace">
-    <div class="tw-sidebar__top">
-      <a routerLink="/developer/teams" class="tw-sidebar__brand" aria-label="FreeGency — My Teams">
-        <span class="tw-sidebar__mark" aria-hidden="true">
-          <img src="/assets/brand/mark.svg" alt="" width="24" height="24" />
-        </span>
-        <img
-          src="/assets/brand/logo.svg"
-          alt="FreeGency"
-          class="tw-sidebar__wordmark"
-          width="160"
-          height="37"
-        />
-      </a>
+    <aside class="tw-sidebar" aria-label="Team workspace">
+      <div class="tw-sidebar__top">
+        <a
+          routerLink="/developer/teams"
+          class="tw-sidebar__brand"
+          aria-label="FreeGency — My Teams"
+        >
+          <span class="tw-sidebar__mark" aria-hidden="true">
+            <img src="/assets/brand/mark.svg" alt="" width="24" height="24" />
+          </span>
+          <img
+            src="/assets/brand/logo.svg"
+            alt="FreeGency"
+            class="tw-sidebar__wordmark"
+            width="160"
+            height="37"
+          />
+        </a>
 
-      <nav class="tw-sidebar__nav">
-        @for (item of sidebarItems; track item.key) {
-          <button
-            type="button"
-            class="tw-nav-btn"
-            [class.is-active]="sidebarActive(item.key)"
-            (click)="onSidebar(item)"
-          >
-            <span class="tw-nav-btn__icon">
-              <hugeicons-icon [icon]="item.icon" [size]="18" color="currentColor" [strokeWidth]="1.75" />
-            </span>
-            {{ item.label }}
-          </button>
-        }
-      </nav>
-    </div>
+        <nav class="tw-sidebar__nav">
+          @for (item of sidebarItems(); track item.key) {
+            <button
+              type="button"
+              class="tw-nav-btn"
+              [class.is-active]="sidebarActive(item.key)"
+              (click)="onSidebar(item)"
+            >
+              <span class="tw-nav-btn__icon">
+                <hugeicons-icon
+                  [icon]="item.icon"
+                  [size]="18"
+                  color="currentColor"
+                  [strokeWidth]="1.75"
+                />
+              </span>
+              <span class="tw-nav-btn__label">{{ item.label }}</span>
+              @if (item.key === 'invitations' && pendingProjectInvitationsCount() > 0) {
+                <span
+                  class="tw-nav-btn__badge"
+                  [attr.aria-label]="pendingProjectInvitationsCount() + ' pending invitations'"
+                >
+                  {{ pendingProjectInvitationsCount() }}
+                </span>
+              }
+            </button>
+          }
+        </nav>
+      </div>
 
-    <div class="tw-sidebar__foot">
-      <button type="button" class="tw-back-btn" (click)="goMyTeams()">
-        <hugeicons-icon [icon]="backIcon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
-        Back to My Teams
-      </button>
-    </div>
-  </aside>
+      <div class="tw-sidebar__foot">
+        <button type="button" class="tw-back-btn" (click)="goMyTeams()">
+          <hugeicons-icon [icon]="backIcon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
+          Back to My Teams
+        </button>
+      </div>
+    </aside>
   }
 
   <div class="tw-main" [class.tw-main--messages]="activeTab() === 'messages'">
     @if (isTeamMember()) {
-    <div class="tw-mobile-bar">
-      <button type="button" class="tw-back-chip" (click)="goMyTeams()">
-        <hugeicons-icon [icon]="backIcon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
-        My Teams
-      </button>
-      <button
-        type="button"
-        class="tw-menu-chip"
-        (click)="mobileNavOpen.set(!mobileNavOpen())"
-      >
-        Sections
-      </button>
-    </div>
-
-    @if (mobileNavOpen()) {
-      <div class="tw-mobile-nav">
-        @for (item of sidebarItems; track item.key) {
-          <button
-            type="button"
-            class="tw-nav-btn"
-            [class.is-active]="sidebarActive(item.key)"
-            (click)="onSidebar(item)"
-          >
-            <span class="tw-nav-btn__icon">
-              <hugeicons-icon [icon]="item.icon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
-            </span>
-            {{ item.label }}
-          </button>
-        }
+      <div class="tw-mobile-bar">
+        <button type="button" class="tw-back-chip" (click)="goMyTeams()">
+          <hugeicons-icon [icon]="backIcon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
+          My Teams
+        </button>
+        <button type="button" class="tw-menu-chip" (click)="mobileNavOpen.set(!mobileNavOpen())">
+          Sections
+        </button>
       </div>
-    }
+
+      @if (mobileNavOpen()) {
+        <div class="tw-mobile-nav">
+          @for (item of sidebarItems(); track item.key) {
+            <button
+              type="button"
+              class="tw-nav-btn"
+              [class.is-active]="sidebarActive(item.key)"
+              (click)="onSidebar(item)"
+            >
+              <span class="tw-nav-btn__icon">
+                <hugeicons-icon
+                  [icon]="item.icon"
+                  [size]="16"
+                  color="currentColor"
+                  [strokeWidth]="1.75"
+                />
+              </span>
+              <span class="tw-nav-btn__label">{{ item.label }}</span>
+              @if (item.key === 'invitations' && pendingProjectInvitationsCount() > 0) {
+                <span class="tw-nav-btn__badge">{{ pendingProjectInvitationsCount() }}</span>
+              }
+            </button>
+          }
+        </div>
+      }
     }
 
     @if (loading()) {
       <div class="h-40 animate-pulse rounded-[28px] bg-white"></div>
     } @else if (error()) {
-      <p class="rounded-2xl border border-[#ffdad6] bg-[#fff8f7] px-4 py-3 font-body text-sm text-[#93000a]">
+      <p
+        class="rounded-2xl border border-[#ffdad6] bg-[#fff8f7] px-4 py-3 font-body text-sm text-[#93000a]"
+      >
         {{ error() }}
       </p>
     } @else if (team(); as t) {
@@ -96,173 +119,229 @@
         {{ isClientViewer() ? 'Back' : 'My Teams' }}
       </button>
 
-      <input id="tw-quick-cover" type="file" accept="image/*" class="sr-only" (change)="onQuickCoverChange($event)" />
-      <input id="tw-quick-logo" type="file" accept="image/*" class="sr-only" (change)="onQuickLogoChange($event)" />
+      <input
+        id="tw-quick-cover"
+        type="file"
+        accept="image/*"
+        class="sr-only"
+        (change)="onQuickCoverChange($event)"
+      />
+      <input
+        id="tw-quick-logo"
+        type="file"
+        accept="image/*"
+        class="sr-only"
+        (change)="onQuickLogoChange($event)"
+      />
 
       @if (activeTab() === 'overview') {
-      <!-- Hero header with cover -->
-      <section class="tw-hero">
-        <div class="tw-hero__cover">
-          @if (t.cover) {
-            <img [src]="t.cover" alt="" class="tw-hero__cover-img" />
-          } @else {
-            <div class="tw-hero__cover-fallback" aria-hidden="true"></div>
-          }
-          <div class="tw-hero__cover-fade" aria-hidden="true"></div>
+        <!-- Hero header with cover -->
+        <section class="tw-hero">
+          <div class="tw-hero__cover">
+            @if (t.cover) {
+              <img [src]="t.cover" alt="" class="tw-hero__cover-img" />
+            } @else {
+              <div class="tw-hero__cover-fallback" aria-hidden="true"></div>
+            }
+            <div class="tw-hero__cover-fade" aria-hidden="true"></div>
 
-          @if (isLeader()) {
-            <button type="button" class="tw-hero__cover-edit" (click)="quickPickCover($event)">
-              <hugeicons-icon [icon]="cameraIcon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
-              Change cover
-            </button>
-          }
+            @if (isLeader()) {
+              <button type="button" class="tw-hero__cover-edit" (click)="quickPickCover($event)">
+                <hugeicons-icon
+                  [icon]="cameraIcon"
+                  [size]="16"
+                  color="currentColor"
+                  [strokeWidth]="1.75"
+                />
+                Change cover
+              </button>
+            }
 
-          <div class="tw-hero__overlay">
-            <button
-              type="button"
-              class="tw-hero__logo"
-              [class.tw-hero__logo--editable]="isLeader()"
-              (click)="isLeader() ? quickPickLogo($event) : null"
-              [attr.aria-label]="isLeader() ? 'Change team logo' : null"
-            >
-              @if (t.logo) {
-                <img [src]="t.logo" alt="" class="absolute inset-0 size-full object-cover" />
-              } @else {
-                {{ initials(t.name) }}
-              }
-              @if (isLeader()) {
-                <span class="tw-hero__logo-edit">
-                  <hugeicons-icon [icon]="cameraIcon" [size]="14" color="currentColor" [strokeWidth]="1.75" />
-                </span>
-              }
-            </button>
-
-            <div class="tw-hero__overlay-text">
-              <div class="tw-hero__title-row">
-                <h1 class="tw-hero__name">{{ t.name }}</h1>
-                @if (isTeamMember()) {
-                  <span
-                    class="role-badge"
-                    [class.role-badge--leader]="isLeader()"
-                    [class.role-badge--member]="!isLeader()"
-                  >
-                    {{ isLeader() ? 'LEADER' : 'MEMBER' }}
-                  </span>
-                  @if (isLeader()) {
-                    <button
-                      type="button"
-                      class="tw-icon-edit tw-icon-edit--on-cover"
-                      aria-label="Edit team profile"
-                      (click)="openProfileEdit()"
-                    >
-                      <hugeicons-icon [icon]="editIcon" [size]="15" color="currentColor" [strokeWidth]="1.75" />
-                    </button>
-                  }
+            <div class="tw-hero__overlay">
+              <button
+                type="button"
+                class="tw-hero__logo"
+                [class.tw-hero__logo--editable]="isLeader()"
+                (click)="isLeader() ? quickPickLogo($event) : null"
+                [attr.aria-label]="isLeader() ? 'Change team logo' : null"
+              >
+                @if (t.logo) {
+                  <img [src]="t.logo" alt="" class="absolute inset-0 size-full object-cover" />
+                } @else {
+                  {{ initials(t.name) }}
                 }
+                @if (isLeader()) {
+                  <span class="tw-hero__logo-edit">
+                    <hugeicons-icon
+                      [icon]="cameraIcon"
+                      [size]="14"
+                      color="currentColor"
+                      [strokeWidth]="1.75"
+                    />
+                  </span>
+                }
+              </button>
+
+              <div class="tw-hero__overlay-text">
+                <div class="tw-hero__title-row">
+                  <h1 class="tw-hero__name">{{ t.name }}</h1>
+                  @if (isTeamMember()) {
+                    <span
+                      class="role-badge"
+                      [class.role-badge--leader]="isLeader()"
+                      [class.role-badge--member]="!isLeader()"
+                    >
+                      {{ isLeader() ? 'LEADER' : 'MEMBER' }}
+                    </span>
+                    @if (isLeader()) {
+                      <button
+                        type="button"
+                        class="tw-icon-edit tw-icon-edit--on-cover"
+                        aria-label="Edit team profile"
+                        (click)="openProfileEdit()"
+                      >
+                        <hugeicons-icon
+                          [icon]="editIcon"
+                          [size]="15"
+                          color="currentColor"
+                          [strokeWidth]="1.75"
+                        />
+                      </button>
+                    }
+                  }
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div class="tw-hero__body">
-          <div class="tw-hero__meta">
-            <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-body text-[13px] font-medium text-[#6b7280]">
-              <span class="inline-flex items-center gap-1">
-                <hugeicons-icon [icon]="starIcon" [size]="14" color="#F59E0B" [strokeWidth]="1.75" />
-                <span class="font-semibold text-[#111827]">
-                  {{ t.averageRating > 0 ? (t.averageRating | number: '1.1-1') : 'New' }}
-                </span>
-                @if (t.ratingCount > 0) {
-                  <span>({{ t.ratingCount }} reviews)</span>
-                }
-              </span>
-              <span class="inline-flex items-center gap-1.5">
-                <hugeicons-icon [icon]="groupIcon" [size]="14" color="currentColor" [strokeWidth]="1.75" />
-                {{ t.membersCount }} members
-              </span>
-            </div>
-
-            <div class="flex flex-wrap gap-1.5">
-              @for (cat of categoryLabels(); track cat.id) {
-                <span
-                  class="tw-cat-chip"
-                  [class.tw-cat-chip--primary]="cat.primary"
-                  [style.--cat-bg]="categoryTone(cat.label).bg"
-                  [style.--cat-fg]="categoryTone(cat.label).fg"
-                  [style.--cat-border]="categoryTone(cat.label).border"
-                >
-                  @if (cat.primary) {
-                    <span class="tw-cat-chip__dot" aria-hidden="true"></span>
-                  }
-                  {{ cat.label }}
-                </span>
-              } @empty {
-                <span class="text-xs text-[#98a2b3]">No categories yet</span>
-              }
-            </div>
-          </div>
-
-          <div class="tw-hero__actions">
-            @if (isTeamMember()) {
-              <button
-                type="button"
-                class="inline-flex size-10 cursor-pointer items-center justify-center rounded-full border border-[#e5e7eb] text-[#6b7280] transition-colors hover:bg-[#f9fafb]"
-                aria-label="Team messages"
-                (click)="setTab('messages')"
+          <div class="tw-hero__body">
+            <div class="tw-hero__meta">
+              <div
+                class="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-body text-[13px] font-medium text-[#6b7280]"
               >
-                <hugeicons-icon [icon]="messageIcon" [size]="16" color="currentColor" [strokeWidth]="1.75" />
-              </button>
-              @if (isLeader()) {
+                <span class="inline-flex items-center gap-1">
+                  <hugeicons-icon
+                    [icon]="starIcon"
+                    [size]="14"
+                    color="#F59E0B"
+                    [strokeWidth]="1.75"
+                  />
+                  <span class="font-semibold text-[#111827]">
+                    {{ t.averageRating > 0 ? (t.averageRating | number: '1.1-1') : 'New' }}
+                  </span>
+                  @if (t.ratingCount > 0) {
+                    <span>({{ t.ratingCount }} reviews)</span>
+                  }
+                </span>
+                <span class="inline-flex items-center gap-1.5">
+                  <hugeicons-icon
+                    [icon]="groupIcon"
+                    [size]="14"
+                    color="currentColor"
+                    [strokeWidth]="1.75"
+                  />
+                  {{ t.membersCount }} members
+                </span>
+              </div>
+
+              <div class="flex flex-wrap gap-1.5">
+                @for (cat of categoryLabels(); track cat.id) {
+                  <span
+                    class="tw-cat-chip"
+                    [class.tw-cat-chip--primary]="cat.primary"
+                    [style.--cat-bg]="categoryTone(cat.label).bg"
+                    [style.--cat-fg]="categoryTone(cat.label).fg"
+                    [style.--cat-border]="categoryTone(cat.label).border"
+                  >
+                    @if (cat.primary) {
+                      <span class="tw-cat-chip__dot" aria-hidden="true"></span>
+                    }
+                    {{ cat.label }}
+                  </span>
+                } @empty {
+                  <span class="text-xs text-[#98a2b3]">No categories yet</span>
+                }
+              </div>
+            </div>
+
+            <div class="tw-hero__actions">
+              @if (isTeamMember()) {
                 <button
                   type="button"
-                  class="inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-full bg-[#4130d7] px-5 font-display text-sm font-semibold text-white transition-colors hover:bg-[#3527b8]"
-                  (click)="openInvite()"
+                  class="inline-flex size-10 cursor-pointer items-center justify-center rounded-full border border-[#e5e7eb] text-[#6b7280] transition-colors hover:bg-[#f9fafb]"
+                  aria-label="Team messages"
+                  (click)="setTab('messages')"
                 >
-                  <hugeicons-icon [icon]="addIcon" [size]="16" color="currentColor" [strokeWidth]="2" />
-                  Invite Member
+                  <hugeicons-icon
+                    [icon]="messageIcon"
+                    [size]="16"
+                    color="currentColor"
+                    [strokeWidth]="1.75"
+                  />
                 </button>
+                @if (isLeader()) {
+                  <button
+                    type="button"
+                    class="inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-full bg-[#4130d7] px-5 font-display text-sm font-semibold text-white transition-colors hover:bg-[#3527b8]"
+                    (click)="openInvite()"
+                  >
+                    <hugeicons-icon
+                      [icon]="addIcon"
+                      [size]="16"
+                      color="currentColor"
+                      [strokeWidth]="2"
+                    />
+                    Invite Member
+                  </button>
+                }
               }
-            }
+            </div>
+          </div>
+        </section>
+
+        <!-- KPIs -->
+        <div class="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div class="tw-card p-4">
+            <p class="tw-mono-label">Success score</p>
+            <p class="tw-kpi mt-1">
+              {{
+                t.averageRating > 0 ? ((t.averageRating / 5) * 100 | number: '1.0-0') + '%' : '—'
+              }}
+            </p>
+          </div>
+          <div class="tw-card p-4">
+            <p class="tw-mono-label">Active projects</p>
+            <p class="tw-kpi mt-1">{{ teamProjects().length || t.projectsCount || 0 }}</p>
+          </div>
+          <div class="tw-card p-4">
+            <p class="tw-mono-label">Portfolio</p>
+            <p class="tw-kpi mt-1">{{ portfolio().length }}</p>
+          </div>
+          <div class="tw-card p-4">
+            <p class="tw-mono-label">Team members</p>
+            <p class="tw-kpi mt-1">{{ t.membersCount }}</p>
           </div>
         </div>
-      </section>
-
-      <!-- KPIs -->
-      <div class="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <div class="tw-card p-4">
-          <p class="tw-mono-label">Success score</p>
-          <p class="tw-kpi mt-1">{{ t.averageRating > 0 ? ((t.averageRating / 5) * 100 | number: '1.0-0') + '%' : '—' }}</p>
-        </div>
-        <div class="tw-card p-4">
-          <p class="tw-mono-label">Active projects</p>
-          <p class="tw-kpi mt-1">{{ teamProjects().length || t.projectsCount || 0 }}</p>
-        </div>
-        <div class="tw-card p-4">
-          <p class="tw-mono-label">Portfolio</p>
-          <p class="tw-kpi mt-1">{{ portfolio().length }}</p>
-        </div>
-        <div class="tw-card p-4">
-          <p class="tw-mono-label">Team members</p>
-          <p class="tw-kpi mt-1">{{ t.membersCount }}</p>
-        </div>
-      </div>
       }
 
       <!-- Tabs (shown under 960px; desktop uses sidebar) — members only -->
       @if (isTeamMember()) {
-      <div class="tw-tabs mt-8" role="tablist">
-        @for (tab of tabs(); track tab.id) {
-          <button
-            type="button"
-            role="tab"
-            class="tw-tab"
-            [class.is-active]="activeTab() === tab.id"
-            (click)="setTab(tab.id)"
-          >
-            {{ tab.label }}
-          </button>
-        }
-      </div>
+        <div class="tw-tabs mt-8" role="tablist">
+          @for (tab of tabs(); track tab.id) {
+            <button
+              type="button"
+              role="tab"
+              class="tw-tab"
+              [class.is-active]="activeTab() === tab.id"
+              (click)="setTab(tab.id)"
+            >
+              {{ tab.label }}
+              @if (tab.id === 'invitations' && pendingProjectInvitationsCount() > 0) {
+                <span class="tw-tab__badge">{{ pendingProjectInvitationsCount() }}</span>
+              }
+            </button>
+          }
+        </div>
       }
 
       <!-- OVERVIEW -->
@@ -273,7 +352,12 @@
               <h2 class="font-display text-[17px] font-bold text-[#111827]">About Team</h2>
               @if (isLeader()) {
                 <button type="button" class="tw-text-edit" (click)="openProfileEdit()">
-                  <hugeicons-icon [icon]="editIcon" [size]="14" color="currentColor" [strokeWidth]="1.75" />
+                  <hugeicons-icon
+                    [icon]="editIcon"
+                    [size]="14"
+                    color="currentColor"
+                    [strokeWidth]="1.75"
+                  />
                   Edit
                 </button>
               }
@@ -313,7 +397,9 @@
                             {{ jobStatusLabel(job.status) }}
                           </span>
                           @if (relativeTime(job.createdAt)) {
-                            <span class="otj-badge otj-badge--soft">{{ relativeTime(job.createdAt) }}</span>
+                            <span class="otj-badge otj-badge--soft">{{
+                              relativeTime(job.createdAt)
+                            }}</span>
                           }
                           @if (appliedJobIds().includes(job.id)) {
                             <span class="otj-badge otj-badge--applied">Applied</span>
@@ -322,12 +408,18 @@
 
                         <h3 class="otj-card__title">{{ job.title }}</h3>
                         <p class="otj-card__desc">
-                          {{ job.description.trim() || 'No description provided for this role yet.' }}
+                          {{
+                            job.description.trim() || 'No description provided for this role yet.'
+                          }}
                         </p>
 
                         <div class="otj-card__actions">
                           @if (appliedJobIds().includes(job.id)) {
-                            <button type="button" class="otj-card__btn otj-card__btn--disabled" disabled>
+                            <button
+                              type="button"
+                              class="otj-card__btn otj-card__btn--disabled"
+                              disabled
+                            >
                               Applied
                             </button>
                           } @else {
@@ -356,14 +448,26 @@
               <div class="mb-2.5 flex items-center justify-between gap-2">
                 <p class="tw-mono-label">Specializations</p>
                 @if (isLeader()) {
-                  <button type="button" class="tw-text-edit" (click)="openExpertiseEdit('specialties')" title="Edit specializations">
-                    <hugeicons-icon [icon]="editIcon" [size]="13" color="currentColor" [strokeWidth]="1.75" />
+                  <button
+                    type="button"
+                    class="tw-text-edit"
+                    (click)="openExpertiseEdit('specialties')"
+                    title="Edit specializations"
+                  >
+                    <hugeicons-icon
+                      [icon]="editIcon"
+                      [size]="13"
+                      color="currentColor"
+                      [strokeWidth]="1.75"
+                    />
                   </button>
                 }
               </div>
               <div class="flex flex-wrap gap-2">
                 @for (spec of specialtyLabels(); track spec) {
-                  <span class="rounded-full bg-[#4130D7] px-3 py-1.5 font-body text-xs font-semibold text-white">
+                  <span
+                    class="rounded-full bg-[#4130D7] px-3 py-1.5 font-body text-xs font-semibold text-white"
+                  >
                     {{ spec }}
                   </span>
                 } @empty {
@@ -379,7 +483,9 @@
               </div>
               <div>
                 <p class="tw-mono-label">Team size</p>
-                <p class="mt-1 text-sm font-semibold text-[#111827]">{{ t.membersCount }} specialists</p>
+                <p class="mt-1 text-sm font-semibold text-[#111827]">
+                  {{ t.membersCount }} specialists
+                </p>
               </div>
             </div>
 
@@ -387,7 +493,9 @@
             <section class="tw-reviews mt-10">
               <header class="tw-reviews__top">
                 <div>
-                  <h2 class="font-display text-[17px] font-bold text-[#111827]">Community Feedback</h2>
+                  <h2 class="font-display text-[17px] font-bold text-[#111827]">
+                    Community Feedback
+                  </h2>
                   <p class="tw-reviews__lede">
                     @if (teamReviews().length) {
                       Based on {{ teamReviews().length }}
@@ -456,7 +564,11 @@
                     <p class="tw-review-form__error">{{ teamReviewError() }}</p>
                   }
 
-                  <button type="submit" class="tw-review-submit" [disabled]="teamReviewSubmitting()">
+                  <button
+                    type="submit"
+                    class="tw-review-submit"
+                    [disabled]="teamReviewSubmitting()"
+                  >
                     {{ teamReviewSubmitting() ? 'Submitting…' : 'Submit Review' }}
                   </button>
                 </form>
@@ -470,7 +582,9 @@
               @if (teamReviewsLoading()) {
                 <div class="space-y-2">
                   @for (i of [1, 2]; track i) {
-                    <div class="h-20 animate-pulse rounded-2xl border border-[#eceef4] bg-white"></div>
+                    <div
+                      class="h-20 animate-pulse rounded-2xl border border-[#eceef4] bg-white"
+                    ></div>
                   }
                 </div>
               } @else if (teamReviews().length) {
@@ -496,7 +610,8 @@
                                 class="tw-star"
                                 [class.is-on]="value <= starRating(review.rating)"
                                 aria-hidden="true"
-                              >★</span>
+                                >★</span
+                              >
                             }
                           </div>
                         </div>
@@ -504,7 +619,9 @@
                           <p class="tw-review-card__comment">{{ review.comment }}</p>
                         }
                         @if (review.createdAt) {
-                          <p class="tw-review-card__date">{{ review.createdAt | date: 'MMM d, y' }}</p>
+                          <p class="tw-review-card__date">
+                            {{ review.createdAt | date: 'MMM d, y' }}
+                          </p>
                         }
                       </div>
                     </li>
@@ -517,9 +634,14 @@
               }
             </section>
 
-            <div id="portfolio" class="mb-4 mt-10 flex flex-wrap items-center justify-between gap-3 scroll-mt-24">
+            <div
+              id="portfolio"
+              class="mb-4 mt-10 flex flex-wrap items-center justify-between gap-3 scroll-mt-24"
+            >
               <div>
-                <h2 class="font-display text-[17px] font-bold text-[#111827]">Portfolio Highlights</h2>
+                <h2 class="font-display text-[17px] font-bold text-[#111827]">
+                  Portfolio Highlights
+                </h2>
                 @if (!isLeader()) {
                   <p class="mt-0.5 text-xs text-[#9ca3af]">Curated by the team leader</p>
                 }
@@ -531,7 +653,12 @@
                     class="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-[#e5e7eb] px-4 font-display text-[13px] font-semibold text-[#374151] hover:bg-[#f9fafb]"
                     (click)="openAddPortfolio()"
                   >
-                    <hugeicons-icon [icon]="addIcon" [size]="14" color="currentColor" [strokeWidth]="2" />
+                    <hugeicons-icon
+                      [icon]="addIcon"
+                      [size]="14"
+                      color="currentColor"
+                      [strokeWidth]="2"
+                    />
                     Add project
                   </button>
                 }
@@ -540,7 +667,9 @@
 
             @if (portfolio().length === 0) {
               <div class="tw-card border-dashed px-5 py-10 text-center">
-                <p class="font-display text-sm font-semibold text-[#111827]">No portfolio projects yet</p>
+                <p class="font-display text-sm font-semibold text-[#111827]">
+                  No portfolio projects yet
+                </p>
                 @if (isLeader()) {
                   <button
                     type="button"
@@ -569,7 +698,12 @@
                             aria-label="Edit project"
                             (click)="openEditPortfolio(item); $event.stopPropagation()"
                           >
-                            <hugeicons-icon [icon]="editIcon" [size]="14" color="#4b5563" [strokeWidth]="1.75" />
+                            <hugeicons-icon
+                              [icon]="editIcon"
+                              [size]="14"
+                              color="#4b5563"
+                              [strokeWidth]="1.75"
+                            />
                           </button>
                           <button
                             type="button"
@@ -577,7 +711,12 @@
                             aria-label="Delete project"
                             (click)="deletePortfolio(item, $event)"
                           >
-                            <hugeicons-icon [icon]="deleteIcon" [size]="14" color="#ef4444" [strokeWidth]="1.75" />
+                            <hugeicons-icon
+                              [icon]="deleteIcon"
+                              [size]="14"
+                              color="#ef4444"
+                              [strokeWidth]="1.75"
+                            />
                           </button>
                         </div>
                       }
@@ -604,14 +743,26 @@
               <div class="mb-3 flex items-center justify-between gap-2">
                 <p class="tw-mono-label">Skills</p>
                 @if (isLeader()) {
-                  <button type="button" class="tw-icon-edit" aria-label="Edit skills" (click)="openExpertiseEdit('skills')">
-                    <hugeicons-icon [icon]="editIcon" [size]="14" color="currentColor" [strokeWidth]="1.75" />
+                  <button
+                    type="button"
+                    class="tw-icon-edit"
+                    aria-label="Edit skills"
+                    (click)="openExpertiseEdit('skills')"
+                  >
+                    <hugeicons-icon
+                      [icon]="editIcon"
+                      [size]="14"
+                      color="currentColor"
+                      [strokeWidth]="1.75"
+                    />
                   </button>
                 }
               </div>
               <div class="flex flex-wrap gap-1.5">
                 @for (skill of skillLabels(); track skill) {
-                  <span class="rounded-full bg-[#f4f3ff] px-3 py-1.5 text-xs font-semibold text-[#4130d7]">
+                  <span
+                    class="rounded-full bg-[#f4f3ff] px-3 py-1.5 text-xs font-semibold text-[#4130d7]"
+                  >
                     {{ skill }}
                   </span>
                 } @empty {
@@ -624,8 +775,18 @@
               <div class="mb-3 flex items-center justify-between gap-2">
                 <p class="tw-mono-label">Categories</p>
                 @if (isLeader()) {
-                  <button type="button" class="tw-icon-edit" aria-label="Edit categories" (click)="openExpertiseEdit('categories')">
-                    <hugeicons-icon [icon]="editIcon" [size]="14" color="currentColor" [strokeWidth]="1.75" />
+                  <button
+                    type="button"
+                    class="tw-icon-edit"
+                    aria-label="Edit categories"
+                    (click)="openExpertiseEdit('categories')"
+                  >
+                    <hugeicons-icon
+                      [icon]="editIcon"
+                      [size]="14"
+                      color="currentColor"
+                      [strokeWidth]="1.75"
+                    />
                   </button>
                 }
               </div>
@@ -655,13 +816,19 @@
                       class="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#e5e7eb] text-[11px] font-bold text-[#4b5563]"
                     >
                       @if (member.imageUrl) {
-                        <img [src]="member.imageUrl" alt="" class="absolute inset-0 size-full object-cover" />
+                        <img
+                          [src]="member.imageUrl"
+                          alt=""
+                          class="absolute inset-0 size-full object-cover"
+                        />
                       } @else {
                         {{ initials(member.name) }}
                       }
                     </span>
                     <div class="min-w-0">
-                      <p class="truncate text-[13px] font-semibold text-[#111827]">{{ member.name }}</p>
+                      <p class="truncate text-[13px] font-semibold text-[#111827]">
+                        {{ member.name }}
+                      </p>
                       <p class="text-xs text-[#6b7280]">Member</p>
                     </div>
                   </div>
@@ -698,12 +865,16 @@
             </div>
           } @else if (teamProjects().length === 0) {
             <div class="tw-card border-dashed px-6 py-12 text-center">
-              <p class="font-display text-base font-semibold text-[#111827]">No team projects yet</p>
+              <p class="font-display text-base font-semibold text-[#111827]">
+                No team projects yet
+              </p>
               <p class="mt-1 font-body text-sm text-[#6b7280]">
                 @if (isLeader()) {
-                  Only hired client work shows here (AssignedTeamId). Open proposals stay on the marketplace until the client accepts.
+                  Only hired client work shows here (AssignedTeamId). Open proposals stay on the
+                  marketplace until the client accepts.
                 } @else {
-                  You only see projects you’re staffed on. Ask a leader to add you under Tasks → Pay share / project members.
+                  You only see projects you’re staffed on. Ask a leader to add you under Tasks → Pay
+                  share / project members.
                 }
               </p>
             </div>
@@ -741,7 +912,10 @@
                     <div class="tp-card__progress">
                       <div class="tp-card__progress-head">
                         <span>Milestone Progress</span>
-                        <span>{{ project.completedMilestones }} / {{ project.totalMilestones }} Completed</span>
+                        <span
+                          >{{ project.completedMilestones }} /
+                          {{ project.totalMilestones }} Completed</span
+                        >
                       </div>
                       <div class="tp-card__steps" aria-hidden="true">
                         @for (step of milestoneSteps(project); track $index; let last = $last) {
@@ -807,7 +981,12 @@
                     <div class="tp-card__avatars">
                       @for (m of project.members; track m.userId) {
                         @if (m.imageUrl) {
-                          <img class="tp-card__avatar" [src]="m.imageUrl" [alt]="m.name" [title]="m.name" />
+                          <img
+                            class="tp-card__avatar"
+                            [src]="m.imageUrl"
+                            [alt]="m.name"
+                            [title]="m.name"
+                          />
                         } @else {
                           <span class="tp-card__avatar tp-card__avatar--fallback" [title]="m.name">
                             {{ initials(m.name) }}
@@ -820,7 +999,9 @@
                         </span>
                       }
                       @if (!project.members.length) {
-                        <span class="tp-card__avatars-empty">{{ project.categoryName || 'Unstaffed' }}</span>
+                        <span class="tp-card__avatars-empty">{{
+                          project.categoryName || 'Unstaffed'
+                        }}</span>
                       }
                     </div>
                     <button type="button" class="tp-card__cta" (click)="openWorkspace(project)">
@@ -841,13 +1022,16 @@
             <div class="min-w-0">
               <p class="tw-mono-label">Hiring</p>
               <h2 class="tj-page__title">Team Jobs</h2>
-              <p class="tj-page__sub">
-                Open roles and applications to join this team
-              </p>
+              <p class="tj-page__sub">Open roles and applications to join this team</p>
             </div>
             @if (isLeader()) {
               <button type="button" class="tj-page__cta" (click)="openAddJob()">
-                <hugeicons-icon [icon]="addIcon" [size]="16" color="currentColor" [strokeWidth]="2" />
+                <hugeicons-icon
+                  [icon]="addIcon"
+                  [size]="16"
+                  color="currentColor"
+                  [strokeWidth]="2"
+                />
                 Add job
               </button>
             }
@@ -879,21 +1063,39 @@
                   }
                 </div>
               } @else if (jobsError()) {
-                <p class="rounded-2xl border border-[#ffd9d4] bg-[#fff8f7] px-4 py-3 font-body text-sm text-[#93000a]">
+                <p
+                  class="rounded-2xl border border-[#ffd9d4] bg-[#fff8f7] px-4 py-3 font-body text-sm text-[#93000a]"
+                >
                   {{ jobsError() }}
                 </p>
               } @else if (jobs().length === 0) {
-                <div class="tw-card flex flex-col items-center border-dashed px-6 py-12 text-center">
-                  <div class="mb-4 flex size-14 items-center justify-center rounded-2xl bg-[#eeecfb] text-[#4130d7]">
-                    <hugeicons-icon [icon]="briefcaseIcon" [size]="24" color="currentColor" [strokeWidth]="1.75" />
+                <div
+                  class="tw-card flex flex-col items-center border-dashed px-6 py-12 text-center"
+                >
+                  <div
+                    class="mb-4 flex size-14 items-center justify-center rounded-2xl bg-[#eeecfb] text-[#4130d7]"
+                  >
+                    <hugeicons-icon
+                      [icon]="briefcaseIcon"
+                      [size]="24"
+                      color="currentColor"
+                      [strokeWidth]="1.75"
+                    />
                   </div>
                   <h3 class="font-display text-lg font-bold text-[#111827]">No team jobs yet</h3>
-                  <p class="mt-2 w-full max-w-[420px] font-body text-sm leading-relaxed text-[#6b7280]">
+                  <p
+                    class="mt-2 w-full max-w-[420px] font-body text-sm leading-relaxed text-[#6b7280]"
+                  >
                     Post a role when you need a designer, developer, or specialist to join the team.
                   </p>
                   @if (isLeader()) {
                     <button type="button" class="tj-page__cta mt-5" (click)="openAddJob()">
-                      <hugeicons-icon [icon]="addIcon" [size]="16" color="currentColor" [strokeWidth]="2" />
+                      <hugeicons-icon
+                        [icon]="addIcon"
+                        [size]="16"
+                        color="currentColor"
+                        [strokeWidth]="2"
+                      />
                       Add first job
                     </button>
                   }
@@ -952,8 +1154,14 @@
                           } @else {
                             <div class="tj-expand__about">
                               <p class="tw-mono-label">About the role</p>
-                              <p class="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-[#4b5563]">
-                                {{ expandedJobDetails()?.description || job.description || 'No description.' }}
+                              <p
+                                class="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-[#4b5563]"
+                              >
+                                {{
+                                  expandedJobDetails()?.description ||
+                                    job.description ||
+                                    'No description.'
+                                }}
                               </p>
                               @if (expandedJobDetails()?.skills?.length) {
                                 <div class="mt-4 flex flex-wrap gap-1.5">
@@ -966,11 +1174,19 @@
 
                             @if (isLeader()) {
                               <div class="tj-expand__actions">
-                                <button type="button" class="tj-req__btn tj-req__btn--reject" (click)="openEditJob(job, $event)">
+                                <button
+                                  type="button"
+                                  class="tj-req__btn tj-req__btn--reject"
+                                  (click)="openEditJob(job, $event)"
+                                >
                                   Edit
                                 </button>
                                 @if (isJobOpen(job.status)) {
-                                  <button type="button" class="tj-req__btn tj-req__btn--reject" (click)="closeJob(job, $event)">
+                                  <button
+                                    type="button"
+                                    class="tj-req__btn tj-req__btn--reject"
+                                    (click)="closeJob(job, $event)"
+                                  >
                                     Close opening
                                   </button>
                                 }
@@ -1000,7 +1216,8 @@
                                       <div class="tj-ai__copy">
                                         <p class="tj-ai__title">AI match ranking</p>
                                         <p class="tj-ai__sub">
-                                          Rank applicants by profile skills and CV fit for this role.
+                                          Rank applicants by profile skills and CV fit for this
+                                          role.
                                         </p>
                                         @if (aiRankHint(job.id); as hint) {
                                           <p class="tj-ai__hint">{{ hint }}</p>
@@ -1024,12 +1241,15 @@
                                     </div>
 
                                     <div class="tj-apps__filters" role="tablist">
-                                      @for (f of [
-                                        { id: 'pending', label: 'Pending' },
-                                        { id: 'all', label: 'All' },
-                                        { id: 'accepted', label: 'Accepted' },
-                                        { id: 'rejected', label: 'Rejected' }
-                                      ]; track f.id) {
+                                      @for (
+                                        f of [
+                                          { id: 'pending', label: 'Pending' },
+                                          { id: 'all', label: 'All' },
+                                          { id: 'accepted', label: 'Accepted' },
+                                          { id: 'rejected', label: 'Rejected' },
+                                        ];
+                                        track f.id
+                                      ) {
                                         <button
                                           type="button"
                                           class="tj-apps__chip"
@@ -1044,7 +1264,9 @@
                                     @if (joinRequestsLoading() && !joinRequestsLoaded()) {
                                       <div class="h-16 animate-pulse rounded-xl bg-[#f3f4f6]"></div>
                                     } @else if (joinRequestsError()) {
-                                      <p class="text-sm text-[#93000a]">{{ joinRequestsError() }}</p>
+                                      <p class="text-sm text-[#93000a]">
+                                        {{ joinRequestsError() }}
+                                      </p>
                                       <button
                                         type="button"
                                         class="mt-2 text-xs font-bold text-[#4130d7]"
@@ -1059,15 +1281,24 @@
                                     } @else {
                                       <div class="tj-apps__list">
                                         @for (req of pagedRequestsForJob(job.id); track req.id) {
-                                          <article class="tj-app" [class.is-top]="req.matchRank === 1 || (matchPercent(req) ?? 0) >= 85">
+                                          <article
+                                            class="tj-app"
+                                            [class.is-top]="
+                                              req.matchRank === 1 || (matchPercent(req) ?? 0) >= 85
+                                            "
+                                          >
                                             <div class="tj-app__main">
                                               @if (req.matchRank || matchPercent(req) != null) {
                                                 <div class="tj-app__rank" aria-label="AI match">
                                                   @if (req.matchRank) {
-                                                    <span class="tj-app__rank-num">#{{ req.matchRank }}</span>
+                                                    <span class="tj-app__rank-num"
+                                                      >#{{ req.matchRank }}</span
+                                                    >
                                                   }
                                                   @if (matchPercent(req); as pct) {
-                                                    <span class="tj-app__score">{{ pct }}% match</span>
+                                                    <span class="tj-app__score"
+                                                      >{{ pct }}% match</span
+                                                    >
                                                   }
                                                 </div>
                                               }
@@ -1085,24 +1316,40 @@
                                                     <p class="tj-req__name">{{ req.fullName }}</p>
                                                     <span
                                                       class="tj-badge tj-badge--sm"
-                                                      [class.is-pending]="isRequestPending(req.status)"
-                                                      [class.is-accepted]="requestStatusLabel(req.status) === 'Accepted'"
-                                                      [class.is-rejected]="requestStatusLabel(req.status) === 'Rejected'"
+                                                      [class.is-pending]="
+                                                        isRequestPending(req.status)
+                                                      "
+                                                      [class.is-accepted]="
+                                                        requestStatusLabel(req.status) ===
+                                                        'Accepted'
+                                                      "
+                                                      [class.is-rejected]="
+                                                        requestStatusLabel(req.status) ===
+                                                        'Rejected'
+                                                      "
                                                     >
                                                       {{ requestStatusLabel(req.status) }}
                                                     </span>
                                                   </div>
                                                   <div class="tj-app__meta">
                                                     @if (req.averageRating > 0) {
-                                                      <span>{{ req.averageRating | number: '1.0-1' }}★</span>
+                                                      <span
+                                                        >{{
+                                                          req.averageRating | number: '1.0-1'
+                                                        }}★</span
+                                                      >
                                                     }
                                                     @if (req.completedProjects > 0) {
-                                                      <span>{{ req.completedProjects }} projects</span>
+                                                      <span
+                                                        >{{ req.completedProjects }} projects</span
+                                                      >
                                                     }
                                                     <span>{{ relativeTime(req.requestedAt) }}</span>
                                                   </div>
                                                   @if (req.coverLetter) {
-                                                    <p class="tj-req__letter">{{ req.coverLetter }}</p>
+                                                    <p class="tj-req__letter">
+                                                      {{ req.coverLetter }}
+                                                    </p>
                                                   }
                                                   @if (req.aiReasoning) {
                                                     <p class="tj-app__why">{{ req.aiReasoning }}</p>
@@ -1150,19 +1397,24 @@
                                             type="button"
                                             class="tj-pager__btn"
                                             [disabled]="appsPage(job.id) <= 1"
-                                            (click)="setAppsPage(job.id, appsPage(job.id) - 1, $event)"
+                                            (click)="
+                                              setAppsPage(job.id, appsPage(job.id) - 1, $event)
+                                            "
                                           >
                                             Prev
                                           </button>
                                           <span class="tj-pager__label">
-                                            Page {{ appsPage(job.id) }} of {{ appsTotalPages(job.id) }}
-                                            · {{ filteredRequestsForJob(job.id).length }} apps
+                                            Page {{ appsPage(job.id) }} of
+                                            {{ appsTotalPages(job.id) }} ·
+                                            {{ filteredRequestsForJob(job.id).length }} apps
                                           </span>
                                           <button
                                             type="button"
                                             class="tj-pager__btn"
                                             [disabled]="appsPage(job.id) >= appsTotalPages(job.id)"
-                                            (click)="setAppsPage(job.id, appsPage(job.id) + 1, $event)"
+                                            (click)="
+                                              setAppsPage(job.id, appsPage(job.id) + 1, $event)
+                                            "
                                           >
                                             Next
                                           </button>
@@ -1176,7 +1428,11 @@
                                           [disabled]="joinRequestsLoading()"
                                           (click)="loadMoreJoinRequests($event)"
                                         >
-                                          {{ joinRequestsLoading() ? 'Loading…' : 'Load more applications from server' }}
+                                          {{
+                                            joinRequestsLoading()
+                                              ? 'Loading…'
+                                              : 'Load more applications from server'
+                                          }}
                                         </button>
                                       }
                                     }
@@ -1186,7 +1442,9 @@
                             } @else if (!isTeamMember() && isJobOpen(job.status)) {
                               <div class="tj-expand__actions">
                                 @if (appliedJobIds().includes(job.id)) {
-                                  <span class="inline-flex h-10 items-center rounded-full bg-[#ecfdf3] px-4 text-xs font-bold text-[#15803d]">
+                                  <span
+                                    class="inline-flex h-10 items-center rounded-full bg-[#ecfdf3] px-4 text-xs font-bold text-[#15803d]"
+                                  >
                                     Applied
                                   </span>
                                 } @else {
@@ -1287,20 +1545,27 @@
       @if (activeTab() === 'tasks') {
         <div class="pt-8">
           @if (!isLeader()) {
-            <app-my-tasks
-              [currentUserId]="auth.session()?.id ?? ''"
-              [teamId]="t.id"
-            ></app-my-tasks>
+            <app-my-tasks [currentUserId]="auth.session()?.id ?? ''" [teamId]="t.id"></app-my-tasks>
           } @else if (projectsLoading()) {
             <div class="tw-card h-32 animate-pulse"></div>
           } @else if (!teamProjects().length) {
             <div class="tw-card flex flex-col items-center px-6 py-10 text-center">
-              <div class="mb-4 flex size-14 items-center justify-center rounded-2xl bg-[#eeecfb] text-[#4130d7]">
-                <hugeicons-icon [icon]="chartIcon" [size]="24" color="currentColor" [strokeWidth]="1.75" />
+              <div
+                class="mb-4 flex size-14 items-center justify-center rounded-2xl bg-[#eeecfb] text-[#4130d7]"
+              >
+                <hugeicons-icon
+                  [icon]="chartIcon"
+                  [size]="24"
+                  color="currentColor"
+                  [strokeWidth]="1.75"
+                />
               </div>
-              <h2 class="font-display text-lg font-bold text-[#111827]">No assigned projects yet</h2>
+              <h2 class="font-display text-lg font-bold text-[#111827]">
+                No assigned projects yet
+              </h2>
               <p class="mt-2 max-w-[380px] font-body text-sm text-[#6b7280]">
-                This team isn't assigned to any client project yet. Task boards become available once the team is hired.
+                This team isn't assigned to any client project yet. Task boards become available
+                once the team is hired.
               </p>
             </div>
           } @else {
@@ -1339,9 +1604,17 @@
             </div>
 
             @if (taskMilestonesError(); as err) {
-              <div class="rounded-2xl border border-[#ffdad6] bg-[#fff8f7] px-4 py-3 font-body text-sm text-[#93000a]">
+              <div
+                class="rounded-2xl border border-[#ffdad6] bg-[#fff8f7] px-4 py-3 font-body text-sm text-[#93000a]"
+              >
                 {{ err }}
-                <button type="button" class="font-bold underline" (click)="selectTaskProject(taskProjectId()!)">Retry</button>
+                <button
+                  type="button"
+                  class="font-bold underline"
+                  (click)="selectTaskProject(taskProjectId()!)"
+                >
+                  Retry
+                </button>
               </div>
             } @else if (taskMilestonesLoaded() && !taskMilestones().length) {
               <div class="tw-card flex flex-col items-center px-6 py-10 text-center">
@@ -1364,12 +1637,9 @@
       }
 
       <!-- FINANCE -->
-       @if (activeTab() === 'finance') {
-  <app-finance
-    [teamId]="team()!.id"
-    [isTeamLeader]="isLeader()"
-  />
-}
+      @if (activeTab() === 'finance') {
+        <app-finance [teamId]="team()!.id" [isTeamLeader]="isLeader()" />
+      }
 
       <!-- MESSAGES -->
       @if (activeTab() === 'messages') {
@@ -1380,18 +1650,24 @@
             [teamName]="t.name"
             [teamLogo]="t.logo"
             [isLeader]="isLeader()"
+            [initialRoomId]="messagesRoomId()"
             [embedded]="true"
           />
         </div>
       }
-     
+
       <!-- PROJECT INVITATIONS -->
       @if (activeTab() === 'invitations' && isLeader()) {
-        <div class="tm-page pt-8">
-          <div class="tm-hero">
+        <div class="pi-page pt-8">
+          <div class="pi-hero">
             <div class="min-w-0">
               <p class="tw-mono-label">Client outreach</p>
-              <h2 class="tm-hero__title">Project invitations</h2>
+              <h2 class="tm-hero__title">
+                Project invitations
+                @if (pendingProjectInvitationsCount() > 0) {
+                  <span>{{ pendingProjectInvitationsCount() }}</span>
+                }
+              </h2>
               <p class="tm-hero__sub">
                 Accept to open a discussion chat with the client. Reject closes the invite.
               </p>
@@ -1399,57 +1675,72 @@
           </div>
 
           @if (projectInvitationsLoading()) {
-            <p class="mt-4 text-sm text-[#6b7280]">Loading invitations…</p>
+            <p class="pi-state">Loading invitations…</p>
           } @else if (projectInvitationsError()) {
-            <p class="mt-4 text-sm text-[#93000a]">{{ projectInvitationsError() }}</p>
+            <p class="pi-state pi-state--error">{{ projectInvitationsError() }}</p>
           } @else if (!projectInvitations().length) {
             <div class="tm-empty mt-6">
               <p class="tm-empty__title">No project invitations</p>
-              <p class="tm-empty__sub">When clients invite this team, invitations will show up here.</p>
+              <p class="tm-empty__sub">
+                When clients invite this team, invitations will show up here.
+              </p>
             </div>
           } @else {
-            <div class="mt-5 flex flex-col gap-3">
+            <div class="pi-list">
               @for (inv of projectInvitations(); track inv.id) {
-                <article class="rounded-2xl border border-[#e5e7eb] bg-white p-4">
-                  <div class="flex flex-wrap items-start justify-between gap-3">
-                    <div class="min-w-0">
-                      <h3 class="font-display text-base font-bold text-[#111827]">
-                        {{ inv.projectTitle || 'Project' }}
-                      </h3>
-                      <p class="mt-1 text-sm font-semibold text-[#4130d7]">
-                        From {{ inv.clientName || 'Client' }} · {{ inv.status }}
-                      </p>
-                      <p class="mt-2 text-sm leading-relaxed text-[#6b7280]">{{ inv.message }}</p>
+                <article class="pi-card">
+                  <div class="pi-card__body">
+                    <div class="pi-card__top">
+                      <h3 class="pi-card__title">{{ inv.projectTitle || 'Project' }}</h3>
+                      <span
+                        class="pi-status"
+                        [class.pi-status--pending]="inv.status === 'Pending'"
+                        [class.pi-status--accepted]="inv.status === 'Accepted'"
+                        [class.pi-status--rejected]="
+                          inv.status === 'Rejected' ||
+                          inv.status === 'Cancelled' ||
+                          inv.status === 'Expired'
+                        "
+                      >
+                        {{ inv.status }}
+                      </span>
                     </div>
-                    <div class="flex flex-wrap gap-2">
-                      @if (inv.status === 'Pending') {
-                        <button
-                          type="button"
-                          class="tm-invite"
-                          [disabled]="projectInviteActionId() === inv.id"
-                          (click)="acceptProjectInvitation(inv)"
-                        >
-                          Accept
-                        </button>
-                        <button
-                          type="button"
-                          class="rounded-full border border-[#e5e7eb] bg-white px-4 py-2 text-sm font-bold text-[#374151]"
-                          [disabled]="projectInviteActionId() === inv.id"
-                          (click)="rejectProjectInvitation(inv)"
-                        >
-                          Reject
-                        </button>
-                      }
-                      @if (inv.status === 'Accepted' && inv.chatRoomId) {
-                        <button
-                          type="button"
-                          class="tm-invite"
-                          (click)="openProjectInvitationChat(inv.chatRoomId)"
-                        >
-                          Open chat
-                        </button>
-                      }
-                    </div>
+                    <p class="pi-card__from">From {{ inv.clientName || 'Client' }}</p>
+                    @if (inv.message) {
+                      <p class="pi-card__msg">{{ inv.message }}</p>
+                    }
+                    @if (inv.createdAt) {
+                      <p class="pi-card__date">{{ inv.createdAt | date: 'MMM d, y' }}</p>
+                    }
+                  </div>
+                  <div class="pi-card__actions">
+                    @if (inv.status === 'Pending') {
+                      <button
+                        type="button"
+                        class="pi-btn pi-btn--accept"
+                        [disabled]="projectInviteActionId() === inv.id"
+                        (click)="acceptProjectInvitation(inv)"
+                      >
+                        Accept
+                      </button>
+                      <button
+                        type="button"
+                        class="pi-btn pi-btn--reject"
+                        [disabled]="projectInviteActionId() === inv.id"
+                        (click)="rejectProjectInvitation(inv)"
+                      >
+                        Reject
+                      </button>
+                    }
+                    @if (inv.status === 'Accepted' && inv.chatRoomId) {
+                      <button
+                        type="button"
+                        class="pi-btn pi-btn--accept"
+                        (click)="openProjectInvitationChat(inv.chatRoomId)"
+                      >
+                        Open chat
+                      </button>
+                    }
                   </div>
                 </article>
               }
@@ -1478,7 +1769,12 @@
             </div>
             @if (isLeader()) {
               <button type="button" class="tm-invite" (click)="openInvite()">
-                <hugeicons-icon [icon]="addIcon" [size]="16" color="currentColor" [strokeWidth]="2" />
+                <hugeicons-icon
+                  [icon]="addIcon"
+                  [size]="16"
+                  color="currentColor"
+                  [strokeWidth]="2"
+                />
                 Invite member
               </button>
             }
@@ -1498,12 +1794,19 @@
           } @else if (members().length === 0) {
             <div class="tm-empty">
               <div class="tm-empty__icon" aria-hidden="true">
-                <hugeicons-icon [icon]="groupIcon" [size]="22" color="currentColor" [strokeWidth]="1.75" />
+                <hugeicons-icon
+                  [icon]="groupIcon"
+                  [size]="22"
+                  color="currentColor"
+                  [strokeWidth]="1.75"
+                />
               </div>
               <p class="tm-empty__title">No members found yet</p>
               <p class="tm-empty__sub">Invite teammates with the team code to grow the roster.</p>
               @if (isLeader()) {
-                <button type="button" class="tm-invite" (click)="openInvite()">Invite someone</button>
+                <button type="button" class="tm-invite" (click)="openInvite()">
+                  Invite someone
+                </button>
               }
             </div>
           } @else {
@@ -1568,10 +1871,7 @@
                         <span class="tm-lock">Updating…</span>
                       }
                     } @else {
-                      <span
-                        class="tm-role-chip"
-                        [class.is-leader]="member.role === 'TeamLeader'"
-                      >
+                      <span class="tm-role-chip" [class.is-leader]="member.role === 'TeamLeader'">
                         {{ roleLabel(member.role) }}
                       </span>
                     }
@@ -1582,16 +1882,16 @@
           }
         </div>
       }
-<!-- INVITATIONS -->
-@if (activeTab() === 'invitations') {
-  @if (isLeader()) {
-    @if (team(); as t) {
-      <app-team-request-job
-        [teamId]="t.id"
-      />
-    }
-  }
-}
+      <!-- INVITATIONS -->
+      @if (activeTab() === 'invitations') {
+        @if (isLeader()) {
+          @if (team(); as t) {
+            <div class="inv-join-wrap">
+              <app-team-request-job [teamId]="t.id" />
+            </div>
+          }
+        }
+      }
     }
   </div>
 </div>
@@ -1603,7 +1903,9 @@
       <p class="mt-1 font-body text-sm text-[#6b7280]">
         Share this team code. Members join from Teams → Join with code.
       </p>
-      <div class="mt-4 flex items-center gap-2 rounded-2xl border border-[#e5e7eb] bg-[#f9fafb] px-4 py-3">
+      <div
+        class="mt-4 flex items-center gap-2 rounded-2xl border border-[#e5e7eb] bg-[#f9fafb] px-4 py-3"
+      >
         <code class="flex-1 font-mono text-lg font-bold tracking-[0.12em] text-[#4130d7]">
           {{ inviteTeam.teamCode }}
         </code>
@@ -1616,7 +1918,12 @@
           {{ codeCopied() ? 'Copied' : 'Copy' }}
         </button>
       </div>
-      <button type="button" class="modal-btn modal-btn--ghost mt-4 w-full" style="flex: none" (click)="closeInvite()">
+      <button
+        type="button"
+        class="modal-btn modal-btn--ghost mt-4 w-full"
+        style="flex: none"
+        (click)="closeInvite()"
+      >
         Close
       </button>
     </div>
@@ -1633,7 +1940,11 @@
       </label>
       <label class="modal-field">
         <span class="tw-mono-label">About</span>
-        <textarea rows="4" [ngModel]="editAbout()" (ngModelChange)="editAbout.set($event)"></textarea>
+        <textarea
+          rows="4"
+          [ngModel]="editAbout()"
+          (ngModelChange)="editAbout.set($event)"
+        ></textarea>
       </label>
       @if (profileError()) {
         <p class="mt-2 text-sm text-[#93000a]">{{ profileError() }}</p>
@@ -1664,7 +1975,9 @@
   <div class="modal-backdrop" (click)="closeExpertiseEdit()">
     <div class="modal-panel modal-panel--wide" (click)="$event.stopPropagation()">
       <h3 class="font-display text-lg font-bold text-[#111827]">Edit expertise</h3>
-      <p class="mt-1 text-sm text-[#6b7280]">Categories, specializations, and skills for this team.</p>
+      <p class="mt-1 text-sm text-[#6b7280]">
+        Categories, specializations, and skills for this team.
+      </p>
 
       <div class="mt-4 flex flex-wrap gap-2">
         <button
@@ -1706,7 +2019,12 @@
                 (click)="toggleEditCategory(cat.id)"
               >
                 @if (selectedCategoryIds().includes(cat.id)) {
-                  <hugeicons-icon [icon]="tickIcon" [size]="14" color="currentColor" [strokeWidth]="2.5" />
+                  <hugeicons-icon
+                    [icon]="tickIcon"
+                    [size]="14"
+                    color="currentColor"
+                    [strokeWidth]="2.5"
+                  />
                 }
                 {{ cat.label }}
               </button>
@@ -1723,7 +2041,12 @@
                   (click)="setPrimaryCategory(id)"
                 >
                   @if (primaryCategoryId() === id) {
-                    <hugeicons-icon [icon]="tickIcon" [size]="14" color="currentColor" [strokeWidth]="2.5" />
+                    <hugeicons-icon
+                      [icon]="tickIcon"
+                      [size]="14"
+                      color="currentColor"
+                      [strokeWidth]="2.5"
+                    />
                   }
                   {{ categoryLabelById(id) }}
                 </button>
@@ -1742,7 +2065,12 @@
                 (click)="toggleEditSpecialty(spec.id)"
               >
                 @if (selectedSpecialtyIds().includes(spec.id)) {
-                  <hugeicons-icon [icon]="tickIcon" [size]="14" color="currentColor" [strokeWidth]="2.5" />
+                  <hugeicons-icon
+                    [icon]="tickIcon"
+                    [size]="14"
+                    color="currentColor"
+                    [strokeWidth]="2.5"
+                  />
                 }
                 {{ spec.label }}
               </button>
@@ -1762,7 +2090,12 @@
                 (click)="toggleEditSkill(skill.id)"
               >
                 @if (selectedSkillIds().includes(skill.id)) {
-                  <hugeicons-icon [icon]="tickIcon" [size]="14" color="currentColor" [strokeWidth]="2.5" />
+                  <hugeicons-icon
+                    [icon]="tickIcon"
+                    [size]="14"
+                    color="currentColor"
+                    [strokeWidth]="2.5"
+                  />
                 }
                 {{ skill.label }}
               </button>
@@ -1851,7 +2184,12 @@
               (click)="toggleJobFormSkill(skill.id)"
             >
               @if (jobFormSkillIds().includes(skill.id)) {
-                <hugeicons-icon [icon]="tickIcon" [size]="14" color="currentColor" [strokeWidth]="2.5" />
+                <hugeicons-icon
+                  [icon]="tickIcon"
+                  [size]="14"
+                  color="currentColor"
+                  [strokeWidth]="2.5"
+                />
               }
               {{ skill.label }}
             </button>
@@ -1903,15 +2241,27 @@
             <p class="apply-job-modal__team">{{ t.name }}</p>
           }
         </div>
-        <button type="button" class="apply-job-modal__close" aria-label="Close" (click)="closeApplyJob()">
-          <hugeicons-icon [icon]="closeIcon" [size]="18" color="currentColor" [strokeWidth]="1.75" />
+        <button
+          type="button"
+          class="apply-job-modal__close"
+          aria-label="Close"
+          (click)="closeApplyJob()"
+        >
+          <hugeicons-icon
+            [icon]="closeIcon"
+            [size]="18"
+            color="currentColor"
+            [strokeWidth]="1.75"
+          />
         </button>
       </header>
 
       @if (applySuccess()) {
         <div class="apply-job-modal__success">
           <p class="apply-job-modal__success-title">Application sent</p>
-          <p class="apply-job-modal__success-copy">The team will review your request and get back to you.</p>
+          <p class="apply-job-modal__success-copy">
+            The team will review your request and get back to you.
+          </p>
         </div>
       } @else {
         <div class="apply-job-modal__body">
