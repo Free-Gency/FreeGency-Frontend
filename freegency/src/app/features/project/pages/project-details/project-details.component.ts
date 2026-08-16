@@ -7,7 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProjectDetailsApiService } from '../../data-access/project-details-api.service';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ClientViewNavbarComponent } from '../../../../shared/components/client-view-navbar/client-view-navbar.component';
@@ -27,6 +27,7 @@ type ProjectTab = 'overview' | 'proposals' | 'milestones' | 'files' | 'activity'
   selector: 'app-project-details',
   standalone: true,
   imports: [
+    RouterLink,
     ClientViewNavbarComponent,
     DeveloperViewNavbarComponent,
     ProjectOverviewComponent,

@@ -209,7 +209,10 @@
               @for (inv of invitations(); track inv.id) {
                 <article class="fh-invite-card">
                   <header class="fh-invite-card__header">
-                    <div class="fh-invite-card__client">
+                    <div
+                      class="fh-invite-card__client cursor-pointer"
+                      [routerLink]="['/developer/clients', inv.clientUserId]"
+                    >
                       <div class="fh-invite-card__avatar" aria-hidden="true">
                         {{ clientInitials(inv.clientName) }}
                       </div>
