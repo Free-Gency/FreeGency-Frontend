@@ -37,7 +37,6 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
   protected readonly actionError = signal<string | null>(null);
   protected readonly selectedProposal = signal<ProjectProposal | null>(null);
   protected readonly detailOpen = signal(false);
-  protected readonly hasActiveDiscussion = signal(false);
   protected readonly isHired = computed(() => this.projectStatus() === 'InProgress');
 
   protected readonly searchTerm = signal('');
@@ -85,7 +84,6 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit() {
-    this.refreshDiscussionLock();
     this.loadProposals();
     this.search$.pipe(debounceTime(350), distinctUntilChanged()).subscribe((term) => {
       this.searchTerm.set(term);
@@ -152,7 +150,6 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
           this.proposals.set(result.items);
           this.totalCount.set(result.totalCount);
           this.loading.set(false);
-          this.refreshDiscussionLock();
 
           const selectedId = this.selectedProposal()?.id;
           if (selectedId) {
@@ -171,27 +168,10 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
       });
   }
 
-  private refreshDiscussionLock() {
-    this.proposalsApi
-      .getByProjectId({
-        projectId: this.projectId(),
-        status: 'InDiscussion',
-        pageNumber: 1,
-        pageSize: 1,
-      })
-      .subscribe({
-        next: (result) => {
-          this.hasActiveDiscussion.set(result.totalCount > 0 || result.items.length > 0);
-        },
-        error: () => {},
-      });
-  }
-
   protected canShowStartDiscussion(p: ProjectProposal): boolean {
     return (
       this.canManageDiscussion() &&
-      (p.status === 'Pending' || p.status === 'Viewed') &&
-      !this.hasActiveDiscussion()
+      (p.status === 'Pending' || p.status === 'Viewed')
     );
   }
 
@@ -312,9 +292,7 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
   protected startDiscussion(id: string) {
     const target = this.proposals().find((p) => p.id === id) ?? this.selectedProposal();
     if (!target || !this.canShowStartDiscussion(target)) {
-      this.toast.error(
-        'Another discussion is already active. Close it before starting a new one.',
-      );
+      this.toast.error('This proposal cannot start a discussion right now.');
       return;
     }
 
@@ -323,7 +301,6 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
     this.proposalsApi.startDiscussion(id).subscribe({
       next: (chatRoomId) => {
         this.actionId.set(null);
-        this.hasActiveDiscussion.set(true);
         this.proposalsChanged.emit();
         this.closeDetail();
         this.loadProposals();
@@ -335,13 +312,10 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
         this.actionId.set(null);
         const message = extractApiError(
           err,
-          err instanceof Error
-            ? err.message
-            : 'Another discussion is already active. Close it before starting a new one.',
+          err instanceof Error ? err.message : 'Could not start discussion.',
         );
         this.actionError.set(message);
         this.toast.error(message);
-        this.refreshDiscussionLock();
         this.loadProposals();
       },
     });
@@ -353,7 +327,6 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
     this.proposalsApi.closeDiscussion(id).subscribe({
       next: () => {
         this.actionId.set(null);
-        this.hasActiveDiscussion.set(false);
         this.proposalsChanged.emit();
         this.closeDetail();
         this.loadProposals();
@@ -374,7 +347,6 @@ export class ProjectProposalsComponent implements OnInit, OnDestroy {
       next: () => {
         this.actionId.set(null);
         this.proposalsChanged.emit();
-        this.refreshDiscussionLock();
         this.closeDetail();
         this.loadProposals();
       },

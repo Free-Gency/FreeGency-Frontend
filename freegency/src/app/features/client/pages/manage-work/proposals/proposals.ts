@@ -58,16 +58,6 @@ export class Proposals implements OnInit {
   readonly assistantAcceptTip = signal(false);
   readonly selectedProposal = signal<Proposal | null>(null);
   readonly detailOpen = signal(false);
-  /** Project IDs that already have an InDiscussion proposal (one discussion at a time). */
-  readonly discussionProjectIds = signal<ReadonlySet<string>>(new Set());
-
-  /** True when the currently filtered project (or any visible proposal's project) has an active discussion. */
-  readonly hasActiveDiscussion = computed(() => {
-    const projectId = this.activeProjectId();
-    const locks = this.discussionProjectIds();
-    if (projectId) return locks.has(projectId);
-    return locks.size > 0 && this.proposals().some((p) => locks.has(p.projectId));
-  });
 
   readonly page = signal(1);
   readonly pageSize = 10;
@@ -137,8 +127,6 @@ export class Proposals implements OnInit {
     this.loadAllProposalsTotal();
   }
 
-  private discussionLockRequestId = 0;
-
   constructor() {
     effect(() => {
       const enabled = this.aiRankingEnabled();
@@ -151,34 +139,6 @@ export class Proposals implements OnInit {
         this.rankingError.set(null);
       }
     });
-
-    effect(() => {
-      this.activeProjectId();
-      this.refreshDiscussionLock();
-    });
-  }
-
-  private refreshDiscussionLock(): void {
-    const requestId = ++this.discussionLockRequestId;
-    const projectId = this.activeProjectId() || undefined;
-    this.manageWorkService
-      .getProposals({
-        projectId,
-        status: 'InDiscussion',
-        pageNumber: 1,
-        pageSize: 100,
-      })
-      .subscribe({
-        next: (page) => {
-          if (requestId !== this.discussionLockRequestId) return;
-          this.discussionProjectIds.set(new Set(page.items.map((p) => p.projectId)));
-        },
-        error: () => undefined,
-      });
-  }
-
-  hasActiveDiscussionFor(proposal: Proposal): boolean {
-    return this.discussionProjectIds().has(proposal.projectId);
   }
 
   canStartDiscussion(proposal: Proposal): boolean {
@@ -482,7 +442,6 @@ export class Proposals implements OnInit {
           this.assistantAcceptTip.set(true);
           this.closeDetail();
           this.proposalsResource.reload();
-          this.refreshDiscussionLock();
           if (this.aiRankingEnabled() && this.activeProjectId()) {
             this.loadRanking(this.activeProjectId());
           }
@@ -495,7 +454,6 @@ export class Proposals implements OnInit {
           this.toast.error(
             extractApiError(err, 'Could not start discussion. Please try again.'),
           );
-          this.refreshDiscussionLock();
           this.proposalsResource.reload();
         },
       });
@@ -529,7 +487,6 @@ export class Proposals implements OnInit {
           this.actionInProgress.set(null);
           this.closeDetail();
           this.proposalsResource.reload();
-          this.refreshDiscussionLock();
         },
         error: (err) => {
           this.actionInProgress.set(null);
@@ -583,7 +540,6 @@ export class Proposals implements OnInit {
           this.actionInProgress.set(null);
           this.closeDetail();
           this.proposalsResource.reload();
-          this.refreshDiscussionLock();
           if (this.aiRankingEnabled() && this.activeProjectId()) {
             this.loadRanking(this.activeProjectId());
           }

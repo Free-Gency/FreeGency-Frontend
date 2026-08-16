@@ -44,7 +44,7 @@ export class InviteToProjectModalComponent implements OnInit {
       .subscribe((page) => {
         const open = (page.items ?? []).filter((p) => {
           const isOpen = (p.status || '').toLowerCase() === 'open';
-          return isOpen && !p.hasActiveDiscussion;
+          return isOpen;
         });
         this.projects.set(open);
         const preferred = this.preferredProjectId();
