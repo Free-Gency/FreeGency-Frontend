@@ -75,7 +75,10 @@
 
         @if (isLeader()) {
           <aside class="tpw-client">
-            <div class="tpw-client__top">
+            <div
+              class="tpw-client__top cursor-pointer"
+              [routerLink]="['/developer/clients', p.clientId]"
+            >
               @if (clientAvatarSrc(p.clientAvatarUrl) && !clientAvatarBroken()) {
                 <img
                   class="tpw-client__avatar"
@@ -388,7 +391,10 @@
                 </section>
               } @else {
                 <section class="tpw-card tpw-card--client-compact">
-                  <div class="tpw-client__top">
+                  <div
+                    class="tpw-client__top cursor-pointer"
+                    [routerLink]="['/developer/clients', p.clientId]"
+                  >
                     @if (clientAvatarSrc(p.clientAvatarUrl) && !clientAvatarBroken()) {
                       <img
                         class="tpw-client__avatar"

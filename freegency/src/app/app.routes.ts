@@ -323,5 +323,13 @@ export const routes: Routes = [
         (m) => m.FreelancerPortfolioComponent,
       ),
   },
+  {
+    path: 'developer/clients/:clientId',
+    canActivate: [authGuard, developerModeGuard],
+    loadComponent: () =>
+      import('./features/client/pages/client-profile/client-profile.component').then(
+        (m) => m.ClientPortfolioComponent,
+      ),
+  },
   { path: '**', redirectTo: '' },
 ];

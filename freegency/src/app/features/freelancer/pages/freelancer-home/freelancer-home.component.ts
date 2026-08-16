@@ -1,7 +1,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FreelancerHome } from '../../data-access/freelancer-home';
 import { DeveloperProfileSummary } from '../../../../shared/models/developer-profile.model';
 import { DeveloperViewNavbarComponent } from '../../../../shared/components/developer-view-navbar/developer-view-navbar.component';
@@ -15,7 +15,13 @@ export type ActiveTab = 'feed' | 'applications' | 'saved' | 'invitations';
 @Component({
   selector: 'app-freelancer-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, DeveloperViewNavbarComponent, ApplyProjectButtonComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    DeveloperViewNavbarComponent,
+    ApplyProjectButtonComponent,
+  ],
   templateUrl: './freelancer-home.component.html',
   styleUrls: ['./freelancer-home.component.css'],
 })

@@ -1,0 +1,46 @@
+<app-developer-view-navbar />
+
+<main class="pf-page">
+  @if (loading()) {
+    <p class="pf-page__loading">Loading profile…</p>
+  } @else if (error()) {
+    <div class="pf-page__error">{{ error() }}</div>
+  } @else if (profile(); as p) {
+    <div class="pf-page__grid">
+      <div class="pf-page__main">
+        <section class="pf-page__portfolio">
+          <div class="pf-page__portfolio-head">
+            <h2 class="pf-page__portfolio-title">
+              {{ fullName() }}
+              @if (p.isVerified) {
+                <span title="Verified">✓</span>
+              }
+            </h2>
+          </div>
+
+          @if (p.country) {
+            <p>{{ p.country }}</p>
+          }
+
+          @if (p.bio) {
+            <p>{{ p.bio }}</p>
+          }
+
+          <div class="pf-page__portfolio-actions">
+            <span class="pf-page__portfolio-count">
+              {{ p.projectsPostedCount }} posted · {{ p.projectsCompletedCount }} completed
+            </span>
+          </div>
+
+          @if (p.ratingCount) {
+            <div class="pf-page__portfolio-actions">
+              <span class="pf-page__portfolio-count">
+                ★ {{ p.averageRating }} ({{ p.ratingCount }})
+              </span>
+            </div>
+          }
+        </section>
+      </div>
+    </div>
+  }
+</main>
